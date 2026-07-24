@@ -1448,6 +1448,42 @@ sources:
     tier: [1, 2]
     enabled: true
 
+  # ── Google News (custom topic RSS) ──
+  - name: "Google News: Cambodia Tech"
+    type: rss
+    url: "https://news.google.com/rss/search?q=cambodia+technology+when:7d&hl=en"
+    category: cambodia
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Google News: AI"
+    type: rss
+    url: "https://news.google.com/rss/search?q=artificial+intelligence+when:3d&hl=en"
+    category: ai
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Google News: Cybersecurity"
+    type: rss
+    url: "https://news.google.com/rss/search?q=cybersecurity+when:3d&hl=en"
+    category: cybersecurity
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Google News: Open Source"
+    type: rss
+    url: "https://news.google.com/rss/search?q=open+source+software+when:3d&hl=en"
+    category: developer
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Google News: Southeast Asia Tech"
+    type: rss
+    url: "https://news.google.com/rss/search?q=southeast+asia+technology+when:3d&hl=en"
+    category: se_asia
+    tier: [1, 2]
+    enabled: true
+
   # ─────────────────────────────────────────────
   # API SOURCES (Tier 2/3 — website pipeline)
   # ─────────────────────────────────────────────
@@ -1565,3 +1601,46 @@ sources:
     tier: [2, 3]
     enabled: true
     requires_key: "FIRECRAWL_API_KEY"
+
+  - name: "GitHub REST API"
+    type: api
+    module: "workers.github_api"
+    function: "fetch_all_github_api"
+    tier: [2, 3]
+    enabled: true
+
+  - name: "The Guardian"
+    type: api
+    module: "workers.guardian"
+    function: "fetch_all_guardian"
+    tier: [2, 3]
+    enabled: true
+
+  - name: "dev.to API"
+    type: api
+    module: "workers.devto"
+    function: "fetch_all_devto"
+    tier: [2, 3]
+    enabled: true
+
+  - name: "YouTube API"
+    type: api
+    module: "workers.youtube"
+    function: "fetch_all_youtube"
+    tier: [2, 3]
+    enabled: true
+    requires_key: "YOUTUBE_API_KEY"
+
+  - name: "Stack Exchange"
+    type: api
+    module: "workers.stackexchange"
+    function: "fetch_all_stackexchange"
+    tier: [2, 3]
+    enabled: true
+
+  - name: "Mastodon"
+    type: api
+    module: "workers.mastodon"
+    function: "fetch_all_mastodon"
+    tier: [2, 3]
+    enabled: true
