@@ -248,6 +248,20 @@ sources:
     tier: [1, 2]
     enabled: true
 
+  - name: "Microsoft Research Blog"
+    type: rss
+    url: "https://www.microsoft.com/en-us/research/feed/"
+    category: ai
+    tier: [1, 2]
+    enabled: true
+
+  - name: "AI Weekly"
+    type: rss
+    url: "https://aiweekly.co/feed"
+    category: ai
+    tier: [1, 2]
+    enabled: true
+
   # ── Cybersecurity ──
   - name: "BleepingComputer"
     type: rss
@@ -1200,6 +1214,48 @@ sources:
     tier: [1, 2]
     enabled: true
 
+  - name: "r/MachineLearning"
+    type: rss
+    url: "https://www.reddit.com/r/MachineLearning/.rss"
+    category: reddit
+    tier: [1, 2]
+    enabled: true
+
+  - name: "r/LocalLLaMA"
+    type: rss
+    url: "https://www.reddit.com/r/LocalLLaMA/.rss"
+    category: reddit
+    tier: [1, 2]
+    enabled: true
+
+  - name: "r/singularity"
+    type: rss
+    url: "https://www.reddit.com/r/singularity/.rss"
+    category: reddit
+    tier: [1, 2]
+    enabled: true
+
+  - name: "r/OSINT"
+    type: rss
+    url: "https://www.reddit.com/r/OSINT/.rss"
+    category: reddit
+    tier: [1, 2]
+    enabled: true
+
+  - name: "r/Cambodia"
+    type: rss
+    url: "https://www.reddit.com/r/Cambodia/.rss"
+    category: reddit
+    tier: [1, 2]
+    enabled: true
+
+  - name: "r/artificial"
+    type: rss
+    url: "https://www.reddit.com/r/artificial/.rss"
+    category: reddit
+    tier: [1, 2]
+    enabled: true
+
   # ── Academic Research ──
   - name: "arXiv cs.AI"
     type: rss
@@ -1237,10 +1293,38 @@ sources:
     tier: [1, 2]
     enabled: true
 
+  - name: "Hacker News (newest)"
+    type: rss
+    url: "https://hnrss.org/newest"
+    category: community
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Hacker News (Ask HN)"
+    type: rss
+    url: "https://hnrss.org/ask"
+    category: community
+    tier: [1, 2]
+    enabled: true
+
   - name: "TechMeme"
     type: rss
     url: "https://www.techmeme.com/feed.xml"
     category: community
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Snopes"
+    type: rss
+    url: "https://www.snopes.com/feed/"
+    category: tech
+    tier: [1, 2]
+    enabled: true
+
+  - name: "PolitiFact"
+    type: rss
+    url: "https://politifact.com/feed/"
+    category: tech
     tier: [1, 2]
     enabled: true
 
