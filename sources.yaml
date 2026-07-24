@@ -304,6 +304,69 @@ sources:
     tier: [1, 2]
     enabled: true
 
+  - name: "Anthropic News"
+    type: rss
+    url: "https://raw.githubusercontent.com/alan-turing-institute/ai-rss-feeds/main/feeds/anthropic-news.xml"
+    category: ai
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Cohere Blog"
+    type: rss
+    url: "https://raw.githubusercontent.com/alan-turing-institute/ai-rss-feeds/main/feeds/cohere-blog.xml"
+    category: ai
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Mistral News"
+    type: rss
+    url: "https://raw.githubusercontent.com/alan-turing-institute/ai-rss-feeds/main/feeds/mistral-news.xml"
+    category: ai
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Simon Willison"
+    type: rss
+    url: "https://simonwillison.net/atom/everything/"
+    category: ai
+    tier: [1, 2]
+    enabled: true
+
+  - name: "The Decoder"
+    type: rss
+    url: "https://the-decoder.com/feed/"
+    category: ai
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Synced AI"
+    type: rss
+    url: "https://syncedreview.com/feed/"
+    category: ai
+    tier: [1, 2]
+    enabled: true
+
+  - name: "TLDR AI"
+    type: rss
+    url: "https://raw.githubusercontent.com/alan-turing-institute/ai-rss-feeds/main/feeds/tldr-ai.xml"
+    category: ai
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Exponential View"
+    type: rss
+    url: "https://www.exponentialview.co/feed/"
+    category: ai
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Fireship"
+    type: rss
+    url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCsBjURrPoezykLs9EqgamOA"
+    category: ai
+    tier: [1, 2]
+    enabled: true
+
   # ── Cybersecurity ──
   - name: "BleepingComputer"
     type: rss
@@ -448,6 +511,55 @@ sources:
   - name: "ANY.RUN"
     type: rss
     url: "https://any.run/cybersecurity-blog/feed/"
+    category: cybersecurity
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Microsoft Security Blog"
+    type: rss
+    url: "https://www.microsoft.com/en-us/security/blog/feed/"
+    category: cybersecurity
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Unit 42 (Palo Alto)"
+    type: rss
+    url: "https://unit42.paloaltonetworks.com/feed/"
+    category: cybersecurity
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Securelist (Kaspersky)"
+    type: rss
+    url: "https://securelist.com/feed/"
+    category: cybersecurity
+    tier: [1, 2]
+    enabled: true
+
+  - name: "CrowdStrike Blog"
+    type: rss
+    url: "https://www.crowdstrike.com/blog/feed/"
+    category: cybersecurity
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Google Security Blog"
+    type: rss
+    url: "https://security.googleblog.com/feeds/posts/default"
+    category: cybersecurity
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Tenable Blog"
+    type: rss
+    url: "https://www.tenable.com/blog/feed"
+    category: cybersecurity
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Malwarebytes Blog"
+    type: rss
+    url: "https://www.malwarebytes.com/blog/feed/index.xml"
     category: cybersecurity
     tier: [1, 2]
     enabled: true
@@ -663,6 +775,20 @@ sources:
   - name: "Quanta Magazine"
     type: rss
     url: "https://www.quantamagazine.org/feed/"
+    category: science
+    tier: [1, 2]
+    enabled: true
+
+  - name: "New Scientist"
+    type: rss
+    url: "https://www.newscientist.com/feed/home/"
+    category: science
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Futurism"
+    type: rss
+    url: "https://futurism.com/feed/"
     category: science
     tier: [1, 2]
     enabled: true
@@ -922,6 +1048,34 @@ sources:
     tier: [1, 2]
     enabled: true
 
+  - name: "Vercel Blog"
+    type: rss
+    url: "https://vercel.com/atom"
+    category: cloud
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Supabase Blog"
+    type: rss
+    url: "https://supabase.com/rss.xml"
+    category: cloud
+    tier: [1, 2]
+    enabled: true
+
+  - name: "SRE Weekly"
+    type: rss
+    url: "https://sreweekly.com/feed/"
+    category: cloud
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Platform Weekly"
+    type: rss
+    url: "https://platformweekly.com/feed"
+    category: cloud
+    tier: [1, 2]
+    enabled: true
+
   # ── Developer & Open Source ──
   - name: "GitHub Blog"
     type: rss
@@ -1010,6 +1164,104 @@ sources:
   - name: "CSS-Tricks"
     type: rss
     url: "https://css-tricks.com/feed/"
+    category: developer
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Golang Weekly"
+    type: rss
+    url: "https://golangweekly.com/rss/"
+    category: developer
+    tier: [1, 2]
+    enabled: true
+
+  - name: "This Week in Rust"
+    type: rss
+    url: "https://this-week-in-rust.org/atom.xml"
+    category: developer
+    tier: [1, 2]
+    enabled: true
+
+  - name: "TLDR Tech"
+    type: rss
+    url: "https://tldr.tech/api/rss/tech"
+    category: developer
+    tier: [1, 2]
+    enabled: true
+
+  - name: "JavaScript Weekly"
+    type: rss
+    url: "https://javascriptweekly.com/rss/"
+    category: developer
+    tier: [1, 2]
+    enabled: true
+
+  - name: "React Status"
+    type: rss
+    url: "https://react.statuscode.com/rss/"
+    category: developer
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Node Weekly"
+    type: rss
+    url: "https://nodeweekly.com/rss/"
+    category: developer
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Ruby Weekly"
+    type: rss
+    url: "https://rubyweekly.com/rss/"
+    category: developer
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Changelog News"
+    type: rss
+    url: "https://changelog.com/news/feed"
+    category: developer
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Frontend Focus"
+    type: rss
+    url: "https://frontendfoc.us/rss/"
+    category: developer
+    tier: [1, 2]
+    enabled: true
+
+  - name: "ByteByteGo"
+    type: rss
+    url: "https://blog.bytebytego.com/feed"
+    category: developer
+    tier: [1, 2]
+    enabled: true
+
+  - name: "The Pragmatic Engineer"
+    type: rss
+    url: "https://newsletter.pragmaticengineer.com/feed"
+    category: developer
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Console.dev"
+    type: rss
+    url: "https://console.substack.com/feed"
+    category: developer
+    tier: [1, 2]
+    enabled: true
+
+  - name: "NVIDIA Developer Blog"
+    type: rss
+    url: "https://developer.nvidia.com/blog/feed/"
+    category: developer
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Computerphile"
+    type: rss
+    url: "https://www.youtube.com/feeds/videos.xml?channel_id=UC9-y-6csu5WGm29I7JiwpnA"
     category: developer
     tier: [1, 2]
     enabled: true
@@ -1260,6 +1512,58 @@ sources:
     tier: [1, 2]
     enabled: true
 
+  # ── Africa Tech ──
+  - name: "TechCabal"
+    type: rss
+    url: "https://techcabal.com/feed/"
+    category: africa
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Disrupt Africa"
+    type: rss
+    url: "https://disrupt-africa.com/feed/"
+    category: africa
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Techpoint Africa"
+    type: rss
+    url: "https://techpoint.africa/feed/"
+    category: africa
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Africa News Tech"
+    type: rss
+    url: "https://www.africanews.com/feed/rss"
+    category: africa
+    tier: [1, 2]
+    enabled: true
+
+  # ── India Tech ──
+  - name: "Inc42"
+    type: rss
+    url: "https://inc42.com/feed/"
+    category: india
+    tier: [1, 2]
+    enabled: true
+
+  - name: "YourStory"
+    type: rss
+    url: "https://yourstory.com/feed"
+    category: india
+    tier: [1, 2]
+    enabled: true
+
+  # ── LATAM Tech ──
+  - name: "latam.tech"
+    type: rss
+    url: "https://www.latam.tech/feed"
+    category: latam
+    tier: [1, 2]
+    enabled: true
+
   # ── Space ──
   - name: "SpaceNews"
     type: rss
@@ -1308,6 +1612,45 @@ sources:
     type: rss
     url: "https://www.utilitydive.com/feeds/news/"
     category: climate
+    tier: [1, 2]
+    enabled: true
+
+  - name: "TechCrunch Climate"
+    type: rss
+    url: "https://techcrunch.com/tag/climate/feed/"
+    category: climate
+    tier: [1, 2]
+    enabled: true
+
+  # ── AgriTech ──
+  - name: "AgFunder News"
+    type: rss
+    url: "https://agfundernews.com/feed"
+    category: agritech
+    tier: [1, 2]
+    enabled: true
+
+  # ── EdTech ──
+  - name: "EdTech Magazine"
+    type: rss
+    url: "https://edtechmagazine.com/k12/rss.xml"
+    category: edtech
+    tier: [1, 2]
+    enabled: true
+
+  # ── HealthTech ──
+  - name: "Healthcare IT News"
+    type: rss
+    url: "https://www.healthcareitnews.com/rss.xml"
+    category: healthtech
+    tier: [1, 2]
+    enabled: true
+
+  # ── LegalTech ──
+  - name: "Artificial Lawyer"
+    type: rss
+    url: "https://www.artificiallawyer.com/feed/"
+    category: legaltech
     tier: [1, 2]
     enabled: true
 
@@ -1590,6 +1933,35 @@ sources:
     tier: [1, 2]
     enabled: true
 
+  # ── Podcasts (RSS) ──
+  - name: "Lex Fridman Podcast"
+    type: rss
+    url: "https://lexfridman.com/feed/podcast/"
+    category: podcast
+    tier: [1, 2]
+    enabled: true
+
+  - name: "The Vergecast"
+    type: rss
+    url: "https://www.theverge.com/rss/podcast/index.xml"
+    category: podcast
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Latent Space"
+    type: rss
+    url: "https://www.latent.space/feed"
+    category: podcast
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Software Engineering Daily"
+    type: rss
+    url: "https://feeds.simplecast.com/54nAGcIl"
+    category: podcast
+    tier: [1, 2]
+    enabled: true
+
   # ─────────────────────────────────────────────
   # API SOURCES (Tier 2/3 — website pipeline)
   # ─────────────────────────────────────────────
@@ -1778,3 +2150,25 @@ sources:
     function: "fetch_all_openlibrary"
     tier: [2, 3]
     enabled: true
+
+  - name: "NVD CVE Database"
+    type: api
+    module: "workers.nvd"
+    function: "fetch_all_nvd"
+    tier: [2, 3]
+    enabled: true
+
+  - name: "WhatsTrending AI"
+    type: api
+    module: "workers.whats_trending"
+    function: "fetch_all_whats_trending"
+    tier: [2, 3]
+    enabled: true
+
+  - name: "GNews"
+    type: api
+    module: "workers.gnews"
+    function: "fetch_all_gnews"
+    tier: [2, 3]
+    enabled: true
+    requires_key: "GNEWS_API_KEY"
