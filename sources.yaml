@@ -403,6 +403,13 @@ sources:
     tier: [1, 2]
     enabled: true
 
+  - name: "CSO Online"
+    type: rss
+    url: "https://www.csoonline.com/feed/"
+    category: cybersecurity
+    tier: [1, 2]
+    enabled: true
+
   - name: "Citizen Lab"
     type: rss
     url: "https://citizenlab.ca/feed"
@@ -624,6 +631,13 @@ sources:
     tier: [1, 2]
     enabled: true
 
+  - name: "PogoWasRight (Privacy)"
+    type: rss
+    url: "https://pogowasright.org/feed/"
+    category: regulation
+    tier: [1, 2]
+    enabled: true
+
   # ── Science ──
   - name: "ScienceDaily"
     type: rss
@@ -650,6 +664,28 @@ sources:
     type: rss
     url: "https://www.quantamagazine.org/feed/"
     category: science
+    tier: [1, 2]
+    enabled: true
+
+  # ── Space ──
+  - name: "Ars Technica Space"
+    type: rss
+    url: "https://arstechnica.com/space/feed/"
+    category: space
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Space.com"
+    type: rss
+    url: "https://www.space.com/feeds/all"
+    category: space
+    tier: [1, 2]
+    enabled: true
+
+  - name: "NASA Space Station"
+    type: rss
+    url: "https://blogs.nasa.gov/spacestation/feed/"
+    category: space
     tier: [1, 2]
     enabled: true
 
@@ -1044,6 +1080,27 @@ sources:
     tier: [1, 2]
     enabled: true
 
+  - name: "Thurrott"
+    type: rss
+    url: "https://www.thurrott.com/feed"
+    category: windows
+    tier: [1, 2]
+    enabled: true
+
+  - name: "WindowsLatest"
+    type: rss
+    url: "https://windowslatest.com/feed/"
+    category: windows
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Neowin"
+    type: rss
+    url: "https://www.neowin.net/news/rss/microsoft"
+    category: windows
+    tier: [1, 2]
+    enabled: true
+
   # ── Enterprise IT ──
   - name: "The Register"
     type: rss
@@ -1163,6 +1220,20 @@ sources:
   - name: "Business Insider"
     type: rss
     url: "https://feeds.businessinsider.com/custom/all"
+    category: business
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Forbes Tech"
+    type: rss
+    url: "https://www.forbes.com/innovation/feed2/"
+    category: business
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Reuters Tech (Google News)"
+    type: rss
+    url: "https://news.google.com/rss/search?q=site%3Areuters.com+(technology+OR+tech+OR+business)&hl=en-US&gl=US&ceid=US%3Aen"
     category: business
     tier: [1, 2]
     enabled: true
@@ -1448,6 +1519,20 @@ sources:
     tier: [1, 2]
     enabled: true
 
+  - name: "Fintech Times"
+    type: rss
+    url: "https://thefintechtimes.com/feed/"
+    category: fintech
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Finextra"
+    type: rss
+    url: "https://www.finextra.com/rss/headlines.aspx"
+    category: fintech
+    tier: [1, 2]
+    enabled: true
+
   # ── Google News (custom topic RSS) ──
   - name: "Google News: Cambodia Tech"
     type: rss
@@ -1481,6 +1566,27 @@ sources:
     type: rss
     url: "https://news.google.com/rss/search?q=southeast+asia+technology+when:3d&hl=en"
     category: se_asia
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Google News: Windows"
+    type: rss
+    url: "https://news.google.com/rss/search?q=windows+os+when:3d&hl=en"
+    category: windows
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Google News: Fintech"
+    type: rss
+    url: "https://news.google.com/rss/search?q=fintech+when:3d&hl=en"
+    category: fintech
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Google News: Space"
+    type: rss
+    url: "https://news.google.com/rss/search?q=space+science+when:3d&hl=en"
+    category: space
     tier: [1, 2]
     enabled: true
 
@@ -1642,5 +1748,33 @@ sources:
     type: api
     module: "workers.mastodon"
     function: "fetch_all_mastodon"
+    tier: [2, 3]
+    enabled: true
+
+  - name: "Wikipedia Pageviews"
+    type: api
+    module: "workers.wikipedia"
+    function: "fetch_all_wikipedia"
+    tier: [2, 3]
+    enabled: true
+
+  - name: "Crossref"
+    type: api
+    module: "workers.crossref"
+    function: "fetch_all_crossref"
+    tier: [2, 3]
+    enabled: true
+
+  - name: "NASA Open API"
+    type: api
+    module: "workers.nasa"
+    function: "fetch_all_nasa"
+    tier: [2, 3]
+    enabled: true
+
+  - name: "Open Library"
+    type: api
+    module: "workers.openlibrary"
+    function: "fetch_all_openlibrary"
     tier: [2, 3]
     enabled: true
