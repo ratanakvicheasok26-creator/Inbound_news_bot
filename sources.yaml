@@ -262,6 +262,34 @@ sources:
     tier: [1, 2]
     enabled: true
 
+  - name: "EleutherAI Blog"
+    type: rss
+    url: "https://blog.eleuther.ai/index.xml"
+    category: ai
+    tier: [1, 2]
+    enabled: true
+
+  - name: "LessWrong"
+    type: rss
+    url: "https://www.lesswrong.com/feed.xml?view=ai"
+    category: ai
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Alignment Forum"
+    type: rss
+    url: "https://www.alignmentforum.org/feed.xml"
+    category: ai
+    tier: [1, 2]
+    enabled: true
+
+  - name: "EA Forum"
+    type: rss
+    url: "https://forum.effectivealtruism.org/feed.xml"
+    category: ai
+    tier: [1, 2]
+    enabled: true
+
   # ── Cybersecurity ──
   - name: "BleepingComputer"
     type: rss
@@ -478,6 +506,27 @@ sources:
   - name: "SemiEngineering"
     type: rss
     url: "https://semiengineering.com/feed/"
+    category: hardware
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Next Platform"
+    type: rss
+    url: "https://www.nextplatform.com/feed/"
+    category: hardware
+    tier: [1, 2]
+    enabled: true
+
+  - name: "ServeTheHome"
+    type: rss
+    url: "https://www.servethehome.com/feed/"
+    category: hardware
+    tier: [1, 2]
+    enabled: true
+
+  - name: "EE Times"
+    type: rss
+    url: "https://www.eetimes.com/feed/"
     category: hardware
     tier: [1, 2]
     enabled: true
@@ -1303,6 +1352,13 @@ sources:
   - name: "Hacker News (Ask HN)"
     type: rss
     url: "https://hnrss.org/ask"
+    category: community
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Hacker News (Show HN)"
+    type: rss
+    url: "https://hnrss.org/show"
     category: community
     tier: [1, 2]
     enabled: true
