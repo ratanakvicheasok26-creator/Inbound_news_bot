@@ -79,6 +79,13 @@ sources:
     tier: [1, 2]
     enabled: true
 
+  - name: "StrictlyVC"
+    type: rss
+    url: "https://strictlyvc.com/feed/"
+    category: startups
+    tier: [1, 2]
+    enabled: true
+
   # ── AI & ML ──
   - name: "TechCrunch AI"
     type: rss
@@ -286,6 +293,13 @@ sources:
   - name: "EA Forum"
     type: rss
     url: "https://forum.effectivealtruism.org/feed.xml"
+    category: ai
+    tier: [1, 2]
+    enabled: true
+
+  - name: "MarkTechPost"
+    type: rss
+    url: "https://www.marktechpost.com/feed/"
     category: ai
     tier: [1, 2]
     enabled: true
@@ -510,6 +524,13 @@ sources:
     tier: [1, 2]
     enabled: true
 
+  - name: "SemiAnalysis"
+    type: rss
+    url: "https://semianalysis.com/feed/"
+    category: hardware
+    tier: [1, 2]
+    enabled: true
+
   - name: "Next Platform"
     type: rss
     url: "https://www.nextplatform.com/feed/"
@@ -527,6 +548,13 @@ sources:
   - name: "EE Times"
     type: rss
     url: "https://www.eetimes.com/feed/"
+    category: hardware
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Asianometry"
+    type: rss
+    url: "https://www.asianometry.com/feed"
     category: hardware
     tier: [1, 2]
     enabled: true
@@ -706,6 +734,13 @@ sources:
   - name: "Gizmodo"
     type: rss
     url: "https://gizmodo.com/rss"
+    category: tech
+    tier: [1, 2]
+    enabled: true
+
+  - name: "404 Media"
+    type: rss
+    url: "https://www.404media.co/rss/"
     category: tech
     tier: [1, 2]
     enabled: true
@@ -1046,6 +1081,13 @@ sources:
     tier: [1, 2]
     enabled: true
 
+  - name: "Tech in Asia"
+    type: rss
+    url: "https://www.techinasia.com/feed"
+    category: se_asia
+    tier: [1, 2]
+    enabled: true
+
   # ── Cambodia ──
   - name: "Koh Santepheap Daily"
     type: rss
@@ -1187,6 +1229,13 @@ sources:
   - name: "CleanTechnica"
     type: rss
     url: "https://cleantechnica.com/feed/"
+    category: climate
+    tier: [1, 2]
+    enabled: true
+
+  - name: "Utility Dive"
+    type: rss
+    url: "https://www.utilitydive.com/feeds/news/"
     category: climate
     tier: [1, 2]
     enabled: true
