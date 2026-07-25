@@ -1,2174 +1,4862 @@
-# ============================================================
-# sources.yaml — Central source registry for Inbound News Bot
-# ============================================================
-# To add a source: add an entry below, save, done. No code changes.
-# Tier 1 = Telegram bot (fast, curated, every 15min)
-# Tier 2 = Website ingestion (bulk, every 30min)
-# Tier 3 = Deep research (API-only, hourly)
-# ============================================================
-
 version: 1
-last_updated: "2026-07-24"
-
-# ─────────────────────────────────────────────
-# RSS FEEDS
-# ─────────────────────────────────────────────
+last_updated: '2026-07-24'
 sources:
-
-  # ── Startups ──
-  - name: "TechCrunch"
-    type: rss
-    url: "https://techcrunch.com/feed/"
-    category: startups
-    tier: [1, 2]
-    enabled: true
-
-  - name: "TechFundingNews"
-    type: rss
-    url: "https://techfundingnews.com/feed/"
-    category: startups
-    tier: [1, 2]
-    enabled: true
-
-  - name: "TechStartups"
-    type: rss
-    url: "https://techstartups.com/feed/"
-    category: startups
-    tier: [1, 2]
-    enabled: true
-
-  - name: "SaaStr"
-    type: rss
-    url: "https://www.saastr.com/feed/"
-    category: startups
-    tier: [1, 2]
-    enabled: true
-
-  - name: "GeekWire"
-    type: rss
-    url: "https://www.geekwire.com/feed/"
-    category: startups
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Product Hunt"
-    type: rss
-    url: "https://www.producthunt.com/feed"
-    category: startups
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Crunchbase News"
-    type: rss
-    url: "https://news.crunchbase.com/feed/"
-    category: startups
-    tier: [1, 2]
-    enabled: true
-
-  - name: "TechCrunch Fundraising"
-    type: rss
-    url: "https://techcrunch.com/category/fundraising/feed/"
-    category: startups
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Y Combinator Blog"
-    type: rss
-    url: "https://www.ycombinator.com/blog/rss"
-    category: startups
-    tier: [1, 2]
-    enabled: true
-
-  - name: "StrictlyVC"
-    type: rss
-    url: "https://strictlyvc.com/feed/"
-    category: startups
-    tier: [1, 2]
-    enabled: true
-
-  # ── AI & ML ──
-  - name: "TechCrunch AI"
-    type: rss
-    url: "https://techcrunch.com/category/artificial-intelligence/feed/"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "OpenAI News"
-    type: rss
-    url: "https://openai.com/news/rss.xml"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Google DeepMind"
-    type: rss
-    url: "https://deepmind.google/blog/rss.xml"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Hugging Face Blog"
-    type: rss
-    url: "https://huggingface.co/blog/feed.xml"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "MIT AI News"
-    type: rss
-    url: "https://news.mit.edu/rss/topic/artificial-intelligence2"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Anthropic Blog"
-    type: rss
-    url: "https://raw.githubusercontent.com/leontloveless/ai-rss-feeds/main/feeds/anthropic.xml"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Google Research Blog"
-    type: rss
-    url: "https://research.google/blog/rss"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Google AI Blog"
-    type: rss
-    url: "https://blog.google/technology/ai/rss/"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Meta AI"
-    type: rss
-    url: "https://raw.githubusercontent.com/oborchers/rss-feeds/main/feeds/feed_meta_ai.xml"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "VentureBeat AI"
-    type: rss
-    url: "https://venturebeat.com/category/ai/feed/"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "KDnuggets"
-    type: rss
-    url: "https://www.kdnuggets.com/feed"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "NVIDIA Developer Blog"
-    type: rss
-    url: "https://developer.nvidia.com/blog/feed/"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Google Research (alt)"
-    type: rss
-    url: "https://research.google/blog/rss/"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Medium: Towards Data Science"
-    type: rss
-    url: "https://medium.com/feed/towards-data-science"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "arXiv cs.CL"
-    type: rss
-    url: "https://rss.arxiv.org/rss/cs.CL"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "BAIR Blog"
-    type: rss
-    url: "https://bair.berkeley.edu/blog/feed.xml"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "The Gradient"
-    type: rss
-    url: "https://thegradient.pub/rss/"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Last Week in AI"
-    type: rss
-    url: "https://lastweekin.ai/feed"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Sebastian Raschka"
-    type: rss
-    url: "https://magazine.sebastianraschka.com/feed"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "The Verge AI"
-    type: rss
-    url: "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Ars Technica AI"
-    type: rss
-    url: "https://arstechnica.com/ai/feed/"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Stability AI"
-    type: rss
-    url: "https://raw.githubusercontent.com/leontloveless/ai-rss-feeds/main/feeds/stability-ai.xml"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Import AI"
-    type: rss
-    url: "https://www.importai.net/feed"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Alignment Feed"
-    type: rss
-    url: "https://api.alignmentfeed.org/rss"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Microsoft Research Blog"
-    type: rss
-    url: "https://www.microsoft.com/en-us/research/feed/"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "AI Weekly"
-    type: rss
-    url: "https://aiweekly.co/feed"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "EleutherAI Blog"
-    type: rss
-    url: "https://blog.eleuther.ai/index.xml"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "LessWrong"
-    type: rss
-    url: "https://www.lesswrong.com/feed.xml?view=ai"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Alignment Forum"
-    type: rss
-    url: "https://www.alignmentforum.org/feed.xml"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "EA Forum"
-    type: rss
-    url: "https://forum.effectivealtruism.org/feed.xml"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "MarkTechPost"
-    type: rss
-    url: "https://www.marktechpost.com/feed/"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Anthropic News"
-    type: rss
-    url: "https://raw.githubusercontent.com/alan-turing-institute/ai-rss-feeds/main/feeds/anthropic-news.xml"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Cohere Blog"
-    type: rss
-    url: "https://raw.githubusercontent.com/alan-turing-institute/ai-rss-feeds/main/feeds/cohere-blog.xml"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Mistral News"
-    type: rss
-    url: "https://raw.githubusercontent.com/alan-turing-institute/ai-rss-feeds/main/feeds/mistral-news.xml"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Simon Willison"
-    type: rss
-    url: "https://simonwillison.net/atom/everything/"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "The Decoder"
-    type: rss
-    url: "https://the-decoder.com/feed/"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Synced AI"
-    type: rss
-    url: "https://syncedreview.com/feed/"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "TLDR AI"
-    type: rss
-    url: "https://raw.githubusercontent.com/alan-turing-institute/ai-rss-feeds/main/feeds/tldr-ai.xml"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Exponential View"
-    type: rss
-    url: "https://www.exponentialview.co/feed/"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Fireship"
-    type: rss
-    url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCsBjURrPoezykLs9EqgamOA"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  # ── Cybersecurity ──
-  - name: "BleepingComputer"
-    type: rss
-    url: "https://www.bleepingcomputer.com/feed/"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Krebs on Security"
-    type: rss
-    url: "https://krebsonsecurity.com/feed/"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Dark Reading"
-    type: rss
-    url: "https://www.darkreading.com/rss.xml"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "The Hacker News"
-    type: rss
-    url: "https://feeds.feedburner.com/TheHackersNews"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "The Record"
-    type: rss
-    url: "https://therecord.media/feed"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "SecurityWeek"
-    type: rss
-    url: "https://www.securityweek.com/feed/"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Help Net Security"
-    type: rss
-    url: "https://www.helpnetsecurity.com/feed/"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "CSO Online"
-    type: rss
-    url: "https://www.csoonline.com/feed"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "CyberScoop"
-    type: rss
-    url: "https://cyberscoop.com/feed/"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Cisco Talos"
-    type: rss
-    url: "https://blog.talosintelligence.com/rss/"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Bruce Schneier"
-    type: rss
-    url: "https://www.schneier.com/feed/atom/"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Graham Cluley"
-    type: rss
-    url: "https://grahamcluley.com/feed/"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "AWS Security Blog"
-    type: rss
-    url: "https://aws.amazon.com/blogs/security/feed/"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "CISA Advisories"
-    type: rss
-    url: "https://www.cisa.gov/cybersecurity-advisories/all.xml"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "CSO Online"
-    type: rss
-    url: "https://www.csoonline.com/feed/"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Citizen Lab"
-    type: rss
-    url: "https://citizenlab.ca/feed"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Trail of Bits"
-    type: rss
-    url: "https://blog.trailofbits.com/feed/"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Praetorian"
-    type: rss
-    url: "https://www.praetorian.com/blog/feed"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "SANS ISC"
-    type: rss
-    url: "https://isc.sans.edu/rssfeed.xml"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Wallarm"
-    type: rss
-    url: "https://lab.wallarm.com/feed/"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "ANY.RUN"
-    type: rss
-    url: "https://any.run/cybersecurity-blog/feed/"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Microsoft Security Blog"
-    type: rss
-    url: "https://www.microsoft.com/en-us/security/blog/feed/"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Unit 42 (Palo Alto)"
-    type: rss
-    url: "https://unit42.paloaltonetworks.com/feed/"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Securelist (Kaspersky)"
-    type: rss
-    url: "https://securelist.com/feed/"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "CrowdStrike Blog"
-    type: rss
-    url: "https://www.crowdstrike.com/blog/feed/"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Google Security Blog"
-    type: rss
-    url: "https://security.googleblog.com/feeds/posts/default"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Tenable Blog"
-    type: rss
-    url: "https://www.tenable.com/blog/feed"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Malwarebytes Blog"
-    type: rss
-    url: "https://www.malwarebytes.com/blog/feed/index.xml"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  # ── DeFi & Crypto ──
-  - name: "CoinDesk"
-    type: rss
-    url: "https://www.coindesk.com/arc/outboundfeeds/rss/"
-    category: crypto
-    tier: [1, 2]
-    enabled: true
-
-  - name: "CoinTelegraph"
-    type: rss
-    url: "https://cointelegraph.com/rss"
-    category: crypto
-    tier: [1, 2]
-    enabled: true
-
-  - name: "The Block"
-    type: rss
-    url: "https://www.theblock.co/rss.xml"
-    category: crypto
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Decrypt"
-    type: rss
-    url: "https://decrypt.co/feed/rss"
-    category: crypto
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Bitcoin Magazine"
-    type: rss
-    url: "https://bitcoinmagazine.com/.rss/full/"
-    category: crypto
-    tier: [1, 2]
-    enabled: true
-
-  - name: "DL News"
-    type: rss
-    url: "https://www.dlnews.com/arc/outboundfeeds/rss/"
-    category: crypto
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Blockworks"
-    type: rss
-    url: "https://blockworks.co/feed"
-    category: crypto
-    tier: [1, 2]
-    enabled: true
-
-  - name: "The Defiant"
-    type: rss
-    url: "https://thedefiant.io/feed"
-    category: crypto
-    tier: [1, 2]
-    enabled: true
-
-  - name: "CryptoSlate"
-    type: rss
-    url: "https://cryptoslate.com/feed/"
-    category: crypto
-    tier: [1, 2]
-    enabled: true
-
-  # ── Hardware ──
-  - name: "Tom's Hardware"
-    type: rss
-    url: "https://www.tomshardware.com/feeds/all"
-    category: hardware
-    tier: [1, 2]
-    enabled: true
-
-  - name: "SemiEngineering"
-    type: rss
-    url: "https://semiengineering.com/feed/"
-    category: hardware
-    tier: [1, 2]
-    enabled: true
-
-  - name: "SemiAnalysis"
-    type: rss
-    url: "https://semianalysis.com/feed/"
-    category: hardware
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Next Platform"
-    type: rss
-    url: "https://www.nextplatform.com/feed/"
-    category: hardware
-    tier: [1, 2]
-    enabled: true
-
-  - name: "ServeTheHome"
-    type: rss
-    url: "https://www.servethehome.com/feed/"
-    category: hardware
-    tier: [1, 2]
-    enabled: true
-
-  - name: "EE Times"
-    type: rss
-    url: "https://www.eetimes.com/feed/"
-    category: hardware
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Asianometry"
-    type: rss
-    url: "https://www.asianometry.com/feed"
-    category: hardware
-    tier: [1, 2]
-    enabled: true
-
-  # ── Mobile ──
-  - name: "9to5Google"
-    type: rss
-    url: "https://9to5google.com/feed/"
-    category: mobile
-    tier: [1, 2]
-    enabled: true
-
-  - name: "9to5Mac"
-    type: rss
-    url: "https://9to5mac.com/feed/"
-    category: mobile
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Android Police"
-    type: rss
-    url: "https://www.androidpolice.com/feed/"
-    category: mobile
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Android Authority"
-    type: rss
-    url: "https://www.androidauthority.com/feed/"
-    category: mobile
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Android Central"
-    type: rss
-    url: "https://www.androidcentral.com/feed"
-    category: mobile
-    tier: [1, 2]
-    enabled: true
-
-  - name: "XDA Developers"
-    type: rss
-    url: "https://www.xda-developers.com/feed/"
-    category: mobile
-    tier: [1, 2]
-    enabled: true
-
-  # ── Regulation & Policy ──
-  - name: "Tech Policy Press"
-    type: rss
-    url: "https://techpolicy.press/rss/feed.xml"
-    category: regulation
-    tier: [1, 2]
-    enabled: true
-
-  - name: "CSET Georgetown"
-    type: rss
-    url: "https://cset.georgetown.edu/feed/"
-    category: regulation
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Lowy Institute"
-    type: rss
-    url: "https://www.lowyinstitute.org/rss"
-    category: regulation
-    tier: [1, 2]
-    enabled: true
-
-  - name: "PogoWasRight (Privacy)"
-    type: rss
-    url: "https://pogowasright.org/feed/"
-    category: regulation
-    tier: [1, 2]
-    enabled: true
-
-  # ── Science ──
-  - name: "ScienceDaily"
-    type: rss
-    url: "https://www.sciencedaily.com/rss/top/technology.xml"
-    category: science
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Nature Technology"
-    type: rss
-    url: "https://www.nature.com/subjects/technology.rss"
-    category: science
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Phys.org"
-    type: rss
-    url: "https://phys.org/rss-feed/"
-    category: science
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Quanta Magazine"
-    type: rss
-    url: "https://www.quantamagazine.org/feed/"
-    category: science
-    tier: [1, 2]
-    enabled: true
-
-  - name: "New Scientist"
-    type: rss
-    url: "https://www.newscientist.com/feed/home/"
-    category: science
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Futurism"
-    type: rss
-    url: "https://futurism.com/feed/"
-    category: science
-    tier: [1, 2]
-    enabled: true
-
-  # ── Space ──
-  - name: "Ars Technica Space"
-    type: rss
-    url: "https://arstechnica.com/space/feed/"
-    category: space
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Space.com"
-    type: rss
-    url: "https://www.space.com/feeds/all"
-    category: space
-    tier: [1, 2]
-    enabled: true
-
-  - name: "NASA Space Station"
-    type: rss
-    url: "https://blogs.nasa.gov/spacestation/feed/"
-    category: space
-    tier: [1, 2]
-    enabled: true
-
-  # ── General Tech ──
-  - name: "The Verge"
-    type: rss
-    url: "https://www.theverge.com/rss/index.xml"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Ars Technica"
-    type: rss
-    url: "https://feeds.arstechnica.com/arstechnica/index"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Wired"
-    type: rss
-    url: "https://www.wired.com/feed/rss"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "The Guardian Technology"
-    type: rss
-    url: "https://www.theguardian.com/technology/rss"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "MIT Technology Review"
-    type: rss
-    url: "https://www.technologyreview.com/feed/"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "ZDNet"
-    type: rss
-    url: "https://www.zdnet.com/news/rss.xml"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Engadget"
-    type: rss
-    url: "https://www.engadget.com/rss.xml"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "IEEE Spectrum"
-    type: rss
-    url: "https://spectrum.ieee.org/feeds/feed.rss"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "CNET"
-    type: rss
-    url: "https://www.cnet.com/rss/news/"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "TechRadar"
-    type: rss
-    url: "https://www.techradar.com/feeds.xml"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Digital Trends"
-    type: rss
-    url: "https://www.digitaltrends.com/feed/"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Gizmodo"
-    type: rss
-    url: "https://gizmodo.com/rss"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "404 Media"
-    type: rss
-    url: "https://www.404media.co/rss/"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "PCWorld"
-    type: rss
-    url: "https://www.pcworld.com/feed"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "MakeUseOf"
-    type: rss
-    url: "https://www.makeuseof.com/feed/"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "How-To Geek"
-    type: rss
-    url: "https://feeds.howtogeek.com/HowToGeek"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "SlashGear"
-    type: rss
-    url: "https://www.slashgear.com/feed"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "ReadWrite"
-    type: rss
-    url: "https://readwrite.com/feed/"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "FOSSBytes"
-    type: rss
-    url: "https://fossbytes.com/feed/"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Fast Company"
-    type: rss
-    url: "https://www.fastcompany.com/rss"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "OsNews"
-    type: rss
-    url: "https://osnews.com/feed"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "BBC News World"
-    type: rss
-    url: "http://feeds.bbci.co.uk/news/world/rss.xml"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "BBC News Tech"
-    type: rss
-    url: "http://feeds.bbci.co.uk/news/technology/rss.xml"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Wired Business"
-    type: rss
-    url: "https://www.wired.com/feed/category/business/latest/rss"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  # ── Cloud & DevOps ──
-  - name: "The New Stack"
-    type: rss
-    url: "https://thenewstack.io/feed/"
-    category: cloud
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Google Cloud Blog"
-    type: rss
-    url: "https://cloudblog.withgoogle.com/rss/"
-    category: cloud
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Docker Blog"
-    type: rss
-    url: "https://www.docker.com/feed/"
-    category: cloud
-    tier: [1, 2]
-    enabled: true
-
-  - name: "AWS Blog"
-    type: rss
-    url: "https://aws.amazon.com/blogs/aws/feed/"
-    category: cloud
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Azure Blog"
-    type: rss
-    url: "https://azure.microsoft.com/blog/feed/"
-    category: cloud
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Cloudflare Blog"
-    type: rss
-    url: "https://blog.cloudflare.com/rss/"
-    category: cloud
-    tier: [1, 2]
-    enabled: true
-
-  - name: "HashiCorp"
-    type: rss
-    url: "https://www.hashicorp.com/feed.xml"
-    category: cloud
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Kubernetes"
-    type: rss
-    url: "https://kubernetes.io/feed.xml"
-    category: cloud
-    tier: [1, 2]
-    enabled: true
-
-  - name: "CNCF"
-    type: rss
-    url: "https://www.cncf.io/blog/feed/"
-    category: cloud
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Vercel Blog"
-    type: rss
-    url: "https://vercel.com/atom"
-    category: cloud
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Supabase Blog"
-    type: rss
-    url: "https://supabase.com/rss.xml"
-    category: cloud
-    tier: [1, 2]
-    enabled: true
-
-  - name: "SRE Weekly"
-    type: rss
-    url: "https://sreweekly.com/feed/"
-    category: cloud
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Platform Weekly"
-    type: rss
-    url: "https://platformweekly.com/feed"
-    category: cloud
-    tier: [1, 2]
-    enabled: true
-
-  # ── Developer & Open Source ──
-  - name: "GitHub Blog"
-    type: rss
-    url: "https://github.blog/feed/"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Stack Overflow Blog"
-    type: rss
-    url: "https://stackoverflow.blog/feed/"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Microsoft Dev Blogs"
-    type: rss
-    url: "https://devblogs.microsoft.com/feed/"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "InfoQ"
-    type: rss
-    url: "https://feed.infoq.com/"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Dev.to"
-    type: rss
-    url: "https://dev.to/feed"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "HackerNoon"
-    type: rss
-    url: "https://hackernoon.com/feed"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "FreeCodeCamp"
-    type: rss
-    url: "https://www.freecodecamp.org/news/rss/"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Smashing Magazine"
-    type: rss
-    url: "https://www.smashingmagazine.com/feed/"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Lobste.rs"
-    type: rss
-    url: "https://lobste.rs/rss"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Freedom to Tinker"
-    type: rss
-    url: "https://freedom-to-tinker.com/feed/"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Chromium Blog"
-    type: rss
-    url: "https://blog.chromium.org/atom.xml"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Rust Blog"
-    type: rss
-    url: "https://blog.rust-lang.org/feed.xml"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "CSS-Tricks"
-    type: rss
-    url: "https://css-tricks.com/feed/"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Golang Weekly"
-    type: rss
-    url: "https://golangweekly.com/rss/"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "This Week in Rust"
-    type: rss
-    url: "https://this-week-in-rust.org/atom.xml"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "TLDR Tech"
-    type: rss
-    url: "https://tldr.tech/api/rss/tech"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "JavaScript Weekly"
-    type: rss
-    url: "https://javascriptweekly.com/rss/"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "React Status"
-    type: rss
-    url: "https://react.statuscode.com/rss/"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Node Weekly"
-    type: rss
-    url: "https://nodeweekly.com/rss/"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Ruby Weekly"
-    type: rss
-    url: "https://rubyweekly.com/rss/"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Changelog News"
-    type: rss
-    url: "https://changelog.com/news/feed"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Frontend Focus"
-    type: rss
-    url: "https://frontendfoc.us/rss/"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "ByteByteGo"
-    type: rss
-    url: "https://blog.bytebytego.com/feed"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "The Pragmatic Engineer"
-    type: rss
-    url: "https://newsletter.pragmaticengineer.com/feed"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Console.dev"
-    type: rss
-    url: "https://console.substack.com/feed"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "NVIDIA Developer Blog"
-    type: rss
-    url: "https://developer.nvidia.com/blog/feed/"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Computerphile"
-    type: rss
-    url: "https://www.youtube.com/feeds/videos.xml?channel_id=UC9-y-6csu5WGm29I7JiwpnA"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  # ── Linux & Open Source ──
-  - name: "Phoronix"
-    type: rss
-    url: "https://www.phoronix.com/rss.php"
-    category: linux
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Hackaday"
-    type: rss
-    url: "https://hackaday.com/feed/"
-    category: linux
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Mozilla Blog"
-    type: rss
-    url: "https://blog.mozilla.org/feed/"
-    category: linux
-    tier: [1, 2]
-    enabled: true
-
-  - name: "EFF"
-    type: rss
-    url: "https://www.eff.org/rss/updates.xml"
-    category: linux
-    tier: [1, 2]
-    enabled: true
-
-  # ── Apple Ecosystem ──
-  - name: "MacRumors"
-    type: rss
-    url: "http://feeds.macrumors.com/MacRumors-Front"
-    category: apple
-    tier: [1, 2]
-    enabled: true
-
-  - name: "AppleInsider"
-    type: rss
-    url: "https://appleinsider.com/rss/news/"
-    category: apple
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Macworld"
-    type: rss
-    url: "https://www.macworld.com/feed"
-    category: apple
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Low End Mac"
-    type: rss
-    url: "https://www.lowendmac.com/rss/"
-    category: apple
-    tier: [1, 2]
-    enabled: true
-
-  # ── Windows & Microsoft ──
-  - name: "Windows Central"
-    type: rss
-    url: "https://www.windowscentral.com/feed.xml"
-    category: windows
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Thurrott"
-    type: rss
-    url: "https://www.thurrott.com/feed"
-    category: windows
-    tier: [1, 2]
-    enabled: true
-
-  - name: "WindowsLatest"
-    type: rss
-    url: "https://windowslatest.com/feed/"
-    category: windows
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Neowin"
-    type: rss
-    url: "https://www.neowin.net/news/rss/microsoft"
-    category: windows
-    tier: [1, 2]
-    enabled: true
-
-  # ── Enterprise IT ──
-  - name: "The Register"
-    type: rss
-    url: "https://www.theregister.com/headlines.atom"
-    category: enterprise
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Computerworld"
-    type: rss
-    url: "https://www.computerworld.com/feed"
-    category: enterprise
-    tier: [1, 2]
-    enabled: true
-
-  - name: "SiliconAngle"
-    type: rss
-    url: "https://siliconangle.com/feed/"
-    category: enterprise
-    tier: [1, 2]
-    enabled: true
-
-  # ── SE Asia & Regional Tech ──
-  - name: "Rest of World"
-    type: rss
-    url: "https://restofworld.org/feed/"
-    category: se_asia
-    tier: [1, 2]
-    enabled: true
-
-  - name: "TechNode"
-    type: rss
-    url: "https://technode.com/feed/"
-    category: se_asia
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Tech in Asia"
-    type: rss
-    url: "https://www.techinasia.com/feed"
-    category: se_asia
-    tier: [1, 2]
-    enabled: true
-
-  # ── Cambodia ──
-  - name: "Koh Santepheap Daily"
-    type: rss
-    url: "https://kohsantepheapdaily.com.kh/feed"
-    category: cambodia
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Kampuchea Thmey"
-    type: rss
-    url: "https://kampucheathmey.com/feed"
-    category: cambodia
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Cambodia Express News"
-    type: rss
-    url: "https://cen.com.kh/feed"
-    category: cambodia
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Nokor Wat News"
-    type: rss
-    url: "http://nokorwatnews.com/feed"
-    category: cambodia
-    tier: [1, 2]
-    enabled: true
-
-  - name: "DAP News"
-    type: rss
-    url: "https://dap-news.com/feed/"
-    category: cambodia
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Cambodia News.Net"
-    type: rss
-    url: "http://feeds.thecambodianews.net/rss/c7e1014a94f7e43b"
-    category: cambodia
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Cambodian Times"
-    type: rss
-    url: "http://feeds.cambodiantimes.com/rss/c7e1014a94f7e43b"
-    category: cambodia
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Phnom Penh Post"
-    type: rss
-    url: "https://phnompenhpost.com/feed/"
-    category: cambodia
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Cambodia Investment Review"
-    type: rss
-    url: "https://cambodiainvestmentreview.com/feed/"
-    category: cambodia
-    tier: [1, 2]
-    enabled: true
-
-  # ── Business & Finance ──
-  - name: "Bloomberg Technology"
-    type: rss
-    url: "https://feeds.bloomberg.com/technology/news.rss"
-    category: business
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Business Insider"
-    type: rss
-    url: "https://feeds.businessinsider.com/custom/all"
-    category: business
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Forbes Tech"
-    type: rss
-    url: "https://www.forbes.com/innovation/feed2/"
-    category: business
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Reuters Tech (Google News)"
-    type: rss
-    url: "https://news.google.com/rss/search?q=site%3Areuters.com+(technology+OR+tech+OR+business)&hl=en-US&gl=US&ceid=US%3Aen"
-    category: business
-    tier: [1, 2]
-    enabled: true
-
-  # ── Other Regional ──
-  - name: "MobileSyrup"
-    type: rss
-    url: "https://mobilesyrup.com/feed/"
-    category: regional
-    tier: [1, 2]
-    enabled: true
-
-  - name: "SiliconRepublic"
-    type: rss
-    url: "https://www.siliconrepublic.com/feed"
-    category: regional
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Tech.eu"
-    type: rss
-    url: "https://tech.eu/feed/"
-    category: regional
-    tier: [1, 2]
-    enabled: true
-
-  # ── Africa Tech ──
-  - name: "TechCabal"
-    type: rss
-    url: "https://techcabal.com/feed/"
-    category: africa
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Disrupt Africa"
-    type: rss
-    url: "https://disrupt-africa.com/feed/"
-    category: africa
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Techpoint Africa"
-    type: rss
-    url: "https://techpoint.africa/feed/"
-    category: africa
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Africa News Tech"
-    type: rss
-    url: "https://www.africanews.com/feed/rss"
-    category: africa
-    tier: [1, 2]
-    enabled: true
-
-  # ── India Tech ──
-  - name: "Inc42"
-    type: rss
-    url: "https://inc42.com/feed/"
-    category: india
-    tier: [1, 2]
-    enabled: true
-
-  - name: "YourStory"
-    type: rss
-    url: "https://yourstory.com/feed"
-    category: india
-    tier: [1, 2]
-    enabled: true
-
-  # ── LATAM Tech ──
-  - name: "latam.tech"
-    type: rss
-    url: "https://www.latam.tech/feed"
-    category: latam
-    tier: [1, 2]
-    enabled: true
-
-  # ── Space ──
-  - name: "SpaceNews"
-    type: rss
-    url: "https://spacenews.com/feed/"
-    category: space
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Space.com"
-    type: rss
-    url: "https://www.space.com/feeds.xml"
-    category: space
-    tier: [1, 2]
-    enabled: true
-
-  # ── Climate Tech ──
-  - name: "Electrek"
-    type: rss
-    url: "https://electrek.co/feed/"
-    category: climate
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Canary Media"
-    type: rss
-    url: "https://www.canarymedia.com/rss.rss"
-    category: climate
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Carbon Brief"
-    type: rss
-    url: "https://www.carbonbrief.org/feed/"
-    category: climate
-    tier: [1, 2]
-    enabled: true
-
-  - name: "CleanTechnica"
-    type: rss
-    url: "https://cleantechnica.com/feed/"
-    category: climate
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Utility Dive"
-    type: rss
-    url: "https://www.utilitydive.com/feeds/news/"
-    category: climate
-    tier: [1, 2]
-    enabled: true
-
-  - name: "TechCrunch Climate"
-    type: rss
-    url: "https://techcrunch.com/tag/climate/feed/"
-    category: climate
-    tier: [1, 2]
-    enabled: true
-
-  # ── AgriTech ──
-  - name: "AgFunder News"
-    type: rss
-    url: "https://agfundernews.com/feed"
-    category: agritech
-    tier: [1, 2]
-    enabled: true
-
-  # ── EdTech ──
-  - name: "EdTech Magazine"
-    type: rss
-    url: "https://edtechmagazine.com/k12/rss.xml"
-    category: edtech
-    tier: [1, 2]
-    enabled: true
-
-  # ── HealthTech ──
-  - name: "Healthcare IT News"
-    type: rss
-    url: "https://www.healthcareitnews.com/rss.xml"
-    category: healthtech
-    tier: [1, 2]
-    enabled: true
-
-  # ── LegalTech ──
-  - name: "Artificial Lawyer"
-    type: rss
-    url: "https://www.artificiallawyer.com/feed/"
-    category: legaltech
-    tier: [1, 2]
-    enabled: true
-
-  # ── Gaming ──
-  - name: "Polygon"
-    type: rss
-    url: "https://www.polygon.com/rss/index.xml"
-    category: gaming
-    tier: [1, 2]
-    enabled: true
-
-  - name: "IGN"
-    type: rss
-    url: "https://feeds.ign.com/ign/all"
-    category: gaming
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Kotaku"
-    type: rss
-    url: "https://kotaku.com/rss"
-    category: gaming
-    tier: [1, 2]
-    enabled: true
-
-  - name: "GameSpot"
-    type: rss
-    url: "https://www.gamespot.com/feeds/news/"
-    category: gaming
-    tier: [1, 2]
-    enabled: true
-
-  - name: "GamesIndustry.biz"
-    type: rss
-    url: "https://www.gamesindustry.biz/feed"
-    category: gaming
-    tier: [1, 2]
-    enabled: true
-
-  # ── Reddit ──
-  - name: "r/technology"
-    type: rss
-    url: "https://www.reddit.com/r/technology/.rss"
-    category: reddit
-    tier: [1, 2]
-    enabled: true
-
-  - name: "r/programming"
-    type: rss
-    url: "https://www.reddit.com/r/programming/.rss"
-    category: reddit
-    tier: [1, 2]
-    enabled: true
-
-  - name: "r/netsec"
-    type: rss
-    url: "https://www.reddit.com/r/netsec/.rss"
-    category: reddit
-    tier: [1, 2]
-    enabled: true
-
-  - name: "r/worldnews"
-    type: rss
-    url: "https://www.reddit.com/r/worldnews/.rss"
-    category: reddit
-    tier: [1, 2]
-    enabled: true
-
-  - name: "r/cybersecurity"
-    type: rss
-    url: "https://www.reddit.com/r/cybersecurity/.rss"
-    category: reddit
-    tier: [1, 2]
-    enabled: true
-
-  - name: "r/MachineLearning"
-    type: rss
-    url: "https://www.reddit.com/r/MachineLearning/.rss"
-    category: reddit
-    tier: [1, 2]
-    enabled: true
-
-  - name: "r/LocalLLaMA"
-    type: rss
-    url: "https://www.reddit.com/r/LocalLLaMA/.rss"
-    category: reddit
-    tier: [1, 2]
-    enabled: true
-
-  - name: "r/singularity"
-    type: rss
-    url: "https://www.reddit.com/r/singularity/.rss"
-    category: reddit
-    tier: [1, 2]
-    enabled: true
-
-  - name: "r/OSINT"
-    type: rss
-    url: "https://www.reddit.com/r/OSINT/.rss"
-    category: reddit
-    tier: [1, 2]
-    enabled: true
-
-  - name: "r/Cambodia"
-    type: rss
-    url: "https://www.reddit.com/r/Cambodia/.rss"
-    category: reddit
-    tier: [1, 2]
-    enabled: true
-
-  - name: "r/artificial"
-    type: rss
-    url: "https://www.reddit.com/r/artificial/.rss"
-    category: reddit
-    tier: [1, 2]
-    enabled: true
-
-  # ── Academic Research ──
-  - name: "arXiv cs.AI"
-    type: rss
-    url: "http://arxiv.org/rss/cs.AI"
-    category: research
-    tier: [1, 2]
-    enabled: true
-
-  - name: "arXiv cs.LG"
-    type: rss
-    url: "http://arxiv.org/rss/cs.LG"
-    category: research
-    tier: [1, 2]
-    enabled: true
-
-  - name: "arXiv cs.CR"
-    type: rss
-    url: "http://arxiv.org/rss/cs.CR"
-    category: research
-    tier: [1, 2]
-    enabled: true
-
-  # ── Community & Aggregation ──
-  - name: "Hacker News (frontpage)"
-    type: rss
-    url: "https://hnrss.org/frontpage"
-    category: community
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Hacker News (100+ points)"
-    type: rss
-    url: "https://hnrss.org/frontpage?points=100"
-    category: community
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Hacker News (newest)"
-    type: rss
-    url: "https://hnrss.org/newest"
-    category: community
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Hacker News (Ask HN)"
-    type: rss
-    url: "https://hnrss.org/ask"
-    category: community
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Hacker News (Show HN)"
-    type: rss
-    url: "https://hnrss.org/show"
-    category: community
-    tier: [1, 2]
-    enabled: true
-
-  - name: "TechMeme"
-    type: rss
-    url: "https://www.techmeme.com/feed.xml"
-    category: community
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Snopes"
-    type: rss
-    url: "https://www.snopes.com/feed/"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "PolitiFact"
-    type: rss
-    url: "https://politifact.com/feed/"
-    category: tech
-    tier: [1, 2]
-    enabled: true
-
-  # ── Fintech ──
-  - name: "Fintech News Asia"
-    type: rss
-    url: "https://fintechnews.sg/feed/"
-    category: fintech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "The Ken"
-    type: rss
-    url: "https://the-ken.com/feed/"
-    category: fintech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Fintech Times"
-    type: rss
-    url: "https://thefintechtimes.com/feed/"
-    category: fintech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Finextra"
-    type: rss
-    url: "https://www.finextra.com/rss/headlines.aspx"
-    category: fintech
-    tier: [1, 2]
-    enabled: true
-
-  # ── Google News (custom topic RSS) ──
-  - name: "Google News: Cambodia Tech"
-    type: rss
-    url: "https://news.google.com/rss/search?q=cambodia+technology+when:7d&hl=en"
-    category: cambodia
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Google News: AI"
-    type: rss
-    url: "https://news.google.com/rss/search?q=artificial+intelligence+when:3d&hl=en"
-    category: ai
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Google News: Cybersecurity"
-    type: rss
-    url: "https://news.google.com/rss/search?q=cybersecurity+when:3d&hl=en"
-    category: cybersecurity
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Google News: Open Source"
-    type: rss
-    url: "https://news.google.com/rss/search?q=open+source+software+when:3d&hl=en"
-    category: developer
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Google News: Southeast Asia Tech"
-    type: rss
-    url: "https://news.google.com/rss/search?q=southeast+asia+technology+when:3d&hl=en"
-    category: se_asia
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Google News: Windows"
-    type: rss
-    url: "https://news.google.com/rss/search?q=windows+os+when:3d&hl=en"
-    category: windows
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Google News: Fintech"
-    type: rss
-    url: "https://news.google.com/rss/search?q=fintech+when:3d&hl=en"
-    category: fintech
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Google News: Space"
-    type: rss
-    url: "https://news.google.com/rss/search?q=space+science+when:3d&hl=en"
-    category: space
-    tier: [1, 2]
-    enabled: true
-
-  # ── Podcasts (RSS) ──
-  - name: "Lex Fridman Podcast"
-    type: rss
-    url: "https://lexfridman.com/feed/podcast/"
-    category: podcast
-    tier: [1, 2]
-    enabled: true
-
-  - name: "The Vergecast"
-    type: rss
-    url: "https://www.theverge.com/rss/podcast/index.xml"
-    category: podcast
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Latent Space"
-    type: rss
-    url: "https://www.latent.space/feed"
-    category: podcast
-    tier: [1, 2]
-    enabled: true
-
-  - name: "Software Engineering Daily"
-    type: rss
-    url: "https://feeds.simplecast.com/54nAGcIl"
-    category: podcast
-    tier: [1, 2]
-    enabled: true
-
-  # ─────────────────────────────────────────────
-  # API SOURCES (Tier 2/3 — website pipeline)
-  # ─────────────────────────────────────────────
-
-  - name: "GDELT"
-    type: api
-    module: "workers.gdelt"
-    function: "fetch_all_gdelt"
-    tier: [2, 3]
-    enabled: true
-    queries:
-      - "technology OR tech OR startup"
-      - "artificial intelligence OR AI OR machine learning"
-      - "cybersecurity OR data breach OR ransomware"
-      - "blockchain OR cryptocurrency OR defi"
-      - "cloud computing OR devops OR kubernetes"
-      - "Cambodia OR Cambodian OR Khmer"
-      - "Southeast Asia OR ASEAN"
-      - "semiconductor OR chip OR GPU"
-      - "open source OR GitHub"
-      - "climate tech OR green energy OR EV"
-
-  - name: "NewsData.io"
-    type: api
-    module: "workers.newsdata"
-    function: "fetch_all_newsdata"
-    tier: [2, 3]
-    enabled: true
-    requires_key: "NEWSDATA_API_KEY"
-
-  - name: "Lobste.rs API"
-    type: api
-    module: "workers.lobsters"
-    function: "fetch_all_lobsters"
-    tier: [2, 3]
-    enabled: true
-
-  - name: "Hacker News Algolia"
-    type: api
-    module: "workers.hackernews"
-    function: "fetch_all_hackernews"
-    tier: [2, 3]
-    enabled: true
-    queries:
-      - "artificial intelligence"
-      - "machine learning"
-      - "cybersecurity"
-      - "startup"
-      - "open source"
-      - "cloud computing"
-      - "Cambodia OR ASEAN"
-      - "semiconductor OR chip"
-      - "climate tech"
-      - "blockchain OR crypto"
-
-  - name: "arXiv API"
-    type: api
-    module: "workers.arxiv"
-    function: "fetch_all_arxiv"
-    tier: [2, 3]
-    enabled: true
-
-  - name: "Semantic Scholar"
-    type: api
-    module: "workers.semantic_scholar"
-    function: "fetch_all_semantic_scholar"
-    tier: [2, 3]
-    enabled: true
-
-  - name: "OpenAlex"
-    type: api
-    module: "workers.openalex"
-    function: "fetch_all_openalex"
-    tier: [2, 3]
-    enabled: true
-
-  - name: "GitHub Trending"
-    type: api
-    module: "workers.github_trending"
-    function: "fetch_all_github_trending"
-    tier: [2, 3]
-    enabled: true
-
-  - name: "Hugging Face"
-    type: api
-    module: "workers.huggingface"
-    function: "fetch_all_huggingface"
-    tier: [2, 3]
-    enabled: true
-
-  - name: "Currents API"
-    type: api
-    module: "workers.currents"
-    function: "fetch_all_currents"
-    tier: [2, 3]
-    enabled: true
-    requires_key: "CURRENTS_API_KEY"
-    categories:
-      - "technology"
-      - "science"
-      - "business"
-
-  - name: "Exa.ai"
-    type: api
-    module: "workers.exa"
-    function: "fetch_all_exa"
-    tier: [2, 3]
-    enabled: true
-    requires_key: "EXA_API_KEY"
-
-  - name: "Firecrawl"
-    type: api
-    module: "workers.firecrawl"
-    function: "crawl_and_extract"
-    tier: [2, 3]
-    enabled: true
-    requires_key: "FIRECRAWL_API_KEY"
-
-  - name: "GitHub REST API"
-    type: api
-    module: "workers.github_api"
-    function: "fetch_all_github_api"
-    tier: [2, 3]
-    enabled: true
-
-  - name: "The Guardian"
-    type: api
-    module: "workers.guardian"
-    function: "fetch_all_guardian"
-    tier: [2, 3]
-    enabled: true
-
-  - name: "dev.to API"
-    type: api
-    module: "workers.devto"
-    function: "fetch_all_devto"
-    tier: [2, 3]
-    enabled: true
-
-  - name: "YouTube API"
-    type: api
-    module: "workers.youtube"
-    function: "fetch_all_youtube"
-    tier: [2, 3]
-    enabled: true
-    requires_key: "YOUTUBE_API_KEY"
-
-  - name: "Stack Exchange"
-    type: api
-    module: "workers.stackexchange"
-    function: "fetch_all_stackexchange"
-    tier: [2, 3]
-    enabled: true
-
-  - name: "Mastodon"
-    type: api
-    module: "workers.mastodon"
-    function: "fetch_all_mastodon"
-    tier: [2, 3]
-    enabled: true
-
-  - name: "Wikipedia Pageviews"
-    type: api
-    module: "workers.wikipedia"
-    function: "fetch_all_wikipedia"
-    tier: [2, 3]
-    enabled: true
-
-  - name: "Crossref"
-    type: api
-    module: "workers.crossref"
-    function: "fetch_all_crossref"
-    tier: [2, 3]
-    enabled: true
-
-  - name: "NASA Open API"
-    type: api
-    module: "workers.nasa"
-    function: "fetch_all_nasa"
-    tier: [2, 3]
-    enabled: true
-
-  - name: "Open Library"
-    type: api
-    module: "workers.openlibrary"
-    function: "fetch_all_openlibrary"
-    tier: [2, 3]
-    enabled: true
-
-  - name: "NVD CVE Database"
-    type: api
-    module: "workers.nvd"
-    function: "fetch_all_nvd"
-    tier: [2, 3]
-    enabled: true
-
-  - name: "WhatsTrending AI"
-    type: api
-    module: "workers.whats_trending"
-    function: "fetch_all_whats_trending"
-    tier: [2, 3]
-    enabled: true
-
-  - name: "GNews"
-    type: api
-    module: "workers.gnews"
-    function: "fetch_all_gnews"
-    tier: [2, 3]
-    enabled: true
-    requires_key: "GNEWS_API_KEY"
+- name: TechCrunch
+  type: rss
+  url: https://techcrunch.com/feed/
+  category: startups
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: TechFundingNews
+  type: rss
+  url: https://techfundingnews.com/feed/
+  category: startups
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: TechStartups
+  type: rss
+  url: https://techstartups.com/feed/
+  category: startups
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: SaaStr
+  type: rss
+  url: https://www.saastr.com/feed/
+  category: startups
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: GeekWire
+  type: rss
+  url: https://www.geekwire.com/feed/
+  category: startups
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Product Hunt
+  type: rss
+  url: https://www.producthunt.com/feed
+  category: startups
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Crunchbase News
+  type: rss
+  url: https://news.crunchbase.com/feed/
+  category: startups
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: TechCrunch Fundraising
+  type: rss
+  url: https://techcrunch.com/category/fundraising/feed/
+  category: startups
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Y Combinator Blog
+  type: rss
+  url: https://www.ycombinator.com/blog/rss
+  category: startups
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: StrictlyVC
+  type: rss
+  url: https://strictlyvc.com/feed/
+  category: startups
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: TechCrunch AI
+  type: rss
+  url: https://techcrunch.com/category/artificial-intelligence/feed/
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: OpenAI News
+  type: rss
+  url: https://openai.com/news/rss.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Google DeepMind
+  type: rss
+  url: https://deepmind.google/blog/rss.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Hugging Face Blog
+  type: rss
+  url: https://huggingface.co/blog/feed.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: MIT AI News
+  type: rss
+  url: https://news.mit.edu/rss/topic/artificial-intelligence2
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Anthropic Blog
+  type: rss
+  url: https://raw.githubusercontent.com/leontloveless/ai-rss-feeds/main/feeds/anthropic.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Google Research Blog
+  type: rss
+  url: https://research.google/blog/rss
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Google AI Blog
+  type: rss
+  url: https://blog.google/technology/ai/rss/
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Meta AI
+  type: rss
+  url: https://raw.githubusercontent.com/oborchers/rss-feeds/main/feeds/feed_meta_ai.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: VentureBeat AI
+  type: rss
+  url: https://venturebeat.com/category/ai/feed/
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: KDnuggets
+  type: rss
+  url: https://www.kdnuggets.com/feed
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: NVIDIA Developer Blog
+  type: rss
+  url: https://developer.nvidia.com/blog/feed/
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Google Research (alt)
+  type: rss
+  url: https://research.google/blog/rss/
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'Medium: Towards Data Science'
+  type: rss
+  url: https://medium.com/feed/towards-data-science
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv cs.CL
+  type: rss
+  url: https://rss.arxiv.org/rss/cs.CL
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: BAIR Blog
+  type: rss
+  url: https://bair.berkeley.edu/blog/feed.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: The Gradient
+  type: rss
+  url: https://thegradient.pub/rss/
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Last Week in AI
+  type: rss
+  url: https://lastweekin.ai/feed
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Sebastian Raschka
+  type: rss
+  url: https://magazine.sebastianraschka.com/feed
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: The Verge AI
+  type: rss
+  url: https://www.theverge.com/rss/ai-artificial-intelligence/index.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Ars Technica AI
+  type: rss
+  url: https://arstechnica.com/ai/feed/
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Stability AI
+  type: rss
+  url: https://raw.githubusercontent.com/leontloveless/ai-rss-feeds/main/feeds/stability-ai.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Import AI
+  type: rss
+  url: https://www.importai.net/feed
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Alignment Feed
+  type: rss
+  url: https://api.alignmentfeed.org/rss
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Microsoft Research Blog
+  type: rss
+  url: https://www.microsoft.com/en-us/research/feed/
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AI Weekly
+  type: rss
+  url: https://aiweekly.co/feed
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: EleutherAI Blog
+  type: rss
+  url: https://blog.eleuther.ai/index.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: LessWrong
+  type: rss
+  url: https://www.lesswrong.com/feed.xml?view=ai
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Alignment Forum
+  type: rss
+  url: https://www.alignmentforum.org/feed.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: EA Forum
+  type: rss
+  url: https://forum.effectivealtruism.org/feed.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: MarkTechPost
+  type: rss
+  url: https://www.marktechpost.com/feed/
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Anthropic News
+  type: rss
+  url: https://raw.githubusercontent.com/alan-turing-institute/ai-rss-feeds/main/feeds/anthropic-news.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Cohere Blog
+  type: rss
+  url: https://raw.githubusercontent.com/alan-turing-institute/ai-rss-feeds/main/feeds/cohere-blog.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Mistral News
+  type: rss
+  url: https://raw.githubusercontent.com/alan-turing-institute/ai-rss-feeds/main/feeds/mistral-news.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Simon Willison
+  type: rss
+  url: https://simonwillison.net/atom/everything/
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: The Decoder
+  type: rss
+  url: https://the-decoder.com/feed/
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Synced AI
+  type: rss
+  url: https://syncedreview.com/feed/
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: TLDR AI
+  type: rss
+  url: https://raw.githubusercontent.com/alan-turing-institute/ai-rss-feeds/main/feeds/tldr-ai.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Exponential View
+  type: rss
+  url: https://www.exponentialview.co/feed/
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Fireship
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCsBjURrPoezykLs9EqgamOA
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: BleepingComputer
+  type: rss
+  url: https://www.bleepingcomputer.com/feed/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Krebs on Security
+  type: rss
+  url: https://krebsonsecurity.com/feed/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Dark Reading
+  type: rss
+  url: https://www.darkreading.com/rss.xml
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: The Hacker News
+  type: rss
+  url: https://feeds.feedburner.com/TheHackersNews
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: The Record
+  type: rss
+  url: https://therecord.media/feed
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: SecurityWeek
+  type: rss
+  url: https://www.securityweek.com/feed/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Help Net Security
+  type: rss
+  url: https://www.helpnetsecurity.com/feed/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: CSO Online
+  type: rss
+  url: https://www.csoonline.com/feed
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: CyberScoop
+  type: rss
+  url: https://cyberscoop.com/feed/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Cisco Talos
+  type: rss
+  url: https://blog.talosintelligence.com/rss/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Bruce Schneier
+  type: rss
+  url: https://www.schneier.com/feed/atom/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Graham Cluley
+  type: rss
+  url: https://grahamcluley.com/feed/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AWS Security Blog
+  type: rss
+  url: https://aws.amazon.com/blogs/security/feed/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: CISA Advisories
+  type: rss
+  url: https://www.cisa.gov/cybersecurity-advisories/all.xml
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: CSO Online
+  type: rss
+  url: https://www.csoonline.com/feed/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Citizen Lab
+  type: rss
+  url: https://citizenlab.ca/feed
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Trail of Bits
+  type: rss
+  url: https://blog.trailofbits.com/feed/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Praetorian
+  type: rss
+  url: https://www.praetorian.com/blog/feed
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: SANS ISC
+  type: rss
+  url: https://isc.sans.edu/rssfeed.xml
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Wallarm
+  type: rss
+  url: https://lab.wallarm.com/feed/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ANY.RUN
+  type: rss
+  url: https://any.run/cybersecurity-blog/feed/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Microsoft Security Blog
+  type: rss
+  url: https://www.microsoft.com/en-us/security/blog/feed/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Unit 42 (Palo Alto)
+  type: rss
+  url: https://unit42.paloaltonetworks.com/feed/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Securelist (Kaspersky)
+  type: rss
+  url: https://securelist.com/feed/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: CrowdStrike Blog
+  type: rss
+  url: https://www.crowdstrike.com/blog/feed/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Google Security Blog
+  type: rss
+  url: https://security.googleblog.com/feeds/posts/default
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Tenable Blog
+  type: rss
+  url: https://www.tenable.com/blog/feed
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Malwarebytes Blog
+  type: rss
+  url: https://www.malwarebytes.com/blog/feed/index.xml
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: CoinDesk
+  type: rss
+  url: https://www.coindesk.com/arc/outboundfeeds/rss/
+  category: crypto
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: CoinTelegraph
+  type: rss
+  url: https://cointelegraph.com/rss
+  category: crypto
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: The Block
+  type: rss
+  url: https://www.theblock.co/rss.xml
+  category: crypto
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Decrypt
+  type: rss
+  url: https://decrypt.co/feed/rss
+  category: crypto
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Bitcoin Magazine
+  type: rss
+  url: https://bitcoinmagazine.com/.rss/full/
+  category: crypto
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: DL News
+  type: rss
+  url: https://www.dlnews.com/arc/outboundfeeds/rss/
+  category: crypto
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Blockworks
+  type: rss
+  url: https://blockworks.co/feed
+  category: crypto
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: The Defiant
+  type: rss
+  url: https://thedefiant.io/feed
+  category: crypto
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: CryptoSlate
+  type: rss
+  url: https://cryptoslate.com/feed/
+  category: crypto
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Tom's Hardware
+  type: rss
+  url: https://www.tomshardware.com/feeds/all
+  category: hardware
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: SemiEngineering
+  type: rss
+  url: https://semiengineering.com/feed/
+  category: hardware
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: SemiAnalysis
+  type: rss
+  url: https://semianalysis.com/feed/
+  category: hardware
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Next Platform
+  type: rss
+  url: https://www.nextplatform.com/feed/
+  category: hardware
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ServeTheHome
+  type: rss
+  url: https://www.servethehome.com/feed/
+  category: hardware
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: EE Times
+  type: rss
+  url: https://www.eetimes.com/feed/
+  category: hardware
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Asianometry
+  type: rss
+  url: https://www.asianometry.com/feed
+  category: hardware
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 9to5Google
+  type: rss
+  url: https://9to5google.com/feed/
+  category: mobile
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 9to5Mac
+  type: rss
+  url: https://9to5mac.com/feed/
+  category: mobile
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Android Police
+  type: rss
+  url: https://www.androidpolice.com/feed/
+  category: mobile
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Android Authority
+  type: rss
+  url: https://www.androidauthority.com/feed/
+  category: mobile
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Android Central
+  type: rss
+  url: https://www.androidcentral.com/feed
+  category: mobile
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: XDA Developers
+  type: rss
+  url: https://www.xda-developers.com/feed/
+  category: mobile
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Tech Policy Press
+  type: rss
+  url: https://techpolicy.press/rss/feed.xml
+  category: regulation
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: CSET Georgetown
+  type: rss
+  url: https://cset.georgetown.edu/feed/
+  category: regulation
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Lowy Institute
+  type: rss
+  url: https://www.lowyinstitute.org/rss
+  category: regulation
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: PogoWasRight (Privacy)
+  type: rss
+  url: https://pogowasright.org/feed/
+  category: regulation
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ScienceDaily
+  type: rss
+  url: https://www.sciencedaily.com/rss/top/technology.xml
+  category: science
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Nature Technology
+  type: rss
+  url: https://www.nature.com/subjects/technology.rss
+  category: science
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Phys.org
+  type: rss
+  url: https://phys.org/rss-feed/
+  category: science
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Quanta Magazine
+  type: rss
+  url: https://www.quantamagazine.org/feed/
+  category: science
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: New Scientist
+  type: rss
+  url: https://www.newscientist.com/feed/home/
+  category: science
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Futurism
+  type: rss
+  url: https://futurism.com/feed/
+  category: science
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Ars Technica Space
+  type: rss
+  url: https://arstechnica.com/space/feed/
+  category: space
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Space.com
+  type: rss
+  url: https://www.space.com/feeds/all
+  category: space
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: NASA Space Station
+  type: rss
+  url: https://blogs.nasa.gov/spacestation/feed/
+  category: space
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: The Verge
+  type: rss
+  url: https://www.theverge.com/rss/index.xml
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Ars Technica
+  type: rss
+  url: https://feeds.arstechnica.com/arstechnica/index
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Wired
+  type: rss
+  url: https://www.wired.com/feed/rss
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: The Guardian Technology
+  type: rss
+  url: https://www.theguardian.com/technology/rss
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: MIT Technology Review
+  type: rss
+  url: https://www.technologyreview.com/feed/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet
+  type: rss
+  url: https://www.zdnet.com/news/rss.xml
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Engadget
+  type: rss
+  url: https://www.engadget.com/rss.xml
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: IEEE Spectrum
+  type: rss
+  url: https://spectrum.ieee.org/feeds/feed.rss
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: CNET
+  type: rss
+  url: https://www.cnet.com/rss/news/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: TechRadar
+  type: rss
+  url: https://www.techradar.com/feeds.xml
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Digital Trends
+  type: rss
+  url: https://www.digitaltrends.com/feed/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Gizmodo
+  type: rss
+  url: https://gizmodo.com/rss
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 404 Media
+  type: rss
+  url: https://www.404media.co/rss/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: PCWorld
+  type: rss
+  url: https://www.pcworld.com/feed
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: MakeUseOf
+  type: rss
+  url: https://www.makeuseof.com/feed/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: How-To Geek
+  type: rss
+  url: https://feeds.howtogeek.com/HowToGeek
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: SlashGear
+  type: rss
+  url: https://www.slashgear.com/feed
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ReadWrite
+  type: rss
+  url: https://readwrite.com/feed/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: FOSSBytes
+  type: rss
+  url: https://fossbytes.com/feed/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Fast Company
+  type: rss
+  url: https://www.fastcompany.com/rss
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: OsNews
+  type: rss
+  url: https://osnews.com/feed
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: BBC News World
+  type: rss
+  url: http://feeds.bbci.co.uk/news/world/rss.xml
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: BBC News Tech
+  type: rss
+  url: http://feeds.bbci.co.uk/news/technology/rss.xml
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Wired Business
+  type: rss
+  url: https://www.wired.com/feed/category/business/latest/rss
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: The New Stack
+  type: rss
+  url: https://thenewstack.io/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Google Cloud Blog
+  type: rss
+  url: https://cloudblog.withgoogle.com/rss/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Docker Blog
+  type: rss
+  url: https://www.docker.com/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AWS Blog
+  type: rss
+  url: https://aws.amazon.com/blogs/aws/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Azure Blog
+  type: rss
+  url: https://azure.microsoft.com/blog/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Cloudflare Blog
+  type: rss
+  url: https://blog.cloudflare.com/rss/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: HashiCorp
+  type: rss
+  url: https://www.hashicorp.com/feed.xml
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Kubernetes
+  type: rss
+  url: https://kubernetes.io/feed.xml
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: CNCF
+  type: rss
+  url: https://www.cncf.io/blog/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Vercel Blog
+  type: rss
+  url: https://vercel.com/atom
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Supabase Blog
+  type: rss
+  url: https://supabase.com/rss.xml
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: SRE Weekly
+  type: rss
+  url: https://sreweekly.com/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Platform Weekly
+  type: rss
+  url: https://platformweekly.com/feed
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: GitHub Blog
+  type: rss
+  url: https://github.blog/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Stack Overflow Blog
+  type: rss
+  url: https://stackoverflow.blog/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Microsoft Dev Blogs
+  type: rss
+  url: https://devblogs.microsoft.com/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: InfoQ
+  type: rss
+  url: https://feed.infoq.com/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Dev.to
+  type: rss
+  url: https://dev.to/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: HackerNoon
+  type: rss
+  url: https://hackernoon.com/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: FreeCodeCamp
+  type: rss
+  url: https://www.freecodecamp.org/news/rss/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Smashing Magazine
+  type: rss
+  url: https://www.smashingmagazine.com/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Lobste.rs
+  type: rss
+  url: https://lobste.rs/rss
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Freedom to Tinker
+  type: rss
+  url: https://freedom-to-tinker.com/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Chromium Blog
+  type: rss
+  url: https://blog.chromium.org/atom.xml
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Rust Blog
+  type: rss
+  url: https://blog.rust-lang.org/feed.xml
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: CSS-Tricks
+  type: rss
+  url: https://css-tricks.com/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Golang Weekly
+  type: rss
+  url: https://golangweekly.com/rss/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: This Week in Rust
+  type: rss
+  url: https://this-week-in-rust.org/atom.xml
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: TLDR Tech
+  type: rss
+  url: https://tldr.tech/api/rss/tech
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: JavaScript Weekly
+  type: rss
+  url: https://javascriptweekly.com/rss/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: React Status
+  type: rss
+  url: https://react.statuscode.com/rss/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Node Weekly
+  type: rss
+  url: https://nodeweekly.com/rss/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Ruby Weekly
+  type: rss
+  url: https://rubyweekly.com/rss/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Changelog News
+  type: rss
+  url: https://changelog.com/news/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Frontend Focus
+  type: rss
+  url: https://frontendfoc.us/rss/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ByteByteGo
+  type: rss
+  url: https://blog.bytebytego.com/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: The Pragmatic Engineer
+  type: rss
+  url: https://newsletter.pragmaticengineer.com/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Console.dev
+  type: rss
+  url: https://console.substack.com/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Computerphile
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UC9-y-6csu5WGm29I7JiwpnA
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Phoronix
+  type: rss
+  url: https://www.phoronix.com/rss.php
+  category: linux
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Hackaday
+  type: rss
+  url: https://hackaday.com/feed/
+  category: linux
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Mozilla Blog
+  type: rss
+  url: https://blog.mozilla.org/feed/
+  category: linux
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: EFF
+  type: rss
+  url: https://www.eff.org/rss/updates.xml
+  category: linux
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: MacRumors
+  type: rss
+  url: http://feeds.macrumors.com/MacRumors-Front
+  category: apple
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AppleInsider
+  type: rss
+  url: https://appleinsider.com/rss/news/
+  category: apple
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Macworld
+  type: rss
+  url: https://www.macworld.com/feed
+  category: apple
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Low End Mac
+  type: rss
+  url: https://www.lowendmac.com/rss/
+  category: apple
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Windows Central
+  type: rss
+  url: https://www.windowscentral.com/feed.xml
+  category: windows
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Thurrott
+  type: rss
+  url: https://www.thurrott.com/feed
+  category: windows
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: WindowsLatest
+  type: rss
+  url: https://windowslatest.com/feed/
+  category: windows
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Neowin
+  type: rss
+  url: https://www.neowin.net/news/rss/microsoft
+  category: windows
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: The Register
+  type: rss
+  url: https://www.theregister.com/headlines.atom
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Computerworld
+  type: rss
+  url: https://www.computerworld.com/feed
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: SiliconAngle
+  type: rss
+  url: https://siliconangle.com/feed/
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Rest of World
+  type: rss
+  url: https://restofworld.org/feed/
+  category: se_asia
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: TechNode
+  type: rss
+  url: https://technode.com/feed/
+  category: se_asia
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Tech in Asia
+  type: rss
+  url: https://www.techinasia.com/feed
+  category: se_asia
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Koh Santepheap Daily
+  type: rss
+  url: https://kohsantepheapdaily.com.kh/feed
+  category: cambodia
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Kampuchea Thmey
+  type: rss
+  url: https://kampucheathmey.com/feed
+  category: cambodia
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Cambodia Express News
+  type: rss
+  url: https://cen.com.kh/feed
+  category: cambodia
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Nokor Wat News
+  type: rss
+  url: http://nokorwatnews.com/feed
+  category: cambodia
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: DAP News
+  type: rss
+  url: https://dap-news.com/feed/
+  category: cambodia
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Cambodia News.Net
+  type: rss
+  url: http://feeds.thecambodianews.net/rss/c7e1014a94f7e43b
+  category: cambodia
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Cambodian Times
+  type: rss
+  url: http://feeds.cambodiantimes.com/rss/c7e1014a94f7e43b
+  category: cambodia
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Phnom Penh Post
+  type: rss
+  url: https://phnompenhpost.com/feed/
+  category: cambodia
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Cambodia Investment Review
+  type: rss
+  url: https://cambodiainvestmentreview.com/feed/
+  category: cambodia
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Bloomberg Technology
+  type: rss
+  url: https://feeds.bloomberg.com/technology/news.rss
+  category: business
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Business Insider
+  type: rss
+  url: https://feeds.businessinsider.com/custom/all
+  category: business
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Forbes Tech
+  type: rss
+  url: https://www.forbes.com/innovation/feed2/
+  category: business
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Reuters Tech (Google News)
+  type: rss
+  url: https://news.google.com/rss/search?q=site%3Areuters.com+(technology+OR+tech+OR+business)&hl=en-US&gl=US&ceid=US%3Aen
+  category: business
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: MobileSyrup
+  type: rss
+  url: https://mobilesyrup.com/feed/
+  category: regional
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: SiliconRepublic
+  type: rss
+  url: https://www.siliconrepublic.com/feed
+  category: regional
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Tech.eu
+  type: rss
+  url: https://tech.eu/feed/
+  category: regional
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: TechCabal
+  type: rss
+  url: https://techcabal.com/feed/
+  category: africa
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Disrupt Africa
+  type: rss
+  url: https://disrupt-africa.com/feed/
+  category: africa
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Techpoint Africa
+  type: rss
+  url: https://techpoint.africa/feed/
+  category: africa
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Africa News Tech
+  type: rss
+  url: https://www.africanews.com/feed/rss
+  category: africa
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Inc42
+  type: rss
+  url: https://inc42.com/feed/
+  category: india
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: YourStory
+  type: rss
+  url: https://yourstory.com/feed
+  category: india
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: latam.tech
+  type: rss
+  url: https://www.latam.tech/feed
+  category: latam
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: SpaceNews
+  type: rss
+  url: https://spacenews.com/feed/
+  category: space
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Space.com
+  type: rss
+  url: https://www.space.com/feeds.xml
+  category: space
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Electrek
+  type: rss
+  url: https://electrek.co/feed/
+  category: climate
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Canary Media
+  type: rss
+  url: https://www.canarymedia.com/rss.rss
+  category: climate
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Carbon Brief
+  type: rss
+  url: https://www.carbonbrief.org/feed/
+  category: climate
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: CleanTechnica
+  type: rss
+  url: https://cleantechnica.com/feed/
+  category: climate
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Utility Dive
+  type: rss
+  url: https://www.utilitydive.com/feeds/news/
+  category: climate
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: TechCrunch Climate
+  type: rss
+  url: https://techcrunch.com/tag/climate/feed/
+  category: climate
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AgFunder News
+  type: rss
+  url: https://agfundernews.com/feed
+  category: agritech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: EdTech Magazine
+  type: rss
+  url: https://edtechmagazine.com/k12/rss.xml
+  category: edtech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Healthcare IT News
+  type: rss
+  url: https://www.healthcareitnews.com/rss.xml
+  category: healthtech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Artificial Lawyer
+  type: rss
+  url: https://www.artificiallawyer.com/feed/
+  category: legaltech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Polygon
+  type: rss
+  url: https://www.polygon.com/rss/index.xml
+  category: gaming
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: IGN
+  type: rss
+  url: https://feeds.ign.com/ign/all
+  category: gaming
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Kotaku
+  type: rss
+  url: https://kotaku.com/rss
+  category: gaming
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: GameSpot
+  type: rss
+  url: https://www.gamespot.com/feeds/news/
+  category: gaming
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: GamesIndustry.biz
+  type: rss
+  url: https://www.gamesindustry.biz/feed
+  category: gaming
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: r/technology
+  type: rss
+  url: https://www.reddit.com/r/technology/.rss
+  category: reddit
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: r/programming
+  type: rss
+  url: https://www.reddit.com/r/programming/.rss
+  category: reddit
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: r/netsec
+  type: rss
+  url: https://www.reddit.com/r/netsec/.rss
+  category: reddit
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: r/worldnews
+  type: rss
+  url: https://www.reddit.com/r/worldnews/.rss
+  category: reddit
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: r/cybersecurity
+  type: rss
+  url: https://www.reddit.com/r/cybersecurity/.rss
+  category: reddit
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: r/MachineLearning
+  type: rss
+  url: https://www.reddit.com/r/MachineLearning/.rss
+  category: reddit
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: r/LocalLLaMA
+  type: rss
+  url: https://www.reddit.com/r/LocalLLaMA/.rss
+  category: reddit
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: r/singularity
+  type: rss
+  url: https://www.reddit.com/r/singularity/.rss
+  category: reddit
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: r/OSINT
+  type: rss
+  url: https://www.reddit.com/r/OSINT/.rss
+  category: reddit
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: r/Cambodia
+  type: rss
+  url: https://www.reddit.com/r/Cambodia/.rss
+  category: reddit
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: r/artificial
+  type: rss
+  url: https://www.reddit.com/r/artificial/.rss
+  category: reddit
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv cs.AI
+  type: rss
+  url: http://arxiv.org/rss/cs.AI
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv cs.LG
+  type: rss
+  url: http://arxiv.org/rss/cs.LG
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv cs.CR
+  type: rss
+  url: http://arxiv.org/rss/cs.CR
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Hacker News (frontpage)
+  type: rss
+  url: https://hnrss.org/frontpage
+  category: community
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Hacker News (100+ points)
+  type: rss
+  url: https://hnrss.org/frontpage?points=100
+  category: community
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Hacker News (newest)
+  type: rss
+  url: https://hnrss.org/newest
+  category: community
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Hacker News (Ask HN)
+  type: rss
+  url: https://hnrss.org/ask
+  category: community
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Hacker News (Show HN)
+  type: rss
+  url: https://hnrss.org/show
+  category: community
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: TechMeme
+  type: rss
+  url: https://www.techmeme.com/feed.xml
+  category: community
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Snopes
+  type: rss
+  url: https://www.snopes.com/feed/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: PolitiFact
+  type: rss
+  url: https://politifact.com/feed/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Fintech News Asia
+  type: rss
+  url: https://fintechnews.sg/feed/
+  category: fintech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: The Ken
+  type: rss
+  url: https://the-ken.com/feed/
+  category: fintech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Fintech Times
+  type: rss
+  url: https://thefintechtimes.com/feed/
+  category: fintech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Finextra
+  type: rss
+  url: https://www.finextra.com/rss/headlines.aspx
+  category: fintech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'Google News: Cambodia Tech'
+  type: rss
+  url: https://news.google.com/rss/search?q=cambodia+technology+when:7d&hl=en
+  category: cambodia
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'Google News: AI'
+  type: rss
+  url: https://news.google.com/rss/search?q=artificial+intelligence+when:3d&hl=en
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'Google News: Cybersecurity'
+  type: rss
+  url: https://news.google.com/rss/search?q=cybersecurity+when:3d&hl=en
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'Google News: Open Source'
+  type: rss
+  url: https://news.google.com/rss/search?q=open+source+software+when:3d&hl=en
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'Google News: Southeast Asia Tech'
+  type: rss
+  url: https://news.google.com/rss/search?q=southeast+asia+technology+when:3d&hl=en
+  category: se_asia
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'Google News: Windows'
+  type: rss
+  url: https://news.google.com/rss/search?q=windows+os+when:3d&hl=en
+  category: windows
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'Google News: Fintech'
+  type: rss
+  url: https://news.google.com/rss/search?q=fintech+when:3d&hl=en
+  category: fintech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'Google News: Space'
+  type: rss
+  url: https://news.google.com/rss/search?q=space+science+when:3d&hl=en
+  category: space
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Lex Fridman Podcast
+  type: rss
+  url: https://lexfridman.com/feed/podcast/
+  category: podcast
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: The Vergecast
+  type: rss
+  url: https://www.theverge.com/rss/podcast/index.xml
+  category: podcast
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Latent Space
+  type: rss
+  url: https://www.latent.space/feed
+  category: podcast
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Software Engineering Daily
+  type: rss
+  url: https://feeds.simplecast.com/54nAGcIl
+  category: podcast
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: GDELT
+  type: api
+  module: workers.gdelt
+  function: fetch_all_gdelt
+  tier:
+  - 2
+  - 3
+  enabled: true
+  queries:
+  - technology OR tech OR startup
+  - artificial intelligence OR AI OR machine learning
+  - cybersecurity OR data breach OR ransomware
+  - blockchain OR cryptocurrency OR defi
+  - cloud computing OR devops OR kubernetes
+  - Cambodia OR Cambodian OR Khmer
+  - Southeast Asia OR ASEAN
+  - semiconductor OR chip OR GPU
+  - open source OR GitHub
+  - climate tech OR green energy OR EV
+- name: NewsData.io
+  type: api
+  module: workers.newsdata
+  function: fetch_all_newsdata
+  tier:
+  - 2
+  - 3
+  enabled: true
+  requires_key: NEWSDATA_API_KEY
+- name: Lobste.rs API
+  type: api
+  module: workers.lobsters
+  function: fetch_all_lobsters
+  tier:
+  - 2
+  - 3
+  enabled: true
+- name: Hacker News Algolia
+  type: api
+  module: workers.hackernews
+  function: fetch_all_hackernews
+  tier:
+  - 2
+  - 3
+  enabled: true
+  queries:
+  - artificial intelligence
+  - machine learning
+  - cybersecurity
+  - startup
+  - open source
+  - cloud computing
+  - Cambodia OR ASEAN
+  - semiconductor OR chip
+  - climate tech
+  - blockchain OR crypto
+- name: arXiv API
+  type: api
+  module: workers.arxiv
+  function: fetch_all_arxiv
+  tier:
+  - 2
+  - 3
+  enabled: true
+- name: Semantic Scholar
+  type: api
+  module: workers.semantic_scholar
+  function: fetch_all_semantic_scholar
+  tier:
+  - 2
+  - 3
+  enabled: true
+- name: OpenAlex
+  type: api
+  module: workers.openalex
+  function: fetch_all_openalex
+  tier:
+  - 2
+  - 3
+  enabled: true
+- name: GitHub Trending
+  type: api
+  module: workers.github_trending
+  function: fetch_all_github_trending
+  tier:
+  - 2
+  - 3
+  enabled: true
+- name: Hugging Face
+  type: api
+  module: workers.huggingface
+  function: fetch_all_huggingface
+  tier:
+  - 2
+  - 3
+  enabled: true
+- name: Currents API
+  type: api
+  module: workers.currents
+  function: fetch_all_currents
+  tier:
+  - 2
+  - 3
+  enabled: true
+  requires_key: CURRENTS_API_KEY
+  categories:
+  - technology
+  - science
+  - business
+- name: Exa.ai
+  type: api
+  module: workers.exa
+  function: fetch_all_exa
+  tier:
+  - 2
+  - 3
+  enabled: true
+  requires_key: EXA_API_KEY
+- name: Firecrawl
+  type: api
+  module: workers.firecrawl
+  function: crawl_and_extract
+  tier:
+  - 2
+  - 3
+  enabled: true
+  requires_key: FIRECRAWL_API_KEY
+- name: GitHub REST API
+  type: api
+  module: workers.github_api
+  function: fetch_all_github_api
+  tier:
+  - 2
+  - 3
+  enabled: true
+- name: The Guardian
+  type: api
+  module: workers.guardian
+  function: fetch_all_guardian
+  tier:
+  - 2
+  - 3
+  enabled: true
+- name: dev.to API
+  type: api
+  module: workers.devto
+  function: fetch_all_devto
+  tier:
+  - 2
+  - 3
+  enabled: true
+- name: YouTube API
+  type: api
+  module: workers.youtube
+  function: fetch_all_youtube
+  tier:
+  - 2
+  - 3
+  enabled: true
+  requires_key: YOUTUBE_API_KEY
+- name: Stack Exchange
+  type: api
+  module: workers.stackexchange
+  function: fetch_all_stackexchange
+  tier:
+  - 2
+  - 3
+  enabled: true
+- name: Mastodon
+  type: api
+  module: workers.mastodon
+  function: fetch_all_mastodon
+  tier:
+  - 2
+  - 3
+  enabled: true
+- name: Wikipedia Pageviews
+  type: api
+  module: workers.wikipedia
+  function: fetch_all_wikipedia
+  tier:
+  - 2
+  - 3
+  enabled: true
+- name: Crossref
+  type: api
+  module: workers.crossref
+  function: fetch_all_crossref
+  tier:
+  - 2
+  - 3
+  enabled: true
+- name: NASA Open API
+  type: api
+  module: workers.nasa
+  function: fetch_all_nasa
+  tier:
+  - 2
+  - 3
+  enabled: true
+- name: Open Library
+  type: api
+  module: workers.openlibrary
+  function: fetch_all_openlibrary
+  tier:
+  - 2
+  - 3
+  enabled: true
+- name: NVD CVE Database
+  type: api
+  module: workers.nvd
+  function: fetch_all_nvd
+  tier:
+  - 2
+  - 3
+  enabled: true
+- name: WhatsTrending AI
+  type: api
+  module: workers.whats_trending
+  function: fetch_all_whats_trending
+  tier:
+  - 2
+  - 3
+  enabled: true
+- name: GNews
+  type: api
+  module: workers.gnews
+  function: fetch_all_gnews
+  tier:
+  - 2
+  - 3
+  enabled: true
+  requires_key: GNEWS_API_KEY
+- name: Mashable
+  type: rss
+  url: https://mashable.com/feeds/rss/all
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Tom's Guide
+  type: rss
+  url: https://www.tomsguide.com/feeds/all
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: VentureBeat
+  type: rss
+  url: https://venturebeat.com/feed/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: TechRadar
+  type: rss
+  url: https://www.techradar.com/rss
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: InformationWeek
+  type: rss
+  url: https://www.informationweek.com/rss.xml
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: SlashGear
+  type: rss
+  url: https://www.slashgear.com/rss/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: How-To Geek
+  type: rss
+  url: https://www.howtogeek.com/feed/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 9to5Toys
+  type: rss
+  url: https://9to5toys.com/feed/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: GHacks
+  type: rss
+  url: https://www.ghacks.net/feed/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Boing Boing
+  type: rss
+  url: https://boingboing.net/feed
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: OMG! Ubuntu
+  type: rss
+  url: https://www.omgubuntu.co.uk/feed/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: BetaNews
+  type: rss
+  url: https://betanews.com/feed/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: FOSS Force
+  type: rss
+  url: https://fossforce.com/feed/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: TechRepublic
+  type: rss
+  url: https://www.techrepublic.com/feed/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Network World
+  type: rss
+  url: https://www.networkworld.com/feed/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: CIO
+  type: rss
+  url: https://www.cio.com/feed/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Hacker News (RSS)
+  type: rss
+  url: https://news.ycombinator.com/rss
+  category: community
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Google Research (old)
+  type: rss
+  url: https://blog.research.google/feeds/posts/default
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Microsoft AI Blog
+  type: rss
+  url: https://www.microsoft.com/en-us/ai/blog/feed/
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Apple ML Research
+  type: rss
+  url: https://machinelearning.apple.com/rss.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AI News (Buttondown)
+  type: rss
+  url: https://buttondown.email/ainews/rss
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Sebastian Raschka Blog
+  type: rss
+  url: https://sebastianraschka.com/rss_feed.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Andrej Karpathy Blog
+  type: rss
+  url: https://karpathy.github.io/feed.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Lilian Weng Blog
+  type: rss
+  url: https://lilianweng.github.io/index.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Maarten Grootendorst NL
+  type: rss
+  url: https://newsletter.maartengrootendorst.com/feed
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Google TensorFlow Medium
+  type: rss
+  url: https://medium.com/feed/tensorflow
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Dev.to Python
+  type: rss
+  url: https://dev.to/feed/tag/python
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Dev.to JavaScript
+  type: rss
+  url: https://dev.to/feed/tag/javascript
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Dev.to Rust
+  type: rss
+  url: https://dev.to/feed/tag/rust
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Dev.to Go
+  type: rss
+  url: https://dev.to/feed/tag/go
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Dev.to AI
+  type: rss
+  url: https://dev.to/feed/tag/ai
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Dev.to WebDev
+  type: rss
+  url: https://dev.to/feed/tag/webdev
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: GitHub Blog Security
+  type: rss
+  url: https://github.blog/tag/security/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: GitHub Blog Open Source
+  type: rss
+  url: https://github.blog/tag/open-source/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: GitHub Blog DevOps
+  type: rss
+  url: https://github.blog/tag/devops/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: GitHub Blog Community
+  type: rss
+  url: https://github.blog/tag/community/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: GitLab Blog
+  type: rss
+  url: https://about.gitlab.com/atom.xml
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Coding Horror
+  type: rss
+  url: https://blog.codinghorror.com/rss/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: The Pragmatic Engineer (new)
+  type: rss
+  url: https://blog.pragmaticengineer.com/rss/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Codrops
+  type: rss
+  url: https://tympanus.net/codrops/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Better Programming (Medium)
+  type: rss
+  url: https://medium.com/feed/better-programming
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: HashiCorp Blog
+  type: rss
+  url: https://www.hashicorp.com/blog/feed.xml
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Docker Blog
+  type: rss
+  url: https://www.docker.com/blog/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Joel on Software
+  type: rss
+  url: https://www.joelonsoftware.com/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Overreacted (Dan Abramov)
+  type: rss
+  url: https://overreacted.io/rss.xml
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Rust Magazine
+  type: rss
+  url: https://rustmagazine.org/feed.xml
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Without Boats
+  type: rss
+  url: https://without.boats/index.xml
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: fasterthanlime
+  type: rss
+  url: https://fasterthanli.me/index.xml
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: High Scalability
+  type: rss
+  url: https://highscalability.com/rss/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: martinfowler.com
+  type: rss
+  url: https://martinfowler.com/feed.atom
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Adaptive Computing
+  type: rss
+  url: https://blog.acolyer.org/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: igvita
+  type: rss
+  url: https://www.igvita.com/atom.xml
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: danluu.com
+  type: rss
+  url: https://danluu.com/atom.xml
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Brendan Gregg
+  type: rss
+  url: https://www.brendangregg.com/blog/rss.xml
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Hunter Walk
+  type: rss
+  url: https://hunterwalk.com/feed/
+  category: startups
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Scott Logic
+  type: rss
+  url: https://blog.scottlogic.com/feed.xml
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Pro Android Dev
+  type: rss
+  url: https://medium.com/feed/proandroiddev
+  category: mobile
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Dark Reading
+  type: rss
+  url: https://darkreading.com/rss.xml
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: SentinelOne
+  type: rss
+  url: https://sentinelone.com/blog/feed/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Infosecurity Magazine
+  type: rss
+  url: https://www.infosecurity-magazine.com/rss/news/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Proofpoint
+  type: rss
+  url: https://www.proofpoint.com/us/rss.xml
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: PortSwigger Research
+  type: rss
+  url: https://portswigger.net/research/rss
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Google Online Security
+  type: rss
+  url: https://feeds.feedburner.com/GoogleOnlineSecurityBlog
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AWS Compute Blog
+  type: rss
+  url: https://aws.amazon.com/blogs/compute/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AWS DevOps Blog
+  type: rss
+  url: https://aws.amazon.com/blogs/devops/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AWS ML Blog
+  type: rss
+  url: https://aws.amazon.com/blogs/machine-learning/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AWS Database Blog
+  type: rss
+  url: https://aws.amazon.com/blogs/database/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AWS Storage Blog
+  type: rss
+  url: https://aws.amazon.com/blogs/storage/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AWS Networking Blog
+  type: rss
+  url: https://aws.amazon.com/blogs/networking-and-content-delivery/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AWS Big Data Blog
+  type: rss
+  url: https://aws.amazon.com/blogs/big-data/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AWS Containers Blog
+  type: rss
+  url: https://aws.amazon.com/blogs/containers/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AWS Open Source Blog
+  type: rss
+  url: https://aws.amazon.com/blogs/opensource/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AWS Industries Blog
+  type: rss
+  url: https://aws.amazon.com/blogs/industries/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AWS Architecture Blog
+  type: rss
+  url: https://aws.amazon.com/blogs/architecture/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AWS HPC Blog
+  type: rss
+  url: https://aws.amazon.com/blogs/hpc/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AWS Media Blog
+  type: rss
+  url: https://aws.amazon.com/blogs/media/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AWS Marketplace Blog
+  type: rss
+  url: https://aws.amazon.com/blogs/awsmarketplace/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AWS BI Blog
+  type: rss
+  url: https://aws.amazon.com/blogs/business-intelligence/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Azure Blog
+  type: rss
+  url: https://azure.microsoft.com/en-us/blog/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Azure SDK Blog
+  type: rss
+  url: https://devblogs.microsoft.com/azure-sdk/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Cloudflare Security
+  type: rss
+  url: https://blog.cloudflare.com/tag/security/rss/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Microsoft DevBlogs
+  type: rss
+  url: https://devblogs.microsoft.com/blog/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Databricks Blog
+  type: rss
+  url: https://www.databricks.com/feed
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Elastic Blog
+  type: rss
+  url: https://www.elastic.co/blog/feed
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: CNCF Blog
+  type: rss
+  url: https://www.cncf.io/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: KubeCon
+  type: rss
+  url: https://www.kubecon.io/feed
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Istio
+  type: rss
+  url: https://istio.io/feed.xml
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Helm Blog
+  type: rss
+  url: https://helm.sh/blog/index.xml
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: PagerDuty
+  type: rss
+  url: https://www.pagerduty.com/resources/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: InfluxData
+  type: rss
+  url: https://www.influxdata.com/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Prometheus
+  type: rss
+  url: https://prometheus.io/blog/feed.xml
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: VMware Blog
+  type: rss
+  url: https://blogs.vmware.com/feed
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Citrix Blog
+  type: rss
+  url: https://www.citrix.com/blogs/feed
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Red Hat Blog
+  type: rss
+  url: https://www.redhat.com/en/rss/blog
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Salesforce Blog
+  type: rss
+  url: https://www.salesforce.com/blog/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Python Insider
+  type: rss
+  url: https://blog.python.org/rss
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Go Blog
+  type: rss
+  url: https://go.dev/blog/feed.atom
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Rust Inside Rust
+  type: rss
+  url: https://blog.rust-lang.org/inside-rust/feed.xml
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: JetBrains Kotlin
+  type: rss
+  url: https://blog.jetbrains.com/kotlin/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: JetBrains Java
+  type: rss
+  url: https://blog.jetbrains.com/java/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: JetBrains .NET
+  type: rss
+  url: https://blog.jetbrains.com/.net/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: JetBrains Go
+  type: rss
+  url: https://blog.jetbrains.com/go/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: JetBrains Rust
+  type: rss
+  url: https://blog.jetbrains.com/rust/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: JetBrains Ruby
+  type: rss
+  url: https://blog.jetbrains.com/ruby/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: JetBrains Scala
+  type: rss
+  url: https://blog.jetbrains.com/scala/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: JetBrains Data Science
+  type: rss
+  url: https://blog.jetbrains.com/data-science/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: JetBrains WebStorm
+  type: rss
+  url: https://blog.jetbrains.com/webstorm/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: JetBrains IntelliJ
+  type: rss
+  url: https://blog.jetbrains.com/idea/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: JetBrains PHPStorm
+  type: rss
+  url: https://blog.jetbrains.com/phpstorm/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: JetBrains PyCharm
+  type: rss
+  url: https://blog.jetbrains.com/pycharm/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: JetBrains CLion
+  type: rss
+  url: https://blog.jetbrains.com/clion/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: JetBrains DataGrip
+  type: rss
+  url: https://blog.jetbrains.com/datagrip/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Flutter Community
+  type: rss
+  url: https://medium.com/feed/flutter-community
+  category: mobile
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Android Developers Blog
+  type: rss
+  url: https://android-developers.googleblog.com/feeds/posts/default
+  category: mobile
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: React Native Blog
+  type: rss
+  url: https://reactnative.dev/blog/feed.xml
+  category: mobile
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Ionic Blog
+  type: rss
+  url: https://blog.ionicframework.com/feed/
+  category: mobile
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: JetBrains Android
+  type: rss
+  url: https://blog.jetbrains.com/android/feed
+  category: mobile
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: NVIDIA Blog
+  type: rss
+  url: https://blogs.nvidia.com/feed/
+  category: hardware
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Intel Newsroom
+  type: rss
+  url: https://newsroom.intel.com/feed/
+  category: hardware
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: WCCFTech
+  type: rss
+  url: https://wccftech.com/feed/
+  category: hardware
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Crypto Briefing
+  type: rss
+  url: https://cryptobriefing.com/feed/
+  category: crypto
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Ethereum Blog
+  type: rss
+  url: https://blog.ethereum.org/feed.xml
+  category: crypto
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Solana News
+  type: rss
+  url: https://solana.com/news/rss.xml
+  category: crypto
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Al Jazeera
+  type: rss
+  url: https://www.aljazeera.com/xml/rss/all.xml
+  category: regional
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Times of India
+  type: rss
+  url: https://timesofindia.indiatimes.com/rssfeedstopstories.cms
+  category: regional
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: The Hindu
+  type: rss
+  url: https://www.thehindu.com/news/feeder/default.rss
+  category: regional
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Hindustan Times Tech
+  type: rss
+  url: https://www.hindustantimes.com/feeds/rss/tech/rssfeed.xml
+  category: regional
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: MENA Startup Digest
+  type: rss
+  url: https://menastartupdigest.com/feed
+  category: regional
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv CS.CV
+  type: rss
+  url: https://export.arxiv.org/rss/cs.CV
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv CS.RO
+  type: rss
+  url: https://export.arxiv.org/rss/cs.RO
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv CS.SE
+  type: rss
+  url: https://export.arxiv.org/rss/cs.SE
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv CS.IR
+  type: rss
+  url: https://export.arxiv.org/rss/cs.IR
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv CS.MA
+  type: rss
+  url: https://export.arxiv.org/rss/cs.MA
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv CS.NE
+  type: rss
+  url: https://export.arxiv.org/rss/cs.NE
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv CS.AR
+  type: rss
+  url: https://export.arxiv.org/rss/cs.AR
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv Stat.ML
+  type: rss
+  url: https://export.arxiv.org/rss/stat.ML
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv Stat (all)
+  type: rss
+  url: https://export.arxiv.org/rss/stat
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv Math.OC
+  type: rss
+  url: https://export.arxiv.org/rss/math.OC
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv Math (all)
+  type: rss
+  url: https://export.arxiv.org/rss/math
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv Q-Fin
+  type: rss
+  url: https://export.arxiv.org/rss/q-fin
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv Q-Bio
+  type: rss
+  url: https://export.arxiv.org/rss/q-bio
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv Cond-Mat
+  type: rss
+  url: https://export.arxiv.org/rss/cond-mat
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv EESS
+  type: rss
+  url: https://export.arxiv.org/rss/eess
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv Astro-Ph
+  type: rss
+  url: https://export.arxiv.org/rss/astro-ph
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv Physics
+  type: rss
+  url: https://export.arxiv.org/rss/physics
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv Quant-Ph
+  type: rss
+  url: https://export.arxiv.org/rss/quant-ph
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv HEP-TH
+  type: rss
+  url: https://export.arxiv.org/rss/hep-th
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv Nucl-Th
+  type: rss
+  url: https://export.arxiv.org/rss/nucl-th
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv GR-QC
+  type: rss
+  url: https://export.arxiv.org/rss/gr-qc
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv Econ
+  type: rss
+  url: https://export.arxiv.org/rss/econ
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: arXiv Nonlin
+  type: rss
+  url: https://export.arxiv.org/rss/nlin
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: MIT News Feed
+  type: rss
+  url: https://news.mit.edu/rss/feed
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: MIT News Computers
+  type: rss
+  url: https://news.mit.edu/rss/topic/computers
+  category: research
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet Cloud
+  type: rss
+  url: https://www.zdnet.com/topic/cloud-computing/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet Security
+  type: rss
+  url: https://www.zdnet.com/topic/security/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet Innovation
+  type: rss
+  url: https://www.zdnet.com/topic/innovation/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet Developer
+  type: rss
+  url: https://www.zdnet.com/topic/developer/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet Hardware
+  type: rss
+  url: https://www.zdnet.com/topic/hardware/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet Mobile
+  type: rss
+  url: https://www.zdnet.com/topic/mobile/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet Software
+  type: rss
+  url: https://www.zdnet.com/topic/software/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet Linux
+  type: rss
+  url: https://www.zdnet.com/topic/linux/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet Apple
+  type: rss
+  url: https://www.zdnet.com/topic/apple/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet Google
+  type: rss
+  url: https://www.zdnet.com/topic/google/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet Microsoft
+  type: rss
+  url: https://www.zdnet.com/topic/microsoft/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet Amazon
+  type: rss
+  url: https://www.zdnet.com/topic/amazon/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet Facebook
+  type: rss
+  url: https://www.zdnet.com/topic/facebook/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet IoT
+  type: rss
+  url: https://www.zdnet.com/topic/internet-of-things/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet Data Mgmt
+  type: rss
+  url: https://www.zdnet.com/topic/data-management/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet Networking
+  type: rss
+  url: https://www.zdnet.com/topic/networking/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet Gaming
+  type: rss
+  url: https://www.zdnet.com/topic/gaming/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet EV
+  type: rss
+  url: https://www.zdnet.com/topic/electric-vehicles/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet Digital Transform
+  type: rss
+  url: https://www.zdnet.com/topic/digital-transformation/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet Reviews
+  type: rss
+  url: https://www.zdnet.com/topic/reviews/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet Deals
+  type: rss
+  url: https://www.zdnet.com/topic/deals/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ZDNet AI
+  type: rss
+  url: https://www.zdnet.com/topic/artificial-intelligence/rss.xml
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Space.com (alt)
+  type: rss
+  url: https://www.space.com/rss
+  category: space
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Universe Today
+  type: rss
+  url: https://www.universetoday.com/feed/
+  category: space
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: NASASpaceFlight
+  type: rss
+  url: https://www.nasaspaceflight.com/feed/
+  category: space
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: NASA Breaking News
+  type: rss
+  url: https://www.nasa.gov/rss/dyn/breaking_news.rss
+  category: space
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ESA Top News
+  type: rss
+  url: https://www.esa.int/rssfeed/TopNews
+  category: space
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ScienceDaily AI
+  type: rss
+  url: https://www.sciencedaily.com/rss/computers_math/artificial_intelligence.xml
+  category: science
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ScienceDaily Climate
+  type: rss
+  url: https://www.sciencedaily.com/rss/earth_climate.xml
+  category: science
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ScienceDaily Society
+  type: rss
+  url: https://www.sciencedaily.com/rss/science_society.xml
+  category: science
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ScienceDaily CS
+  type: rss
+  url: https://www.sciencedaily.com/rss/computers_math.xml
+  category: science
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ScienceDaily All
+  type: rss
+  url: https://www.sciencedaily.com/rss/all.xml
+  category: science
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Live Science
+  type: rss
+  url: https://www.livescience.com/feeds/all
+  category: science
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Ars Science
+  type: rss
+  url: https://arstechnica.com/science/feed/
+  category: science
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Clean Energy Wire
+  type: rss
+  url: https://www.cleanenergywire.org/rss.xml
+  category: climate
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: The Driven
+  type: rss
+  url: https://thedriven.io/feed/
+  category: climate
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: PV Magazine
+  type: rss
+  url: https://www.pv-magazine.com/feed/
+  category: climate
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Solar Power World
+  type: rss
+  url: https://www.solarpowerworldonline.com/feed/
+  category: climate
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Wind Power Engineering
+  type: rss
+  url: https://www.windpowerengineering.com/feed/feed/
+  category: climate
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Renewable Energy World
+  type: rss
+  url: https://renewableenergyworld.com/feed/
+  category: climate
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Darknet Diaries
+  type: rss
+  url: https://feeds.megaphone.fm/darknetdiaries
+  category: podcast
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'YouTube: MKBHD'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCBJycsmduvYEL83R_U4JriQ
+  category: youtube
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'YouTube: Theo'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCBcRF18a7Qf58cCRy5xuWwQ
+  category: youtube
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'YouTube: Google Developers'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UC_x5XG1OV2P6uZZ5FSM9Ttw
+  category: youtube
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: EFF Deeplinks
+  type: rss
+  url: https://www.eff.org/deeplinks.xml
+  category: regulation
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: UK Government
+  type: rss
+  url: https://www.gov.uk/search/news-and-communications.atom
+  category: regulation
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Netflix Tech Blog
+  type: rss
+  url: https://netflixtechblog.com/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Spotify Engineering
+  type: rss
+  url: https://engineering.atspotify.com/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Grab Engineering
+  type: rss
+  url: https://engineering.grab.com/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Stripe Blog
+  type: rss
+  url: https://stripe.com/blog/feed.rss
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Percona Blog
+  type: rss
+  url: https://www.percona.com/blog/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: PostgreSQL News
+  type: rss
+  url: https://www.postgresql.org/news.rss
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: MongoDB Blog
+  type: rss
+  url: https://www.mongodb.com/blog/rss
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: CouchDB Blog
+  type: rss
+  url: https://blog.couchdb.org/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Redis Blog
+  type: rss
+  url: https://redis.io/blog/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Neo4j Blog
+  type: rss
+  url: https://neo4j.com/blog/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ScyllaDB
+  type: rss
+  url: https://www.scylladb.com/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: SingleStore Blog
+  type: rss
+  url: https://www.singlestore.com/blog/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Honeybadger Blog
+  type: rss
+  url: https://blog.honeybadger.io/feed.xml
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: The Changelog
+  type: rss
+  url: https://changelog.com/podcast/feed
+  category: podcast
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Ship It!
+  type: rss
+  url: https://changelog.com/shipit/feed
+  category: podcast
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Practical AI Podcast
+  type: rss
+  url: https://changelog.com/practicalai/feed
+  category: podcast
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: TWIML AI Podcast
+  type: rss
+  url: https://twimlai.com/feed
+  category: podcast
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: No Priors
+  type: rss
+  url: https://feeds.megaphone.fm/nopriors
+  category: podcast
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'YouTube: Andrej Karpathy'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCXUPKJO5MZQN11PqgIvyuvQ
+  category: youtube
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'YouTube: AI Explained'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCBjkbmzVplPgVF-GheNYWCg
+  category: youtube
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'YouTube: Two Minute Papers'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCbfYPyITQ-7l4upoX8nvctg
+  category: youtube
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'YouTube: Yannic Kilcher'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCZHmQk67mSJgfCCTn7xBfew
+  category: youtube
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'YouTube: 3Blue1Brown'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCYO_jab_esuFRV4b17AJtAw
+  category: youtube
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'YouTube: Matt Wolfe'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCl3U-xOlFVLlsheAug-QoWA
+  category: youtube
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'YouTube: AI Jason'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCrXSVX9a1mj8l0CMLwKgMVw
+  category: youtube
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'YouTube: Lex Fridman'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCSHZKyawb77ixDdsGog4iWA
+  category: youtube
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'YouTube: AI Epiphany'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UChepm4zf3QIYZgL5w7jl3MA
+  category: youtube
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'YouTube: Hugging Face'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCHlNU7kIZhRgSbhHvFoy72w
+  category: youtube
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'YouTube: Veritasium'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCHnyfMqiRRG1u-2MsSQLbXA
+  category: youtube
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Congress.gov Most Viewed
+  type: rss
+  url: https://www.congress.gov/rss/most-viewed-bills.xml
+  category: regulation
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Pandaily
+  type: rss
+  url: https://pandaily.com/feed/
+  category: regional
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Nikkei Asia Tech
+  type: rss
+  url: https://asia.nikkei.com/rss/feed/nar
+  category: regional
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: South China Morning Post
+  type: rss
+  url: https://www.scmp.com/rss/5/feed
+  category: regional
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Korea Herald
+  type: rss
+  url: https://www.koreaherald.com/rss/020200000000.xml
+  category: regional
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Airbnb Engineering
+  type: rss
+  url: https://medium.com/feed/airbnb-engineering
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Meta Engineering
+  type: rss
+  url: https://engineering.fb.com/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Grafana Blog
+  type: rss
+  url: https://grafana.com/blog/index.xml
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Fly.io Blog
+  type: rss
+  url: https://fly.io/blog/feed.xml
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Unchained
+  type: rss
+  url: https://unchainedcrypto.com/feed/
+  category: crypto
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Distill.pub
+  type: rss
+  url: https://distill.pub/rss.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: TLDR AI
+  type: rss
+  url: https://tldr.tech/api/rss/ai
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: One Useful Thing
+  type: rss
+  url: https://oneusefulthing.substack.com/feed
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: The Rundown AI
+  type: rss
+  url: https://rss.beehiiv.com/feeds/2R3C6Bt5wj.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Gary Marcus
+  type: rss
+  url: https://garymarcus.substack.com/feed
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Newcomer
+  type: rss
+  url: https://www.newcomer.co/feed
+  category: startups
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Lenny's Newsletter
+  type: rss
+  url: https://www.lennysnewsletter.com/feed
+  category: startups
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Pluralistic (Cory Doctorow)
+  type: rss
+  url: https://pluralistic.net/feed/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Chipstrat
+  type: rss
+  url: https://chipstrat.substack.com/feed
+  category: hardware
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Troy Hunt
+  type: rss
+  url: https://www.troyhunt.com/rss/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: TechSpot
+  type: rss
+  url: https://www.techspot.com/backend.xml
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: InfoWorld
+  type: rss
+  url: https://www.infoworld.com/feed/
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Slashdot
+  type: rss
+  url: https://rss.slashdot.org/Slashdot/slashdotMain
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: AI News
+  type: rss
+  url: https://www.artificialintelligence-news.com/feed/
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Interesting Engineering
+  type: rss
+  url: https://interestingengineering.com/feed
+  category: science
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'Google News: Startups'
+  type: rss
+  url: https://news.google.com/rss/search?q=startups+venture+capital+when:3d&hl=en
+  category: startups
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'Google News: Cloud Computing'
+  type: rss
+  url: https://news.google.com/rss/search?q=cloud+computing+when:3d&hl=en
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'Google News: Hardware Chips'
+  type: rss
+  url: https://news.google.com/rss/search?q=semiconductor+chip+hardware+when:3d&hl=en
+  category: hardware
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'Google News: Science'
+  type: rss
+  url: https://news.google.com/rss/search?q=science+research+when:3d&hl=en
+  category: science
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'Google News: Gaming'
+  type: rss
+  url: https://news.google.com/rss/search?q=video+gaming+esports+when:3d&hl=en
+  category: gaming
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'Google News: Climate Tech'
+  type: rss
+  url: https://news.google.com/rss/search?q=climate+tech+green+energy+when:3d&hl=en
+  category: climate
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'Google News: Crypto DeFi'
+  type: rss
+  url: https://news.google.com/rss/search?q=cryptocurrency+defi+web3+when:3d&hl=en
+  category: crypto
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'Google News: Apple'
+  type: rss
+  url: https://news.google.com/rss/search?q=apple+iphone+mac+when:3d&hl=en
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'Google News: Google'
+  type: rss
+  url: https://news.google.com/rss/search?q=google+android+when:3d&hl=en
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: 'Google News: Microsoft'
+  type: rss
+  url: https://news.google.com/rss/search?q=microsoft+windows+azure+when:3d&hl=en
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: DZone
+  type: rss
+  url: https://feeds.dzone.com/home
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: PC Gamer
+  type: rss
+  url: https://www.pcgamer.com/rss/
+  category: gaming
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Eurogamer
+  type: rss
+  url: https://www.eurogamer.net/feed
+  category: gaming
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Rock Paper Shotgun
+  type: rss
+  url: https://www.rockpapershotgun.com/feed
+  category: gaming
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Diginomica
+  type: rss
+  url: https://diginomica.com/feed/
+  category: enterprise
+  tier:
+  - 1
+  - 2
+  enabled: true
+# ── General Tech (Major) ──
+- name: The Next Web
+  type: rss
+  url: https://thenextweb.com/feed
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: BBC Science
+  type: rss
+  url: https://www.bbc.com/news/science_and_environment/rss.xml
+  category: science
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Financial Times Tech
+  type: rss
+  url: https://www.ft.com/technology?format=rss
+  category: business
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Inc.com
+  type: rss
+  url: https://www.inc.com/rss/
+  category: business
+  tier:
+  - 1
+  - 2
+  enabled: true
+# ── AI Labs ──
+- name: OpenAI Blog
+  type: rss
+  url: https://openai.com/blog/rss.xml
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Replicate Blog
+  type: rss
+  url: https://replicate.com/blog/rss
+  category: ai
+  tier:
+  - 1
+  - 2
+  enabled: true
+# ── Cybersecurity ──
+- name: Sucuri Blog
+  type: rss
+  url: https://blog.sucuri.net/feed
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Check Point Research
+  type: rss
+  url: https://research.checkpoint.com/feed/
+  category: cybersecurity
+  tier:
+  - 1
+  - 2
+  enabled: true
+# ── Cloud & DevOps ──
+- name: Linode Blog
+  type: rss
+  url: https://www.linode.com/blog/feed/
+  category: cloud
+  tier:
+  - 1
+  - 2
+  enabled: true
+# ── Developer & Open Source ──
+- name: Python Blog
+  type: rss
+  url: https://blog.python.org/feeds/posts/default
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: JetBrains Blog
+  type: rss
+  url: https://blog.jetbrains.com/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: .NET Blog
+  type: rss
+  url: https://devblogs.microsoft.com/dotnet/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Python DevBlog
+  type: rss
+  url: https://devblogs.microsoft.com/python/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: VS Code Blog
+  type: rss
+  url: https://devblogs.microsoft.com/visualstudio/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: TypeScript Blog
+  type: rss
+  url: https://devblogs.microsoft.com/typescript/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: CodePen Blog
+  type: rss
+  url: https://blog.codepen.io/feed/
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: JavaScript Plain English
+  type: rss
+  url: https://javascript.plainenglish.io/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Stackademic
+  type: rss
+  url: https://blog.stackademic.com/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: LeadDev
+  type: rss
+  url: https://leaddev.com/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: ShopTalk Show
+  type: rss
+  url: https://shoptalkshow.com/feed
+  category: developer
+  tier:
+  - 1
+  - 2
+  enabled: true
+# ── Hardware ──
+- name: TechPowerUp
+  type: rss
+  url: https://www.techpowerup.com/rss/news
+  category: hardware
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Fierce Electronics
+  type: rss
+  url: https://www.fierceelectronics.com/rss/xml
+  category: hardware
+  tier:
+  - 1
+  - 2
+  enabled: true
+# ── Science ──
+- name: SciTech Daily
+  type: rss
+  url: https://scitechdaily.com/feed/
+  category: science
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: Nature News
+  type: rss
+  url: https://www.nature.com/nature.rss
+  category: science
+  tier:
+  - 1
+  - 2
+  enabled: true
+# ── Business & Startups ──
+- name: Sifted
+  type: rss
+  url: https://sifted.eu/feed
+  category: business
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: EU Startups
+  type: rss
+  url: https://www.eu-startups.com/feed/
+  category: startups
+  tier:
+  - 1
+  - 2
+  enabled: true
+- name: TechCrunch Startups
+  type: rss
+  url: https://techcrunch.com/category/startups/feed/
+  category: startups
+  tier:
+  - 1
+  - 2
+  enabled: true
+# ── Regional: India ──
+- name: Medianama
+  type: rss
+  url: https://www.medianama.com/feed/
+  category: india
+  tier:
+  - 1
+  - 2
+  enabled: true
+# ── MENA Tech ──
+- name: Wamda
+  type: rss
+  url: https://www.wamda.com/feed
+  category: mena
+  tier:
+  - 1
+  - 2
+  enabled: true
+# ── SE Asia ──
+- name: Channel NewsAsia
+  type: rss
+  url: https://www.channelnewsasia.com/api/v1/rss-outbound-feed
+  category: se_asia
+  tier:
+  - 1
+  - 2
+  enabled: true
+# ── YouTube Channels (RSS) ──
+- name: Linus Tech Tips
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCXuqSBlHAE6Xw-yeJA0Tunw
+  category: tech
+  tier:
+  - 1
+  - 2
+  enabled: true
+# ─────────────────────────────────────────────
+# API SOURCES (Tier 2/3 — website pipeline)
+# ─────────────────────────────────────────────
+- name: TerminalFeed
+  type: api
+  module: workers.terminalfeed
+  function: fetch_all_terminalfeed
+  tier:
+  - 2
+  - 3
+  enabled: true
+- name: NewsAPI.org
+  type: api
+  module: workers.newsapi_org
+  function: fetch_all_newsapi
+  tier:
+  - 2
+  - 3
+  enabled: true
+  requires_key: NEWSAPI_KEY
+- name: APITube
+  type: api
+  module: workers.apitube
+  function: fetch_all_apitube
+  tier:
+  - 2
+  - 3
+  enabled: true
+  requires_key: APITUBE_API_KEY
+- name: Product Hunt
+  type: api
+  module: workers.producthunt
+  function: fetch_all_producthunt
+  tier:
+  - 2
+  - 3
+  enabled: true
+  requires_key: PRODUCTHUNT_API_KEY
+- name: finlight
+  type: api
+  module: workers.finlight
+  function: fetch_all_finlight
+  tier:
+  - 2
+  - 3
+  enabled: true
+  requires_key: FINLIGHT_API_KEY
