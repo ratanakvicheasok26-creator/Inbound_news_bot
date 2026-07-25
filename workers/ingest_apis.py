@@ -5,6 +5,8 @@ Run: python -m workers.ingest_apis
 Env vars required:
     SUPABASE_URL
     SUPABASE_SERVICE_ROLE_KEY
+    GROQ_API_KEY (optional — primary AI for summary rewriting)
+    GOOGLE_GEMINI_API_KEY (optional — fallback AI when Groq fails)
     NEWSDATA_API_KEY (optional)
     EXA_API_KEY (optional)
     FIRECRAWL_API_KEY (optional)
@@ -33,6 +35,7 @@ import sys
 import time
 from typing import Any
 
+from workers.ai_rewrite import rewrite_batch
 from workers.db import get_supabase
 
 # --- All source imports ---
@@ -222,6 +225,12 @@ def run() -> None:
             unique_articles.append(a)
 
     logger.info("Total unique articles: %d (from %d sources)", len(unique_articles), len(all_sources))
+
+    # --- AI rewrite summaries (optional, skips if GROQ_API_KEY not set) ---
+    try:
+        unique_articles = rewrite_batch(unique_articles)
+    except Exception:
+        logger.exception("AI rewrite failed — continuing with original summaries")
 
     # --- Upsert to Supabase ---
     if unique_articles:
