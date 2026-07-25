@@ -1,5 +1,5 @@
 version: 1
-last_updated: '2026-07-24'
+last_updated: '2026-07-25'
 sources:
 - name: TechCrunch
   type: rss
@@ -172,14 +172,6 @@ sources:
 - name: NVIDIA Developer Blog
   type: rss
   url: https://developer.nvidia.com/blog/feed/
-  category: ai
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: Google Research (alt)
-  type: rss
-  url: https://research.google/blog/rss/
   category: ai
   tier:
   - 1
@@ -377,14 +369,6 @@ sources:
   - 1
   - 2
   enabled: true
-- name: TLDR AI
-  type: rss
-  url: https://raw.githubusercontent.com/alan-turing-institute/ai-rss-feeds/main/feeds/tldr-ai.xml
-  category: ai
-  tier:
-  - 1
-  - 2
-  enabled: true
 - name: Exponential View
   type: rss
   url: https://www.exponentialview.co/feed/
@@ -452,14 +436,6 @@ sources:
 - name: Help Net Security
   type: rss
   url: https://www.helpnetsecurity.com/feed/
-  category: cybersecurity
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: CSO Online
-  type: rss
-  url: https://www.csoonline.com/feed
   category: cybersecurity
   tier:
   - 1
@@ -1113,25 +1089,9 @@ sources:
   - 1
   - 2
   enabled: true
-- name: Docker Blog
-  type: rss
-  url: https://www.docker.com/feed/
-  category: cloud
-  tier:
-  - 1
-  - 2
-  enabled: true
 - name: AWS Blog
   type: rss
   url: https://aws.amazon.com/blogs/aws/feed/
-  category: cloud
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: Azure Blog
-  type: rss
-  url: https://azure.microsoft.com/blog/feed/
   category: cloud
   tier:
   - 1
@@ -1236,14 +1196,6 @@ sources:
 - name: Dev.to
   type: rss
   url: https://dev.to/feed
-  category: developer
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: HackerNoon
-  type: rss
-  url: https://hackernoon.com/feed
   category: developer
   tier:
   - 1
@@ -1497,14 +1449,6 @@ sources:
   - 1
   - 2
   enabled: true
-- name: Neowin
-  type: rss
-  url: https://www.neowin.net/news/rss/microsoft
-  category: windows
-  tier:
-  - 1
-  - 2
-  enabled: true
 - name: The Register
   type: rss
   url: https://www.theregister.com/headlines.atom
@@ -1745,14 +1689,6 @@ sources:
   - 1
   - 2
   enabled: true
-- name: Space.com
-  type: rss
-  url: https://www.space.com/feeds.xml
-  category: space
-  tier:
-  - 1
-  - 2
-  enabled: true
 - name: Electrek
   type: rss
   url: https://electrek.co/feed/
@@ -1809,14 +1745,6 @@ sources:
   - 1
   - 2
   enabled: true
-- name: EdTech Magazine
-  type: rss
-  url: https://edtechmagazine.com/k12/rss.xml
-  category: edtech
-  tier:
-  - 1
-  - 2
-  enabled: true
 - name: Healthcare IT News
   type: rss
   url: https://www.healthcareitnews.com/rss.xml
@@ -1852,14 +1780,6 @@ sources:
 - name: Kotaku
   type: rss
   url: https://kotaku.com/rss
-  category: gaming
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: GameSpot
-  type: rss
-  url: https://www.gamespot.com/feeds/news/
   category: gaming
   tier:
   - 1
@@ -2068,14 +1988,6 @@ sources:
 - name: Fintech Times
   type: rss
   url: https://thefintechtimes.com/feed/
-  category: fintech
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: Finextra
-  type: rss
-  url: https://www.finextra.com/rss/headlines.aspx
   category: fintech
   tier:
   - 1
@@ -2433,33 +2345,9 @@ sources:
   - 1
   - 2
   enabled: true
-- name: TechRadar
-  type: rss
-  url: https://www.techradar.com/rss
-  category: tech
-  tier:
-  - 1
-  - 2
-  enabled: true
 - name: InformationWeek
   type: rss
   url: https://www.informationweek.com/rss.xml
-  category: tech
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: SlashGear
-  type: rss
-  url: https://www.slashgear.com/rss/
-  category: tech
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: How-To Geek
-  type: rss
-  url: https://www.howtogeek.com/feed/
   category: tech
   tier:
   - 1
@@ -2545,14 +2433,6 @@ sources:
   - 1
   - 2
   enabled: true
-- name: Google Research (old)
-  type: rss
-  url: https://blog.research.google/feeds/posts/default
-  category: ai
-  tier:
-  - 1
-  - 2
-  enabled: true
 - name: Microsoft AI Blog
   type: rss
   url: https://www.microsoft.com/en-us/ai/blog/feed/
@@ -2564,14 +2444,6 @@ sources:
 - name: Apple ML Research
   type: rss
   url: https://machinelearning.apple.com/rss.xml
-  category: ai
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: AI News (Buttondown)
-  type: rss
-  url: https://buttondown.email/ainews/rss
   category: ai
   tier:
   - 1
@@ -2596,14 +2468,6 @@ sources:
 - name: Lilian Weng Blog
   type: rss
   url: https://lilianweng.github.io/index.xml
-  category: ai
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: Maarten Grootendorst NL
-  type: rss
-  url: https://newsletter.maartengrootendorst.com/feed
   category: ai
   tier:
   - 1
@@ -2777,22 +2641,6 @@ sources:
   - 1
   - 2
   enabled: true
-- name: Without Boats
-  type: rss
-  url: https://without.boats/index.xml
-  category: developer
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: fasterthanlime
-  type: rss
-  url: https://fasterthanli.me/index.xml
-  category: developer
-  tier:
-  - 1
-  - 2
-  enabled: true
 - name: High Scalability
   type: rss
   url: https://highscalability.com/rss/
@@ -2861,14 +2709,6 @@ sources:
   type: rss
   url: https://medium.com/feed/proandroiddev
   category: mobile
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: Dark Reading
-  type: rss
-  url: https://darkreading.com/rss.xml
-  category: cybersecurity
   tier:
   - 1
   - 2
@@ -3012,14 +2852,6 @@ sources:
 - name: AWS Media Blog
   type: rss
   url: https://aws.amazon.com/blogs/media/feed/
-  category: cloud
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: AWS Marketplace Blog
-  type: rss
-  url: https://aws.amazon.com/blogs/awsmarketplace/feed/
   category: cloud
   tier:
   - 1
@@ -3201,49 +3033,9 @@ sources:
   - 1
   - 2
   enabled: true
-- name: JetBrains Java
-  type: rss
-  url: https://blog.jetbrains.com/java/feed
-  category: developer
-  tier:
-  - 1
-  - 2
-  enabled: true
 - name: JetBrains .NET
   type: rss
   url: https://blog.jetbrains.com/.net/feed
-  category: developer
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: JetBrains Go
-  type: rss
-  url: https://blog.jetbrains.com/go/feed
-  category: developer
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: JetBrains Rust
-  type: rss
-  url: https://blog.jetbrains.com/rust/feed
-  category: developer
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: JetBrains Ruby
-  type: rss
-  url: https://blog.jetbrains.com/ruby/feed
-  category: developer
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: JetBrains Scala
-  type: rss
-  url: https://blog.jetbrains.com/scala/feed
   category: developer
   tier:
   - 1
@@ -3257,14 +3049,6 @@ sources:
   - 1
   - 2
   enabled: true
-- name: JetBrains WebStorm
-  type: rss
-  url: https://blog.jetbrains.com/webstorm/feed
-  category: developer
-  tier:
-  - 1
-  - 2
-  enabled: true
 - name: JetBrains IntelliJ
   type: rss
   url: https://blog.jetbrains.com/idea/feed
@@ -3273,33 +3057,9 @@ sources:
   - 1
   - 2
   enabled: true
-- name: JetBrains PHPStorm
-  type: rss
-  url: https://blog.jetbrains.com/phpstorm/feed
-  category: developer
-  tier:
-  - 1
-  - 2
-  enabled: true
 - name: JetBrains PyCharm
   type: rss
   url: https://blog.jetbrains.com/pycharm/feed
-  category: developer
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: JetBrains CLion
-  type: rss
-  url: https://blog.jetbrains.com/clion/feed
-  category: developer
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: JetBrains DataGrip
-  type: rss
-  url: https://blog.jetbrains.com/datagrip/feed
   category: developer
   tier:
   - 1
@@ -3321,25 +3081,9 @@ sources:
   - 1
   - 2
   enabled: true
-- name: React Native Blog
-  type: rss
-  url: https://reactnative.dev/blog/feed.xml
-  category: mobile
-  tier:
-  - 1
-  - 2
-  enabled: true
 - name: Ionic Blog
   type: rss
   url: https://blog.ionicframework.com/feed/
-  category: mobile
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: JetBrains Android
-  type: rss
-  url: https://blog.jetbrains.com/android/feed
   category: mobile
   tier:
   - 1
@@ -3484,14 +3228,6 @@ sources:
 - name: arXiv CS.AR
   type: rss
   url: https://export.arxiv.org/rss/cs.AR
-  category: research
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: arXiv Stat.ML
-  type: rss
-  url: https://export.arxiv.org/rss/stat.ML
   category: research
   tier:
   - 1
@@ -3785,22 +3521,6 @@ sources:
   - 1
   - 2
   enabled: true
-- name: ZDNet Reviews
-  type: rss
-  url: https://www.zdnet.com/topic/reviews/rss.xml
-  category: enterprise
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: ZDNet Deals
-  type: rss
-  url: https://www.zdnet.com/topic/deals/rss.xml
-  category: enterprise
-  tier:
-  - 1
-  - 2
-  enabled: true
 - name: ZDNet AI
   type: rss
   url: https://www.zdnet.com/topic/artificial-intelligence/rss.xml
@@ -3937,26 +3657,10 @@ sources:
   - 1
   - 2
   enabled: true
-- name: Wind Power Engineering
-  type: rss
-  url: https://www.windpowerengineering.com/feed/feed/
-  category: climate
-  tier:
-  - 1
-  - 2
-  enabled: true
 - name: Renewable Energy World
   type: rss
   url: https://renewableenergyworld.com/feed/
   category: climate
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: Darknet Diaries
-  type: rss
-  url: https://feeds.megaphone.fm/darknetdiaries
-  category: podcast
   tier:
   - 1
   - 2
@@ -4097,14 +3801,6 @@ sources:
   - 1
   - 2
   enabled: true
-- name: Honeybadger Blog
-  type: rss
-  url: https://blog.honeybadger.io/feed.xml
-  category: developer
-  tier:
-  - 1
-  - 2
-  enabled: true
 - name: The Changelog
   type: rss
   url: https://changelog.com/podcast/feed
@@ -4233,14 +3929,6 @@ sources:
   - 1
   - 2
   enabled: true
-- name: Congress.gov Most Viewed
-  type: rss
-  url: https://www.congress.gov/rss/most-viewed-bills.xml
-  category: regulation
-  tier:
-  - 1
-  - 2
-  enabled: true
 - name: Pandaily
   type: rss
   url: https://pandaily.com/feed/
@@ -4289,14 +3977,6 @@ sources:
   - 1
   - 2
   enabled: true
-- name: Grafana Blog
-  type: rss
-  url: https://grafana.com/blog/index.xml
-  category: developer
-  tier:
-  - 1
-  - 2
-  enabled: true
 - name: Fly.io Blog
   type: rss
   url: https://fly.io/blog/feed.xml
@@ -4324,22 +4004,6 @@ sources:
 - name: TLDR AI
   type: rss
   url: https://tldr.tech/api/rss/ai
-  category: ai
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: One Useful Thing
-  type: rss
-  url: https://oneusefulthing.substack.com/feed
-  category: ai
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: The Rundown AI
-  type: rss
-  url: https://rss.beehiiv.com/feeds/2R3C6Bt5wj.xml
   category: ai
   tier:
   - 1
@@ -4373,14 +4037,6 @@ sources:
   type: rss
   url: https://pluralistic.net/feed/
   category: tech
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: Chipstrat
-  type: rss
-  url: https://chipstrat.substack.com/feed
-  category: hardware
   tier:
   - 1
   - 2
@@ -4553,19 +4209,10 @@ sources:
   - 1
   - 2
   enabled: true
-# ── General Tech (Major) ──
 - name: The Next Web
   type: rss
   url: https://thenextweb.com/feed
   category: tech
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: BBC Science
-  type: rss
-  url: https://www.bbc.com/news/science_and_environment/rss.xml
-  category: science
   tier:
   - 1
   - 2
@@ -4586,7 +4233,6 @@ sources:
   - 1
   - 2
   enabled: true
-# ── AI Labs ──
 - name: OpenAI Blog
   type: rss
   url: https://openai.com/blog/rss.xml
@@ -4603,7 +4249,6 @@ sources:
   - 1
   - 2
   enabled: true
-# ── Cybersecurity ──
 - name: Sucuri Blog
   type: rss
   url: https://blog.sucuri.net/feed
@@ -4620,7 +4265,6 @@ sources:
   - 1
   - 2
   enabled: true
-# ── Cloud & DevOps ──
 - name: Linode Blog
   type: rss
   url: https://www.linode.com/blog/feed/
@@ -4629,7 +4273,6 @@ sources:
   - 1
   - 2
   enabled: true
-# ── Developer & Open Source ──
 - name: Python Blog
   type: rss
   url: https://blog.python.org/feeds/posts/default
@@ -4657,14 +4300,6 @@ sources:
 - name: Python DevBlog
   type: rss
   url: https://devblogs.microsoft.com/python/feed/
-  category: developer
-  tier:
-  - 1
-  - 2
-  enabled: true
-- name: VS Code Blog
-  type: rss
-  url: https://devblogs.microsoft.com/visualstudio/feed/
   category: developer
   tier:
   - 1
@@ -4718,7 +4353,6 @@ sources:
   - 1
   - 2
   enabled: true
-# ── Hardware ──
 - name: TechPowerUp
   type: rss
   url: https://www.techpowerup.com/rss/news
@@ -4735,7 +4369,6 @@ sources:
   - 1
   - 2
   enabled: true
-# ── Science ──
 - name: SciTech Daily
   type: rss
   url: https://scitechdaily.com/feed/
@@ -4752,7 +4385,6 @@ sources:
   - 1
   - 2
   enabled: true
-# ── Business & Startups ──
 - name: Sifted
   type: rss
   url: https://sifted.eu/feed
@@ -4777,7 +4409,6 @@ sources:
   - 1
   - 2
   enabled: true
-# ── Regional: India ──
 - name: Medianama
   type: rss
   url: https://www.medianama.com/feed/
@@ -4786,7 +4417,6 @@ sources:
   - 1
   - 2
   enabled: true
-# ── MENA Tech ──
 - name: Wamda
   type: rss
   url: https://www.wamda.com/feed
@@ -4795,16 +4425,6 @@ sources:
   - 1
   - 2
   enabled: true
-# ── SE Asia ──
-- name: Channel NewsAsia
-  type: rss
-  url: https://www.channelnewsasia.com/api/v1/rss-outbound-feed
-  category: se_asia
-  tier:
-  - 1
-  - 2
-  enabled: true
-# ── YouTube Channels (RSS) ──
 - name: Linus Tech Tips
   type: rss
   url: https://www.youtube.com/feeds/videos.xml?channel_id=UCXuqSBlHAE6Xw-yeJA0Tunw
@@ -4813,9 +4433,6 @@ sources:
   - 1
   - 2
   enabled: true
-# ─────────────────────────────────────────────
-# API SOURCES (Tier 2/3 — website pipeline)
-# ─────────────────────────────────────────────
 - name: TerminalFeed
   type: api
   module: workers.terminalfeed
@@ -4842,15 +4459,6 @@ sources:
   - 3
   enabled: true
   requires_key: APITUBE_API_KEY
-- name: Product Hunt
-  type: api
-  module: workers.producthunt
-  function: fetch_all_producthunt
-  tier:
-  - 2
-  - 3
-  enabled: true
-  requires_key: PRODUCTHUNT_API_KEY
 - name: finlight
   type: api
   module: workers.finlight
@@ -4860,3 +4468,2701 @@ sources:
   - 3
   enabled: true
   requires_key: FINLIGHT_API_KEY
+- name: IEEE Spectrum Robotics
+  type: rss
+  url: https://spectrum.ieee.org/feeds/topic/robotics.rss
+  category: robotics
+  tier: &id001
+  - 1
+  - 2
+  enabled: true
+- name: The Robot Report
+  type: rss
+  url: https://www.therobotreport.com/feed/
+  category: robotics
+  tier: *id001
+  enabled: true
+- name: Robotics Business Review
+  type: rss
+  url: https://roboticsbusinessreview.com/feed/
+  category: robotics
+  tier: *id001
+  enabled: true
+- name: IEEE Spectrum Automation
+  type: rss
+  url: https://spectrum.ieee.org/feeds/automaton.rss
+  category: robotics
+  tier: *id001
+  enabled: true
+- name: Robotics Today
+  type: rss
+  url: https://roboticstoday.com/feed/
+  category: robotics
+  tier: *id001
+  enabled: true
+- name: Automated Robotics
+  type: rss
+  url: https://automatedrobotics.com.au/feed/
+  category: robotics
+  tier: *id001
+  enabled: true
+- name: Qiskit Blog
+  type: rss
+  url: https://qiskit.org/blog/feed.xml
+  category: quantum
+  tier: *id001
+  enabled: true
+- name: The Quantum Insider
+  type: rss
+  url: https://thequantuminsider.com/feed/
+  category: quantum
+  tier: *id001
+  enabled: true
+- name: Quantum Computing Report
+  type: rss
+  url: https://quantumcomputingreport.com/feed/
+  category: quantum
+  tier: *id001
+  enabled: true
+- name: IEEE Spectrum Quantum
+  type: rss
+  url: https://spectrum.ieee.org/feeds/topic/quantum-computing.rss
+  category: quantum
+  tier: *id001
+  enabled: true
+- name: Quantum Frontiers
+  type: rss
+  url: https://quantumfrontiers.com/feed/
+  category: quantum
+  tier: *id001
+  enabled: true
+- name: HR Dive
+  type: rss
+  url: https://www.hrdive.com/feeds/news/
+  category: hrtech
+  tier: *id001
+  enabled: true
+- name: HR Technologist
+  type: rss
+  url: https://www.hrtechnologist.com/feed/
+  category: hrtech
+  tier: *id001
+  enabled: true
+- name: People Matters
+  type: rss
+  url: https://www.peoplematters.in/feed
+  category: hrtech
+  tier: *id001
+  enabled: true
+- name: Workforce
+  type: rss
+  url: https://www.workforce.com/feed/
+  category: hrtech
+  tier: *id001
+  enabled: true
+- name: NoCode Journal
+  type: rss
+  url: https://nocodejournal.com/feed/
+  category: nocode
+  tier: *id001
+  enabled: true
+- name: Automate.io Blog
+  type: rss
+  url: https://automate.io/blog/feed/
+  category: nocode
+  tier: *id001
+  enabled: true
+- name: Retool Blog
+  type: rss
+  url: https://retool.com/blog/rss.xml
+  category: nocode
+  tier: *id001
+  enabled: true
+- name: Softr Blog
+  type: rss
+  url: https://www.softr.io/blog/rss
+  category: nocode
+  tier: *id001
+  enabled: true
+- name: Real Estate Tech News
+  type: rss
+  url: https://realestatetech.news/feed/
+  category: proptech
+  tier: *id001
+  enabled: true
+- name: PropTech Today
+  type: rss
+  url: https://proptechtoday.com/feed/
+  category: proptech
+  tier: *id001
+  enabled: true
+- name: CRE Tech
+  type: rss
+  url: https://cretech.com/feed/
+  category: proptech
+  tier: *id001
+  enabled: true
+- name: The Real Deal Tech
+  type: rss
+  url: https://therealdeal.com/feed/
+  category: proptech
+  tier: *id001
+  enabled: true
+- name: RegTech Analyst
+  type: rss
+  url: https://www.regtechanalyst.com/feed/
+  category: regtech
+  tier: *id001
+  enabled: true
+- name: ComplyAdvantage Blog
+  type: rss
+  url: https://complyadvantage.com/insights/feed/
+  category: regtech
+  tier: *id001
+  enabled: true
+- name: Finextra Regulation
+  type: rss
+  url: https://www.finextra.com/rss/regulation.rss
+  category: regtech
+  tier: *id001
+  enabled: true
+- name: The Spoon
+  type: rss
+  url: https://thespoon.tech/feed/
+  category: foodtech
+  tier: *id001
+  enabled: true
+- name: Food Dive
+  type: rss
+  url: https://www.fooddive.com/feeds/news/
+  category: foodtech
+  tier: *id001
+  enabled: true
+- name: Food Navigator
+  type: rss
+  url: https://www.foodnavigator.com/rss
+  category: foodtech
+  tier: *id001
+  enabled: true
+- name: Food Tank
+  type: rss
+  url: https://foodtank.com/feed/
+  category: foodtech
+  tier: *id001
+  enabled: true
+- name: AdExchanger
+  type: rss
+  url: https://www.adexchanger.com/feed/
+  category: adtech
+  tier: *id001
+  enabled: true
+- name: Digiday
+  type: rss
+  url: https://digiday.com/feed/
+  category: adtech
+  tier: *id001
+  enabled: true
+- name: Ad Age
+  type: rss
+  url: https://adage.com/rss
+  category: adtech
+  tier: *id001
+  enabled: true
+- name: MarTech Today
+  type: rss
+  url: https://martechtoday.com/feed
+  category: adtech
+  tier: *id001
+  enabled: true
+- name: Adweek
+  type: rss
+  url: https://www.adweek.com/feed/
+  category: adtech
+  tier: *id001
+  enabled: true
+- name: Light Reading
+  type: rss
+  url: https://www.lightreading.com/rss
+  category: telecom
+  tier: *id001
+  enabled: true
+- name: Fierce Telecom
+  type: rss
+  url: https://www.fiercewireless.com/rss/xml
+  category: telecom
+  tier: *id001
+  enabled: true
+- name: Telecoms.com
+  type: rss
+  url: https://www.telecoms.com/feed
+  category: telecom
+  tier: *id001
+  enabled: true
+- name: Mobile World Live
+  type: rss
+  url: https://www.mobileworldlive.com/feed
+  category: telecom
+  tier: *id001
+  enabled: true
+- name: RCR Wireless
+  type: rss
+  url: https://www.rcrwireless.com/feed
+  category: telecom
+  tier: *id001
+  enabled: true
+- name: InsideEVs
+  type: rss
+  url: https://insideevs.com/rss/news/
+  category: ev
+  tier: *id001
+  enabled: true
+- name: Charged EVs
+  type: rss
+  url: https://chargedevs.com/feed/
+  category: ev
+  tier: *id001
+  enabled: true
+- name: EV Obsession
+  type: rss
+  url: https://evobsession.com/feed/
+  category: ev
+  tier: *id001
+  enabled: true
+- name: Green Car Reports
+  type: rss
+  url: https://www.greencarreports.com/rss/news
+  category: ev
+  tier: *id001
+  enabled: true
+- name: Electrive
+  type: rss
+  url: https://www.electrive.com/feed/
+  category: ev
+  tier: *id001
+  enabled: true
+- name: Trending Topics CE
+  type: rss
+  url: https://trendingtopics.eu/feed/
+  category: eastern_europe
+  tier: *id001
+  enabled: true
+- name: ITKey
+  type: rss
+  url: https://itkey.com/feed/
+  category: eastern_europe
+  tier: *id001
+  enabled: true
+- name: SeeNews Tech
+  type: rss
+  url: https://seenews.com/technology/feed
+  category: eastern_europe
+  tier: *id001
+  enabled: true
+- name: Spicy IP
+  type: rss
+  url: https://spicyip.com/feed/
+  category: eastern_europe
+  tier: *id001
+  enabled: true
+- name: Emerging Europe
+  type: rss
+  url: https://emerging-europe.com/feed/
+  category: eastern_europe
+  tier: *id001
+  enabled: true
+- name: MENAbytes
+  type: rss
+  url: https://menabytes.com/feed/
+  category: middle_east
+  tier: *id001
+  enabled: true
+- name: Startup MGZN
+  type: rss
+  url: https://startupmgzn.com/feed/
+  category: middle_east
+  tier: *id001
+  enabled: true
+- name: Arabian Business Tech
+  type: rss
+  url: https://www.arabianbusiness.com/rss
+  category: middle_east
+  tier: *id001
+  enabled: true
+- name: Gulf Tech News
+  type: rss
+  url: https://gulftechnews.com/feed/
+  category: middle_east
+  tier: *id001
+  enabled: true
+- name: MAGNiTT
+  type: rss
+  url: https://magnitt.com/feed
+  category: mena
+  tier: *id001
+  enabled: true
+- name: Middle East Monitor Tech
+  type: rss
+  url: https://www.middleeastmonitor.com/feed/
+  category: mena
+  tier: *id001
+  enabled: true
+- name: ArabNet
+  type: rss
+  url: https://www.arabnet.me/feed/
+  category: mena
+  tier: *id001
+  enabled: true
+- name: Wamda MENA Startups
+  type: rss
+  url: https://www.wamda.com/accelerate/feed
+  category: mena
+  tier: *id001
+  enabled: true
+- name: MobiHealthNews
+  type: rss
+  url: https://www.mobihealthnews.com/feed/
+  category: healthtech
+  tier: *id001
+  enabled: true
+- name: Health IT News
+  type: rss
+  url: https://www.healthcareitnews.com/rss
+  category: healthtech
+  tier: *id001
+  enabled: true
+- name: Digital Health News
+  type: rss
+  url: https://www.digitalhealthnews.com/feed/
+  category: healthtech
+  tier: *id001
+  enabled: true
+- name: Rock Health
+  type: rss
+  url: https://rockhealth.com/feed/
+  category: healthtech
+  tier: *id001
+  enabled: true
+- name: HIMSS News
+  type: rss
+  url: https://www.himss.org/news/rss.xml
+  category: healthtech
+  tier: *id001
+  enabled: true
+- name: LawSites
+  type: rss
+  url: https://www.lawsitesblog.com/feed
+  category: legaltech
+  tier: *id001
+  enabled: true
+- name: Legal Tech Hub
+  type: rss
+  url: https://legaltechhub.com/feed/
+  category: legaltech
+  tier: *id001
+  enabled: true
+- name: Above the Law Tech
+  type: rss
+  url: https://abovethelaw.com/feed/
+  category: legaltech
+  tier: *id001
+  enabled: true
+- name: Legaltech News
+  type: rss
+  url: https://www.law.com/legaltechnews/rss/
+  category: legaltech
+  tier: *id001
+  enabled: true
+- name: Insurance Thought Leadership
+  type: rss
+  url: https://www.insurancethoughtleadership.com/feed
+  category: insurtech
+  tier: *id001
+  enabled: true
+- name: InsurTech Insights
+  type: rss
+  url: https://insurtechinsights.com/feed/
+  category: insurtech
+  tier: *id001
+  enabled: true
+- name: Digital Insurance
+  type: rss
+  url: https://www.digitalinsurance.com/feed/
+  category: insurtech
+  tier: *id001
+  enabled: true
+- name: FTC InsurTech
+  type: rss
+  url: https://www.insurtechfx.com/feed/
+  category: insurtech
+  tier: *id001
+  enabled: true
+- name: Coverager
+  type: rss
+  url: https://coverager.com/feed/
+  category: insurtech
+  tier: *id001
+  enabled: true
+- name: Precision Agriculture
+  type: rss
+  url: https://www.precisionag.com/feed/
+  category: agritech
+  tier: *id001
+  enabled: true
+- name: AgriTech Tomorrow
+  type: rss
+  url: https://agritechtomorrow.com/feed/
+  category: agritech
+  tier: *id001
+  enabled: true
+- name: Agri-Pulse
+  type: rss
+  url: https://www.agri-pulse.com/feed
+  category: agritech
+  tier: *id001
+  enabled: true
+- name: Precision Farming
+  type: rss
+  url: https://precisionfarming.com/feed/
+  category: agritech
+  tier: *id001
+  enabled: true
+- name: GEN News
+  type: rss
+  url: https://www.genengnews.com/feed/
+  category: biotech
+  tier: *id001
+  enabled: true
+- name: BioPharma Dive
+  type: rss
+  url: https://www.biopharmadive.com/feeds/news/
+  category: biotech
+  tier: *id001
+  enabled: true
+- name: Endpoints News
+  type: rss
+  url: https://endpts.com/feed/
+  category: biotech
+  tier: *id001
+  enabled: true
+- name: STAT News BioPharma
+  type: rss
+  url: https://www.statnews.com/category/biopharma/feed/
+  category: biotech
+  tier: *id001
+  enabled: true
+- name: Fierce Biotech
+  type: rss
+  url: https://www.fiercebiotech.com/rss/xml
+  category: biotech
+  tier: *id001
+  enabled: true
+- name: EdSurge
+  type: rss
+  url: https://www.edsurge.com/feed
+  category: edtech
+  tier: *id001
+  enabled: true
+- name: eLearning Industry
+  type: rss
+  url: https://elearningindustry.com/feed
+  category: edtech
+  tier: *id001
+  enabled: true
+- name: Class Tech Tips
+  type: rss
+  url: https://classtechtips.com/feed/
+  category: edtech
+  tier: *id001
+  enabled: true
+- name: Inside Higher Ed Tech
+  type: rss
+  url: https://www.insidehighered.com/rss/technology
+  category: edtech
+  tier: *id001
+  enabled: true
+- name: Supply Chain Dive
+  type: rss
+  url: https://www.supplychaindive.com/feeds/news/
+  category: supplychain
+  tier: *id001
+  enabled: true
+- name: Logistics Management
+  type: rss
+  url: https://www.logisticsmgmt.com/rss
+  category: supplychain
+  tier: *id001
+  enabled: true
+- name: Modern Materials Handling
+  type: rss
+  url: https://www.mmh.com/rss
+  category: supplychain
+  tier: *id001
+  enabled: true
+- name: Inbound Logistics
+  type: rss
+  url: https://www.inboundlogistics.com/rss
+  category: supplychain
+  tier: *id001
+  enabled: true
+- name: Supply Chain Digital
+  type: rss
+  url: https://www.supplychaindigital.com/feed
+  category: supplychain
+  tier: *id001
+  enabled: true
+- name: BetaKit
+  type: rss
+  url: https://betakit.com/feed/
+  category: north_america
+  tier: *id001
+  enabled: true
+- name: Techcouver
+  type: rss
+  url: https://techcouver.com/feed/
+  category: north_america
+  tier: *id001
+  enabled: true
+- name: Daily Hive Vancouver
+  type: rss
+  url: https://dailyhive.com/vancouver/rss
+  category: north_america
+  tier: *id001
+  enabled: true
+- name: IT World Canada
+  type: rss
+  url: https://www.itworldcanada.com/feed
+  category: north_america
+  tier: *id001
+  enabled: true
+- name: Game Developer
+  type: rss
+  url: https://www.gamedeveloper.com/rss.xml
+  category: gamingdev
+  tier: *id001
+  enabled: true
+- name: IndieDB
+  type: rss
+  url: https://www.indiedb.com/rss
+  category: gamingdev
+  tier: *id001
+  enabled: true
+- name: Gamasutra
+  type: rss
+  url: https://www.gamedeveloper.com/rss
+  category: gamingdev
+  tier: *id001
+  enabled: true
+- name: itch.io Devlog
+  type: rss
+  url: https://itch.io/devlog/feed
+  category: gamingdev
+  tier: *id001
+  enabled: true
+- name: SaaSMag
+  type: rss
+  url: https://saasmag.net/feed/
+  category: saas
+  tier: *id001
+  enabled: true
+- name: SaaS Capital Blog
+  type: rss
+  url: https://www.saascapital.com/blog/feed
+  category: saas
+  tier: *id001
+  enabled: true
+- name: SaaS Scout
+  type: rss
+  url: https://saasscout.com/feed/
+  category: saas
+  tier: *id001
+  enabled: true
+- name: OpenView Blog
+  type: rss
+  url: https://openviewpartners.com/blog/feed/
+  category: saas
+  tier: *id001
+  enabled: true
+- name: Practical Ecommerce
+  type: rss
+  url: https://pec-ly.com/feed
+  category: ecommerce
+  tier: *id001
+  enabled: true
+- name: EcommerceBytes
+  type: rss
+  url: https://www.ecommercebytes.com/rss/
+  category: ecommerce
+  tier: *id001
+  enabled: true
+- name: Shopify Engineering
+  type: rss
+  url: https://engineering.shopify.com/feed
+  category: ecommerce
+  tier: *id001
+  enabled: true
+- name: BigCommerce Blog
+  type: rss
+  url: https://www.bigcommerce.com/blog/feed/
+  category: ecommerce
+  tier: *id001
+  enabled: true
+- name: Linux Journal
+  type: rss
+  url: https://www.linuxjournal.com/feed
+  category: linux
+  tier: *id001
+  enabled: true
+- name: It's FOSS
+  type: rss
+  url: https://itsfoss.com/feed/
+  category: linux
+  tier: *id001
+  enabled: true
+- name: Linux Today
+  type: rss
+  url: https://www.linuxtoday.com/feed/
+  category: linux
+  tier: *id001
+  enabled: true
+- name: DistroWatch
+  type: rss
+  url: https://distrowatch.com/news/dw.xml
+  category: linux
+  tier: *id001
+  enabled: true
+- name: OC Register Tech
+  type: rss
+  url: https://www.ocregister.com/feed/
+  category: windows
+  tier: *id001
+  enabled: true
+- name: Pureinfotech
+  type: rss
+  url: https://pureinfotech.com/feed/
+  category: windows
+  tier: *id001
+  enabled: true
+- name: MacObserver
+  type: rss
+  url: https://www.macobserver.com/feed/
+  category: apple
+  tier: *id001
+  enabled: true
+- name: MacStories
+  type: rss
+  url: https://www.macstories.net/feed/
+  category: apple
+  tier: *id001
+  enabled: true
+- name: Contxto
+  type: rss
+  url: https://contxto.com/feed/
+  category: latam
+  tier: *id001
+  enabled: true
+- name: Plataforma Media Tech
+  type: rss
+  url: https://www.plataformamedia.com/feed/
+  category: latam
+  tier: *id001
+  enabled: true
+- name: A List Apart
+  type: rss
+  url: https://alistapart.com/main/feed/
+  category: design
+  tier: *id001
+  enabled: true
+- name: InVision Blog
+  type: rss
+  url: https://www.invisionapp.com/blog/feed
+  category: design
+  tier: *id001
+  enabled: true
+- name: Figma Blog
+  type: rss
+  url: https://www.figma.com/blog/feed/
+  category: design
+  tier: *id001
+  enabled: true
+- name: Chief Marketing Technologist
+  type: rss
+  url: https://chiefmartec.com/feed/
+  category: martech
+  tier: *id001
+  enabled: true
+- name: Marketing Tech Blog
+  type: rss
+  url: https://www.marketingtechblog.com/feed/
+  category: martech
+  tier: *id001
+  enabled: true
+- name: MarTech Series
+  type: rss
+  url: https://martechseries.com/feed/
+  category: martech
+  tier: *id001
+  enabled: true
+- name: Factor Daily
+  type: rss
+  url: https://factordaily.com/feed/
+  category: south_asia
+  tier: *id001
+  enabled: true
+- name: Reuters World
+  type: rss
+  url: https://www.reutersagency.com/feed/
+  category: news
+  tier: *id001
+  enabled: true
+- name: AP News Tech
+  type: rss
+  url: https://rsshub.app/apnews/topics/technology
+  category: news
+  tier: *id001
+  enabled: true
+- name: NPR Technology
+  type: rss
+  url: https://feeds.npr.org/1019/rss.xml
+  category: news
+  tier: *id001
+  enabled: true
+- name: Hacker News (best)
+  type: rss
+  url: https://hnrss.org/best
+  category: community
+  tier: *id001
+  enabled: true
+- name: Congress.gov Most Viewed
+  type: rss
+  url: https://www.congress.gov/rss/most-viewed-bills
+  category: regulation
+  tier: *id001
+  enabled: true
+- name: Harvard Business Review Tech
+  type: rss
+  url: https://hbr.org/topic/subject/technology/feed
+  category: business
+  tier: *id001
+  enabled: true
+- name: McKinsey Digital
+  type: rss
+  url: https://www.mckinsey.com/featured-insights/artificial-intelligence/rss
+  category: business
+  tier: *id001
+  enabled: true
+- name: NZ Herald Tech
+  type: rss
+  url: https://www.nzherald.co.nz/arc/outboundfeeds/rss/section/technology/
+  category: oceania
+  tier: *id001
+  enabled: true
+- name: Startup Daily AU
+  type: rss
+  url: https://www.startupdaily.net/feed/
+  category: oceania
+  tier: *id001
+  enabled: true
+- name: TouchArcade
+  type: rss
+  url: https://toucharcade.com/feed/
+  category: gaming
+  tier: *id001
+  enabled: true
+- name: GameSpot
+  type: rss
+  url: https://www.gamespot.com/rss/
+  category: gaming
+  tier: *id001
+  enabled: true
+- name: Payments Dive
+  type: rss
+  url: https://www.paymentsdive.com/feeds/news/
+  category: fintech
+  tier: *id001
+  enabled: true
+- name: The Financial Brand
+  type: rss
+  url: https://thefinancialbrand.com/feed
+  category: fintech
+  tier: *id001
+  enabled: true
+- name: Finextra News
+  type: rss
+  url: https://www.finextra.com/rss/news
+  category: fintech
+  tier: *id001
+  enabled: true
+- name: Khmer Times Tech
+  type: rss
+  url: https://www.khmertimeskh.com/feed/
+  category: cambodia
+  tier: *id001
+  enabled: true
+- name: Cambodia Daily
+  type: rss
+  url: https://www.cambodiadaily.com/feed/
+  category: cambodia
+  tier: *id001
+  enabled: true
+- name: PlanetScale Blog
+  type: rss
+  url: https://planetscale.com/blog/rss.xml
+  category: database
+  tier: *id001
+  enabled: true
+- name: Turso Blog
+  type: rss
+  url: https://turso.tech/blog/rss.xml
+  category: database
+  tier: *id001
+  enabled: true
+- name: Timescale Blog
+  type: rss
+  url: https://www.timescale.com/blog/rss.xml
+  category: database
+  tier: *id001
+  enabled: true
+- name: e27
+  type: rss
+  url: https://e27.co/feed
+  category: se_asia
+  tier: *id001
+  enabled: true
+- name: IoT World Today
+  type: rss
+  url: https://www.iotworldtoday.com/rss
+  category: iot
+  tier: *id001
+  enabled: true
+- name: Stacey on IoT
+  type: rss
+  url: https://staceyoniot.com/feed/
+  category: iot
+  tier: *id001
+  enabled: true
+- name: Darknet Diaries
+  type: rss
+  url: https://darknetdiaries.com/feed/
+  category: podcast
+  tier: *id001
+  enabled: true
+- name: 'YouTube: NetworkChuck'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCzIwpO_0CTpOq0JL1cHnMbg
+  category: youtube
+  tier: *id001
+  enabled: true
+- name: Groq Blog
+  type: rss
+  url: https://groq.com/blog/rss.xml
+  category: research
+  tier: *id001
+  enabled: true
+- name: Cursor Blog
+  type: rss
+  url: https://www.cursor.com/blog/rss.xml
+  category: research
+  tier: *id001
+  enabled: true
+- name: Together AI Blog
+  type: rss
+  url: https://www.together.ai/blog/rss
+  category: research
+  tier: *id001
+  enabled: true
+- name: Mashable Tech
+  type: rss
+  url: https://mashable.com/feeds/rss/tech
+  category: tech
+  tier: *id001
+  enabled: true
+- name: Cloudflare Radar
+  type: rss
+  url: https://blog.cloudflare.com/radar/rss/
+  category: cloud
+  tier: *id001
+  enabled: true
+- name: Deno Blog
+  type: rss
+  url: https://deno.com/blog/rss.xml
+  category: developer
+  tier: *id001
+  enabled: true
+- name: Bun Blog
+  type: rss
+  url: https://bun.sh/blog/rss.xml
+  category: developer
+  tier: *id001
+  enabled: true
+- name: Svelte Blog
+  type: rss
+  url: https://svelte.dev/blog/rss.xml
+  category: developer
+  tier: *id001
+  enabled: true
+- name: Vue.js Blog
+  type: rss
+  url: https://blog.vuejs.org/feed.xml
+  category: developer
+  tier: *id001
+  enabled: true
+- name: Next.js Blog
+  type: rss
+  url: https://nextjs.org/blog/rss.xml
+  category: developer
+  tier: *id001
+  enabled: true
+- name: JetBrains WebStorm
+  type: rss
+  url: https://blog.jetbrains.com/webstorm/rss
+  category: developer
+  tier: &id002
+  - 1
+  - 2
+  enabled: true
+- name: JetBrains DataSpell
+  type: rss
+  url: https://blog.jetbrains.com/datascience/rss
+  category: developer
+  tier: *id002
+  enabled: true
+- name: JetBrains Aqua
+  type: rss
+  url: https://blog.jetbrains.com/aqua/rss
+  category: developer
+  tier: *id002
+  enabled: true
+- name: PyCharm Blog
+  type: rss
+  url: https://blog.jetbrains.com/pycharm/rss
+  category: developer
+  tier: *id002
+  enabled: true
+- name: Istio Blog
+  type: rss
+  url: https://istio.io/latest/feed.xml
+  category: developer
+  tier: *id002
+  enabled: true
+- name: Twilio Blog
+  type: rss
+  url: https://www.twilio.com/blog/feed.xml
+  category: developer
+  tier: *id002
+  enabled: true
+- name: PagerDuty Blog
+  type: rss
+  url: https://www.pagerduty.com/blog/feed/
+  category: developer
+  tier: *id002
+  enabled: true
+- name: Netlify Blog
+  type: rss
+  url: https://www.netlify.com/blog/rss.xml
+  category: developer
+  tier: *id002
+  enabled: true
+- name: Cloudflare Workers Blog
+  type: rss
+  url: https://blog.cloudflare.com/tag/workers/rss/
+  category: developer
+  tier: *id002
+  enabled: true
+- name: PostHog Blog
+  type: rss
+  url: https://posthog.com/blog/rss.xml
+  category: developer
+  tier: *id002
+  enabled: true
+- name: Neon Blog
+  type: rss
+  url: https://neon.tech/blog/rss.xml
+  category: developer
+  tier: *id002
+  enabled: true
+- name: Railway Blog
+  type: rss
+  url: https://blog.railway.app/rss
+  category: developer
+  tier: *id002
+  enabled: true
+- name: Render Blog
+  type: rss
+  url: https://render.com/blog/rss.xml
+  category: developer
+  tier: *id002
+  enabled: true
+- name: DigitalOcean Community
+  type: rss
+  url: https://www.digitalocean.com/community/feed.xml
+  category: developer
+  tier: *id002
+  enabled: true
+- name: Laravel News
+  type: rss
+  url: https://laravel-news.com/feed
+  category: developer
+  tier: *id002
+  enabled: true
+- name: Django Blog
+  type: rss
+  url: https://www.djangoproject.com/rss/blog/
+  category: developer
+  tier: *id002
+  enabled: true
+- name: FastAPI Blog
+  type: rss
+  url: https://fastapi.tiangolo.com/blog/rss.xml
+  category: developer
+  tier: *id002
+  enabled: true
+- name: AI News (Buttondown)
+  type: rss
+  url: https://buttondown.com/ainews/rss
+  category: ai
+  tier: *id002
+  enabled: true
+- name: The Rundown AI
+  type: rss
+  url: https://www.therundownai.com/feed
+  category: ai
+  tier: *id002
+  enabled: true
+- name: Ben's Bites
+  type: rss
+  url: https://bensbites.beehiiv.com/rss
+  category: ai
+  tier: *id002
+  enabled: true
+- name: One Useful Thing
+  type: rss
+  url: https://www.oneusefulthing.org/feed
+  category: ai
+  tier: *id002
+  enabled: true
+- name: Maarten Grootendorst NL
+  type: rss
+  url: https://www.maartengrootendorst.com/feed
+  category: ai
+  tier: *id002
+  enabled: true
+- name: Scott Logic Blog
+  type: rss
+  url: https://www.scottlogic.com/feed.xml
+  category: ai
+  tier: *id002
+  enabled: true
+- name: Hugging Face Daily Papers
+  type: rss
+  url: https://huggingface.co/blog/daily-papers.xml
+  category: ai
+  tier: *id002
+  enabled: true
+- name: Perplexity Blog
+  type: rss
+  url: https://www.perplexity.ai/feed
+  category: ai
+  tier: *id002
+  enabled: true
+- name: Proofpoint Blog
+  type: rss
+  url: https://www.proofpoint.com/us/blog/rss.xml
+  category: cybersecurity
+  tier: *id002
+  enabled: true
+- name: Sophos News
+  type: rss
+  url: https://nakedsecurity.sophos.com/feed/
+  category: cybersecurity
+  tier: *id002
+  enabled: true
+- name: Zscaler Blog
+  type: rss
+  url: https://www.zscaler.com/blogs/security-research/rss
+  category: cybersecurity
+  tier: *id002
+  enabled: true
+- name: Rapid7 Blog
+  type: rss
+  url: https://www.rapid7.com/blog/feed/
+  category: cybersecurity
+  tier: *id002
+  enabled: true
+- name: Qualys Blog
+  type: rss
+  url: https://blog.qualys.com/feed
+  category: cybersecurity
+  tier: *id002
+  enabled: true
+- name: Beers with Talos
+  type: rss
+  url: https://blog.talosintelligence.com/feeds/posts/default
+  category: cybersecurity
+  tier: *id002
+  enabled: true
+- name: InfluxData Blog
+  type: rss
+  url: https://www.influxdata.com/blog/feed/
+  category: cloud
+  tier: *id002
+  enabled: true
+- name: Terraform Blog
+  type: rss
+  url: https://www.terraform.io/blog/feed.xml
+  category: cloud
+  tier: *id002
+  enabled: true
+- name: Pulumi Blog
+  type: rss
+  url: https://www.pulumi.com/blog/feed.xml
+  category: cloud
+  tier: *id002
+  enabled: true
+- name: Inc.com Tech
+  type: rss
+  url: https://www.inc.com/rss/technology.xml
+  category: tech
+  tier: *id002
+  enabled: true
+- name: Fast Company Co.Design
+  type: rss
+  url: https://www.fastcompany.com/design/rss
+  category: tech
+  tier: *id002
+  enabled: true
+- name: Scientific American
+  type: rss
+  url: https://www.scientificamerican.com/feed/
+  category: science
+  tier: *id002
+  enabled: true
+- name: Honeybadger Blog
+  type: rss
+  url: https://www.honeybadger.io/feed.xml
+  category: enterprise
+  tier: *id002
+  enabled: true
+- name: Uber Engineering
+  type: rss
+  url: https://www.uber.com/blog/engineering/rss/
+  category: research
+  tier: *id002
+  enabled: true
+- name: Twitter Engineering
+  type: rss
+  url: https://blog.twitter.com/engineering/en_us/rss
+  category: research
+  tier: *id002
+  enabled: true
+- name: Finextra
+  type: rss
+  url: https://www.finextra.com/rss
+  category: fintech
+  tier: *id002
+  enabled: true
+- name: Pymnts
+  type: rss
+  url: https://www.pymnts.com/feed/
+  category: fintech
+  tier: *id002
+  enabled: true
+- name: Bankless
+  type: rss
+  url: https://podcast.bankless.com/rss
+  category: fintech
+  tier: *id002
+  enabled: true
+- name: Hackster.io
+  type: rss
+  url: https://www.hackster.io/feed
+  category: iot
+  tier: *id002
+  enabled: true
+- name: SparkFun Blog
+  type: rss
+  url: https://www.sparkfun.com/news/feed
+  category: iot
+  tier: *id002
+  enabled: true
+- name: Dangerous Prototypes
+  type: rss
+  url: http://dangerousprototypes.com/feed
+  category: iot
+  tier: *id002
+  enabled: true
+- name: All About Circuits
+  type: rss
+  url: https://www.allaboutcircuits.com/rss
+  category: iot
+  tier: *id002
+  enabled: true
+- name: CNX Software
+  type: rss
+  url: https://www.cnx-software.com/feed
+  category: iot
+  tier: *id002
+  enabled: true
+- name: Chipstrat
+  type: rss
+  url: https://chipstrat.com/feed/
+  category: hardware
+  tier: *id002
+  enabled: true
+- name: WeeTracker
+  type: rss
+  url: https://weetracker.com/feed/
+  category: africa
+  tier: *id002
+  enabled: true
+- name: Digest Africa
+  type: rss
+  url: https://digestafrica.com/feed/
+  category: africa
+  tier: *id002
+  enabled: true
+- name: Channel NewsAsia
+  type: rss
+  url: https://www.channelnewsasia.com/rss
+  category: se_asia
+  tier: *id002
+  enabled: true
+- name: Pandaily CN
+  type: rss
+  url: https://pandaily.com/zh-cn/feed/
+  category: se_asia
+  tier: *id002
+  enabled: true
+- name: The Hindu Tech
+  type: rss
+  url: https://www.thehindu.com/feeder/default.rss
+  category: south_asia
+  tier: *id002
+  enabled: true
+- name: Times of India Tech
+  type: rss
+  url: https://timesofindia.indiatimes.com/rssfeeds/1898055.cms
+  category: south_asia
+  tier: *id002
+  enabled: true
+- name: NextBigWhat
+  type: rss
+  url: https://nextbigwhat.com/feed
+  category: india
+  tier: *id002
+  enabled: true
+- name: Trak.in
+  type: rss
+  url: https://trak.in/feed/
+  category: india
+  tier: *id002
+  enabled: true
+- name: Harvard Business Review
+  type: rss
+  url: https://hbr.org/rss
+  category: business
+  tier: *id002
+  enabled: true
+- name: UI Movement
+  type: rss
+  url: https://uimovement.com/feed
+  category: design
+  tier: *id002
+  enabled: true
+- name: IT News AU
+  type: rss
+  url: https://www.itnews.com.au/rss
+  category: oceania
+  tier: *id002
+  enabled: true
+- name: ZDNet Australia
+  type: rss
+  url: https://www.zdnet.com/au/rss.xml
+  category: oceania
+  tier: *id002
+  enabled: true
+- name: Lifehacker Australia
+  type: rss
+  url: https://www.lifehacker.com.au/feed/
+  category: oceania
+  tier: *id002
+  enabled: true
+- name: El Blog Salmon
+  type: rss
+  url: https://elblogsalmon.com/feed/
+  category: latam
+  tier: *id002
+  enabled: true
+- name: New Europe
+  type: rss
+  url: https://neweurope.eu/feed/
+  category: eastern_europe
+  tier: *id002
+  enabled: true
+- name: MENA Startups
+  type: rss
+  url: https://menastartups.com/feed/
+  category: mena
+  tier: *id002
+  enabled: true
+- name: ChartMogul Blog
+  type: rss
+  url: https://chartmogul.com/blog/feed/
+  category: saas
+  tier: *id002
+  enabled: true
+- name: ProfitWell Blog
+  type: rss
+  url: https://www.profitwell.com/blog/rss
+  category: saas
+  tier: *id002
+  enabled: true
+- name: Cobloom Blog
+  type: rss
+  url: https://www.cobloom.com/blog/feed/
+  category: saas
+  tier: *id002
+  enabled: true
+- name: WooCommerce Blog
+  type: rss
+  url: https://woocommerce.com/blog/feed/
+  category: ecommerce
+  tier: *id002
+  enabled: true
+- name: Magento Blog
+  type: rss
+  url: https://business.adobe.com/blog/rss.xml
+  category: ecommerce
+  tier: *id002
+  enabled: true
+- name: Printful Blog
+  type: rss
+  url: https://www.printful.com/blog/feed
+  category: ecommerce
+  tier: *id002
+  enabled: true
+- name: Healthcare IT Today
+  type: rss
+  url: https://www.healthcareittoday.com/feed/
+  category: healthtech
+  tier: *id002
+  enabled: true
+- name: EHR Intelligence
+  type: rss
+  url: https://ehrintelligence.com/feed/
+  category: healthtech
+  tier: *id002
+  enabled: true
+- name: Health Data Management
+  type: rss
+  url: https://www.healthdatamanagement.com/feed/
+  category: healthtech
+  tier: *id002
+  enabled: true
+- name: Healthcare Innovation
+  type: rss
+  url: https://www.healthcareinnovationonline.com/feed/
+  category: healthtech
+  tier: *id002
+  enabled: true
+- name: EdTech Magazine
+  type: rss
+  url: https://edtechmagazine.com/rss
+  category: edtech
+  tier: *id002
+  enabled: true
+- name: ISTE
+  type: rss
+  url: https://iste.org/rss
+  category: edtech
+  tier: *id002
+  enabled: true
+- name: Campus Technology
+  type: rss
+  url: https://www.campustechnology.com/rss.aspx
+  category: edtech
+  tier: *id002
+  enabled: true
+- name: The Loop
+  type: rss
+  url: https://theloop.ca/feed/
+  category: apple
+  tier: *id002
+  enabled: true
+- name: Neowin
+  type: rss
+  url: https://www.neowin.net/rss/
+  category: windows
+  tier: *id002
+  enabled: true
+- name: STAT News
+  type: rss
+  url: https://www.statnews.com/feed/
+  category: biotech
+  tier: *id002
+  enabled: true
+- name: Restaurant Business
+  type: rss
+  url: https://www.restaurantbusinessonline.com/rss
+  category: foodtech
+  tier: *id002
+  enabled: true
+- name: Thomson Reuters Regulatory
+  type: rss
+  url: https://blogs.thomsonreuters.com/regulatory/feed/
+  category: regtech
+  tier: *id002
+  enabled: true
+- name: Cockroach Labs Blog
+  type: rss
+  url: https://www.cockroachlabs.com/blog/feed/
+  category: database
+  tier: *id002
+  enabled: true
+- name: DuckDB Blog
+  type: rss
+  url: https://duckdb.org/feeds/blog.xml
+  category: database
+  tier: *id002
+  enabled: true
+- name: Hacker News (100+)
+  type: rss
+  url: https://hnrss.org/bestpoints
+  category: community
+  tier: *id002
+  enabled: true
+- name: Syntax FM
+  type: rss
+  url: https://syntax.fm/rss
+  category: podcast
+  tier: *id002
+  enabled: true
+- name: Adafruit Blog
+  type: rss
+  url: https://blog.adafruit.com/feed/
+  category: iot
+  tier: *id002
+  enabled: true
+- name: Raspberry Pi Blog
+  type: rss
+  url: https://www.raspberrypi.com/blog/feed/
+  category: iot
+  tier: *id002
+  enabled: true
+- name: Arduino Blog
+  type: rss
+  url: https://www.arduino.cc/blog/feed/
+  category: iot
+  tier: *id002
+  enabled: true
+- name: Espressif News
+  type: rss
+  url: https://www.espressif.com/en/news/rss
+  category: iot
+  tier: *id002
+  enabled: true
+- name: IoT News
+  type: rss
+  url: https://iotnews.com/feed/
+  category: iot
+  tier: *id002
+  enabled: true
+- name: Montreal Tech Watch
+  type: rss
+  url: https://montrealtechwatch.com/feed/
+  category: north_america
+  tier: *id002
+  enabled: true
+- name: Unity Blog
+  type: rss
+  url: https://unity3d.com/blog/feed
+  category: gamingdev
+  tier: *id002
+  enabled: true
+- name: Remix Blog
+  type: rss
+  url: https://remix.run/blog/feed.xml
+  category: developer
+  tier: &id003
+  - 1
+  - 2
+  enabled: true
+- name: SolidJS Blog
+  type: rss
+  url: https://www.solidjs.com/blog/rss.xml
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Astro Blog
+  type: rss
+  url: https://astro.build/blog/rss.xml
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Gatsby Blog
+  type: rss
+  url: https://www.gatsbyjs.com/blog/rss.xml
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Nuxt Blog
+  type: rss
+  url: https://nuxt.com/blog/feed.xml
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Angular Blog
+  type: rss
+  url: https://blog.angular.io/feed
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Ember.js Blog
+  type: rss
+  url: https://emberjs.com/blog/feed.xml
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Backbone.js Blog
+  type: rss
+  url: https://blog.cloudflare.com/backbone.js/feed/
+  category: developer
+  tier: *id003
+  enabled: true
+- name: jQuery Blog
+  type: rss
+  url: https://blog.jquery.com/feed/
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Swift.org Blog
+  type: rss
+  url: https://www.swift.org/blog/feed.xml
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Kotlin Blog
+  type: rss
+  url: https://blog.jetbrains.com/kotlin/rss
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Scala Blog
+  type: rss
+  url: https://www.scala-lang.org/blog/feed.xml
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Elixir Blog
+  type: rss
+  url: https://elixir-lang.org/blog/feed.xml
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Clojure Blog
+  type: rss
+  url: https://clojure.org/feed.xml
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Haskell Blog
+  type: rss
+  url: https://www.haskell.org/blog/feed.xml
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Julia Blog
+  type: rss
+  url: https://julialang.org/blog/feed.xml
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Zig News
+  type: rss
+  url: https://ziglang.org/feed.xml
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Nim Blog
+  type: rss
+  url: https://nim-lang.org/feed.xml
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Crystal Blog
+  type: rss
+  url: https://crystal-lang.org/feed.xml
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Lua Blog
+  type: rss
+  url: https://www.lua.org/lua-l.html
+  category: developer
+  tier: *id003
+  enabled: true
+- name: PHP.net Changelog
+  type: rss
+  url: https://www.php.net/releases/feed.php
+  category: developer
+  tier: *id003
+  enabled: true
+- name: WordPress Developer Blog
+  type: rss
+  url: https://developer.wordpress.org/news/feed/
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Drupal Blog
+  type: rss
+  url: https://www.drupal.org/rss.xml
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Joomla Community Magazine
+  type: rss
+  url: https://community.joomla.org/feed/
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Symfony Blog
+  type: rss
+  url: https://symfony.com/blog/feed
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Rails Blog
+  type: rss
+  url: https://rubyonrails.org/blog/feed.xml
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Phoenix Framework Blog
+  type: rss
+  url: https://phoenixframework.org/blog/feed.xml
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Sinatra Blog
+  type: rss
+  url: https://sinatrarb.com/feed.xml
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Flask Pallets Blog
+  type: rss
+  url: https://flask.palletsprojects.com/feed.xml
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Express.js Blog
+  type: rss
+  url: https://expressjs.com/blog/feed.xml
+  category: developer
+  tier: *id003
+  enabled: true
+- name: fasterthanlime
+  type: rss
+  url: https://fasterthanli.me/rss
+  category: tech
+  tier: *id003
+  enabled: true
+- name: Security Now
+  type: rss
+  url: https://twit.tv/shows/security-now/rss
+  category: cybersecurity
+  tier: *id003
+  enabled: true
+- name: The Daily Swig
+  type: rss
+  url: https://portswigger.net/daily-swig/rss
+  category: cybersecurity
+  tier: *id003
+  enabled: true
+- name: Threatpost
+  type: rss
+  url: https://threatpost.com/feed/
+  category: cybersecurity
+  tier: *id003
+  enabled: true
+- name: WeLiveSecurity
+  type: rss
+  url: https://www.welivesecurity.com/feed/
+  category: cybersecurity
+  tier: *id003
+  enabled: true
+- name: Recorded Future Blog
+  type: rss
+  url: https://www.recordedfuture.com/feed
+  category: cybersecurity
+  tier: *id003
+  enabled: true
+- name: Mandiant Blog
+  type: rss
+  url: https://www.mandiant.com/resources/blog/rss.xml
+  category: cybersecurity
+  tier: *id003
+  enabled: true
+- name: Snyk Blog
+  type: rss
+  url: https://snyk.io/blog/feed/
+  category: cybersecurity
+  tier: *id003
+  enabled: true
+- name: GitHub Security Lab
+  type: rss
+  url: https://securitylab.github.com/feed.xml
+  category: cybersecurity
+  tier: *id003
+  enabled: true
+- name: NCC Group Blog
+  type: rss
+  url: https://research.nccgroup.com/feed/
+  category: cybersecurity
+  tier: *id003
+  enabled: true
+- name: AWS Marketplace Blog
+  type: rss
+  url: https://aws.amazon.com/blogs/marketplace/feed/
+  category: cloud
+  tier: *id003
+  enabled: true
+- name: Azure AI Blog
+  type: rss
+  url: https://azure.microsoft.com/en-us/blog/tag/artificial-intelligence/feed/
+  category: cloud
+  tier: *id003
+  enabled: true
+- name: Heroku Blog
+  type: rss
+  url: https://blog.heroku.com/feed
+  category: cloud
+  tier: *id003
+  enabled: true
+- name: Cloud Foundry Blog
+  type: rss
+  url: https://www.cloudfoundry.org/feed/
+  category: cloud
+  tier: *id003
+  enabled: true
+- name: Pivotal Blog
+  type: rss
+  url: https://pivotal.io/feed
+  category: cloud
+  tier: *id003
+  enabled: true
+- name: JFrog Blog
+  type: rss
+  url: https://jfrog.com/blog/feed/
+  category: cloud
+  tier: *id003
+  enabled: true
+- name: Snyk Cloud Blog
+  type: rss
+  url: https://snyk.io/blog/cloud-security/feed/
+  category: cloud
+  tier: *id003
+  enabled: true
+- name: Prisma Cloud Blog
+  type: rss
+  url: https://www.paloaltonetworks.com/blog/rss/
+  category: cloud
+  tier: *id003
+  enabled: true
+- name: VS Code Blog
+  type: rss
+  url: https://devblogs.microsoft.com/vscode/feed/
+  category: developer
+  tier: *id003
+  enabled: true
+- name: Envoy Blog
+  type: rss
+  url: https://blog.envoyproxy.io/feed
+  category: cloud
+  tier: *id003
+  enabled: true
+- name: OpenTelemetry Blog
+  type: rss
+  url: https://opentelemetry.io/blog/index.xml
+  category: cloud
+  tier: *id003
+  enabled: true
+- name: a]6z Podcast
+  type: rss
+  url: https://a16z.com/podcasts/feed/
+  category: podcast
+  tier: *id003
+  enabled: true
+- name: The Twenty Minute VC
+  type: rss
+  url: https://feeds.libsyn.com/130/the-20-minute-vc
+  category: podcast
+  tier: *id003
+  enabled: true
+- name: Acquired FM
+  type: rss
+  url: https://acquired.fm/feed
+  category: podcast
+  tier: *id003
+  enabled: true
+- name: All-In Podcast
+  type: rss
+  url: https://www.allinpodcast.co/rss
+  category: podcast
+  tier: *id003
+  enabled: true
+- name: Stratechery
+  type: rss
+  url: https://stratechery.com/feed/
+  category: podcast
+  tier: *id003
+  enabled: true
+- name: Lenny's Podcast
+  type: rss
+  url: https://www.lennyspodcast.com/feed
+  category: podcast
+  tier: *id003
+  enabled: true
+- name: 36Kr
+  type: rss
+  url: https://36kr.com/feed
+  category: se_asia
+  tier: *id003
+  enabled: true
+- name: Greentech Media
+  type: rss
+  url: https://www.greentechmedia.com/feed
+  category: climate
+  tier: *id003
+  enabled: true
+- name: Wind Power Engineering
+  type: rss
+  url: https://www.windpowerengineering.com/feed/
+  category: climate
+  tier: *id003
+  enabled: true
+- name: Two Minute Papers
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCbfYPyITm-8l7tjELQ7p07A
+  category: ai
+  tier: &id004
+  - 1
+  - 2
+  enabled: true
+- name: AI Explained
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCNJ1Ymd5yFuUPtn21xtRbbw
+  category: ai
+  tier: *id004
+  enabled: true
+- name: AI Jason
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UC5j_HCMjUyLzp4yag_4k0Mg
+  category: ai
+  tier: *id004
+  enabled: true
+- name: AI Epiphany
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCLB7Siw31pLxl930r049M4A
+  category: ai
+  tier: *id004
+  enabled: true
+- name: 'YouTube: Kurzgesagt'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCsXVk37bltHxD1rDPwtNM8Q
+  category: youtube
+  tier: *id004
+  enabled: true
+- name: 'YouTube: Mrwhosetheboss'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCeznChjQW1mTp4N4cZzOGjQ
+  category: youtube
+  tier: *id004
+  enabled: true
+- name: 'YouTube: DevOps Toolkit'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UC4xKpaAXpWCAc_C81XVp1mA
+  category: youtube
+  tier: *id004
+  enabled: true
+- name: 'YouTube: David Bombal'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UC1JfoMyGz2h-OArdVLDW4BQ
+  category: youtube
+  tier: *id004
+  enabled: true
+- name: 'YouTube: IppSec'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCaZlPZBcc0CmLmP2f5aTgZA
+  category: youtube
+  tier: *id004
+  enabled: true
+- name: 'YouTube: SmarterEveryDay'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UC6107grzy4db0Dqzw0RqRBg
+  category: youtube
+  tier: *id004
+  enabled: true
+- name: 'YouTube: HackerSploit'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UC0ZTPk-TH5dSCLL3f-UEqXA
+  category: youtube
+  tier: *id004
+  enabled: true
+- name: 'YouTube: The Slow Mo Guys'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCFPYUd1Km5y6g-m-aA0Yxrw
+  category: youtube
+  tier: *id004
+  enabled: true
+- name: 'YouTube: a16z crypto'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCf-tWI6bcVq2JjC2p2pMVBw
+  category: youtube
+  tier: *id004
+  enabled: true
+- name: 'YouTube: ThePrimeagen'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UC4EzDz1Mf7hGn1UwQ7u7B5A
+  category: youtube
+  tier: *id004
+  enabled: true
+- name: ZDNet Reviews
+  type: rss
+  url: https://www.zdnet.com/reviews/rss.xml
+  category: tech
+  tier: *id004
+  enabled: true
+- name: ZDNet Deals
+  type: rss
+  url: https://www.zdnet.com/deals/rss.xml
+  category: tech
+  tier: *id004
+  enabled: true
+- name: arXiv Stat.ML
+  type: rss
+  url: https://rss.arxiv.org/rss/stat.ML
+  category: ai
+  tier: *id004
+  enabled: true
+- name: JetBrains Java
+  type: rss
+  url: https://blog.jetbrains.com/java/rss
+  category: developer
+  tier: *id004
+  enabled: true
+- name: JetBrains Go
+  type: rss
+  url: https://blog.jetbrains.com/go/rss
+  category: developer
+  tier: *id004
+  enabled: true
+- name: JetBrains Rust
+  type: rss
+  url: https://blog.jetbrains.com/rust/rss
+  category: developer
+  tier: *id004
+  enabled: true
+- name: JetBrains Ruby
+  type: rss
+  url: https://blog.jetbrains.com/ruby/rss
+  category: developer
+  tier: *id004
+  enabled: true
+- name: JetBrains Scala
+  type: rss
+  url: https://blog.jetbrains.com/scala/rss
+  category: developer
+  tier: *id004
+  enabled: true
+- name: JetBrains PHPStorm
+  type: rss
+  url: https://blog.jetbrains.com/phpstorm/rss
+  category: developer
+  tier: *id004
+  enabled: true
+- name: JetBrains CLion
+  type: rss
+  url: https://blog.jetbrains.com/clion/rss
+  category: developer
+  tier: *id004
+  enabled: true
+- name: JetBrains DataGrip
+  type: rss
+  url: https://blog.jetbrains.com/datagrip/rss
+  category: developer
+  tier: *id004
+  enabled: true
+- name: JetBrains Android
+  type: rss
+  url: https://blog.jetbrains.com/android/rss
+  category: developer
+  tier: *id004
+  enabled: true
+- name: DEV.to Security
+  type: rss
+  url: https://dev.to/feed/tag/security
+  category: cybersecurity
+  tier: *id004
+  enabled: true
+- name: Cloudflare Developers
+  type: rss
+  url: https://blog.cloudflare.com/tag/developers/rss/
+  category: developer
+  tier: *id004
+  enabled: true
+- name: BBC Science
+  type: rss
+  url: http://feeds.bbci.co.uk/news/science_and_environment/rss.xml
+  category: science
+  tier: *id004
+  enabled: true
+- name: JS Party
+  type: rss
+  url: https://changelog.com/jsparty/feed
+  category: developer
+  tier: *id004
+  enabled: true
+- name: Go Time
+  type: rss
+  url: https://changelog.com/gotime/feed
+  category: developer
+  tier: *id004
+  enabled: true
+- name: Nature Biotechnology
+  type: rss
+  url: https://www.nature.com/naturebiotechnology.rss
+  category: biotech
+  tier: *id004
+  enabled: true
+- name: Google Research (old)
+  type: rss
+  url: https://research.google.com/rss/blog.xml
+  category: research
+  tier: *id004
+  enabled: true
+- name: DigitalOcean Blog
+  type: rss
+  url: https://www.digitalocean.com/blog/feed.xml
+  category: cloud
+  tier: &id005
+  - 1
+  - 2
+  enabled: true
+- name: Singlestore Blog
+  type: rss
+  url: https://www.singlestore.com/blog/rss.xml
+  category: database
+  tier: *id005
+  enabled: true
+- name: Grafana Blog
+  type: rss
+  url: https://grafana.com/blog/feed/
+  category: cloud
+  tier: &id006
+  - 1
+  - 2
+  enabled: true
+- name: Supabase Discord
+  type: rss
+  url: https://supabase.com/blog/rss.xml
+  category: cloud
+  tier: *id006
+  enabled: true
+- name: Railway Blog v2
+  type: rss
+  url: https://blog.railway.app/rss/feed
+  category: cloud
+  tier: *id006
+  enabled: true
+- name: React Native Blog
+  type: rss
+  url: https://reactnative.dev/blog/rss.xml
+  category: developer
+  tier: &id007
+  - 1
+  - 2
+  enabled: true
+- name: Google Brain Blog
+  type: rss
+  url: https://ai.googleblog.com/feeds/posts/default
+  category: ai
+  tier: *id007
+  enabled: true
+- name: Wired Science
+  type: rss
+  url: https://www.wired.com/feed/category/science/latest/rss
+  category: science
+  tier: *id007
+  enabled: true
+- name: LinkedIn Engineering
+  type: rss
+  url: https://engineering.linkedin.com/blog/rss.xml
+  category: research
+  tier: *id007
+  enabled: true
+- name: BioSpace
+  type: rss
+  url: https://www.biospace.com/feed
+  category: biotech
+  tier: *id007
+  enabled: true
+- name: Without Boats
+  type: rss
+  url: https://without.boats/index.xml
+  category: developer
+  tier: &id008
+  - 1
+  - 2
+  enabled: true
+- name: 'Google News: Tech'
+  type: rss
+  url: https://news.google.com/rss/search?q=technology+when:3d&hl=en-US&gl=US&ceid=US:en
+  category: news
+  tier: *id008
+  enabled: true
+- name: Julia Evans Blog
+  type: rss
+  url: https://jvns.ca/atom.xml
+  category: developer
+  tier: &id009
+  - 1
+  - 2
+  enabled: true
+- name: Will Larson Blog
+  type: rss
+  url: https://lethain.com/feed.xml
+  category: developer
+  tier: *id009
+  enabled: true
+- name: Cam Jackson Blog
+  type: rss
+  url: https://camjackson.net/feed.xml
+  category: developer
+  tier: *id009
+  enabled: true
+- name: Kent C. Dodds Blog
+  type: rss
+  url: https://kentcdodds.com/blog/rss.xml
+  category: developer
+  tier: *id009
+  enabled: true
+- name: Sarah Drasner Blog
+  type: rss
+  url: https://sarahdrasnerdesign.com/blog/rss.xml
+  category: developer
+  tier: *id009
+  enabled: true
+- name: Addy Osmani Blog
+  type: rss
+  url: https://addyosmani.com/feed.xml
+  category: developer
+  tier: *id009
+  enabled: true
+- name: Surma Blog
+  type: rss
+  url: https://surma.dev/feed.xml
+  category: developer
+  tier: *id009
+  enabled: true
+- name: Mathias Bynens Blog
+  type: rss
+  url: https://mathiasbynens.be/feed.xml
+  category: developer
+  tier: *id009
+  enabled: true
+- name: Ryan Dahl Blog
+  type: rss
+  url: https://tinyclouds.org/index.xml
+  category: developer
+  tier: *id009
+  enabled: true
+- name: Pieter Levels Blog
+  type: rss
+  url: https://levels.io/feed.xml
+  category: startups
+  tier: *id009
+  enabled: true
+- name: DHH Blog
+  type: rss
+  url: https://world.hey.com/dhh/feed.atom
+  category: developer
+  tier: *id009
+  enabled: true
+- name: Jason Fried Blog
+  type: rss
+  url: https://world.hey.com/jason/feed.atom
+  category: startups
+  tier: *id009
+  enabled: true
+- name: Paul Graham Blog
+  type: rss
+  url: http:// paulgraham.com/rss.html
+  category: startups
+  tier: *id009
+  enabled: true
+- name: The Pragmatic Bookshelf
+  type: rss
+  url: https://pragprog.com/feed/
+  category: developer
+  tier: *id009
+  enabled: true
+- name: ThoughtWorks Radar
+  type: rss
+  url: https://www.thoughtworks.com/radar/feed
+  category: enterprise
+  tier: *id009
+  enabled: true
+- name: Postgres Weekly
+  type: rss
+  url: https://postgresweekly.com/rss/
+  category: database
+  tier: *id009
+  enabled: true
+- name: MySQL Newsletter
+  type: rss
+  url: https://dev.mysql.com/blog/feed/
+  category: database
+  tier: *id009
+  enabled: true
+- name: SQLite News
+  type: rss
+  url: https://sqlite.org/news.html/rss
+  category: database
+  tier: *id009
+  enabled: true
+- name: Cassandra Weekly
+  type: rss
+  url: https://cassandra.apache.org/feed/
+  category: database
+  tier: *id009
+  enabled: true
+- name: Kafka Blog
+  type: rss
+  url: https://kafka.apache.org/blog/feed.xml
+  category: database
+  tier: *id009
+  enabled: true
+- name: RabbitMQ Blog
+  type: rss
+  url: https://blog.rabbitmq.com/rss.xml
+  category: database
+  tier: *id009
+  enabled: true
+- name: NATS Blog
+  type: rss
+  url: https://nats.io/blog/feed.xml
+  category: database
+  tier: *id009
+  enabled: true
+- name: Consul Blog
+  type: rss
+  url: https://www.consul.io/blog/feed.xml
+  category: cloud
+  tier: *id009
+  enabled: true
+- name: Vault Blog
+  type: rss
+  url: https://www.vaultproject.io/blog/feed.xml
+  category: cloud
+  tier: *id009
+  enabled: true
+- name: Nomad Blog
+  type: rss
+  url: https://www.nomadproject.io/blog/feed.xml
+  category: cloud
+  tier: *id009
+  enabled: true
+- name: Project Zero Blog
+  type: rss
+  url: https://googleprojectzero.blogspot.com/feeds/posts/default
+  category: cybersecurity
+  tier: *id009
+  enabled: true
+- name: Pentest-Tools Blog
+  type: rss
+  url: https://pentest-tools.com/blog/feed
+  category: cybersecurity
+  tier: *id009
+  enabled: true
+- name: HackerOne Blog
+  type: rss
+  url: https://www.hackerone.com/blog/rss.xml
+  category: cybersecurity
+  tier: *id009
+  enabled: true
+- name: Bugcrowd Blog
+  type: rss
+  url: https://www.bugcrowd.com/blog/feed/
+  category: cybersecurity
+  tier: *id009
+  enabled: true
+- name: Detectify Blog
+  type: rss
+  url: https://blog.detectify.com/feed/
+  category: cybersecurity
+  tier: *id009
+  enabled: true
+- name: ImmuniWeb Blog
+  type: rss
+  url: https://www.immuniweb.com/blog/feed/
+  category: cybersecurity
+  tier: *id009
+  enabled: true
+- name: Acunetix Blog
+  type: rss
+  url: https://www.acunetix.com/blog/feed/
+  category: cybersecurity
+  tier: *id009
+  enabled: true
+- name: Weights & Biases Blog
+  type: rss
+  url: https://wandb.ai/fully-connected/rss.xml
+  category: ai
+  tier: *id009
+  enabled: true
+- name: Anyscale Blog
+  type: rss
+  url: https://www.anyscale.com/blog/rss.xml
+  category: ai
+  tier: *id009
+  enabled: true
+- name: Modal Blog
+  type: rss
+  url: https://modal.com/blog/rss.xml
+  category: ai
+  tier: *id009
+  enabled: true
+- name: LangChain Blog
+  type: rss
+  url: https://blog.langchain.dev/rss/
+  category: ai
+  tier: *id009
+  enabled: true
+- name: LlamaIndex Blog
+  type: rss
+  url: https://www.llamaindex.ai/blog/rss.xml
+  category: ai
+  tier: *id009
+  enabled: true
+- name: Pinecone Blog
+  type: rss
+  url: https://www.pinecone.io/blog/feed/
+  category: ai
+  tier: *id009
+  enabled: true
+- name: ChromaDB Blog
+  type: rss
+  url: https://www.trychroma.com/blog/rss
+  category: ai
+  tier: *id009
+  enabled: true
+- name: Weaviate Blog
+  type: rss
+  url: https://weaviate.io/blog/rss.xml
+  category: ai
+  tier: *id009
+  enabled: true
+- name: Qdrant Blog
+  type: rss
+  url: https://qdrant.tech/blog/feed.xml
+  category: ai
+  tier: *id009
+  enabled: true
+- name: Milvus Blog
+  type: rss
+  url: https://milvus.io/blog/rss.xml
+  category: ai
+  tier: *id009
+  enabled: true
+- name: Cardinal ML Blog
+  type: rss
+  url: https://blog.cardinalml.com/rss
+  category: ai
+  tier: *id009
+  enabled: true
+- name: Neptune.ai Blog
+  type: rss
+  url: https://neptune.ai/blog/feed
+  category: ai
+  tier: *id009
+  enabled: true
+- name: Valohai Blog
+  type: rss
+  url: https://valohai.com/blog/feed/
+  category: ai
+  tier: *id009
+  enabled: true
+- name: Determined AI Blog
+  type: rss
+  url: https://www.determined.ai/blog/rss.xml
+  category: ai
+  tier: *id009
+  enabled: true
+- name: Fintech Zoom
+  type: rss
+  url: https://fintechzoom.com/feed/
+  category: fintech
+  tier: *id009
+  enabled: true
+- name: Crowdfund Insider
+  type: rss
+  url: https://www.crowdfundinsider.com/feed/
+  category: fintech
+  tier: *id009
+  enabled: true
+- name: FinLedger
+  type: rss
+  url: https://finledger.com/feed/
+  category: fintech
+  tier: *id009
+  enabled: true
+- name: Banking Dive
+  type: rss
+  url: https://www.bankingdive.com/feeds/news/
+  category: fintech
+  tier: *id009
+  enabled: true
+- name: Payments Journal
+  type: rss
+  url: https://www.paymentsjournal.com/feed/
+  category: fintech
+  tier: *id009
+  enabled: true
+- name: KrASIA
+  type: rss
+  url: https://kr-asia.com/feed
+  category: se_asia
+  tier: *id009
+  enabled: true
+- name: Tech Wire Asia
+  type: rss
+  url: https://techwireasia.com/feed/
+  category: se_asia
+  tier: *id009
+  enabled: true
+- name: Disrupt Technology Vietnam
+  type: rss
+  url: https://disrupt-vietnam.com/feed/
+  category: se_asia
+  tier: *id009
+  enabled: true
+- name: TechSauce
+  type: rss
+  url: https://techsauce.co/feed
+  category: se_asia
+  tier: *id009
+  enabled: true
+- name: AFK Insider
+  type: rss
+  url: https://www.afkinsider.com/feed/
+  category: africa
+  tier: *id009
+  enabled: true
+- name: Ventures Africa
+  type: rss
+  url: https://venturesafrica.com/feed/
+  category: africa
+  tier: *id009
+  enabled: true
+- name: StartUp Blink
+  type: rss
+  url: https://startupblink.com/blog/feed/
+  category: latam
+  tier: *id009
+  enabled: true
+- name: AnandTech
+  type: rss
+  url: https://www.anandtech.com/rss/
+  category: hardware
+  tier: *id009
+  enabled: true
+- name: Chip Scale Review
+  type: rss
+  url: https://chipscalereview.com/feed/
+  category: hardware
+  tier: *id009
+  enabled: true
+- name: EEWeb
+  type: rss
+  url: https://www.eeweb.com/feed/
+  category: hardware
+  tier: *id009
+  enabled: true
+- name: EDN
+  type: rss
+  url: https://www.edn.com/feed/
+  category: hardware
+  tier: *id009
+  enabled: true
+- name: Science Magazine
+  type: rss
+  url: https://www.science.org/rss/news_current.xml
+  category: science
+  tier: *id009
+  enabled: true
+- name: The Space Review
+  type: rss
+  url: https://www.thespacereview.com/rss
+  category: space
+  tier: *id009
+  enabled: true
+- name: EdTech Hub
+  type: rss
+  url: https://edtechhub.org/feed/
+  category: edtech
+  tier: *id009
+  enabled: true
+- name: EdtechX
+  type: rss
+  url: https://edtechx.io/feed/
+  category: edtech
+  tier: *id009
+  enabled: true
+- name: Edsurge News
+  type: rss
+  url: https://www.edsurge.com/news/feed
+  category: edtech
+  tier: *id009
+  enabled: true
+- name: Modern Healthcare
+  type: rss
+  url: https://www.modernhealthcare.com/rss
+  category: healthtech
+  tier: *id009
+  enabled: true
+- name: Insurance Innovation Reporter
+  type: rss
+  url: https://insuranceinnovationreporter.com/feed/
+  category: insurtech
+  tier: *id009
+  enabled: true
+- name: AgriTech Africa
+  type: rss
+  url: https://agritechafrica.com/feed/
+  category: agritech
+  tier: *id009
+  enabled: true
+- name: DC Velocity
+  type: rss
+  url: https://www.dcvelocity.com/rss
+  category: supplychain
+  tier: *id009
+  enabled: true
+- name: PropertyTech News
+  type: rss
+  url: https://propertytechnews.com/feed/
+  category: proptech
+  tier: *id009
+  enabled: true
+- name: HR Bartender
+  type: rss
+  url: https://www.hrbartender.com/feed/
+  category: hrtech
+  tier: *id009
+  enabled: true
+- name: Glide Blog
+  type: rss
+  url: https://www.glideapps.com/blog/rss
+  category: nocode
+  tier: *id009
+  enabled: true
+- name: Quantum Journal
+  type: rss
+  url: https://quantum-journal.org/feed/
+  category: quantum
+  tier: *id009
+  enabled: true
+- name: TiDB Blog
+  type: rss
+  url: https://www.pingcap.com/blog/feed/
+  category: database
+  tier: *id009
+  enabled: true
+- name: UX Collective
+  type: rss
+  url: https://uxdesign.cc/feed
+  category: design
+  tier: *id009
+  enabled: true
+- name: Nielsen Norman Group
+  type: rss
+  url: https://www.nngroup.com/feed/
+  category: design
+  tier: *id009
+  enabled: true
+- name: MarTech.org
+  type: rss
+  url: https://martech.org/feed/
+  category: martech
+  tier: *id009
+  enabled: true
+- name: 'YouTube: Prompt Engineering'
+  type: rss
+  url: https://www.youtube.com/feeds/videos.xml?channel_id=UCBFy8cZT0eQ13L1pVlq1LXA
+  category: youtube
+  tier: *id009
+  enabled: true
+- name: SemiWiki
+  type: rss
+  url: https://semiwiki.com/feed/
+  category: hardware
+  tier: &id010
+  - 1
+  - 2
+  enabled: true
+- name: Tails Blog
+  type: rss
+  url: https://tails.net/blog/index.xml
+  category: linux
+  tier: *id010
+  enabled: true
+- name: Elementary OS Blog
+  type: rss
+  url: https://blog.elementary.io/rss.xml
+  category: linux
+  tier: *id010
+  enabled: true
+- name: PostmarketOS Blog
+  type: rss
+  url: https://postmarketos.org/blog/feed.xml
+  category: linux
+  tier: *id010
+  enabled: true
+- name: PureOS Blog
+  type: rss
+  url: https://puri.sm/feed/
+  category: linux
+  tier: *id010
+  enabled: true
+- name: Mobian Blog
+  type: rss
+  url: https://mobian.org/feed/
+  category: linux
+  tier: *id010
+  enabled: true
+- name: Sailfish OS Forum
+  type: rss
+  url: https://forum.sailfishos.org/feed
+  category: linux
+  tier: *id010
+  enabled: true
+- name: Ubuntu Blog
+  type: rss
+  url: https://ubuntu.com/blog/feed
+  category: linux
+  tier: *id010
+  enabled: true
+- name: Fedora Magazine
+  type: rss
+  url: https://fedoramagazine.org/feed/
+  category: linux
+  tier: *id010
+  enabled: true
+- name: Cal.com Blog
+  type: rss
+  url: https://cal.com/blog/rss.xml
+  category: saas
+  tier:
+  - 1
+  - 2
+  enabled: true
