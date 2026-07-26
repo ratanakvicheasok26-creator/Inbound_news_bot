@@ -290,8 +290,15 @@ def collect_new_entries(posted_ids: set[str], posted_titles: set[str] | None = N
             except httpx.TimeoutException:
                 logger.warning("Feed %s HTTP timeout after %ds", feed_url, FEED_TIMEOUT_SECONDS)
                 continue
+            except httpx.HTTPStatusError as exc:
+                status = exc.response.status_code
+                if status in (403, 404, 429):
+                    logger.debug("Feed %s returned %d (expected for blocked/removed feeds)", feed_url, status)
+                else:
+                    logger.warning("Feed %s HTTP %d", feed_url, status)
+                continue
             except Exception:
-                logger.exception("Failed to fetch feed %s", feed_url)
+                logger.warning("Failed to fetch feed %s (unexpected error)", feed_url)
                 continue
 
             completed += 1
