@@ -6,6 +6,7 @@ import asyncio
 import json
 import logging
 import os
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Callable
@@ -426,6 +427,10 @@ def _prepare_entries(urgent: bool = False, header: str | None = None) -> list[St
         story = _cluster_to_story(cluster, urgent=urgent, header=item_header)
         if story:
             stories.append(story)
+        # Pace AI calls so a full digest (up to DIGEST_MAX_STORIES back-to-back
+        # completions) doesn't burst past Groq's per-minute token/request limit.
+        if index < n:
+            time.sleep(1.5)
     return stories
 
 

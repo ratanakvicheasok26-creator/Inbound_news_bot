@@ -21,6 +21,10 @@ load_dotenv()
 __all__ = [
     "validate_config",
     "create_groq_client",
+    "create_gemini_client",
+    "GEMINI_MODEL",
+    "create_openrouter_client",
+    "OPENROUTER_MODEL",
     "REDIS_URL",
     "RSS_FEEDS",
     "MAX_ITEMS_PER_FEED",
@@ -190,3 +194,55 @@ def create_groq_client():
         api_key=os.environ["GROQ_API_KEY"],
         base_url=GROQ_BASE_URL,
     )
+
+
+GEMINI_MODEL: str = "gemini-2.0-flash"
+
+
+def create_gemini_client():
+    """Create and return the Gemini client, or None if GOOGLE_GEMINI_API_KEY is unset.
+
+    Unlike create_groq_client(), this never raises — Gemini is a fallback,
+    so a missing key should just mean "fallback unavailable", not a crash.
+    """
+    api_key = os.environ.get("GOOGLE_GEMINI_API_KEY", "").strip()
+    if not api_key:
+        return None
+    try:
+        from google import genai
+
+        return genai.Client(api_key=api_key)
+    except Exception:
+        import logging
+
+        logging.getLogger(__name__).exception("Failed to create Gemini client")
+        return None
+
+
+OPENROUTER_MODEL: str = os.environ.get(
+    "OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct:free"
+)
+# NOTE: OpenRouter's free-model lineup rotates — a specific model (e.g. DeepSeek)
+# can lose its :free tier with no notice. Check https://openrouter.ai/models
+# (filter: Price = Free) periodically and override via OPENROUTER_MODEL env var
+# if this default stops working.
+OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+
+
+def create_openrouter_client():
+    """Create and return an OpenAI-compatible OpenRouter client, or None if
+    OPENROUTER_API_KEY is unset. Last-resort fallback (free DeepSeek tier),
+    so a missing key should mean "unavailable", not a crash.
+    """
+    api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
+    if not api_key:
+        return None
+    try:
+        from openai import OpenAI
+
+        return OpenAI(api_key=api_key, base_url=OPENROUTER_BASE_URL)
+    except Exception:
+        import logging
+
+        logging.getLogger(__name__).exception("Failed to create OpenRouter client")
+        return None

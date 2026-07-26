@@ -1,0 +1,269 @@
+diff --git a/.env.example b/.env.example
+index 5460ed8..cd02f71 100644
+--- a/.env.example
++++ b/.env.example
+@@ -1,6 +1,15 @@
+ TELEGRAM_BOT_TOKEN="your-telegram-bot-token"
+ GROQ_API_KEY="your-groq-api-key"
+ GOOGLE_GEMINI_API_KEY="your-gemini-api-key"
++
++# Last-resort AI fallback (free tier) — used only if both Groq and
++# Gemini fail/rate-limit. Get a free key at https://openrouter.ai/keys
++OPENROUTER_API_KEY="your-openrouter-api-key"
++# Optional — override which free model to use. OpenRouter's free lineup
++# rotates over time; check https://openrouter.ai/models (filter: Free)
++# if the default below ever stops working.
++# OPENROUTER_MODEL="meta-llama/llama-3.3-70b-instruct:free"
++
+ TELEGRAM_CHANNEL_ID="your-channel-id"
+ TELEGRAM_THREAD_ID="your-thread-id"
+ TELEGRAM_GROUP_CHAT_ID="your-group-chat-id"
+diff --git a/newsbot/ai.py b/newsbot/ai.py
+index e528323..d86aad3 100644
+--- a/newsbot/ai.py
++++ b/newsbot/ai.py
+@@ -210,7 +210,7 @@ Stories covering the same event:
+ 
+ def rewrite_compact(cluster: list[Entry]) -> str:
+     prompt = _build_compact_prompt(cluster)
+-    raw_output = _call_groq_with_retry(prompt)
++    raw_output, _provider = _call_ai_with_fallback(prompt)
+ 
+     if raw_output is None:
+         primary = cluster[0]
+@@ -339,10 +339,100 @@ def _call_groq_with_retry(prompt: str) -> str | None:
+                 )
+                 time.sleep(delay)
+             else:
+-                logger.exception("Groq API failed after %d attempts", _MAX_RETRIES)
++                logger.warning("Groq API failed after %d attempts: %s", _MAX_RETRIES, exc)
+     return raw_output
+ 
+ 
++def _call_gemini_with_retry(prompt: str) -> str | None:
++    """Fallback path when Groq is rate-limited/unavailable. Returns None if
++    Gemini isn't configured (no GOOGLE_GEMINI_API_KEY) or also fails."""
++    from newsbot.config import GEMINI_MODEL, create_gemini_client
++
++    client = create_gemini_client()
++    if client is None:
++        return None
++
++    raw_output = None
++    for attempt in range(1, _MAX_RETRIES + 1):
++        try:
++            response = client.models.generate_content(
++                model=GEMINI_MODEL,
++                contents=prompt,
++            )
++            content = response.text
++            if not content or not content.strip():
++                raise ValueError("Gemini API returned empty content")
++            raw_output = content.strip()
++            break
++        except Exception as exc:
++            if attempt < _MAX_RETRIES:
++                delay = _RETRY_BASE_DELAY * (2 ** (attempt - 1))
++                logger.warning(
++                    "Gemini API attempt %d/%d failed (%s), retrying in %.1fs",
++                    attempt, _MAX_RETRIES, exc, delay,
++                )
++                time.sleep(delay)
++            else:
++                logger.warning("Gemini API failed after %d attempts: %s", _MAX_RETRIES, exc)
++    return raw_output
++
++
++def _call_openrouter_with_retry(prompt: str) -> str | None:
++    """Last-resort fallback when both Groq and Gemini fail/unavailable.
++    Uses OpenRouter's current free-tier model (see OPENROUTER_MODEL). Returns None if OPENROUTER_API_KEY
++    isn't set or the call also fails."""
++    from newsbot.config import OPENROUTER_MODEL, create_openrouter_client
++
++    client = create_openrouter_client()
++    if client is None:
++        return None
++
++    raw_output = None
++    for attempt in range(1, _MAX_RETRIES + 1):
++        try:
++            response = client.chat.completions.create(
++                model=OPENROUTER_MODEL,
++                max_tokens=GROQ_MAX_TOKENS,
++                messages=[{"role": "user", "content": prompt}],
++            )
++            content = response.choices[0].message.content
++            if not content or not content.strip():
++                raise ValueError("OpenRouter API returned empty content")
++            raw_output = content.strip()
++            break
++        except Exception as exc:
++            if attempt < _MAX_RETRIES:
++                delay = _RETRY_BASE_DELAY * (2 ** (attempt - 1))
++                logger.warning(
++                    "OpenRouter API attempt %d/%d failed (%s), retrying in %.1fs",
++                    attempt, _MAX_RETRIES, exc, delay,
++                )
++                time.sleep(delay)
++            else:
++                logger.warning("OpenRouter API failed after %d attempts: %s", _MAX_RETRIES, exc)
++    return raw_output
++
++
++def _call_ai_with_fallback(prompt: str) -> tuple[str | None, str]:
++    """Try Groq first, then Gemini, then OpenRouter (free tier).
++    Returns (raw_output, provider_used)."""
++    raw_output = _call_groq_with_retry(prompt)
++    if raw_output is not None:
++        return raw_output, "groq"
++
++    logger.warning("Groq unavailable, falling back to Gemini")
++    raw_output = _call_gemini_with_retry(prompt)
++    if raw_output is not None:
++        return raw_output, "gemini"
++
++    logger.warning("Gemini unavailable, falling back to OpenRouter (free tier)")
++    raw_output = _call_openrouter_with_retry(prompt)
++    if raw_output is not None:
++        return raw_output, "openrouter"
++
++    return None, "none"
++
++
+ def _fallback_data(cluster: list[Entry], urgent: bool) -> dict:
+     primary = cluster[0]
+     urgency = "alert" if urgent else "analysis"
+@@ -376,15 +466,21 @@ def rewrite_with_ai(cluster: list[Entry], urgent: bool = False, header: str | No
+     source_name_str = source_names[0] if source_names else "Unknown"
+ 
+     prompt = _build_prompt(cluster, source_note)
+-    raw_output = _call_groq_with_retry(prompt)
++    raw_output, provider = _call_ai_with_fallback(prompt)
+ 
+     if raw_output is None:
++        logger.warning("Groq, Gemini, and OpenRouter all failed/unavailable — using hardcoded fallback")
+         data = _fallback_data(cluster, urgent)
+     else:
+         try:
+             data = _parse_ai_json(raw_output)
++            if provider != "groq":
++                logger.info("Rewrote via %s fallback (earlier tier(s) unavailable)", provider)
+         except ValueError:
+-            logger.warning("Failed to parse AI output as JSON, using fallback. Raw: %.200s", raw_output)
++            logger.warning(
++                "Failed to parse %s output as JSON, using fallback. Raw: %.200s",
++                provider, raw_output,
++            )
+             data = _fallback_data(cluster, urgent)
+ 
+     if isinstance(data, dict) and data.get("reject"):
+diff --git a/newsbot/bot.py b/newsbot/bot.py
+index bc0b200..e2f0d46 100644
+--- a/newsbot/bot.py
++++ b/newsbot/bot.py
+@@ -6,6 +6,7 @@ import asyncio
+ import json
+ import logging
+ import os
++import time
+ from dataclasses import dataclass, field
+ from datetime import datetime
+ from typing import Any, Callable
+@@ -426,6 +427,10 @@ def _prepare_entries(urgent: bool = False, header: str | None = None) -> list[St
+         story = _cluster_to_story(cluster, urgent=urgent, header=item_header)
+         if story:
+             stories.append(story)
++        # Pace AI calls so a full digest (up to DIGEST_MAX_STORIES back-to-back
++        # completions) doesn't burst past Groq's per-minute token/request limit.
++        if index < n:
++            time.sleep(1.5)
+     return stories
+ 
+ 
+diff --git a/newsbot/config.py b/newsbot/config.py
+index ecc74dc..712c6c1 100644
+--- a/newsbot/config.py
++++ b/newsbot/config.py
+@@ -21,6 +21,10 @@ load_dotenv()
+ __all__ = [
+     "validate_config",
+     "create_groq_client",
++    "create_gemini_client",
++    "GEMINI_MODEL",
++    "create_openrouter_client",
++    "OPENROUTER_MODEL",
+     "REDIS_URL",
+     "RSS_FEEDS",
+     "MAX_ITEMS_PER_FEED",
+@@ -189,4 +193,56 @@ def create_groq_client():
+     return OpenAI(
+         api_key=os.environ["GROQ_API_KEY"],
+         base_url=GROQ_BASE_URL,
+-    )
+\ No newline at end of file
++    )
++
++
++GEMINI_MODEL: str = "gemini-2.0-flash"
++
++
++def create_gemini_client():
++    """Create and return the Gemini client, or None if GOOGLE_GEMINI_API_KEY is unset.
++
++    Unlike create_groq_client(), this never raises — Gemini is a fallback,
++    so a missing key should just mean "fallback unavailable", not a crash.
++    """
++    api_key = os.environ.get("GOOGLE_GEMINI_API_KEY", "").strip()
++    if not api_key:
++        return None
++    try:
++        from google import genai
++
++        return genai.Client(api_key=api_key)
++    except Exception:
++        import logging
++
++        logging.getLogger(__name__).exception("Failed to create Gemini client")
++        return None
++
++
++OPENROUTER_MODEL: str = os.environ.get(
++    "OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct:free"
++)
++# NOTE: OpenRouter's free-model lineup rotates — a specific model (e.g. DeepSeek)
++# can lose its :free tier with no notice. Check https://openrouter.ai/models
++# (filter: Price = Free) periodically and override via OPENROUTER_MODEL env var
++# if this default stops working.
++OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
++
++
++def create_openrouter_client():
++    """Create and return an OpenAI-compatible OpenRouter client, or None if
++    OPENROUTER_API_KEY is unset. Last-resort fallback (free DeepSeek tier),
++    so a missing key should mean "unavailable", not a crash.
++    """
++    api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
++    if not api_key:
++        return None
++    try:
++        from openai import OpenAI
++
++        return OpenAI(api_key=api_key, base_url=OPENROUTER_BASE_URL)
++    except Exception:
++        import logging
++
++        logging.getLogger(__name__).exception("Failed to create OpenRouter client")
++        return None
+\ No newline at end of file
+diff --git a/requirements.txt b/requirements.txt
+index ebcb553..018060f 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -1,6 +1,7 @@
+ python-telegram-bot[job-queue]==22.2
+ feedparser==6.0.11
+ openai==1.82.0
++google-genai>=1.0
+ httpx==0.28.1
+ pytz==2024.1
+ python-dotenv==1.0.1

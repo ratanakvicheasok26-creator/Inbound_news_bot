@@ -210,7 +210,7 @@ Stories covering the same event:
 
 def rewrite_compact(cluster: list[Entry]) -> str:
     prompt = _build_compact_prompt(cluster)
-    raw_output = _call_groq_with_retry(prompt)
+    raw_output, _provider = _call_ai_with_fallback(prompt)
 
     if raw_output is None:
         primary = cluster[0]
@@ -339,8 +339,98 @@ def _call_groq_with_retry(prompt: str) -> str | None:
                 )
                 time.sleep(delay)
             else:
-                logger.exception("Groq API failed after %d attempts", _MAX_RETRIES)
+                logger.warning("Groq API failed after %d attempts: %s", _MAX_RETRIES, exc)
     return raw_output
+
+
+def _call_gemini_with_retry(prompt: str) -> str | None:
+    """Fallback path when Groq is rate-limited/unavailable. Returns None if
+    Gemini isn't configured (no GOOGLE_GEMINI_API_KEY) or also fails."""
+    from newsbot.config import GEMINI_MODEL, create_gemini_client
+
+    client = create_gemini_client()
+    if client is None:
+        return None
+
+    raw_output = None
+    for attempt in range(1, _MAX_RETRIES + 1):
+        try:
+            response = client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=prompt,
+            )
+            content = response.text
+            if not content or not content.strip():
+                raise ValueError("Gemini API returned empty content")
+            raw_output = content.strip()
+            break
+        except Exception as exc:
+            if attempt < _MAX_RETRIES:
+                delay = _RETRY_BASE_DELAY * (2 ** (attempt - 1))
+                logger.warning(
+                    "Gemini API attempt %d/%d failed (%s), retrying in %.1fs",
+                    attempt, _MAX_RETRIES, exc, delay,
+                )
+                time.sleep(delay)
+            else:
+                logger.warning("Gemini API failed after %d attempts: %s", _MAX_RETRIES, exc)
+    return raw_output
+
+
+def _call_openrouter_with_retry(prompt: str) -> str | None:
+    """Last-resort fallback when both Groq and Gemini fail/unavailable.
+    Uses OpenRouter's current free-tier model (see OPENROUTER_MODEL). Returns None if OPENROUTER_API_KEY
+    isn't set or the call also fails."""
+    from newsbot.config import OPENROUTER_MODEL, create_openrouter_client
+
+    client = create_openrouter_client()
+    if client is None:
+        return None
+
+    raw_output = None
+    for attempt in range(1, _MAX_RETRIES + 1):
+        try:
+            response = client.chat.completions.create(
+                model=OPENROUTER_MODEL,
+                max_tokens=GROQ_MAX_TOKENS,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            content = response.choices[0].message.content
+            if not content or not content.strip():
+                raise ValueError("OpenRouter API returned empty content")
+            raw_output = content.strip()
+            break
+        except Exception as exc:
+            if attempt < _MAX_RETRIES:
+                delay = _RETRY_BASE_DELAY * (2 ** (attempt - 1))
+                logger.warning(
+                    "OpenRouter API attempt %d/%d failed (%s), retrying in %.1fs",
+                    attempt, _MAX_RETRIES, exc, delay,
+                )
+                time.sleep(delay)
+            else:
+                logger.warning("OpenRouter API failed after %d attempts: %s", _MAX_RETRIES, exc)
+    return raw_output
+
+
+def _call_ai_with_fallback(prompt: str) -> tuple[str | None, str]:
+    """Try Groq first, then Gemini, then OpenRouter (free tier).
+    Returns (raw_output, provider_used)."""
+    raw_output = _call_groq_with_retry(prompt)
+    if raw_output is not None:
+        return raw_output, "groq"
+
+    logger.warning("Groq unavailable, falling back to Gemini")
+    raw_output = _call_gemini_with_retry(prompt)
+    if raw_output is not None:
+        return raw_output, "gemini"
+
+    logger.warning("Gemini unavailable, falling back to OpenRouter (free tier)")
+    raw_output = _call_openrouter_with_retry(prompt)
+    if raw_output is not None:
+        return raw_output, "openrouter"
+
+    return None, "none"
 
 
 def _fallback_data(cluster: list[Entry], urgent: bool) -> dict:
@@ -376,15 +466,21 @@ def rewrite_with_ai(cluster: list[Entry], urgent: bool = False, header: str | No
     source_name_str = source_names[0] if source_names else "Unknown"
 
     prompt = _build_prompt(cluster, source_note)
-    raw_output = _call_groq_with_retry(prompt)
+    raw_output, provider = _call_ai_with_fallback(prompt)
 
     if raw_output is None:
+        logger.warning("Groq, Gemini, and OpenRouter all failed/unavailable — using hardcoded fallback")
         data = _fallback_data(cluster, urgent)
     else:
         try:
             data = _parse_ai_json(raw_output)
+            if provider != "groq":
+                logger.info("Rewrote via %s fallback (earlier tier(s) unavailable)", provider)
         except ValueError:
-            logger.warning("Failed to parse AI output as JSON, using fallback. Raw: %.200s", raw_output)
+            logger.warning(
+                "Failed to parse %s output as JSON, using fallback. Raw: %.200s",
+                provider, raw_output,
+            )
             data = _fallback_data(cluster, urgent)
 
     if isinstance(data, dict) and data.get("reject"):
