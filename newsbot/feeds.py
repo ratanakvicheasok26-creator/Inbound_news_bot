@@ -5,6 +5,7 @@ from __future__ import annotations
 import concurrent.futures
 import html
 import logging
+import random
 import re
 import threading
 import time
@@ -55,7 +56,7 @@ def _get_http_client() -> httpx.Client:
 
 
 # Shared thread pool for parallel feed fetching
-_feed_pool = concurrent.futures.ThreadPoolExecutor(max_workers=min(len(RSS_FEEDS), 10))
+_feed_pool = concurrent.futures.ThreadPoolExecutor(max_workers=min(len(RSS_FEEDS), 60))
 
 # Stop words for title normalization
 _STOP_WORDS: frozenset[str] = frozenset({
@@ -270,8 +271,9 @@ def collect_new_entries(posted_ids: set[str], posted_titles: set[str] | None = N
     if posted_titles is None:
         posted_titles = set()
 
+    shuffled = random.sample(RSS_FEEDS, len(RSS_FEEDS))
     futures: dict[concurrent.futures.Future, str] = {
-        _feed_pool.submit(_fetch_feed, url): url for url in RSS_FEEDS
+        _feed_pool.submit(_fetch_feed, url): url for url in shuffled
     }
 
     entries: list[Entry] = []

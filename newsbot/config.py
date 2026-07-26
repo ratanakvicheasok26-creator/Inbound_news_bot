@@ -72,8 +72,8 @@ RSS_FEEDS: list[str] = _get_rss_feeds(tier=1)
 
 MAX_ITEMS_PER_FEED: int = 3
 MAX_ENTRY_AGE_HOURS: int = 24
-FEED_TIMEOUT_SECONDS: int = 15
-FEED_GLOBAL_TIMEOUT_EXTRA: int = 10
+FEED_TIMEOUT_SECONDS: int = 10
+FEED_GLOBAL_TIMEOUT_EXTRA: int = 50
 
 # ---- Clustering ----
 CLUSTER_SIMILARITY_THRESHOLD: float = 0.45

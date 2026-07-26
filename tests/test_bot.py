@@ -49,21 +49,23 @@ class TestRankClusters:
 
 class TestSourceKeyboard:
     def test_primary_read_more_button(self):
-        post = StoryPost(text="x", primary_url="https://example.com/a")
+        post = StoryPost(text="x", primary_url="https://example.com/a", primary_source="Example")
         markup = _source_keyboard(post)
-        assert markup.inline_keyboard[0][0].text == "Read more"
+        assert markup.inline_keyboard[0][0].text == "Example"
         assert markup.inline_keyboard[0][0].url == "https://example.com/a"
 
     def test_extra_source_buttons(self):
         post = StoryPost(
             text="x",
             primary_url="https://a.com",
+            primary_source="Source A",
             extra_urls=["https://b.com", "https://c.com", "https://d.com"],
+            extra_sources=["Source B", "Source C", "Source D"],
         )
         markup = _source_keyboard(post)
         assert len(markup.inline_keyboard) == 2
         assert len(markup.inline_keyboard[1]) == 2
-        assert markup.inline_keyboard[1][0].text == "Source 2"
+        assert markup.inline_keyboard[1][0].text == "Source B"
 
 
 class TestPrepareEntries:
@@ -112,10 +114,11 @@ class TestPrepareUrgent:
 
 
 def test_broadcast_stories_sends_separately_with_button():
-    post1 = StoryPost(text="<b>One</b>", primary_url="https://a.com", entry_ids={"1"})
+    post1 = StoryPost(text="<b>One</b>", primary_url="https://a.com", primary_source="Source A", entry_ids={"1"})
     post2 = StoryPost(
         text="<b>Two</b>",
         primary_url="https://b.com",
+        primary_source="Source B",
         image_url="https://img.com/x.jpg",
         entry_ids={"2"},
     )
@@ -139,7 +142,7 @@ def test_broadcast_stories_sends_separately_with_button():
     assert mock_bot.send_message.await_count == 1
     assert mock_bot.send_photo.await_count == 1
     msg_kwargs = mock_bot.send_message.await_args.kwargs
-    assert msg_kwargs["reply_markup"].inline_keyboard[0][0].text == "Read more"
+    assert msg_kwargs["reply_markup"].inline_keyboard[0][0].text == "Source A"
     photo_kwargs = mock_bot.send_photo.await_args.kwargs
     assert photo_kwargs["photo"] == "https://img.com/x.jpg"
     assert photo_kwargs["reply_markup"].inline_keyboard[0][0].url == "https://b.com"

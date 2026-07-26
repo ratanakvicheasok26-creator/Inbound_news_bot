@@ -432,7 +432,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: Help Net Security
   type: rss
   url: https://www.helpnetsecurity.com/feed/
@@ -520,7 +520,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: SANS ISC
   type: rss
   url: https://isc.sans.edu/rssfeed.xml
@@ -640,7 +640,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: DL News
   type: rss
   url: https://www.dlnews.com/arc/outboundfeeds/rss/
@@ -760,7 +760,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: Android Central
   type: rss
   url: https://www.androidcentral.com/feed
@@ -1112,7 +1112,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: Kubernetes
   type: rss
   url: https://kubernetes.io/feed.xml
@@ -1496,7 +1496,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: Koh Santepheap Daily
   type: rss
   url: https://kohsantepheapdaily.com.kh/feed
@@ -1632,7 +1632,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: Disrupt Africa
   type: rss
   url: https://disrupt-africa.com/feed/
@@ -1752,7 +1752,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: Artificial Lawyer
   type: rss
   url: https://www.artificiallawyer.com/feed/
@@ -1800,7 +1800,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: r/programming
   type: rss
   url: https://www.reddit.com/r/programming/.rss
@@ -1808,7 +1808,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: r/netsec
   type: rss
   url: https://www.reddit.com/r/netsec/.rss
@@ -1816,7 +1816,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: r/worldnews
   type: rss
   url: https://www.reddit.com/r/worldnews/.rss
@@ -1824,7 +1824,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: r/cybersecurity
   type: rss
   url: https://www.reddit.com/r/cybersecurity/.rss
@@ -1832,7 +1832,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: r/MachineLearning
   type: rss
   url: https://www.reddit.com/r/MachineLearning/.rss
@@ -1840,7 +1840,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: r/LocalLLaMA
   type: rss
   url: https://www.reddit.com/r/LocalLLaMA/.rss
@@ -1848,7 +1848,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: r/singularity
   type: rss
   url: https://www.reddit.com/r/singularity/.rss
@@ -1856,7 +1856,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: r/OSINT
   type: rss
   url: https://www.reddit.com/r/OSINT/.rss
@@ -1864,7 +1864,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: r/Cambodia
   type: rss
   url: https://www.reddit.com/r/Cambodia/.rss
@@ -1872,7 +1872,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: r/artificial
   type: rss
   url: https://www.reddit.com/r/artificial/.rss
@@ -1880,7 +1880,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: arXiv cs.AI
   type: rss
   url: http://arxiv.org/rss/cs.AI
@@ -1968,7 +1968,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: Fintech News Asia
   type: rss
   url: https://fintechnews.sg/feed/
@@ -1976,7 +1976,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: The Ken
   type: rss
   url: https://the-ken.com/feed/
@@ -2608,7 +2608,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: Docker Blog
   type: rss
   url: https://www.docker.com/blog/feed/
@@ -4829,7 +4829,7 @@ sources:
   url: https://www.healthcareitnews.com/rss
   category: healthtech
   tier: *id001
-  enabled: true
+  enabled: false
 - name: Digital Health News
   type: rss
   url: https://www.digitalhealthnews.com/feed/
