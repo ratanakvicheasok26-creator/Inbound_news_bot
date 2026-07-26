@@ -320,7 +320,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: Anthropic News
   type: rss
   url: https://raw.githubusercontent.com/alan-turing-institute/ai-rss-feeds/main/feeds/anthropic-news.xml
@@ -824,7 +824,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: Phys.org
   type: rss
   url: https://phys.org/rss-feed/
@@ -832,7 +832,7 @@ sources:
   tier:
   - 1
   - 2
-  enabled: true
+  enabled: false
 - name: Quanta Magazine
   type: rss
   url: https://www.quantamagazine.org/feed/
