@@ -110,9 +110,9 @@ def _resolve_channel_target() -> tuple[int | None, int | None]:
         except ValueError:
             logger.error("TELEGRAM_THREAD_ID env var is set but not a valid integer: %r", raw_thread)
 
-    logger.warning(
-        "TELEGRAM_CHANNEL_ID was unresolved in cached config at startup but found in "
-        "env at runtime (channel=%s thread=%s) — using it. Investigate startup config load.",
+    logger.info(
+        "TELEGRAM_CHANNEL_ID was unresolved at startup, found via runtime env fallback "
+        "(channel=%s thread=%s) — this is expected on Railway.",
         channel_id, thread_id,
     )
     return channel_id, thread_id

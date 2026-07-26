@@ -336,8 +336,8 @@ def collect_new_entries(posted_ids: set[str], posted_titles: set[str] | None = N
                 ))
                 count += 1
     except TimeoutError:
-        logger.warning("Global feed timeout hit after %ds — %d/%d feeds completed, %d entries collected.",
-                        global_timeout, completed, total, len(entries))
+        logger.info("Global feed timeout after %ds — %d/%d feeds completed, %d entries collected.",
+                    global_timeout, completed, total, len(entries))
 
     return entries
 
