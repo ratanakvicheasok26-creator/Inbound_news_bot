@@ -210,7 +210,10 @@ Stories covering the same event:
 
 def rewrite_compact(cluster: list[Entry]) -> str:
     prompt = _build_compact_prompt(cluster)
-    raw_output, _provider = _call_ai_with_fallback(prompt)
+    raw_output, provider = _call_ai_with_fallback(prompt)
+
+    if provider != "groq":
+        logger.info("Compact rewrite via %s fallback", provider)
 
     if raw_output is None:
         primary = cluster[0]
@@ -316,7 +319,12 @@ Stories covering the same event:
 def _call_groq_with_retry(prompt: str) -> str | None:
     from newsbot.config import create_groq_client
 
-    client = create_groq_client()
+    try:
+        client = create_groq_client()
+    except Exception as exc:
+        logger.warning("Failed to create Groq client: %s", exc)
+        return None
+
     raw_output = None
     for attempt in range(1, _MAX_RETRIES + 1):
         try:
@@ -350,6 +358,7 @@ def _call_gemini_with_retry(prompt: str) -> str | None:
 
     client = create_gemini_client()
     if client is None:
+        logger.info("Gemini skipped: GOOGLE_GEMINI_API_KEY not configured")
         return None
 
     raw_output = None
@@ -385,6 +394,7 @@ def _call_openrouter_with_retry(prompt: str) -> str | None:
 
     client = create_openrouter_client()
     if client is None:
+        logger.info("OpenRouter skipped: OPENROUTER_API_KEY not configured")
         return None
 
     raw_output = None
@@ -415,22 +425,102 @@ def _call_openrouter_with_retry(prompt: str) -> str | None:
 
 def _call_ai_with_fallback(prompt: str) -> tuple[str | None, str]:
     """Try Groq first, then Gemini, then OpenRouter (free tier).
-    Returns (raw_output, provider_used)."""
-    raw_output = _call_groq_with_retry(prompt)
-    if raw_output is not None:
-        return raw_output, "groq"
+    Returns (raw_output, provider_used). Each tier is wrapped in
+    try/except so an unexpected error in one provider doesn't crash
+    the entire fallback chain."""
+    try:
+        raw_output = _call_groq_with_retry(prompt)
+        if raw_output is not None:
+            return raw_output, "groq"
+    except Exception as exc:
+        logger.warning("Groq fallback chain raised unexpectedly: %s", exc)
 
     logger.warning("Groq unavailable, falling back to Gemini")
-    raw_output = _call_gemini_with_retry(prompt)
-    if raw_output is not None:
-        return raw_output, "gemini"
+    try:
+        raw_output = _call_gemini_with_retry(prompt)
+        if raw_output is not None:
+            return raw_output, "gemini"
+    except Exception as exc:
+        logger.warning("Gemini fallback chain raised unexpectedly: %s", exc)
 
     logger.warning("Gemini unavailable, falling back to OpenRouter (free tier)")
-    raw_output = _call_openrouter_with_retry(prompt)
-    if raw_output is not None:
-        return raw_output, "openrouter"
+    try:
+        raw_output = _call_openrouter_with_retry(prompt)
+        if raw_output is not None:
+            return raw_output, "openrouter"
+    except Exception as exc:
+        logger.warning("OpenRouter fallback chain raised unexpectedly: %s", exc)
 
     return None, "none"
+
+
+_CATEGORY_KEYWORDS: dict[str, list[str]] = {
+    "cybersecurity": [
+        "security", "hack", "breach", "vulnerability", "ransomware",
+        "cyber", "malware", "zero-day", "exploit", "phishing",
+    ],
+    "defi": [
+        "defi", "crypto", "bitcoin", "ethereum", "blockchain",
+        "token", "web3", "nft", "solana", "stablecoin",
+    ],
+    "science": [
+        "research", "study", "scientist", "discovery",
+        "lab", "experiment", "physics", "biology",
+    ],
+    "regulation": [
+        "regulat", "ban", "law", "policy", "congress",
+        "eu", "government", "compliance", "antitrust",
+    ],
+    "cloud": [
+        "cloud", "aws", "azure", "devops", "kubernetes",
+        "docker", "saas", "infrastructure",
+    ],
+    "opensource": [
+        "open source", "open-source", "github", "linux",
+        "foss", "git",
+    ],
+    "gaming": [
+        "game", "gaming", "playstation", "xbox", "nintendo",
+        "esports", "steam",
+    ],
+    "climate": [
+        "climate", "renewable", "solar", "carbon",
+        "sustainability", "green energy", "ev ",
+    ],
+    "telecom": [
+        "satellite", "5g", "6g", "telecom", "starlink",
+        "broadband", "isp",
+    ],
+    "hardware": [
+        "chip", "processor", "gpu", "cpu", "device",
+        "hardware", "semiconductor", "robotics",
+        "nvidia", "amd", "intel",
+    ],
+    "big_tech": [
+        "google", "apple", "microsoft", "amazon", "meta",
+        "alphabet", "tesla",
+    ],
+    "mobile": [
+        "android", "ios", "app store",
+        "mobile", "smartphone",
+    ],
+    "ai": [
+        "artificial intelligence", "machine learning", "llm",
+        "gpt", "openai", "anthropic", "deepmind", "chatbot",
+        "neural", "deep learning",
+    ],
+}
+
+
+def _guess_category(cluster: list[Entry]) -> str:
+    """Best-effort category guess from title/summary when AI is unavailable."""
+    text = " ".join(
+        f"{e.title or ''} {e.summary or ''}" for e in cluster
+    ).lower()
+    for cat, keywords in _CATEGORY_KEYWORDS.items():
+        if any(kw in text for kw in keywords):
+            return cat
+    return "startups"
 
 
 def _fallback_data(cluster: list[Entry], urgent: bool) -> dict:
@@ -443,7 +533,7 @@ def _fallback_data(cluster: list[Entry], urgent: bool) -> dict:
 
     return {
         "urgency": urgency,
-        "category": "startups",
+        "category": _guess_category(cluster),
         "headline": title,
         "summary": summary,
         "key_points": [f"Reported by: {', '.join(source_names[:3])}"],
@@ -500,7 +590,7 @@ def rewrite_with_ai(cluster: list[Entry], urgent: bool = False, header: str | No
             logger.error("Fallback data also failed validation — using hardcoded minimal data")
             data = {
                 "urgency": "alert",
-                "category": "startups",
+                "category": _guess_category(cluster),
                 "headline": cluster[0].title or "Untitled Story",
                 "summary": (cluster[0].summary or "No summary available.")[:200],
                 "key_points": [],

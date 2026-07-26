@@ -231,7 +231,7 @@ OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
 
 def create_openrouter_client():
     """Create and return an OpenAI-compatible OpenRouter client, or None if
-    OPENROUTER_API_KEY is unset. Last-resort fallback (free DeepSeek tier),
+    OPENROUTER_API_KEY is unset. Last-resort fallback (free-tier LLM),
     so a missing key should mean "unavailable", not a crash.
     """
     api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()

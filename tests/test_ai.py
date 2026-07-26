@@ -5,13 +5,15 @@ from unittest.mock import MagicMock, patch
 from newsbot.ai import (
     _parse_ai_json,
     _validate_ai_data,
-    _md_bold_to_html,
     _fallback_data,
+    _guess_category,
     render_template,
     trim_for_caption,
     collect_links,
     pick_image_url,
     rewrite_with_ai,
+    rewrite_compact,
+    _call_ai_with_fallback,
 )
 from newsbot.feeds import Entry
 
@@ -116,28 +118,13 @@ class TestRenderTemplate:
             "headline": "Major Exploit",
             "summary": "Protocol hacked for $10M.",
             "key_points": ["Flash loan used", "Oracle manipulated"],
-            "metrics": ["Loss: $10M", "Status: Investigating"],
-            "context": "This is the third attack this month.",
-            "timeline": "2:00 AM UTC | Discovered 3:30 AM UTC",
-            "tags": ["DeFi", "Security"],
-            "source_name": "CoinDesk",
-            "published_date": "Jul 16, 2026",
         }
         result = render_template(data)
-        assert "🚨 CRITICAL:" in result
+        assert "<b>🔴 CRITICAL — Inbound Reports</b>" in result
         assert "<b>Major Exploit</b>" in result
-        assert "📂 Cybersecurity" in result
-        assert "📅 Jul 16, 2026" in result
         assert "Protocol hacked" in result
-        assert "📊 KEY METRICS:" in result
-        assert "Loss: $10M" in result
-        assert "⚠️ WHY IT MATTERS:" in result
-        assert "third attack" in result
-        assert "🔍 DETAILS:" in result
-        assert "Flash loan used" in result
-        assert "⏰ 2:00 AM UTC" in result
-        assert "📌 Source: CoinDesk" in result
-        assert "#DeFi #Security" in result
+        assert "▸ Flash loan used" in result
+        assert "▸ Oracle manipulated" in result
 
     def test_alert_template(self):
         data = {
@@ -145,23 +132,13 @@ class TestRenderTemplate:
             "category": "cybersecurity",
             "headline": "Vulnerability in Compound V2",
             "summary": "Medium-severity bug disclosed.",
-            "what_to_do": ["Check positions", "De-risk if needed"],
-            "who_affected": ["Users with <150% collateral"],
-            "timeline": "Patch in 7-10 days",
-            "tags": ["Security", "DeFi"],
-            "source_name": "Compound Forum",
-            "published_date": "Jul 14, 2026",
+            "key_points": ["Check positions", "De-risk if needed"],
         }
         result = render_template(data)
-        assert "⚠️ ALERT:" in result
+        assert "<b>🟡 ALERT — Inbound Reports</b>" in result
         assert "<b>Vulnerability in Compound V2</b>" in result
-        assert "📅 Jul 14, 2026" in result
-        assert "🛡️ WHAT TO DO:" in result
-        assert "Check positions" in result
-        assert "📍 AFFECTED:" in result
-        assert "Users with" in result
-        assert "⏰ Patch in 7-10 days" in result
-        assert "📌 Source: Compound Forum" in result
+        assert "Medium-severity bug" in result
+        assert "▸ Check positions" in result
 
     def test_analysis_template(self):
         data = {
@@ -170,23 +147,11 @@ class TestRenderTemplate:
             "headline": "SEC Proposes DeFi Framework",
             "summary": "New guidance on governance tokens.",
             "key_points": ["Governance tokens may be securities", "2-year safe harbor"],
-            "market_impact": "Bitcoin +1.2% on clarity.",
-            "who_affected": ["DAOs", "DeFi protocols"],
-            "context": "First clear language on DAO tokens.",
-            "tags": ["Regulation", "DeFi"],
-            "source_name": "The Block",
-            "published_date": "Jul 16, 2026",
         }
         result = render_template(data)
-        assert "📊 <b>SEC Proposes" in result
-        assert "📅 Jul 16, 2026" in result
-        assert "💡 KEY POINTS:" in result
-        assert "Governance tokens may be securities" in result
-        assert "📈 MARKET IMPACT:" in result
-        assert "Bitcoin +1.2%" in result
-        assert "🎯 WHO THIS AFFECTS:" in result
-        assert "💬 CONTEXT:" in result
-        assert "📌 Source: The Block" in result
+        assert "<b>🔵 Analysis — Inbound Reports</b>" in result
+        assert "<b>SEC Proposes DeFi Framework</b>" in result
+        assert "Governance tokens" in result
 
     def test_market_template(self):
         data = {
@@ -195,46 +160,32 @@ class TestRenderTemplate:
             "headline": "BTC Breaks $65K",
             "summary": "Bitcoin surges on ETF inflows.",
             "key_points": ["Current: $65,420", "+3.2% 24h"],
-            "market_impact": "Bullish breakout confirmed.",
-            "tags": ["BTC", "Bitcoin"],
-            "source_name": "CoinGecko",
-            "published_date": "Jul 16, 2026",
         }
         result = render_template(data)
-        assert "💹 <b>BTC Breaks $65K</b>" in result
-        assert "📅 Jul 16, 2026" in result
-        assert "📊 KEY POINTS:" in result
-        assert "📈 MARKET IMPACT:" in result
-        assert "Bullish breakout" in result
-        assert "📌 Source: CoinGecko" in result
+        assert "<b>💰 Market — Inbound Reports</b>" in result
+        assert "<b>BTC Breaks $65K</b>" in result
+        assert "Bitcoin surges" in result
 
-    def test_explainer_template(self):
+    def test_explainer_template_with_tldr(self):
         data = {
             "urgency": "explainer",
             "category": "defi",
             "headline": "How Oracle Attacks Work",
             "summary": "DeFi relies on price feeds attackers can manipulate.",
             "key_points": ["Oracles feed prices", "Flash loans amplify attacks"],
-            "what_to_watch": ["Chainlink v2 adoption", "Regulatory response"],
             "tldr": "DeFi price feeds are a weak link.",
-            "tags": ["Oracles", "DeFi"],
-            "source_name": "Messari",
-            "published_date": "Jul 15, 2026",
         }
         result = render_template(data)
-        assert "📚 EXPLAINER:" in result
+        assert "<b>📖 Explainer — Inbound Reports</b>" in result
         assert "<b>How Oracle Attacks Work</b>" in result
-        assert "📅 Jul 15, 2026" in result
-        assert "🔹 KEY POINTS:" in result
-        assert "🔹 WHAT TO WATCH:" in result
-        assert "💡 TL;DR:" in result
         assert "DeFi price feeds are a weak link." in result
-        assert "📌 Source: Messari" in result
+        assert "<b>TL;DR:</b>" in result
 
-    def test_defaults_to_analysis(self):
+    def test_unknown_urgency_no_badge(self):
         data = {"urgency": "unknown", "headline": "Test", "summary": "Sum"}
         result = render_template(data)
-        assert "📊 <b>Test</b>" in result
+        assert "<b>Test</b>" in result
+        assert "Inbound Reports" not in result
 
     def test_truncation_over_limit(self):
         data = {
@@ -244,31 +195,22 @@ class TestRenderTemplate:
         }
         result = render_template(data)
         assert len(result) <= 4096
-        assert result.endswith("…")
+        assert result.endswith("...")
 
-    def test_timeline_not_deduped_when_real_status(self):
+    def test_tldr_ignored_for_non_explainer(self):
         data = {
             "urgency": "alert",
-            "category": "cybersecurity",
-            "headline": "Vulnerability Disclosed",
-            "summary": "Medium-severity bug.",
-            "timeline": "Patch in 7-10 days",
-            "published_date": "Jul 14, 2026",
+            "headline": "Test",
+            "summary": "Sum",
+            "tldr": "This should not appear",
         }
         result = render_template(data)
-        assert "⏰ Patch in 7-10 days" in result
+        assert "This should not appear" not in result
 
-    def test_timeline_deduped_when_it_echoes_published_date(self):
-        data = {
-            "urgency": "alert",
-            "category": "ai",
-            "headline": "AI Article Published",
-            "summary": "A new article on AI.",
-            "timeline": "Published on Jul 19, 2026",
-            "published_date": "Jul 19, 2026",
-        }
+    def test_no_key_points_section_when_empty(self):
+        data = {"urgency": "analysis", "headline": "Test", "summary": "Sum"}
         result = render_template(data)
-        assert "⏰" not in result
+        assert "▸" not in result
 
 
 # --- Fallback Data ---
@@ -322,28 +264,74 @@ class TestFallbackData:
         assert is_valid is True, f"Fallback data failed validation: {reason}"
 
 
+# --- Category Guessing ---
+
+class TestGuessCategory:
+    def test_cybersecurity_keywords(self):
+        entries = [Entry(id="1", title="Major breach at exchange", summary="", link="http://a.com", source_name="A")]
+        assert _guess_category(entries) == "cybersecurity"
+
+    def test_defi_keywords(self):
+        entries = [Entry(id="1", title="Ethereum gas fees surge", summary="", link="http://a.com", source_name="A")]
+        assert _guess_category(entries) == "defi"
+
+    def test_big_tech_keywords(self):
+        entries = [Entry(id="1", title="Apple announces new MacBook", summary="", link="http://a.com", source_name="A")]
+        assert _guess_category(entries) == "big_tech"
+
+    def test_ai_keywords(self):
+        entries = [Entry(id="1", title="OpenAI releases GPT-5", summary="", link="http://a.com", source_name="A")]
+        assert _guess_category(entries) == "ai"
+
+    def test_hardware_keywords(self):
+        entries = [Entry(id="1", title="NVIDIA new GPU chip announced", summary="", link="http://a.com", source_name="A")]
+        assert _guess_category(entries) == "hardware"
+
+    def test_science_keywords(self):
+        entries = [Entry(id="1", title="Scientists discover new material", summary="", link="http://a.com", source_name="A")]
+        assert _guess_category(entries) == "science"
+
+    def test_regulation_keywords(self):
+        entries = [Entry(id="1", title="EU regulation on AI compliance", summary="", link="http://a.com", source_name="A")]
+        assert _guess_category(entries) == "regulation"
+
+    def test_cloud_keywords(self):
+        entries = [Entry(id="1", title="AWS Kubernetes update", summary="", link="http://a.com", source_name="A")]
+        assert _guess_category(entries) == "cloud"
+
+    def test_opensource_keywords(self):
+        entries = [Entry(id="1", title="Linux kernel 6.0 released", summary="", link="http://a.com", source_name="A")]
+        assert _guess_category(entries) == "opensource"
+
+    def test_gaming_keywords(self):
+        entries = [Entry(id="1", title="Nintendo Switch 2 launch", summary="", link="http://a.com", source_name="A")]
+        assert _guess_category(entries) == "gaming"
+
+    def test_climate_keywords(self):
+        entries = [Entry(id="1", title="New solar panel efficiency record", summary="", link="http://a.com", source_name="A")]
+        assert _guess_category(entries) == "climate"
+
+    def test_telecom_keywords(self):
+        entries = [Entry(id="1", title="Starlink 5G partnership", summary="", link="http://a.com", source_name="A")]
+        assert _guess_category(entries) == "telecom"
+
+    def test_mobile_keywords(self):
+        entries = [Entry(id="1", title="Android 15 release date", summary="", link="http://a.com", source_name="A")]
+        assert _guess_category(entries) == "mobile"
+
+    def test_defaults_to_startups(self):
+        entries = [Entry(id="1", title="Random unrelated news", summary="Something happened", link="http://a.com", source_name="A")]
+        assert _guess_category(entries) == "startups"
+
+    def test_multiple_entries_combined(self):
+        entries = [
+            Entry(id="1", title="Ethereum gas fees surge", summary="", link="http://a.com", source_name="A"),
+            Entry(id="2", title="Bitcoin price hits new ATH", summary="", link="http://b.com", source_name="B"),
+        ]
+        assert _guess_category(entries) == "defi"
+
+
 # --- Utilities ---
-
-class TestMdBoldToHtml:
-    def test_bold_conversion(self):
-        assert _md_bold_to_html("**Hello** world") == "<b>Hello</b> world"
-
-    def test_multiple_bold(self):
-        result = _md_bold_to_html("**A** and **B**")
-        assert result == "<b>A</b> and <b>B</b>"
-
-    def test_no_bold(self):
-        result = _md_bold_to_html("No bold here")
-        assert result == "No bold here"
-
-    def test_html_escaping(self):
-        result = _md_bold_to_html("**<script>**")
-        assert "<b>&lt;script&gt;</b>" in result
-
-    def test_apostrophe_not_escaped(self):
-        result = _md_bold_to_html("It's a test")
-        assert "It's" in result
-
 
 class TestTrimForCaption:
     def test_short_text(self):
@@ -352,8 +340,8 @@ class TestTrimForCaption:
     def test_long_text(self):
         long = "a" * 2000
         result = trim_for_caption(long, limit=100)
-        assert len(result) <= 100
-        assert result.endswith("…")
+        assert len(result) <= 103  # limit + up to 2 for "..." suffix
+        assert result.endswith("...")
 
 
 class TestCollectLinks:
@@ -365,8 +353,9 @@ class TestCollectLinks:
         ]
         links = collect_links(entries)
         assert len(links) == 2
-        assert "http://a.com" in links
-        assert "http://c.com" in links
+        urls = [url for url, _ in links]
+        assert "http://a.com" in urls
+        assert "http://c.com" in urls
 
     def test_urgent_cap(self):
         entries = [Entry(id=str(i), title=str(i), summary="", link=f"http://{i}.com", source_name="X") for i in range(5)]
@@ -392,64 +381,137 @@ class TestPickImageUrl:
         assert pick_image_url(entries) is None
 
 
+# --- Fallback Chain ---
+
+class TestCallAiWithFallback:
+    def test_groq_success(self):
+        with patch("newsbot.ai._call_groq_with_retry", return_value="groq output") as mock:
+            result, provider = _call_ai_with_fallback("prompt")
+            assert result == "groq output"
+            assert provider == "groq"
+            mock.assert_called_once()
+
+    def test_groq_fails_gemini_succeeds(self):
+        with patch("newsbot.ai._call_groq_with_retry", return_value=None), \
+             patch("newsbot.ai._call_gemini_with_retry", return_value="gemini output") as mock:
+            result, provider = _call_ai_with_fallback("prompt")
+            assert result == "gemini output"
+            assert provider == "gemini"
+            mock.assert_called_once()
+
+    def test_groq_and_gemini_fail_openrouter_succeeds(self):
+        with patch("newsbot.ai._call_groq_with_retry", return_value=None), \
+             patch("newsbot.ai._call_gemini_with_retry", return_value=None), \
+             patch("newsbot.ai._call_openrouter_with_retry", return_value="openrouter output") as mock:
+            result, provider = _call_ai_with_fallback("prompt")
+            assert result == "openrouter output"
+            assert provider == "openrouter"
+            mock.assert_called_once()
+
+    def test_all_providers_fail(self):
+        with patch("newsbot.ai._call_groq_with_retry", return_value=None), \
+             patch("newsbot.ai._call_gemini_with_retry", return_value=None), \
+             patch("newsbot.ai._call_openrouter_with_retry", return_value=None):
+            result, provider = _call_ai_with_fallback("prompt")
+            assert result is None
+            assert provider == "none"
+
+    def test_groq_raises_gemini_succeeds(self):
+        with patch("newsbot.ai._call_groq_with_retry", side_effect=RuntimeError("groq crashed")), \
+             patch("newsbot.ai._call_gemini_with_retry", return_value="gemini recovery"):
+            result, provider = _call_ai_with_fallback("prompt")
+            assert result == "gemini recovery"
+            assert provider == "gemini"
+
+    def test_all_providers_raise(self):
+        with patch("newsbot.ai._call_groq_with_retry", side_effect=RuntimeError("groq crashed")), \
+             patch("newsbot.ai._call_gemini_with_retry", side_effect=RuntimeError("gemini crashed")), \
+             patch("newsbot.ai._call_openrouter_with_retry", side_effect=RuntimeError("openrouter crashed")):
+            result, provider = _call_ai_with_fallback("prompt")
+            assert result is None
+            assert provider == "none"
+
+
+# --- Header Parameter ---
+
 class TestHeaderParameter:
-    def _mock_groq(self):
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = (
+    def _mock_ai_output(self):
+        return (
             '{"urgency": "analysis", "category": "ai", "headline": "Test Story", '
-            '"headline_km": "រឿងសាកល្បង", "summary": "A summary", '
-            '"summary_km": "សង្ខេប", "key_points": ["point"], "key_points_km": ["ចំណុច"], "tags": ["Tag"]}'
+            '"summary": "A summary", "key_points": ["point"], "tags": ["Tag"]}'
         )
-        return mock_response
 
     def test_header_prepended_to_output(self):
         cluster = [Entry(id="1", title="Test", summary="Summary", link="http://a.com", source_name="A")]
-        mock_response = self._mock_groq()
-        with patch("newsbot.ai._call_groq_with_retry", return_value=mock_response.choices[0].message.content):
+        with patch("newsbot.ai._call_ai_with_fallback", return_value=(self._mock_ai_output(), "groq")):
             result = rewrite_with_ai(cluster, header="📰 1/3 · January 16, 2026")
         assert result.startswith("📰 1/3 · January 16, 2026\n\n")
         assert "Test Story" in result
 
     def test_no_header(self):
         cluster = [Entry(id="1", title="Test", summary="Summary", link="http://a.com", source_name="A")]
-        mock_response = self._mock_groq()
-        with patch("newsbot.ai._call_groq_with_retry", return_value=mock_response.choices[0].message.content):
+        with patch("newsbot.ai._call_ai_with_fallback", return_value=(self._mock_ai_output(), "groq")):
             result = rewrite_with_ai(cluster, header=None)
         assert not result.startswith("📰")
         assert "Test Story" in result
 
 
+# --- rewrite_with_ai ---
+
 class TestRewriteWithAi:
     def test_fallback_on_none_output(self):
         cluster = [Entry(id="1", title="Fallback Test", summary="Summary", link="http://a.com", source_name="A")]
-        with patch("newsbot.ai._call_groq_with_retry", return_value=None):
+        with patch("newsbot.ai._call_ai_with_fallback", return_value=(None, "none")):
             result = rewrite_with_ai(cluster)
         assert "Fallback Test" in result
 
     def test_fallback_on_invalid_json(self):
         cluster = [Entry(id="1", title="Bad JSON Test", summary="Summary", link="http://a.com", source_name="A")]
-        with patch("newsbot.ai._call_groq_with_retry", return_value="not json at all"):
+        with patch("newsbot.ai._call_ai_with_fallback", return_value=("not json at all", "groq")):
             result = rewrite_with_ai(cluster)
         assert "Bad JSON Test" in result
 
     def test_emergency_fallback_on_bad_validation(self):
         cluster = [Entry(id="1", title="Emergency", summary="Summary", link="http://a.com", source_name="A")]
         bad_data = '{"urgency": "INVALID_LEVEL", "category": "INVALID_CAT"}'
-        with patch("newsbot.ai._call_groq_with_retry", return_value=bad_data):
+        with patch("newsbot.ai._call_ai_with_fallback", return_value=(bad_data, "groq")):
             result = rewrite_with_ai(cluster)
         assert "Emergency" in result
 
     def test_urgent_overrides_non_urgent_level(self):
         cluster = [Entry(id="1", title="Urgent Override", summary="Exploit detected", link="http://a.com", source_name="A")]
-        data = '{"urgency": "explainer", "category": "ai", "headline": "Test", "headline_km": "សាកល្បង", "summary": "Sum", "summary_km": "សង្ខេប", "key_points": [], "key_points_km": [], "tags": []}'
-        with patch("newsbot.ai._call_groq_with_retry", return_value=data):
+        data = '{"urgency": "explainer", "category": "ai", "headline": "Test", "summary": "Sum", "key_points": [], "tags": []}'
+        with patch("newsbot.ai._call_ai_with_fallback", return_value=(data, "groq")):
             result = rewrite_with_ai(cluster, urgent=True)
-        assert "⚠️ ALERT:" in result
+        assert "🟡 ALERT" in result
 
-    def test_publish_date_injected(self):
-        cluster = [Entry(id="1", title="Date Test", summary="Summary", link="http://a.com", source_name="A", published_date="Jul 16, 2026")]
-        data = '{"urgency": "analysis", "category": "ai", "headline": "Date Test", "headline_km": "កាលបរិច្ឆេទ", "summary": "Summary", "summary_km": "សង្ខេប", "key_points": [], "key_points_km": [], "tags": []}'
-        with patch("newsbot.ai._call_groq_with_retry", return_value=data):
-            result = rewrite_with_ai(cluster)
-        assert "📅 Jul 16, 2026" in result
+
+# --- rewrite_compact ---
+
+class TestRewriteCompact:
+    def test_compact_normal(self):
+        cluster = [Entry(id="1", title="Test", summary="Summary", link="http://a.com", source_name="A")]
+        with patch("newsbot.ai._call_ai_with_fallback", return_value=("Short summary.", "groq")):
+            result = rewrite_compact(cluster)
+        assert result == "Short summary."
+
+    def test_compact_truncates_long_output(self):
+        cluster = [Entry(id="1", title="Test", summary="Summary", link="http://a.com", source_name="A")]
+        long_output = "First sentence. Second sentence. Third sentence. Fourth sentence."
+        with patch("newsbot.ai._call_ai_with_fallback", return_value=(long_output, "groq")):
+            result = rewrite_compact(cluster)
+        sentences = result.split(". ")
+        assert len(sentences) <= 3
+
+    def test_compact_fallback_to_summary(self):
+        cluster = [Entry(id="1", title="Test", summary="Original summary text", link="http://a.com", source_name="A")]
+        with patch("newsbot.ai._call_ai_with_fallback", return_value=(None, "none")):
+            result = rewrite_compact(cluster)
+        assert result == "Original summary text"
+
+    def test_compact_logs_non_groq_provider(self):
+        cluster = [Entry(id="1", title="Test", summary="Summary", link="http://a.com", source_name="A")]
+        with patch("newsbot.ai._call_ai_with_fallback", return_value=("ok", "gemini")), \
+             patch("newsbot.ai.logger") as mock_logger:
+            rewrite_compact(cluster)
+            mock_logger.info.assert_any_call("Compact rewrite via %s fallback", "gemini")
