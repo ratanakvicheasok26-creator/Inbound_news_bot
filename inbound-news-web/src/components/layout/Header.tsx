@@ -55,12 +55,9 @@ export function Header() {
 
   const isDark = theme === "dark"
 
-  const leftLinks = [
+  const centerLinks = [
     { href: "/blindspot", label: "Blindspot" },
     { href: "/", label: "Timeline" },
-  ]
-
-  const centerLinks = [
     { href: "/glossary", label: "Glossary" },
   ]
 
@@ -83,12 +80,38 @@ export function Header() {
           <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)]">
             {today} · {fullDate}
           </span>
-          <Link
-            href="/donate"
-            className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
-          >
-            Donate
-          </Link>
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="hidden md:flex border border-[var(--text-primary)] overflow-hidden font-mono text-[9px] font-bold uppercase tracking-[0.05em]">
+              <button
+                className={`px-2 py-0.5 transition-colors ${
+                  lang === "en"
+                    ? "bg-[var(--text-primary)] text-[var(--bg)]"
+                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg)]"
+                }`}
+                onClick={() => setLang("en")}
+              >
+                EN
+              </button>
+              <div className="w-px bg-[var(--border)]" />
+              <button
+                className={`px-2 py-0.5 transition-colors ${
+                  lang === "km"
+                    ? "bg-[var(--text-primary)] text-[var(--bg)]"
+                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg)]"
+                }`}
+                onClick={() => setLang("km")}
+              >
+                ខ្មែរ
+              </button>
+            </div>
+            <ThemeToggle variant="header" />
+            <Link
+              href="/donate"
+              className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+            >
+              Donate
+            </Link>
+          </div>
         </div>
 
         {/* TIER 2 — Cursive Logo (Masthead) */}
@@ -116,8 +139,8 @@ export function Header() {
         {/* TIER 3 — Main Navigation (Strict 3-Column Grid) */}
         <div className="grid grid-cols-3 items-center px-4 md:px-10 h-[44px]">
 
-          {/* LEFT COLUMN — Blindspot, Timeline */}
-          <nav className="flex justify-start items-center gap-4 md:gap-6">
+          {/* LEFT COLUMN — Mobile menu button only */}
+          <nav className="flex justify-start items-center">
             <button
               className="flex items-center justify-center w-8 h-8 md:hidden"
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -125,8 +148,11 @@ export function Header() {
             >
               <Menu className="h-4 w-4" />
             </button>
+          </nav>
 
-            {leftLinks.map((link) => (
+          {/* CENTER COLUMN — Blindspot, Timeline, Glossary, Topics */}
+          <nav className="flex justify-center items-center gap-4 md:gap-6">
+            {centerLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -139,25 +165,8 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
-          </nav>
 
-          {/* CENTER COLUMN — Glossary, Topics */}
-          <nav className="flex justify-center items-center gap-4 md:gap-6">
-            {centerLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`font-mono text-[11px] font-bold uppercase tracking-[0.1em] px-2 py-1 transition-colors ${
-                  pathname === link.href
-                    ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                    : "text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)]"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-
-            <div className="relative" ref={topicsRef}>
+            <div className="hidden md:block relative" ref={topicsRef}>
               <button
                 onClick={() => setTopicsOpen(!topicsOpen)}
                 className="flex items-center gap-1 font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)] px-2 py-1 transition-colors"
@@ -187,33 +196,8 @@ export function Header() {
             </div>
           </nav>
 
-          {/* RIGHT COLUMN — Language Toggle + Theme Toggle */}
-          <div className="flex justify-end items-center gap-2">
-            <div className="flex border-2 border-[var(--text-primary)] overflow-hidden font-mono text-[10px] font-bold uppercase tracking-[0.05em]">
-              <button
-                className={`px-2 md:px-3 py-1 transition-colors ${
-                  lang === "en"
-                    ? "bg-[var(--text-primary)] text-[var(--bg)]"
-                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg)]"
-                }`}
-                onClick={() => setLang("en")}
-              >
-                EN
-              </button>
-              <div className="w-px bg-[var(--border)]" />
-              <button
-                className={`px-2 md:px-3 py-1 transition-colors ${
-                  lang === "km"
-                    ? "bg-[var(--text-primary)] text-[var(--bg)]"
-                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg)]"
-                }`}
-                onClick={() => setLang("km")}
-              >
-                ខ្មែរ
-              </button>
-            </div>
-            <ThemeToggle variant="header" />
-          </div>
+          {/* RIGHT COLUMN — Spacer (keeps center nav visually centered) */}
+          <div />
 
         </div>
 
@@ -231,20 +215,6 @@ export function Header() {
           </button>
 
           <div className="mt-16 px-6">
-            {leftLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileOpen(false)}
-                className={`block py-4 font-mono text-sm font-bold uppercase tracking-[0.08em] border-b border-[var(--border)] transition-colors ${
-                  pathname === link.href
-                    ? "text-[var(--accent)]"
-                    : "text-[var(--text-primary)] hover:text-[var(--accent)]"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
             {centerLinks.map((link) => (
               <Link
                 key={link.href}

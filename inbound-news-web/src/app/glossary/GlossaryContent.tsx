@@ -27,7 +27,7 @@ export function GlossaryContent() {
 
         <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed mb-8">
           The digital literacy engine. A persistent, searchable encyclopedia of tech jargon
-          that compounds in value over time. Terms are defined in both English and Khmer.
+          that compounds in value over time.
         </p>
 
         <div className="relative mb-6">
@@ -79,21 +79,14 @@ export function GlossaryContent() {
                   <h2 className="font-serif text-[20px] font-bold text-[var(--text-primary)]">
                     {term.term_en}
                   </h2>
-                  <p className="font-mono text-[12px] text-[var(--text-secondary)]">
-                    {term.term_km}
-                  </p>
                 </div>
                 <span className="font-mono text-[10px] text-[var(--text-secondary)] tabular-nums shrink-0">
                   {term.story_count} stories
                 </span>
               </div>
 
-              <p className="text-[14px] text-[var(--text-primary)] leading-relaxed mb-2">
+              <p className="text-[14px] text-[var(--text-primary)] leading-relaxed mb-3">
                 {term.definition_en}
-              </p>
-
-              <p className="text-[13px] text-[var(--text-secondary)] leading-relaxed mb-3 font-khmer kh-body">
-                {term.definition_km}
               </p>
 
               <div className="p-3 bg-[var(--surface-alt)] border-l-2 border-[var(--accent)]">

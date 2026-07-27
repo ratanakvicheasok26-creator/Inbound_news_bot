@@ -47,9 +47,6 @@ export function JargonPopover({ term, position, onClose }: JargonPopoverProps) {
             <h3 className="text-[18px] font-extrabold text-[var(--text-primary)] leading-tight tracking-tight">
               {term.term_en}
             </h3>
-            <p className="font-mono text-[11px] text-[var(--text-secondary)] mt-0.5 font-medium">
-              {term.term_km}
-            </p>
           </div>
           <button
             onClick={onClose}
@@ -64,9 +61,6 @@ export function JargonPopover({ term, position, onClose }: JargonPopoverProps) {
       <div className="px-4 py-3">
         <p className="text-[13px] text-[var(--text-primary)] leading-relaxed mb-3">
           {term.definition_en}
-        </p>
-        <p className="text-[12px] text-[var(--text-secondary)] leading-relaxed font-khmer kh-body mb-3">
-          {term.definition_km}
         </p>
         <div className="p-3 bg-[var(--surface-alt)] border-l-2 border-[var(--accent)]">
           <p className="text-[12px] text-[var(--text-secondary)] italic leading-relaxed">
