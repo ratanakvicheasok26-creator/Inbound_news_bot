@@ -1,26 +1,28 @@
-import { getAllPosts } from "@/lib/posts";
+import { getAllStories } from "@/lib/posts"
+import { formatDistanceToNow } from "@/lib/utils"
 
 export async function Ticker() {
-  const posts = await getAllPosts();
-  const items = posts.slice(0, 10);
+  const stories = await getAllStories()
+  const items = stories.slice(0, 10)
+  if (items.length === 0) return null
 
-  if (items.length === 0) return null;
-
-  // Duplicated so the CSS scroll animation (-50%) loops seamlessly.
-  const track = [...items, ...items];
+  const duplicated = [...items, ...items]
 
   return (
     <div className="ticker">
       <div className="ticker-track">
-        {track.map((post, i) => (
-          <div
-            key={`${post.id}-${i}`}
-            className={`ticker-item${post.category === "cyber" ? " breaking" : ""}`}
+        {duplicated.map((story, i) => (
+          <span
+            key={`${story.id}-${i}`}
+            className={`ticker-item ${story.category === "cybersecurity" ? "breaking" : ""}`}
           >
-            {post.title}
-          </div>
+            {story.title}
+            <span className="text-[var(--accent)] text-[10px] ml-1">
+              {formatDistanceToNow(story.created_at)}
+            </span>
+          </span>
         ))}
       </div>
     </div>
-  );
+  )
 }

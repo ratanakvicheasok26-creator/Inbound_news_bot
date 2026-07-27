@@ -1,4 +1,8 @@
-"""AI-powered story rewriting via Groq API with structured JSON output and template rendering."""
+"""AI-powered story rewriting via shared AI router with structured JSON output and template rendering.
+
+Uses shared.ai_router for 3-tier provider fallback with key rotation:
+  Tier 1: Groq (3 keys) → Tier 2: OpenRouter (3 keys) → Tier 3: Gemini (3 keys)
+"""
 
 from __future__ import annotations
 
@@ -14,13 +18,13 @@ import httpx
 from newsbot.config import (
     DIGEST_MIN_SOURCES,
     GROQ_MAX_TOKENS,
-    GROQ_MODEL,
     LINK_CAP_NORMAL,
     LINK_CAP_URGENT,
     NEWS_CATEGORIES_SET,
     URGENCY_LEVELS_SET,
 )
 from newsbot.feeds import Entry
+from shared.ai_router import get_router
 
 __all__ = [
     "render_template",
@@ -34,8 +38,6 @@ logger = logging.getLogger(__name__)
 
 _MAX_TELEGRAM_LENGTH: int = 4096
 _CAPTION_MAX: int = 1024
-_MAX_RETRIES: int = 3
-_RETRY_BASE_DELAY: float = 1.0
 
 _REQUIRED_JSON_KEYS = ("urgency", "headline", "summary", "category")
 
@@ -144,11 +146,11 @@ _CATEGORY_LABELS: dict[str, str] = {
 
 
 _URGENCY_BADGES: dict[str, str] = {
-    "breaking": "🔴 CRITICAL",
-    "alert": "🟡 ALERT",
-    "analysis": "🔵 Analysis",
-    "market": "💰 Market",
-    "explainer": "📖 Explainer",
+    "breaking": "\U0001f534 CRITICAL",
+    "alert": "\U0001f7e1 ALERT",
+    "analysis": "\U0001f535 Analysis",
+    "market": "\U0001f4b0 Market",
+    "explainer": "\U0001f4d6 Explainer",
 }
 
 
@@ -162,7 +164,7 @@ def _render_template(data: dict) -> str:
 
     badge = _URGENCY_BADGES.get(urgency, "")
     if badge:
-        sections: list[str] = [f"<b>{badge} — Inbound Reports</b>", ""]
+        sections: list[str] = [f"<b>{badge} \u2014 Inbound Reports</b>", ""]
     else:
         sections = []
 
@@ -199,10 +201,10 @@ def _build_compact_prompt(cluster: list[Entry]) -> str:
     return f"""You are a tech news bot writing a compact 2-3 sentence summary.
 
 Summarise the following tech news story in at most {_COMPACT_MAX_SENTENCES} sentences.
-Focus on: what happened, at a high level — who, what, why it matters.
+Focus on: what happened, at a high level \u2014 who, what, why it matters.
 - Plain text only, no markdown, no HTML, no bold, no headlines, no bullet points.
 - Do not simply repeat article titles.
-- Report facts only — no opinions, no speculation.
+- Report facts only \u2014 no opinions, no speculation.
 
 Stories covering the same event:
 {headlines}"""
@@ -210,10 +212,11 @@ Stories covering the same event:
 
 def rewrite_compact(cluster: list[Entry]) -> str:
     prompt = _build_compact_prompt(cluster)
-    raw_output, provider = _call_ai_with_fallback(prompt)
+    router = get_router()
+    raw_output, provider = router.call(prompt, max_tokens=GROQ_MAX_TOKENS)
 
-    if provider != "groq":
-        logger.info("Compact rewrite via %s fallback", provider)
+    if provider != "none":
+        logger.info("Compact rewrite via %s", provider)
 
     if raw_output is None:
         primary = cluster[0]
@@ -305,153 +308,15 @@ Urgency classification:
 - "explainer": education, how something works, deep dive, tutorial
 
 Rules:
-- Report facts only — no opinions, no speculation, no buy/sell advice
+- Report facts only \u2014 no opinions, no speculation, no buy/sell advice
 - Never closely mirror any single article's wording
 - If sources disagree, note it in context
-- No HTML tags in any field — plain text only
+- No HTML tags in any field \u2014 plain text only
 - Return ONLY valid JSON, no preamble, no markdown code fences
 {source_note}
 
 Stories covering the same event:
 {headlines}"""
-
-
-def _call_groq_with_retry(prompt: str) -> str | None:
-    from newsbot.config import create_groq_client
-
-    try:
-        client = create_groq_client()
-    except Exception as exc:
-        logger.warning("Failed to create Groq client: %s", exc)
-        return None
-
-    raw_output = None
-    for attempt in range(1, _MAX_RETRIES + 1):
-        try:
-            response = client.chat.completions.create(
-                model=GROQ_MODEL,
-                max_tokens=GROQ_MAX_TOKENS,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            content = response.choices[0].message.content
-            if content is None:
-                raise ValueError("Groq API returned empty content")
-            raw_output = content.strip()
-            break
-        except Exception as exc:
-            if attempt < _MAX_RETRIES:
-                delay = _RETRY_BASE_DELAY * (2 ** (attempt - 1))
-                logger.warning(
-                    "Groq API attempt %d/%d failed (%s), retrying in %.1fs",
-                    attempt, _MAX_RETRIES, exc, delay,
-                )
-                time.sleep(delay)
-            else:
-                logger.warning("Groq API failed after %d attempts: %s", _MAX_RETRIES, exc)
-    return raw_output
-
-
-def _call_gemini_with_retry(prompt: str) -> str | None:
-    """Fallback path when Groq is rate-limited/unavailable. Returns None if
-    Gemini isn't configured (no GOOGLE_GEMINI_API_KEY) or also fails."""
-    from newsbot.config import GEMINI_MODEL, create_gemini_client
-
-    client = create_gemini_client()
-    if client is None:
-        logger.info("Gemini skipped: GOOGLE_GEMINI_API_KEY not configured")
-        return None
-
-    raw_output = None
-    for attempt in range(1, _MAX_RETRIES + 1):
-        try:
-            response = client.models.generate_content(
-                model=GEMINI_MODEL,
-                contents=prompt,
-            )
-            content = response.text
-            if not content or not content.strip():
-                raise ValueError("Gemini API returned empty content")
-            raw_output = content.strip()
-            break
-        except Exception as exc:
-            if attempt < _MAX_RETRIES:
-                delay = _RETRY_BASE_DELAY * (2 ** (attempt - 1))
-                logger.warning(
-                    "Gemini API attempt %d/%d failed (%s), retrying in %.1fs",
-                    attempt, _MAX_RETRIES, exc, delay,
-                )
-                time.sleep(delay)
-            else:
-                logger.warning("Gemini API failed after %d attempts: %s", _MAX_RETRIES, exc)
-    return raw_output
-
-
-def _call_openrouter_with_retry(prompt: str) -> str | None:
-    """Last-resort fallback when both Groq and Gemini fail/unavailable.
-    Uses OpenRouter's current free-tier model (see OPENROUTER_MODEL). Returns None if OPENROUTER_API_KEY
-    isn't set or the call also fails."""
-    from newsbot.config import OPENROUTER_MODEL, create_openrouter_client
-
-    client = create_openrouter_client()
-    if client is None:
-        logger.info("OpenRouter skipped: OPENROUTER_API_KEY not configured")
-        return None
-
-    raw_output = None
-    for attempt in range(1, _MAX_RETRIES + 1):
-        try:
-            response = client.chat.completions.create(
-                model=OPENROUTER_MODEL,
-                max_tokens=GROQ_MAX_TOKENS,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            content = response.choices[0].message.content
-            if not content or not content.strip():
-                raise ValueError("OpenRouter API returned empty content")
-            raw_output = content.strip()
-            break
-        except Exception as exc:
-            if attempt < _MAX_RETRIES:
-                delay = _RETRY_BASE_DELAY * (2 ** (attempt - 1))
-                logger.warning(
-                    "OpenRouter API attempt %d/%d failed (%s), retrying in %.1fs",
-                    attempt, _MAX_RETRIES, exc, delay,
-                )
-                time.sleep(delay)
-            else:
-                logger.warning("OpenRouter API failed after %d attempts: %s", _MAX_RETRIES, exc)
-    return raw_output
-
-
-def _call_ai_with_fallback(prompt: str) -> tuple[str | None, str]:
-    """Try Groq first, then Gemini, then OpenRouter (free tier).
-    Returns (raw_output, provider_used). Each tier is wrapped in
-    try/except so an unexpected error in one provider doesn't crash
-    the entire fallback chain."""
-    try:
-        raw_output = _call_groq_with_retry(prompt)
-        if raw_output is not None:
-            return raw_output, "groq"
-    except Exception as exc:
-        logger.warning("Groq fallback chain raised unexpectedly: %s", exc)
-
-    logger.warning("Groq unavailable, falling back to Gemini")
-    try:
-        raw_output = _call_gemini_with_retry(prompt)
-        if raw_output is not None:
-            return raw_output, "gemini"
-    except Exception as exc:
-        logger.warning("Gemini fallback chain raised unexpectedly: %s", exc)
-
-    logger.warning("Gemini unavailable, falling back to OpenRouter (free tier)")
-    try:
-        raw_output = _call_openrouter_with_retry(prompt)
-        if raw_output is not None:
-            return raw_output, "openrouter"
-    except Exception as exc:
-        logger.warning("OpenRouter fallback chain raised unexpectedly: %s", exc)
-
-    return None, "none"
 
 
 _CATEGORY_KEYWORDS: dict[str, list[str]] = {
@@ -556,10 +421,11 @@ def rewrite_with_ai(cluster: list[Entry], urgent: bool = False, header: str | No
     source_name_str = source_names[0] if source_names else "Unknown"
 
     prompt = _build_prompt(cluster, source_note)
-    raw_output, provider = _call_ai_with_fallback(prompt)
+    router = get_router()
+    raw_output, provider = router.call(prompt, max_tokens=GROQ_MAX_TOKENS)
 
     if raw_output is None:
-        logger.warning("Groq, Gemini, and OpenRouter all failed/unavailable — using hardcoded fallback")
+        logger.warning("All AI providers exhausted \u2014 using hardcoded fallback")
         data = _fallback_data(cluster, urgent)
     else:
         try:
@@ -587,7 +453,7 @@ def rewrite_with_ai(cluster: list[Entry], urgent: bool = False, header: str | No
         data = _fallback_data(cluster, urgent)
         is_valid, _ = _validate_ai_data(data)
         if not is_valid:
-            logger.error("Fallback data also failed validation — using hardcoded minimal data")
+            logger.error("Fallback data also failed validation \u2014 using hardcoded minimal data")
             data = {
                 "urgency": "alert",
                 "category": _guess_category(cluster),

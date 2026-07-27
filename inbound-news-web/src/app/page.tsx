@@ -1,158 +1,89 @@
-import Link from "next/link";
-import { getAllPosts, getPostsByCategory } from "@/lib/posts";
-import { ArticleCard } from "@/components/ArticleCard";
-import { CATEGORIES } from "@/lib/categories";
-import { DonateSection } from "@/components/DonateSection";
-import type { Post } from "@/lib/types";
+import { getAllStories, getStoryStats } from "@/lib/posts"
+import { LeadStoryCard } from "@/components/story/LeadStoryCard"
+import { SignalSidebar } from "@/components/story/SignalSidebar"
+import { StoryRow } from "@/components/story/StoryRow"
+import { BlindspotCard } from "@/components/story/BlindspotCard"
+import { StatsStrip } from "@/components/story/StatsStrip"
+import { TrendingStrip } from "@/components/story/TrendingStrip"
 
-function formatMeta(post: Post) {
-  const date = new Date(post.published_at).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-  return { source: post.source, date };
-}
+export default async function HomePage() {
+  const [stories, stats] = await Promise.all([getAllStories(), getStoryStats()])
 
-export default async function Home() {
-  const posts = await getAllPosts();
+  const leadStory = stories[0] || null
+  const signalStories = stories.slice(1, 6)
+  const trendingStories = stories.slice(0, 8)
+  const latestStories = stories.slice(0, 15)
 
-  if (posts.length === 0) {
+  if (!leadStory) {
     return (
-      <section className="container">
-        <div className="empty-state">The wire is quiet — no dispatches yet.</div>
-      </section>
-    );
+      <div className="container">
+        <div className="empty-state">
+          <p className="font-serif text-[24px] mb-2">The wire is quiet</p>
+          <p>No dispatches yet. Stories will appear here as they come in.</p>
+        </div>
+      </div>
+    )
   }
 
-  const [lead, ...rest] = posts;
-  const sideStories = rest.slice(0, 3);
-  const mostRead = posts.slice(0, 4);
-  const leadMeta = formatMeta(lead);
-  const uniqueSources = new Set(posts.map((p) => p.source)).size;
-
-  const rails = await Promise.all(
-    CATEGORIES.map(async (c) => ({
-      ...c,
-      posts: (await getPostsByCategory(c.slug)).slice(0, 3),
-    }))
-  );
-
   return (
-    <>
-      {/* Hero */}
-      <section className="hero container">
-        <article className="hero-main">
-          <div className="tag">{lead.category}</div>
-          <h1>
-            <Link href={`/post/${lead.id}`} style={{ textDecoration: "none", color: "inherit" }}>
-              {lead.title}
-            </Link>
-          </h1>
-          {lead.summary && <p className="hero-dek">{lead.summary}</p>}
-          <div className="hero-meta">
-            <span>{leadMeta.source}</span>
-            <span>{leadMeta.date}</span>
-          </div>
-          <div className="hero-img" />
-        </article>
-        <aside className="hero-side">
-          {sideStories.map((post) => (
-            <div className="side-card" key={post.id}>
-              <div className="tag">{post.category}</div>
-              <h3>
-                <Link href={`/post/${post.id}`} style={{ textDecoration: "none" }}>
-                  {post.title}
-                </Link>
-              </h3>
-              <div className="hero-meta" style={{ marginBottom: 0 }}>
-                <span>{post.source}</span>
-              </div>
-            </div>
-          ))}
-        </aside>
+    <div className="container">
+      {/* LEAD STORY + SIGNAL SIDEBAR */}
+      <section className="grid gap-12 py-10 border-b-2 border-[var(--text-primary)] md:grid-cols-[2fr_1fr]">
+        <LeadStoryCard story={leadStory} />
+        <SignalSidebar stories={signalStories} />
       </section>
 
-      {/* Category rails */}
-      {rails
-        .filter((r) => r.posts.length > 0)
-        .map((rail) => (
-          <section className="rail container" key={rail.slug}>
-            <div className="section-header">
-              <div className="section-title">
-                <span className="tick">└─</span> {rail.label}
-              </div>
-              <Link href={`/${rail.slug}`} className="see-all">
-                See all {rail.label}
-              </Link>
-            </div>
-            <div className="grid-3">
-              {rail.posts.map((post) => (
-                <ArticleCard post={post} key={post.id} />
-              ))}
-            </div>
-          </section>
-        ))}
+      {/* TRENDING STRIP */}
+      <section className="py-8 border-b border-[var(--border)]">
+        <div className="section-header">
+          <h2 className="section-title">Trending</h2>
+        </div>
+        <TrendingStrip stories={trendingStories} />
+      </section>
 
-      {/* Stats strip */}
-      <section className="stats-strip container">
-        <div className="stat-item">
-          <div className="stat-num">{String(posts.length).padStart(2, "0")}</div>
-          <div className="stat-label">Stories Filed</div>
+      {/* BLINDSPOT SECTION */}
+      <section className="py-10 border-b border-[var(--border)]">
+        <div className="section-header">
+          <h2 className="section-title">&#9888; Blindspot</h2>
+          <span className="font-mono text-[10px] text-[var(--text-secondary)]">
+            Underreported stories
+          </span>
         </div>
-        <div className="stat-item">
-          <div className="stat-num">{String(uniqueSources).padStart(2, "0")}</div>
-          <div className="stat-label">Sources Tracked</div>
-        </div>
-        <div className="stat-item">
-          <div className="stat-num">{String(CATEGORIES.length).padStart(2, "0")}</div>
-          <div className="stat-label">Desks</div>
-        </div>
-        <div className="stat-item">
-          <div className="stat-num">24/7</div>
-          <div className="stat-label">Wire Coverage</div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <BlindspotCard
+            title="Cambodia's new data privacy law takes effect with unclear enforcement"
+            summary="Only 2 sources covering this — both from regional tech press"
+            sourceCount={2}
+            sourceNames={["Tech in Asia", "Rest of World"]}
+          />
+          <BlindspotCard
+            title="Southeast Asian startups shifting from growth to profitability ahead of global peers"
+            summary="Mainstream media has not picked this up"
+            sourceCount={3}
+            sourceNames={["e27", "KrASIA"]}
+          />
         </div>
       </section>
 
-      {/* Most read */}
-      <section className="split-layout container">
-        <aside className="most-read">
-          <div className="section-header">
-            <div className="section-title">
-              <span className="tick">└─</span> Latest In
-            </div>
-          </div>
-          <ol>
-            {mostRead.map((post) => (
-              <li key={post.id}>
-                <div>
-                  <div className="tag">{post.category}</div>
-                  <h4>
-                    <Link href={`/post/${post.id}`} style={{ textDecoration: "none" }}>
-                      {post.title}
-                    </Link>
-                  </h4>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </aside>
+      {/* LATEST COVERAGE */}
+      <section className="py-10 border-b border-[var(--border)]">
+        <div className="section-header">
+          <h2 className="section-title">Latest Coverage</h2>
+          <span className="font-mono text-[10px] text-[var(--text-secondary)]">
+            {latestStories.length} stories
+          </span>
+        </div>
         <div>
-          <div className="section-header">
-            <div className="section-title">
-              <span className="tick">└─</span> All Dispatches
-            </div>
-          </div>
-          <div className="grid-3">
-            {posts.slice(0, 6).map((post) => (
-              <ArticleCard post={post} key={post.id} />
-            ))}
-          </div>
+          {latestStories.map((story) => (
+            <StoryRow key={story.id} story={story} />
+          ))}
         </div>
       </section>
 
-      {/* Donate */}
-      <DonateSection />
-    </>
-  );
+      {/* STATS */}
+      <section className="py-10 border-b-2 border-[var(--text-primary)]">
+        <StatsStrip stats={stats} />
+      </section>
+    </div>
+  )
 }

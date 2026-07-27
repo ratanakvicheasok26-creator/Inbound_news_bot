@@ -5,12 +5,12 @@ Run: python -m workers.dedup
 Env vars required:
     SUPABASE_URL
     SUPABASE_SERVICE_ROLE_KEY
-    COHERE_API_KEY
+    COHERE_API_KEY (optional — falls back to Jaccard similarity if missing/down)
 
 This worker:
 1. Fetches unprocessed articles from Supabase
 2. Generates Cohere embeddings for each article title + summary
-3. Searches pgvector for existing stories with cosine similarity ≥ 0.85
+3. Searches pgvector for existing stories with cosine similarity >= 0.85
 4. If similar story found: adds article to that story
 5. If no similar story: creates a new story
 """
@@ -19,10 +19,8 @@ from __future__ import annotations
 
 import logging
 import os
-import sys
+import time
 from typing import Any
-
-import httpx
 
 from workers.db import get_supabase
 
@@ -36,33 +34,67 @@ _SIMILARITY_THRESHOLD = 0.85
 _EMBED_MODEL = "embed-multilingual-v3.0"
 _EMBED_DIM = 1024
 _BATCH_SIZE = 100
+_MAX_RETRIES = 3
+_RETRY_BASE_DELAY = 2.0
 
 
 def _get_cohere_client():
-    import cohere
+    """Get Cohere client. Returns None if COHERE_API_KEY is not set or import fails."""
     api_key = os.environ.get("COHERE_API_KEY", "").strip()
     if not api_key:
-        raise RuntimeError("Set COHERE_API_KEY env var.")
-    return cohere.ClientV2(api_key)
+        logger.warning("COHERE_API_KEY not set — will use Jaccard fallback")
+        return None
+    try:
+        import cohere
+        return cohere.ClientV2(api_key)
+    except ImportError:
+        logger.warning("cohere package not installed — will use Jaccard fallback")
+        return None
+    except Exception as exc:
+        logger.warning("Failed to create Cohere client: %s", exc)
+        return None
 
 
-def _embed_texts(client, texts: list[str]) -> list[list[float]]:
-    """Generate embeddings for a list of texts using Cohere."""
+def _embed_texts_with_retry(client, texts: list[str]) -> list[list[float]] | None:
+    """Generate embeddings with retry. Returns None on failure."""
     if not texts:
         return []
 
-    result = client.embed(
-        texts=texts,
-        model=_EMBED_MODEL,
-        input_type="search_document",
-        embedding_types=["float"],
-    )
-    return [e for e in result.embeddings.float]
+    for attempt in range(1, _MAX_RETRIES + 1):
+        try:
+            result = client.embed(
+                texts=texts,
+                model=_EMBED_MODEL,
+                input_type="search_document",
+                embedding_types=["float"],
+            )
+            return [e for e in result.embeddings.float]
+        except Exception as exc:
+            if attempt < _MAX_RETRIES:
+                delay = _RETRY_BASE_DELAY * (2 ** (attempt - 1))
+                logger.warning(
+                    "Cohere embed attempt %d/%d failed (%s), retrying in %.1fs",
+                    attempt, _MAX_RETRIES, exc, delay,
+                )
+                time.sleep(delay)
+            else:
+                logger.error("Cohere embed failed after %d attempts: %s", _MAX_RETRIES, exc)
+    return None
+
+
+def _jaccard_similarity(a: str, b: str) -> float:
+    """Simple word-level Jaccard similarity for fallback clustering."""
+    words_a = set(a.lower().split())
+    words_b = set(b.lower().split())
+    if not words_a or not words_b:
+        return 0.0
+    intersection = words_a & words_b
+    union = words_a | words_b
+    return len(intersection) / len(union)
 
 
 def _fetch_unprocessed(supabase, limit: int = 500) -> list[dict[str, Any]]:
     """Fetch articles that haven't been linked to a story yet."""
-    # Get articles not yet in story_sources
     result = supabase.table("articles").select("*").not_.in_(
         "id",
         supabase.table("story_sources").select("article_id")
@@ -88,20 +120,42 @@ def _search_similar_stories(supabase, embedding: list[float], threshold: float =
     return None
 
 
-def _create_story(supabase, article: dict, embedding: list[float]) -> str:
+def _search_similar_stories_jaccard(supabase, title: str, threshold: float = 0.6) -> str | None:
+    """Fallback: search for similar stories using title word overlap."""
+    result = supabase.table("stories").select("id, title").order(
+        "created_at", desc=True
+    ).limit(200).execute()
+
+    stories = result.data or []
+    best_score = 0.0
+    best_id = None
+
+    for story in stories:
+        score = _jaccard_similarity(title, story.get("title", ""))
+        if score > best_score:
+            best_score = score
+            best_id = story["id"]
+
+    if best_score >= threshold:
+        return best_id
+    return None
+
+
+def _create_story(supabase, article: dict, embedding: list[float] | None = None) -> str:
     """Create a new story from an article. Returns the story ID."""
-    result = supabase.table("stories").insert({
+    row = {
         "title": article["title"],
         "summary_en": article.get("summary", ""),
         "source_count": 1,
         "category": article.get("category"),
         "tags": [],
-        "embedding": embedding,
-    }).execute()
+    }
+    if embedding is not None:
+        row["embedding"] = embedding
 
+    result = supabase.table("stories").insert(row).execute()
     story_id = result.data[0]["id"]
 
-    # Link article to story
     supabase.table("story_sources").insert({
         "story_id": story_id,
         "article_id": article["id"],
@@ -121,20 +175,25 @@ def _add_to_story(supabase, story_id: str, article: dict) -> None:
         "source_url": article.get("url", ""),
     }).execute()
 
-    # Increment source_count
-    supabase.table("stories").update({
-        "source_count": supabase.rpc("increment_source_count", {"sid": story_id}),
-    }).eq("id", story_id).execute()
-
-
-def _add_increment_rpc(supabase) -> None:
-    """Ensure the increment_source_count RPC function exists."""
-    supabase.rpc("increment_source_count", {"sid": "test"}).execute()
+    # Increment source_count directly
+    current = supabase.table("stories").select("source_count").eq("id", story_id).execute()
+    if current.data:
+        new_count = (current.data[0].get("source_count") or 0) + 1
+        supabase.table("stories").update({"source_count": new_count}).eq("id", story_id).execute()
 
 
 def run() -> None:
+    try:
+        _run_inner()
+    except Exception:
+        logger.exception("Dedup worker crashed — this should never happen. All articles preserved.")
+        return
+
+
+def _run_inner() -> None:
     supabase = get_supabase()
     cohere_client = _get_cohere_client()
+    use_embeddings = cohere_client is not None
 
     logger.info("Fetching unprocessed articles...")
     articles = _fetch_unprocessed(supabase, limit=500)
@@ -144,36 +203,61 @@ def run() -> None:
         logger.info("Nothing to dedup.")
         return
 
-    # 1. Generate embeddings for all articles
-    texts = [
-        f"{a.get('title', '')}. {a.get('summary', '')[:200]}"
-        for a in articles
-    ]
-    logger.info("Generating embeddings for %d articles...", len(texts))
-    embeddings = _embed_texts(cohere_client, texts)
+    # Generate embeddings if Cohere is available
+    embeddings: list[list[float]] | None = None
+    if use_embeddings:
+        texts = [
+            f"{a.get('title', '')}. {a.get('summary', '')[:200]}"
+            for a in articles
+        ]
+        logger.info("Generating embeddings for %d articles via Cohere...", len(texts))
+        embeddings = _embed_texts_with_retry(cohere_client, texts)
+        if embeddings is None:
+            logger.warning("Cohere embedding failed — falling back to Jaccard similarity")
+            use_embeddings = False
 
-    # 2. For each article, search for similar stories
+    if not use_embeddings:
+        logger.info("Using Jaccard title similarity (Cohere unavailable)")
+
+    # Process each article
     new_stories = 0
     merged = 0
+    errors = 0
 
-    for article, embedding in zip(articles, embeddings):
-        story_id = _search_similar_stories(supabase, embedding, _SIMILARITY_THRESHOLD)
+    for i, article in enumerate(articles):
+        try:
+            embedding = embeddings[i] if embeddings and i < len(embeddings) else None
 
-        if story_id:
-            _add_to_story(supabase, story_id, article)
-            merged += 1
-        else:
-            _create_story(supabase, article, embedding)
-            new_stories += 1
+            if use_embeddings and embedding is not None:
+                story_id = _search_similar_stories(supabase, embedding, _SIMILARITY_THRESHOLD)
+            else:
+                story_id = _search_similar_stories_jaccard(
+                    supabase, article.get("title", ""), threshold=0.6
+                )
 
-    logger.info("Dedup complete: %d new stories, %d merged into existing", new_stories, merged)
+            if story_id:
+                _add_to_story(supabase, story_id, article)
+                merged += 1
+            else:
+                _create_story(supabase, article, embedding)
+                new_stories += 1
 
-    # 3. Enable vector index if enough stories
+        except Exception:
+            errors += 1
+            logger.warning("Failed to process article '%.60s' (id=%s)",
+                           article.get("title", ""), article.get("id"))
+            continue
+
+    logger.info("Dedup complete: %d new stories, %d merged, %d errors",
+                new_stories, merged, errors)
+
+    # Log vector index hint
     story_count = supabase.table("stories").select("id", count="exact").execute()
     total = story_count.count or 0
     if total >= 100:
-        logger.info("Story count: %d — you can now create the vector index in Supabase SQL:", total)
-        logger.info("  CREATE INDEX stories_embedding_idx ON stories USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);")
+        logger.info("Story count: %d — consider creating vector index:", total)
+        logger.info("  CREATE INDEX stories_embedding_idx ON stories "
+                    "USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);")
 
 
 if __name__ == "__main__":

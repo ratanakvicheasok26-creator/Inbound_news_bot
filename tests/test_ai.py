@@ -13,7 +13,6 @@ from newsbot.ai import (
     pick_image_url,
     rewrite_with_ai,
     rewrite_compact,
-    _call_ai_with_fallback,
 )
 from newsbot.feeds import Entry
 
@@ -381,53 +380,22 @@ class TestPickImageUrl:
         assert pick_image_url(entries) is None
 
 
-# --- Fallback Chain ---
+# --- AI Router Integration ---
 
-class TestCallAiWithFallback:
-    def test_groq_success(self):
-        with patch("newsbot.ai._call_groq_with_retry", return_value="groq output") as mock:
-            result, provider = _call_ai_with_fallback("prompt")
+class TestAIRouterIntegration:
+    def test_router_success(self):
+        mock_router = MagicMock()
+        mock_router.call.return_value = ("groq output", "groq")
+        with patch("newsbot.ai.get_router", return_value=mock_router):
+            result, provider = mock_router.call("prompt")
             assert result == "groq output"
             assert provider == "groq"
-            mock.assert_called_once()
 
-    def test_groq_fails_gemini_succeeds(self):
-        with patch("newsbot.ai._call_groq_with_retry", return_value=None), \
-             patch("newsbot.ai._call_gemini_with_retry", return_value="gemini output") as mock:
-            result, provider = _call_ai_with_fallback("prompt")
-            assert result == "gemini output"
-            assert provider == "gemini"
-            mock.assert_called_once()
-
-    def test_groq_and_gemini_fail_openrouter_succeeds(self):
-        with patch("newsbot.ai._call_groq_with_retry", return_value=None), \
-             patch("newsbot.ai._call_gemini_with_retry", return_value=None), \
-             patch("newsbot.ai._call_openrouter_with_retry", return_value="openrouter output") as mock:
-            result, provider = _call_ai_with_fallback("prompt")
-            assert result == "openrouter output"
-            assert provider == "openrouter"
-            mock.assert_called_once()
-
-    def test_all_providers_fail(self):
-        with patch("newsbot.ai._call_groq_with_retry", return_value=None), \
-             patch("newsbot.ai._call_gemini_with_retry", return_value=None), \
-             patch("newsbot.ai._call_openrouter_with_retry", return_value=None):
-            result, provider = _call_ai_with_fallback("prompt")
-            assert result is None
-            assert provider == "none"
-
-    def test_groq_raises_gemini_succeeds(self):
-        with patch("newsbot.ai._call_groq_with_retry", side_effect=RuntimeError("groq crashed")), \
-             patch("newsbot.ai._call_gemini_with_retry", return_value="gemini recovery"):
-            result, provider = _call_ai_with_fallback("prompt")
-            assert result == "gemini recovery"
-            assert provider == "gemini"
-
-    def test_all_providers_raise(self):
-        with patch("newsbot.ai._call_groq_with_retry", side_effect=RuntimeError("groq crashed")), \
-             patch("newsbot.ai._call_gemini_with_retry", side_effect=RuntimeError("gemini crashed")), \
-             patch("newsbot.ai._call_openrouter_with_retry", side_effect=RuntimeError("openrouter crashed")):
-            result, provider = _call_ai_with_fallback("prompt")
+    def test_router_returns_none_when_all_fail(self):
+        mock_router = MagicMock()
+        mock_router.call.return_value = (None, "none")
+        with patch("newsbot.ai.get_router", return_value=mock_router):
+            result, provider = mock_router.call("prompt")
             assert result is None
             assert provider == "none"
 
@@ -441,16 +409,23 @@ class TestHeaderParameter:
             '"summary": "A summary", "key_points": ["point"], "tags": ["Tag"]}'
         )
 
+    def _make_mock_router(self, output, provider="groq"):
+        mock_router = MagicMock()
+        mock_router.call.return_value = (output, provider)
+        return mock_router
+
     def test_header_prepended_to_output(self):
         cluster = [Entry(id="1", title="Test", summary="Summary", link="http://a.com", source_name="A")]
-        with patch("newsbot.ai._call_ai_with_fallback", return_value=(self._mock_ai_output(), "groq")):
+        mock_router = self._make_mock_router(self._mock_ai_output())
+        with patch("newsbot.ai.get_router", return_value=mock_router):
             result = rewrite_with_ai(cluster, header="📰 1/3 · January 16, 2026")
         assert result.startswith("📰 1/3 · January 16, 2026\n\n")
         assert "Test Story" in result
 
     def test_no_header(self):
         cluster = [Entry(id="1", title="Test", summary="Summary", link="http://a.com", source_name="A")]
-        with patch("newsbot.ai._call_ai_with_fallback", return_value=(self._mock_ai_output(), "groq")):
+        mock_router = self._make_mock_router(self._mock_ai_output())
+        with patch("newsbot.ai.get_router", return_value=mock_router):
             result = rewrite_with_ai(cluster, header=None)
         assert not result.startswith("📰")
         assert "Test Story" in result
@@ -459,29 +434,38 @@ class TestHeaderParameter:
 # --- rewrite_with_ai ---
 
 class TestRewriteWithAi:
+    def _make_mock_router(self, output, provider="groq"):
+        mock_router = MagicMock()
+        mock_router.call.return_value = (output, provider)
+        return mock_router
+
     def test_fallback_on_none_output(self):
         cluster = [Entry(id="1", title="Fallback Test", summary="Summary", link="http://a.com", source_name="A")]
-        with patch("newsbot.ai._call_ai_with_fallback", return_value=(None, "none")):
+        mock_router = self._make_mock_router(None, "none")
+        with patch("newsbot.ai.get_router", return_value=mock_router):
             result = rewrite_with_ai(cluster)
         assert "Fallback Test" in result
 
     def test_fallback_on_invalid_json(self):
         cluster = [Entry(id="1", title="Bad JSON Test", summary="Summary", link="http://a.com", source_name="A")]
-        with patch("newsbot.ai._call_ai_with_fallback", return_value=("not json at all", "groq")):
+        mock_router = self._make_mock_router("not json at all", "groq")
+        with patch("newsbot.ai.get_router", return_value=mock_router):
             result = rewrite_with_ai(cluster)
         assert "Bad JSON Test" in result
 
     def test_emergency_fallback_on_bad_validation(self):
         cluster = [Entry(id="1", title="Emergency", summary="Summary", link="http://a.com", source_name="A")]
         bad_data = '{"urgency": "INVALID_LEVEL", "category": "INVALID_CAT"}'
-        with patch("newsbot.ai._call_ai_with_fallback", return_value=(bad_data, "groq")):
+        mock_router = self._make_mock_router(bad_data, "groq")
+        with patch("newsbot.ai.get_router", return_value=mock_router):
             result = rewrite_with_ai(cluster)
         assert "Emergency" in result
 
     def test_urgent_overrides_non_urgent_level(self):
         cluster = [Entry(id="1", title="Urgent Override", summary="Exploit detected", link="http://a.com", source_name="A")]
         data = '{"urgency": "explainer", "category": "ai", "headline": "Test", "summary": "Sum", "key_points": [], "tags": []}'
-        with patch("newsbot.ai._call_ai_with_fallback", return_value=(data, "groq")):
+        mock_router = self._make_mock_router(data, "groq")
+        with patch("newsbot.ai.get_router", return_value=mock_router):
             result = rewrite_with_ai(cluster, urgent=True)
         assert "🟡 ALERT" in result
 
@@ -489,29 +473,38 @@ class TestRewriteWithAi:
 # --- rewrite_compact ---
 
 class TestRewriteCompact:
+    def _make_mock_router(self, output, provider="groq"):
+        mock_router = MagicMock()
+        mock_router.call.return_value = (output, provider)
+        return mock_router
+
     def test_compact_normal(self):
         cluster = [Entry(id="1", title="Test", summary="Summary", link="http://a.com", source_name="A")]
-        with patch("newsbot.ai._call_ai_with_fallback", return_value=("Short summary.", "groq")):
+        mock_router = self._make_mock_router("Short summary.")
+        with patch("newsbot.ai.get_router", return_value=mock_router):
             result = rewrite_compact(cluster)
         assert result == "Short summary."
 
     def test_compact_truncates_long_output(self):
         cluster = [Entry(id="1", title="Test", summary="Summary", link="http://a.com", source_name="A")]
         long_output = "First sentence. Second sentence. Third sentence. Fourth sentence."
-        with patch("newsbot.ai._call_ai_with_fallback", return_value=(long_output, "groq")):
+        mock_router = self._make_mock_router(long_output)
+        with patch("newsbot.ai.get_router", return_value=mock_router):
             result = rewrite_compact(cluster)
         sentences = result.split(". ")
         assert len(sentences) <= 3
 
     def test_compact_fallback_to_summary(self):
         cluster = [Entry(id="1", title="Test", summary="Original summary text", link="http://a.com", source_name="A")]
-        with patch("newsbot.ai._call_ai_with_fallback", return_value=(None, "none")):
+        mock_router = self._make_mock_router(None, "none")
+        with patch("newsbot.ai.get_router", return_value=mock_router):
             result = rewrite_compact(cluster)
         assert result == "Original summary text"
 
     def test_compact_logs_non_groq_provider(self):
         cluster = [Entry(id="1", title="Test", summary="Summary", link="http://a.com", source_name="A")]
-        with patch("newsbot.ai._call_ai_with_fallback", return_value=("ok", "gemini")), \
+        mock_router = self._make_mock_router("ok", "gemini")
+        with patch("newsbot.ai.get_router", return_value=mock_router), \
              patch("newsbot.ai.logger") as mock_logger:
             rewrite_compact(cluster)
-            mock_logger.info.assert_any_call("Compact rewrite via %s fallback", "gemini")
+            mock_logger.info.assert_any_call("Compact rewrite via %s", "gemini")
