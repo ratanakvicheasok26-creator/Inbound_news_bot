@@ -10,23 +10,23 @@
   --color-mist: #E5E5E5;
   --color-bone: #F5F5F5;
 
-  --color-signal: #E63946;
+  --color-signal: #A0153E;
   --color-signal-contrast: #FFFFFF;
 
-  --color-alert-red: #FF0000;
-  --color-critical-red: #CC0000;
-  --color-breaking-red: #FF0000;
-  --color-hover-red: #CC0000;
-  --color-subtle-red: #FFF0F0;
+  --color-alert-red: #C01020;
+  --color-critical-red: #8B0000;
+  --color-breaking-red: #C01020;
+  --color-hover-red: #8B0000;
+  --color-subtle-red: #F5E0E0;
 
   --color-substance: #000000;
   --color-info: #0000FF;
-  --color-hype: #E63946;
+  --color-hype: #A0153E;
 
   --color-coal: #000000;
   --color-graphite: #111111;
   --color-chalk: #FFFFFF;
-  --color-ember: #FF4444;
+  --color-ember: #B91C1C;
 }
 
 :root {
@@ -36,16 +36,16 @@
   --text-primary: #000000;
   --text-secondary: #666666;
   --border: #E5E5E5;
-  --accent: #E63946;
+  --accent: #A0153E;
   --accent-contrast: #FFFFFF;
   --grid-line: transparent;
 
-  --red-alert: #FF0000;
-  --red-critical: #CC0000;
-  --red-breaking: #FF0000;
-  --red-hover: #CC0000;
-  --red-subtle-bg: #FFF0F0;
-  --red-subtle-text: #CC0000;
+  --red-alert: #C01020;
+  --red-critical: #8B0000;
+  --red-breaking: #C01020;
+  --red-hover: #8B0000;
+  --red-subtle-bg: #F5E0E0;
+  --red-subtle-text: #8B0000;
 
   --green-substance: #000000;
   --green-subtle-bg: #F0F0F0;
@@ -60,16 +60,16 @@
   --text-primary: #FFFFFF;
   --text-secondary: #999999;
   --border: #333333;
-  --accent: #FF0000;
+  --accent: #C01020;
   --accent-contrast: #FFFFFF;
   --grid-line: transparent;
 
-  --red-alert: #FF0000;
-  --red-critical: #FF4444;
-  --red-breaking: #FF0000;
-  --red-hover: #FF4444;
-  --red-subtle-bg: rgba(255, 0, 0, 0.1);
-  --red-subtle-text: #FF6666;
+  --red-alert: #C01020;
+  --red-critical: #B91C1C;
+  --red-breaking: #C01020;
+  --red-hover: #B91C1C;
+  --red-subtle-bg: rgba(192, 16, 32, 0.1);
+  --red-subtle-text: #D45555;
 
   --green-substance: #FFFFFF;
   --green-subtle-bg: rgba(255, 255, 255, 0.05);
@@ -448,7 +448,7 @@ footer {
 }
 .theme-toggle:hover {
   background: var(--text-primary);
-  color: var(--bg);
+  color: var(--bg) !important;
 }
 
 /* ===== Language Toggle ===== */
@@ -473,7 +473,7 @@ footer {
 }
 .lang-toggle button.active {
   background: var(--text-primary);
-  color: var(--bg);
+  color: var(--bg) !important;
 }
 
 /* ===== Source Comparison Framing Box ===== */

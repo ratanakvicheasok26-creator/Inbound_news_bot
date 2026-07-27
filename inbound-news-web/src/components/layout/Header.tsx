@@ -48,7 +48,7 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b-2 border-[var(--text-primary)] bg-[var(--bg)]">
+      <header className="sticky top-0 border-b-2 border-[var(--text-primary)] bg-[var(--bg)]">
         <div className="container">
           <div className="flex items-center justify-between" style={{ height: "64px" }}>
             <button
@@ -61,7 +61,7 @@ export function Header() {
 
             <Link href="/" className="flex items-center shrink-0">
               <Image
-                src="/logo-light.png"
+                src="/logo-dark.png"
                 alt="Inbound Reports"
                 width={180}
                 height={40}
@@ -69,7 +69,7 @@ export function Header() {
                 className="block h-[32px] w-auto dark:hidden"
               />
               <Image
-                src="/logo-dark.png"
+                src="/logo-light.png"
                 alt="Inbound Reports"
                 width={180}
                 height={40}
@@ -82,7 +82,7 @@ export function Header() {
               <div className="relative" ref={topicsRef}>
                 <button
                   onClick={() => setTopicsOpen(!topicsOpen)}
-                  className="flex items-center gap-1 px-4 py-2 font-mono text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg)] transition-colors"
+                  className="flex items-center gap-1 px-4 py-2 font-mono text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:!text-[var(--bg)] transition-colors"
                 >
                   Topics
                   <ChevronDown className={`h-3.5 w-3.5 transition-transform ${topicsOpen ? "rotate-180" : ""}`} />
@@ -96,8 +96,8 @@ export function Header() {
                           href={`/topic/${cat.slug}`}
                           className={`block px-4 py-3 font-mono text-[11px] uppercase tracking-[0.06em] font-medium transition-colors border-b border-[var(--border)] ${
                             pathname === `/topic/${cat.slug}`
-                              ? "bg-[var(--text-primary)] text-[var(--bg)]"
-                              : "text-[var(--text-secondary)] hover:bg-[var(--surface-alt)] hover:text-[var(--text-primary)]"
+                              ? "bg-[var(--text-primary)] !text-[var(--bg)]"
+                              : "text-[var(--text-secondary)] hover:bg-[var(--surface-alt)] hover:!text-[var(--text-primary)]"
                           }`}
                         >
                           {cat.label}
@@ -114,8 +114,8 @@ export function Header() {
                   href={link.href}
                   className={`px-4 py-2 font-mono text-[12px] font-bold uppercase tracking-[0.08em] transition-colors ${
                     pathname === link.href
-                      ? "bg-[var(--text-primary)] text-[var(--bg)]"
-                      : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg)]"
+                      ? "bg-[var(--text-primary)] !text-[var(--bg)]"
+                      : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:!text-[var(--bg)]"
                   }`}
                 >
                   {link.label}
