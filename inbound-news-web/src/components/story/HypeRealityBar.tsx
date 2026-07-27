@@ -1,11 +1,6 @@
-interface SourceHype {
-  name: string
-  score: number
-}
-
 interface HypeRealityBarProps {
   score: number
-  sources?: SourceHype[]
+  sources?: { name: string; score: number }[]
   size?: "sm" | "md" | "lg"
   showLabels?: boolean
   className?: string
@@ -14,11 +9,11 @@ interface HypeRealityBarProps {
 export function HypeRealityBar({ score, sources = [], size = "md", showLabels = false, className = "" }: HypeRealityBarProps) {
   const clamped = Math.max(0, Math.min(100, score))
   const isHighHype = clamped > 75
-  const height = size === "sm" ? "h-[3px]" : size === "lg" ? "h-[6px]" : "h-[4px]"
+  const height = size === "sm" ? "h-[3px]" : size === "lg" ? "h-[8px]" : "h-[4px]"
 
   return (
     <div className={className}>
-      <div className={`relative ${height} bg-gradient-to-r from-[var(--green-substance)] via-[var(--text-secondary)] to-[var(--red-alert)]`}>
+      <div className={`relative ${height} bg-gradient-to-r from-[var(--text-primary)] via-[var(--text-secondary)] to-[var(--red-alert)]`}>
         <div
           className={`hype-bar-dot ${isHighHype ? "high-hype" : ""}`}
           style={{ left: `${clamped}%` }}
@@ -48,7 +43,7 @@ export function HypeRealityBar({ score, sources = [], size = "md", showLabels = 
           {sources.map((src, i) => (
             <div key={`${src.name}-label-${i}`} className="flex items-center gap-1.5">
               <span className={`w-[6px] h-[6px] rounded-full border ${src.score > 75 ? "border-[var(--red-alert)]" : "border-[var(--text-primary)]"} bg-[var(--surface)]`} />
-              <span className="font-mono text-[10px] text-[var(--text-secondary)]">
+              <span className="font-mono text-[10px] text-[var(--text-secondary)] font-medium">
                 {src.name} <span className="tabular-nums">{src.score}</span>
               </span>
             </div>

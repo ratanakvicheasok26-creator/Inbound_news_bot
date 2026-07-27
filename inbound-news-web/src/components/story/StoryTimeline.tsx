@@ -9,9 +9,9 @@ interface TimelineNode {
 
 const phaseColors: Record<string, string> = {
   break: "var(--red-breaking)",
-  clarification: "var(--hype)",
-  pushback: "var(--accent)",
-  analysis: "var(--green-substance)",
+  clarification: "var(--accent)",
+  pushback: "var(--text-secondary)",
+  analysis: "var(--text-primary)",
 }
 
 function daysBetween(a: Date, b: Date): number {
@@ -40,7 +40,6 @@ export function deriveTimelineNodes(articles: Article[]): TimelineNode[] {
   }
 
   const origin = withDates[0].date
-  const totalDays = daysBetween(origin, withDates[withDates.length - 1].date)
 
   if (withDates.length === 1) {
     return [
@@ -49,7 +48,7 @@ export function deriveTimelineNodes(articles: Article[]): TimelineNode[] {
   }
 
   if (withDates.length === 2) {
-    const gap = totalDays
+    const gap = daysBetween(withDates[0].date, withDates[1].date)
     if (gap < 2) {
       return [
         { date: formatRelativeDay(withDates[0].date, origin), label: "Initial report", phase: "break", sourceCount: 1 },
@@ -105,7 +104,7 @@ export function StoryTimeline({ nodes }: StoryTimelineProps) {
         <h2 className="section-title">Story Evolution</h2>
       </div>
       <div className="relative">
-        <div className="absolute top-[7px] left-0 right-0 h-[2px] bg-[var(--border)]" />
+        <div className="absolute top-[7px] left-0 right-0 h-[2px] bg-[var(--text-primary)]" />
 
         <div className="relative flex justify-between">
           {nodes.map((node, i) => (
@@ -117,14 +116,14 @@ export function StoryTimeline({ nodes }: StoryTimelineProps) {
                   backgroundColor: i === 0 ? phaseColors[node.phase] : "var(--bg)",
                 }}
               />
-              <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--text-secondary)] mb-1">
+              <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--text-secondary)] mb-1 font-bold">
                 {node.date}
               </span>
-              <span className="text-[11px] text-[var(--text-primary)] font-medium leading-tight">
+              <span className="text-[11px] text-[var(--text-primary)] font-bold leading-tight">
                 {node.label}
               </span>
               {node.sourceCount > 1 && (
-                <span className="font-mono text-[8px] text-[var(--text-secondary)] mt-0.5">
+                <span className="font-mono text-[8px] text-[var(--text-secondary)] mt-0.5 font-medium">
                   {node.sourceCount} sources
                 </span>
               )}

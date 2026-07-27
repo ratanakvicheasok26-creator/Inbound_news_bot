@@ -85,7 +85,7 @@ export function StoryContent({ story }: StoryContentProps) {
       <div className="pt-6 pb-4">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-wider text-[var(--text-secondary)] hover:text-[var(--red-hover)] transition-colors"
+          className="inline-flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-wider text-[var(--text-secondary)] font-bold hover:text-[var(--accent)] transition-colors"
         >
           <ArrowLeft className="h-3 w-3" />
           Back to feed
@@ -95,10 +95,10 @@ export function StoryContent({ story }: StoryContentProps) {
       <header className="pb-8 border-b-2 border-[var(--text-primary)]">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--accent)] font-medium border border-[var(--accent)] px-2 py-0.5">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--accent)] font-bold border-2 border-[var(--accent)] px-2 py-0.5">
               {categoryLabel}
             </span>
-            <span className="font-mono text-[11px] text-[var(--text-secondary)] tabular-nums">
+            <span className="font-mono text-[11px] text-[var(--text-secondary)] tabular-nums font-medium">
               {story.source_count} source{story.source_count !== 1 ? "s" : ""}
             </span>
             <span className="font-mono text-[11px] text-[var(--text-secondary)]">&middot;</span>
@@ -109,7 +109,7 @@ export function StoryContent({ story }: StoryContentProps) {
           <ReadingTierToggle active={activeTier} onChange={setActiveTier} />
         </div>
 
-        <h1 className="font-serif text-[28px] md:text-[36px] font-bold leading-[1.12] tracking-[-0.02em]">
+        <h1 className="text-[36px] md:text-[56px] font-extrabold leading-[0.95] tracking-[-0.04em]">
           {story.title}
         </h1>
 
@@ -142,12 +142,12 @@ export function StoryContent({ story }: StoryContentProps) {
             <div>
               {activeTier !== "standard" && (
                 <div className="mb-3">
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--text-secondary)]">
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--accent)] font-bold">
                     Reading level: {activeTier === "eli5" ? "Simplified" : "Expert"}
                   </span>
                 </div>
               )}
-              <p className="text-[17px] leading-[1.7] text-[var(--text-primary)]">
+              <p className="text-[18px] leading-[1.6] text-[var(--text-primary)]">
                 <HighlightText
                   text={displaySummary}
                   terms={GLOSSARY_TERMS}
@@ -175,7 +175,7 @@ export function StoryContent({ story }: StoryContentProps) {
           <div className="section-header">
             <h2 className="section-title">
               <Newspaper className="mr-2 inline h-3.5 w-3.5" />
-              How the Media is Covering This ({articles.length})
+              Source Coverage ({articles.length})
             </h2>
           </div>
 
@@ -212,7 +212,7 @@ export function StoryContent({ story }: StoryContentProps) {
       <section className="py-8">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-wider text-[var(--text-secondary)] hover:text-[var(--red-hover)] transition-colors"
+          className="inline-flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-wider text-[var(--text-secondary)] font-bold hover:text-[var(--accent)] transition-colors"
         >
           <ArrowLeft className="h-3 w-3" />
           Back to feed

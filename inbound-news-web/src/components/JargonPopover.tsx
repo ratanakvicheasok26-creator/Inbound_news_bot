@@ -38,16 +38,16 @@ export function JargonPopover({ term, position, onClose }: JargonPopoverProps) {
   return (
     <div
       ref={ref}
-      className="fixed z-[200] w-[320px] bg-[var(--surface)] border border-[var(--border)] shadow-lg"
+      className="fixed z-[200] w-[320px] bg-[var(--surface)] border-2 border-[var(--text-primary)]"
       style={{ left, top }}
     >
-      <div className="px-4 pt-4 pb-3 border-b border-[var(--border)]">
+      <div className="px-4 pt-4 pb-3 border-b-2 border-[var(--text-primary)]">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h3 className="font-serif text-[18px] font-bold text-[var(--text-primary)] leading-tight">
+            <h3 className="text-[18px] font-extrabold text-[var(--text-primary)] leading-tight tracking-tight">
               {term.term_en}
             </h3>
-            <p className="font-mono text-[11px] text-[var(--text-secondary)] mt-0.5">
+            <p className="font-mono text-[11px] text-[var(--text-secondary)] mt-0.5 font-medium">
               {term.term_km}
             </p>
           </div>
@@ -75,11 +75,11 @@ export function JargonPopover({ term, position, onClose }: JargonPopoverProps) {
         </div>
       </div>
 
-      <div className="px-4 pb-3">
+      <div className="px-4 pb-3 border-t border-[var(--border)] pt-3">
         <Link
           href={`/glossary#${term.slug}`}
           onClick={onClose}
-          className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-[var(--accent)] hover:text-[var(--red-hover)] transition-colors"
+          className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-[var(--accent)] font-bold hover:text-[var(--red-hover)] transition-colors"
         >
           View in Glossary &rarr;
         </Link>

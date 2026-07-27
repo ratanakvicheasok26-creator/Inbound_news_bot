@@ -18,7 +18,7 @@ export default async function HomePage() {
     return (
       <div className="container">
         <div className="empty-state">
-          <p className="font-serif text-[24px] mb-2">The wire is quiet</p>
+          <p className="text-[32px] font-extrabold tracking-tight mb-2">THE WIRE IS QUIET</p>
           <p>No dispatches yet. Stories will appear here as they come in.</p>
         </div>
       </div>
@@ -34,9 +34,12 @@ export default async function HomePage() {
       </section>
 
       {/* TRENDING STRIP */}
-      <section className="py-8 border-b border-[var(--border)]">
+      <section className="py-10 border-b border-[var(--border)]">
         <div className="section-header">
-          <h2 className="section-title">Trending</h2>
+          <h2 className="section-title">
+            <span className="section-number mr-3">01</span>
+            Trending
+          </h2>
         </div>
         <TrendingStrip stories={trendingStories} />
       </section>
@@ -44,7 +47,10 @@ export default async function HomePage() {
       {/* BLINDSPOT SECTION */}
       <section className="py-10 border-b border-[var(--border)]">
         <div className="section-header">
-          <h2 className="section-title">&#9888; Blindspot</h2>
+          <h2 className="section-title">
+            <span className="section-number mr-3">02</span>
+            Blindspot
+          </h2>
           <span className="font-mono text-[10px] text-[var(--text-secondary)]">
             Underreported stories
           </span>
@@ -68,7 +74,10 @@ export default async function HomePage() {
       {/* LATEST COVERAGE */}
       <section className="py-10 border-b border-[var(--border)]">
         <div className="section-header">
-          <h2 className="section-title">Latest Coverage</h2>
+          <h2 className="section-title">
+            <span className="section-number mr-3">03</span>
+            Latest Coverage
+          </h2>
           <span className="font-mono text-[10px] text-[var(--text-secondary)]">
             {latestStories.length} stories
           </span>

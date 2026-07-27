@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Newsreader, Inter, JetBrains_Mono, Noto_Sans_Khmer } from "next/font/google";
+import { Inter, JetBrains_Mono, Noto_Sans_Khmer } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Ticker } from "@/components/Ticker";
@@ -7,16 +7,10 @@ import { Footer } from "@/components/layout/Footer";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { cn } from "@/lib/utils";
 
-const newsreader = Newsreader({
-  subsets: ["latin"],
-  variable: "--font-serif",
-  weight: ["400", "600", "700"],
-  display: "swap",
-});
-
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
+  weight: ["400", "500", "700", "800", "900"],
   display: "swap",
 });
 
@@ -35,7 +29,7 @@ const notoKhmer = Noto_Sans_Khmer({
 });
 
 export const metadata: Metadata = {
-  title: "Inbound Reports — Tech, filed from the ground up.",
+  title: "Inbound Reports — Decode the Tech.",
   description:
     "Independent technology journalism from Phnom Penh — startups, AI, cybersecurity, and more.",
 };
@@ -57,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="light" className={cn(newsreader.variable, inter.variable, mono.variable, notoKhmer.variable, "font-sans")}>
+    <html lang="en" data-theme="light" className={cn(inter.variable, mono.variable, notoKhmer.variable, "font-sans")}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

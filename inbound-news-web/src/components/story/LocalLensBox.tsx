@@ -64,23 +64,23 @@ export function LocalLensBox({ category, storyTitle, storySummary }: LocalLensBo
   }, [category, storyTitle, storySummary])
 
   return (
-    <div className="border-t-2 border-[var(--accent)] p-4 bg-[var(--surface-alt)]">
-      <p className="font-mono text-[10px] uppercase tracking-[0.12em] font-medium text-[var(--accent)] mb-2">
+    <div className="bg-[var(--text-primary)] p-5 text-[var(--bg)] border-t-3 border-[var(--accent)]">
+      <p className="font-mono text-[10px] uppercase tracking-[0.12em] font-bold text-[var(--accent)] mb-2">
         Local Lens — Cambodia
       </p>
       {loading ? (
         <div className="space-y-2">
-          <div className="h-3 bg-[var(--border)] animate-pulse w-full" />
-          <div className="h-3 bg-[var(--border)] animate-pulse w-4/5" />
-          <div className="h-3 bg-[var(--border)] animate-pulse w-3/5" />
+          <div className="h-3 bg-[#333] animate-pulse w-full" />
+          <div className="h-3 bg-[#333] animate-pulse w-4/5" />
+          <div className="h-3 bg-[#333] animate-pulse w-3/5" />
         </div>
       ) : (
-        <p className="text-[13px] text-[var(--text-secondary)] leading-relaxed">
+        <p className="text-[13px] leading-relaxed opacity-90">
           {text}
         </p>
       )}
       {error && (
-        <p className="mt-2 font-mono text-[9px] text-[var(--text-secondary)] opacity-60">
+        <p className="mt-2 font-mono text-[9px] opacity-50">
           Fallback text shown — AI generation unavailable
         </p>
       )}

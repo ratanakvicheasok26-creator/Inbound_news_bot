@@ -17,11 +17,11 @@ export function StoryRow({ story }: { story: Story }) {
     <article className={`story-row group ${isBreaking ? "breaking-border" : ""}`}>
       <div className="min-w-0 flex-1">
         <div className="mb-1.5 flex items-center gap-2 flex-wrap">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--accent)] font-medium">
+          <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--accent)] font-bold">
             {categoryLabel}
           </span>
-          <span className="font-mono text-[10px] text-[var(--text-secondary)] tabular-nums">
-            {story.source_count} src
+          <span className="font-mono text-[10px] text-[var(--text-secondary)] tabular-nums font-medium">
+            [{story.source_count} src]
           </span>
           <span className="font-mono text-[10px] text-[var(--text-secondary)]">
             {formatDistanceToNow(story.created_at)}
@@ -29,7 +29,7 @@ export function StoryRow({ story }: { story: Story }) {
         </div>
 
         <Link href={`/story/${story.id}`} className="group/link block">
-          <h3 className="font-serif text-[17px] font-semibold leading-snug tracking-tight group-hover/link:text-[var(--red-hover)] transition-colors">
+          <h3 className="text-[20px] md:text-[24px] font-extrabold leading-tight tracking-[-0.02em] group-hover/link:text-[var(--accent)] transition-colors">
             {story.title}
           </h3>
         </Link>
@@ -37,17 +37,14 @@ export function StoryRow({ story }: { story: Story }) {
         {story.summary_en && (
           <JargonText
             text={story.summary_en}
-            className="mt-1 text-[13px] text-[var(--text-secondary)] line-clamp-2 leading-relaxed"
+            className="mt-1 text-[14px] text-[var(--text-secondary)] line-clamp-2 leading-relaxed"
           />
         )}
 
         <div className="mt-2 flex items-center gap-2 flex-wrap">
-          {/* Mini hype bar */}
-          <div className="w-16 shrink-0">
+          <div className="w-20 shrink-0">
             <HypeRealityBar score={hypeScore} size="sm" />
           </div>
-
-          {/* Tags */}
           {tags.includes("hype") && <DnaTag type="hype" label="Hype" />}
           {tags.includes("kh_relevant") && <DnaTag type="kh" label="KH" />}
         </div>
@@ -55,9 +52,9 @@ export function StoryRow({ story }: { story: Story }) {
 
       <Link
         href={`/story/${story.id}`}
-        className="mt-1 flex-shrink-0 text-[var(--text-secondary)] transition-colors group-hover:text-[var(--red-hover)]"
+        className="mt-1 flex-shrink-0 w-11 h-11 flex items-center justify-center text-[var(--text-secondary)] transition-colors group-hover:text-[var(--accent)]"
       >
-        <ArrowUpRight className="h-4 w-4" />
+        <ArrowUpRight className="h-5 w-5" />
       </Link>
     </article>
   )

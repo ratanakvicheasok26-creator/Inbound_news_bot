@@ -17,12 +17,12 @@ export function SignalSidebar({ stories }: { stories: Story[] }) {
           const hypeScore = Math.min(100, 30 + (story.source_count || 1) * 8)
           return (
             <li key={story.id} className="flex gap-3 py-3 border-b border-[var(--border)] last:border-0 group">
-              <span className="font-mono text-[20px] font-bold text-[var(--accent)] tabular-nums leading-none mt-0.5 shrink-0">
+              <span className="text-[24px] font-extrabold text-[var(--accent)] tabular-nums leading-none mt-0.5 shrink-0">
                 {String(i + 1).padStart(2, "0")}
               </span>
               <div className="min-w-0 flex-1">
                 <div className="mb-1 flex items-center gap-2">
-                  <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--text-secondary)]">
+                  <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">
                     {getCategoryLabel(story.category || "")}
                   </span>
                   <span className="font-mono text-[9px] text-[var(--text-secondary)]">
@@ -30,7 +30,7 @@ export function SignalSidebar({ stories }: { stories: Story[] }) {
                   </span>
                 </div>
                 <Link href={`/story/${story.id}`}>
-                  <h3 className="font-serif text-[14px] font-semibold leading-snug group-hover:text-[var(--red-hover)] transition-colors">
+                  <h3 className="text-[14px] font-bold leading-snug tracking-tight group-hover:text-[var(--accent)] transition-colors">
                     {story.title}
                   </h3>
                 </Link>

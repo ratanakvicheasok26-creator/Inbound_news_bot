@@ -12,11 +12,11 @@ export function BlindspotCard({ title, summary, sourceCount, sourceNames }: Blin
         <span className="dna-tag dna-tag-hype">
           &#9888; Blindspot
         </span>
-        <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--red-subtle-text)]">
+        <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--red-subtle-text)] font-bold">
           Underreported
         </span>
       </div>
-      <h3 className="font-serif text-[16px] font-semibold leading-snug text-[var(--text-primary)]">
+      <h3 className="text-[16px] font-bold leading-snug text-[var(--text-primary)]">
         {title}
       </h3>
       {summary && (

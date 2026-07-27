@@ -22,14 +22,14 @@ export function TrendingStrip({ stories }: TrendingStripProps) {
             className="story-card snap-start shrink-0 w-[280px] md:w-[320px]"
           >
             <div className="mb-2 flex items-center gap-2">
-              <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--accent)] font-medium">
+              <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--accent)] font-bold">
                 {getCategoryLabel(story.category || "")}
               </span>
-              <span className="font-mono text-[9px] text-[var(--text-secondary)] tabular-nums">
-                {story.source_count} src
+              <span className="font-mono text-[9px] text-[var(--text-secondary)] tabular-nums font-medium">
+                [{story.source_count} src]
               </span>
             </div>
-            <h3 className="font-serif text-[15px] font-semibold leading-snug text-[var(--text-primary)] line-clamp-2 mb-2">
+            <h3 className="text-[16px] font-bold leading-snug text-[var(--text-primary)] line-clamp-2 mb-2 tracking-tight">
               {story.title}
             </h3>
             {story.summary_en && (

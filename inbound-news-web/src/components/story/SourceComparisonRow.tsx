@@ -61,22 +61,22 @@ export function SourceComparisonRow({ article, trustScore = 3, trustAxes, framin
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-[var(--text-primary)] shrink-0" />
-            <span className="font-mono text-[12px] font-medium text-[var(--text-primary)]">
+            <span className="w-2 h-2 bg-[var(--text-primary)] shrink-0" />
+            <span className="font-mono text-[12px] font-bold text-[var(--text-primary)]">
               {article.source_name || domain || "Unknown"}
             </span>
             {domain && (
-              <span className="font-mono text-[10px] text-[var(--text-secondary)] bg-[var(--surface-alt)] px-1.5 py-0.5">
+              <span className="font-mono text-[10px] text-[var(--text-secondary)] bg-[var(--surface-alt)] px-1.5 py-0.5 font-medium border border-[var(--border)]">
                 {domain}
               </span>
             )}
           </div>
 
-          <p className="text-[14px] font-medium text-[var(--text-primary)] leading-snug mb-1">
+          <p className="text-[14px] font-bold text-[var(--text-primary)] leading-snug mb-1">
             {article.title}
           </p>
 
-          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-[var(--text-secondary)]">
+          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">
             {article.published_at && <span>{formatDistanceToNow(article.published_at)}</span>}
           </div>
 
@@ -88,12 +88,12 @@ export function SourceComparisonRow({ article, trustScore = 3, trustAxes, framin
 
           <div className="mt-3 grid grid-cols-2 gap-4">
             <div>
-              <p className="font-mono text-[9px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">
+              <p className="font-mono text-[9px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
                 Hype Level
               </p>
-              <div className="relative h-[3px] bg-gradient-to-r from-[var(--green-substance)] via-[var(--text-secondary)] to-[var(--red-alert)]">
+              <div className="relative h-[8px] bg-gradient-to-r from-[var(--text-primary)] via-[var(--text-secondary)] to-[var(--red-alert)]">
                 <div
-                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-[6px] h-[6px] rounded-full border border-[var(--text-primary)] bg-[var(--surface)] ${hypeScore > 75 ? "!border-[var(--red-alert)]" : ""}`}
+                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-[8px] h-[8px] rounded-full border border-[var(--text-primary)] bg-[var(--surface)] ${hypeScore > 75 ? "!border-[var(--red-alert)]" : ""}`}
                   style={{ left: `${hypeScore}%` }}
                   title={`Hype: ${hypeScore}/100`}
                 />
@@ -104,7 +104,7 @@ export function SourceComparisonRow({ article, trustScore = 3, trustAxes, framin
               </div>
             </div>
             <div>
-              <p className="font-mono text-[9px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">
+              <p className="font-mono text-[9px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
                 Source Trust
               </p>
               <TrustRadar score={Math.round((axes.primary_sourcing + axes.technical_accuracy + axes.originality + axes.corrections + axes.funding_disclosure) / 5)} axes={Object.entries(axes).map(([key, val]) => ({ label: key, score: val }))} size="sm" />
@@ -116,9 +116,9 @@ export function SourceComparisonRow({ article, trustScore = 3, trustAxes, framin
           href={article.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-shrink-0 p-2 text-[var(--text-secondary)] hover:text-[var(--red-hover)] transition-colors"
+          className="flex-shrink-0 w-11 h-11 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
         >
-          <ExternalLink className="h-3.5 w-3.5" />
+          <ExternalLink className="h-4 w-4" />
         </a>
       </div>
     </div>
