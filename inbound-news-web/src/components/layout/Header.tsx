@@ -13,7 +13,21 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [topicsOpen, setTopicsOpen] = useState(false)
   const [lang, setLang] = useState<"en" | "km">("en")
+  const [theme, setTheme] = useState<"light" | "dark">("light")
   const topicsRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const current = document.documentElement.getAttribute("data-theme")
+    if (current === "dark" || current === "light") {
+      setTheme(current)
+    }
+    const observer = new MutationObserver(() => {
+      const t = document.documentElement.getAttribute("data-theme")
+      if (t === "dark" || t === "light") setTheme(t)
+    })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] })
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -39,103 +53,175 @@ export function Header() {
     return () => { document.body.style.overflow = "" }
   }, [mobileOpen])
 
-  const navLinks = [
+  const isDark = theme === "dark"
+
+  const leftLinks = [
     { href: "/blindspot", label: "Blindspot" },
     { href: "/", label: "Timeline" },
-    { href: "/glossary", label: "Glossary" },
-    { href: "/donate", label: "Donate" },
   ]
+
+  const centerLinks = [
+    { href: "/glossary", label: "Glossary" },
+  ]
+
+  const today = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+  }).toUpperCase()
+
+  const fullDate = new Date().toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).toUpperCase()
 
   return (
     <>
-      <header className="sticky top-0 border-b-2 border-[var(--text-primary)] bg-[var(--bg)]">
-        <div className="container">
-          <div className="flex items-center justify-between" style={{ height: "64px" }}>
+      <header className="sticky top-0 z-[100] w-full bg-[var(--bg)] text-[var(--text-primary)] border-b-2 border-[var(--text-primary)]">
+
+        {/* TIER 1 — Top Meta Bar */}
+        <div className="flex justify-between items-center border-b border-[var(--border)] px-4 md:px-10 h-[36px]">
+          <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+            {today} · {fullDate}
+          </span>
+          <Link
+            href="/donate"
+            className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+          >
+            Donate
+          </Link>
+        </div>
+
+        {/* TIER 2 — Cursive Logo (Masthead) */}
+        <div className="flex justify-center items-center border-b-2 border-[var(--text-primary)] py-4 md:py-6">
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/logo-dark.png"
+              alt="Inbound Reports"
+              width={1983}
+              height={467}
+              priority
+              className="block h-[48px] w-auto md:h-[72px] dark:hidden"
+            />
+            <Image
+              src="/logo-light.png"
+              alt="Inbound Reports"
+              width={1982}
+              height={467}
+              priority
+              className="hidden h-[48px] w-auto md:h-[72px] dark:block"
+            />
+          </Link>
+        </div>
+
+        {/* TIER 3 — Main Navigation (Strict 3-Column Grid) */}
+        <div className="grid grid-cols-3 items-center px-4 md:px-10 h-[44px]">
+
+          {/* LEFT COLUMN — Blindspot, Timeline */}
+          <nav className="flex justify-start items-center gap-4 md:gap-6">
             <button
-              className="flex items-center justify-center w-11 h-11 md:hidden"
+              className="flex items-center justify-center w-8 h-8 md:hidden"
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label="Toggle menu"
             >
-              {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              <Menu className="h-4 w-4" />
             </button>
 
-            <Link href="/" className="flex items-center shrink-0">
-              <Image
-                src="/logo-dark.png"
-                alt="Inbound Reports"
-                width={180}
-                height={40}
-                priority
-                className="block h-[32px] w-auto dark:hidden"
-              />
-              <Image
-                src="/logo-light.png"
-                alt="Inbound Reports"
-                width={180}
-                height={40}
-                priority
-                className="hidden h-[32px] w-auto dark:block"
-              />
-            </Link>
+            {leftLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`hidden md:inline font-mono text-[11px] font-bold uppercase tracking-[0.1em] px-2 py-1 transition-colors ${
+                  pathname === link.href
+                    ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+                    : "text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)]"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
 
-            <nav className="hidden md:flex items-center gap-0 ml-8">
-              <div className="relative" ref={topicsRef}>
-                <button
-                  onClick={() => setTopicsOpen(!topicsOpen)}
-                  className="flex items-center gap-1 px-4 py-2 font-mono text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:!text-[var(--bg)] transition-colors"
-                >
-                  Topics
-                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${topicsOpen ? "rotate-180" : ""}`} />
-                </button>
-                {topicsOpen && (
-                  <div className="absolute top-full left-0 mt-0 w-[320px] bg-[var(--surface)] border-2 border-[var(--text-primary)] z-50">
-                    <div className="grid grid-cols-2 gap-0">
-                      {CATEGORIES.map((cat) => (
-                        <Link
-                          key={cat.slug}
-                          href={`/topic/${cat.slug}`}
-                          className={`block px-4 py-3 font-mono text-[11px] uppercase tracking-[0.06em] font-medium transition-colors border-b border-[var(--border)] ${
-                            pathname === `/topic/${cat.slug}`
-                              ? "bg-[var(--text-primary)] !text-[var(--bg)]"
-                              : "text-[var(--text-secondary)] hover:bg-[var(--surface-alt)] hover:!text-[var(--text-primary)]"
-                          }`}
-                        >
-                          {cat.label}
-                        </Link>
-                      ))}
-                    </div>
+          {/* CENTER COLUMN — Glossary, Topics */}
+          <nav className="flex justify-center items-center gap-4 md:gap-6">
+            {centerLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`font-mono text-[11px] font-bold uppercase tracking-[0.1em] px-2 py-1 transition-colors ${
+                  pathname === link.href
+                    ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+                    : "text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)]"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+
+            <div className="relative" ref={topicsRef}>
+              <button
+                onClick={() => setTopicsOpen(!topicsOpen)}
+                className="flex items-center gap-1 font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)] px-2 py-1 transition-colors"
+              >
+                Topics
+                <ChevronDown className={`h-3 w-3 transition-transform ${topicsOpen ? "rotate-180" : ""}`} />
+              </button>
+              {topicsOpen && (
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-[1px] w-[360px] bg-[var(--bg)] border-2 border-[var(--text-primary)] z-50">
+                  <div className="grid grid-cols-2 gap-0">
+                    {CATEGORIES.map((cat) => (
+                      <Link
+                        key={cat.slug}
+                        href={`/topic/${cat.slug}`}
+                        className={`block px-4 py-3 font-mono text-[11px] uppercase tracking-[0.06em] font-medium transition-colors border-b border-[var(--border)] ${
+                          pathname === `/topic/${cat.slug}`
+                            ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+                            : "text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)]"
+                        }`}
+                      >
+                        {cat.label}
+                      </Link>
+                    ))}
                   </div>
-                )}
-              </div>
-
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`px-4 py-2 font-mono text-[12px] font-bold uppercase tracking-[0.08em] transition-colors ${
-                    pathname === link.href
-                      ? "bg-[var(--text-primary)] !text-[var(--bg)]"
-                      : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:!text-[var(--bg)]"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-
-            <div className="flex items-center gap-2">
-              <div className="lang-toggle">
-                <button className={lang === "en" ? "active" : ""} onClick={() => setLang("en")}>EN</button>
-                <button className={lang === "km" ? "active" : ""} onClick={() => setLang("km")}>ខ្មែរ</button>
-              </div>
-              <ThemeToggle />
+                </div>
+              )}
             </div>
+          </nav>
+
+          {/* RIGHT COLUMN — Language Toggle + Theme Toggle */}
+          <div className="flex justify-end items-center gap-2">
+            <div className="flex border-2 border-[var(--text-primary)] overflow-hidden font-mono text-[10px] font-bold uppercase tracking-[0.05em]">
+              <button
+                className={`px-2 md:px-3 py-1 transition-colors ${
+                  lang === "en"
+                    ? "bg-[var(--text-primary)] text-[var(--bg)]"
+                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg)]"
+                }`}
+                onClick={() => setLang("en")}
+              >
+                EN
+              </button>
+              <div className="w-px bg-[var(--border)]" />
+              <button
+                className={`px-2 md:px-3 py-1 transition-colors ${
+                  lang === "km"
+                    ? "bg-[var(--text-primary)] text-[var(--bg)]"
+                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg)]"
+                }`}
+                onClick={() => setLang("km")}
+              >
+                ខ្មែរ
+              </button>
+            </div>
+            <ThemeToggle variant="header" />
           </div>
+
         </div>
+
       </header>
 
+      {/* Mobile Overlay — Full Screen */}
       {mobileOpen && (
-        <div className="mobile-overlay">
+        <div className="fixed inset-0 z-[200] bg-[var(--bg)] flex flex-col overflow-y-auto">
           <button
             className="absolute top-5 right-5 w-11 h-11 flex items-center justify-center"
             onClick={() => setMobileOpen(false)}
@@ -144,14 +230,72 @@ export function Header() {
             <X className="h-6 w-6" />
           </button>
 
-          <div className="mt-12">
-            <Link href="/" onClick={() => setMobileOpen(false)}>Home</Link>
-            <Link href="/blindspot" onClick={() => setMobileOpen(false)}>Blindspot</Link>
-            <Link href="/glossary" onClick={() => setMobileOpen(false)}>Glossary</Link>
-            <Link href="/donate" onClick={() => setMobileOpen(false)}>Donate</Link>
+          <div className="mt-16 px-6">
+            {leftLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMobileOpen(false)}
+                className={`block py-4 font-mono text-sm font-bold uppercase tracking-[0.08em] border-b border-[var(--border)] transition-colors ${
+                  pathname === link.href
+                    ? "text-[var(--accent)]"
+                    : "text-[var(--text-primary)] hover:text-[var(--accent)]"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+            {centerLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMobileOpen(false)}
+                className={`block py-4 font-mono text-sm font-bold uppercase tracking-[0.08em] border-b border-[var(--border)] transition-colors ${
+                  pathname === link.href
+                    ? "text-[var(--accent)]"
+                    : "text-[var(--text-primary)] hover:text-[var(--accent)]"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+            <Link
+              href="/donate"
+              onClick={() => setMobileOpen(false)}
+              className="block py-4 font-mono text-sm font-bold uppercase tracking-[0.08em] border-b border-[var(--border)] text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
+            >
+              Donate
+            </Link>
           </div>
 
-          <div className="mt-8">
+          <div className="px-6 mt-8 flex items-center gap-2">
+            <div className="flex border-2 border-[var(--text-primary)] overflow-hidden font-mono text-[11px] font-bold uppercase tracking-[0.05em]">
+              <button
+                className={`px-3 py-1.5 transition-colors ${
+                  lang === "en"
+                    ? "bg-[var(--text-primary)] text-[var(--bg)]"
+                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg)]"
+                }`}
+                onClick={() => setLang("en")}
+              >
+                EN
+              </button>
+              <div className="w-px bg-[var(--border)]" />
+              <button
+                className={`px-3 py-1.5 transition-colors ${
+                  lang === "km"
+                    ? "bg-[var(--text-primary)] text-[var(--bg)]"
+                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg)]"
+                }`}
+                onClick={() => setLang("km")}
+              >
+                ខ្មែរ
+              </button>
+            </div>
+            <ThemeToggle variant="header" />
+          </div>
+
+          <div className="px-6 mt-8">
             <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--text-secondary)] mb-4 font-bold">
               Topics
             </p>
@@ -161,7 +305,7 @@ export function Header() {
                   key={cat.slug}
                   href={`/topic/${cat.slug}`}
                   onClick={() => setMobileOpen(false)}
-                  className="block px-0 py-3 font-mono text-[11px] uppercase tracking-wider font-medium text-[var(--text-secondary)] border-b border-[var(--border)] hover:text-[var(--text-primary)]"
+                  className="block px-0 py-3 font-mono text-[11px] uppercase tracking-wider font-medium text-[var(--text-secondary)] border-b border-[var(--border)] hover:text-[var(--text-primary)] transition-colors"
                 >
                   {cat.label}
                 </Link>

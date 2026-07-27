@@ -16,8 +16,8 @@ export function Footer() {
         <div className="footer-grid">
           <div>
             <Link href="/" className="flex items-center mb-4">
-              <Image src="/logo-dark.png" alt="Inbound Reports" width={140} height={32} className="block h-[28px] w-auto dark:hidden" />
-              <Image src="/logo-light.png" alt="Inbound Reports" width={140} height={32} className="hidden h-[28px] w-auto dark:block" />
+              <Image src="/logo-dark.png" alt="Inbound Reports" width={1983} height={467} className="block h-[28px] w-auto dark:hidden" />
+              <Image src="/logo-light.png" alt="Inbound Reports" width={1982} height={467} className="hidden h-[28px] w-auto dark:block" />
             </Link>
             <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed max-w-[280px]">
               Independent technology journalism, published from Phnom Penh, Cambodia.
