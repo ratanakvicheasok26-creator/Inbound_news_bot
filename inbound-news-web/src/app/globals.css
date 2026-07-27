@@ -10,7 +10,7 @@
   --color-mist: #E5E5E5;
   --color-bone: #F5F5F5;
 
-  --color-signal: #A0153E;
+  --color-signal: #C01020;
   --color-signal-contrast: #FFFFFF;
 
   --color-alert-red: #C01020;
@@ -21,12 +21,12 @@
 
   --color-substance: #000000;
   --color-info: #0000FF;
-  --color-hype: #A0153E;
+  --color-hype: #C01020;
 
   --color-coal: #000000;
   --color-graphite: #111111;
   --color-chalk: #FFFFFF;
-  --color-ember: #B91C1C;
+  --color-ember: #C01020;
 }
 
 :root {
@@ -36,7 +36,7 @@
   --text-primary: #000000;
   --text-secondary: #666666;
   --border: #E5E5E5;
-  --accent: #A0153E;
+  --accent: #C01020;
   --accent-contrast: #FFFFFF;
   --grid-line: transparent;
 
