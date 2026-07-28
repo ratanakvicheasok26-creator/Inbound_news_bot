@@ -63,7 +63,7 @@ export default async function ConceptPage({ params }: { params: Promise<{ slug: 
           <TrendingUp className="h-4 w-4 text-[var(--accent)]" />
           <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--accent)]">Concept</span>
         </div>
-        <h1 className="font-serif text-[28px] md:text-[36px] font-bold leading-[1.1] tracking-[-0.02em]">
+        <h1 className="page-title">
           {concept.name}
         </h1>
         <p className="mt-3 text-[16px] text-[var(--text-secondary)] leading-[1.7] max-w-[720px]">

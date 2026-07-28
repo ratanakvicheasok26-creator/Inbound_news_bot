@@ -6,7 +6,7 @@ export default function DonatePage() {
     <div className="container">
       <section className="py-10 max-w-[640px] mx-auto">
         <div className="section-header">
-          <h1 className="font-serif text-[28px] font-bold">Support Inbound</h1>
+          <h1 className="page-title">Support Inbound</h1>
         </div>
 
         <p className="text-[16px] text-[var(--text-secondary)] leading-[1.7] mb-8">
@@ -24,7 +24,7 @@ export default function DonatePage() {
             </span>
           </div>
 
-          <div className="relative w-[240px] h-[240px] mx-auto mb-6 bg-white p-2">
+          <div className="relative w-[240px] h-[240px] mx-auto mb-6 bg-[var(--surface)] p-2">
             <Image
               src="/khqr.png"
               alt="KHQR Donation Code"

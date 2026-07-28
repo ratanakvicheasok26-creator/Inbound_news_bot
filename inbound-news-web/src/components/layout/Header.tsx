@@ -6,19 +6,31 @@ import { usePathname } from "next/navigation"
 import { useState, useEffect, useRef } from "react"
 import { CATEGORIES } from "@/lib/categories"
 import { ThemeToggle } from "@/components/ThemeToggle"
+import { SearchBar } from "@/components/layout/SearchBar"
 import { Menu, X, ChevronDown } from "lucide-react"
+import { supabase, signOut } from "@/lib/auth"
+import type { User } from "@supabase/supabase-js"
 
 export function Header() {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [topicsOpen, setTopicsOpen] = useState(false)
   const [lang, setLang] = useState<"en" | "km">("en")
+  const [user, setUser] = useState<User | null>(null)
   const topicsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const observer = new MutationObserver(() => {})
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] })
     return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user: u } }) => setUser(u))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+    return () => subscription.unsubscribe()
   }, [])
 
   useEffect(() => {
@@ -53,6 +65,11 @@ export function Header() {
     { href: "/glossary", label: "Glossary" },
   ]
 
+  async function handleSignOut() {
+    await signOut()
+    setUser(null)
+  }
+
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
   }).toUpperCase()
@@ -65,31 +82,30 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-[100] w-full bg-[var(--bg)] text-[var(--text-primary)] border-b-2 border-[var(--text-primary)]">
+      <header className="sticky top-0 z-[100] w-full bg-[var(--bg)] text-[var(--text-primary)] border-b-2 border-[var(--text-primary)] relative">
 
         {/* TIER 1 — Top Meta Bar */}
         <div className="flex justify-between items-center border-b border-[var(--border)] px-4 md:px-10 h-[36px]">
           <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)]">
             {today} · {fullDate}
           </span>
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="hidden md:flex border border-[var(--text-primary)] overflow-hidden font-mono text-[9px] font-bold uppercase tracking-[0.05em]">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="hidden md:flex w-[64px] h-[30px] border-2 border-[var(--text-primary)] overflow-hidden font-mono text-[9px] font-bold uppercase tracking-[0.06em]">
               <button
-                className={`px-2 py-0.5 transition-colors ${
+                className={`flex-1 flex items-center justify-center transition-colors ${
                   lang === "en"
-                    ? "bg-[var(--text-primary)] text-[var(--bg)]"
-                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg)]"
+                    ? "bg-[var(--text-primary)] text-inverted"
+                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted"
                 }`}
                 onClick={() => setLang("en")}
               >
                 EN
               </button>
-              <div className="w-px bg-[var(--border)]" />
               <button
-                className={`px-2 py-0.5 transition-colors ${
+                className={`flex-1 flex items-center justify-center transition-colors ${
                   lang === "km"
-                    ? "bg-[var(--text-primary)] text-[var(--bg)]"
-                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg)]"
+                    ? "bg-[var(--text-primary)] text-inverted"
+                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted"
                 }`}
                 onClick={() => setLang("km")}
               >
@@ -97,9 +113,22 @@ export function Header() {
               </button>
             </div>
             <ThemeToggle variant="header" />
+            <SearchBar />
+            <Link
+              href="/account"
+              className="flex items-center justify-center h-[30px] border-2 border-[var(--text-primary)] px-2.5 font-mono text-[10px] md:text-[11px] uppercase tracking-[0.12em] font-bold text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
+            >
+              {user ? (
+                <span className="font-bold text-[9px]">
+                  {(user.email?.[0] || "R").toUpperCase()}
+                </span>
+              ) : (
+                "Sign In"
+              )}
+            </Link>
             <Link
               href="/donate"
-              className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+              className="flex items-center justify-center h-[30px] border-2 border-[var(--text-primary)] px-2.5 font-mono text-[10px] md:text-[11px] uppercase tracking-[0.12em] font-bold text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
             >
               Donate
             </Link>
@@ -207,6 +236,13 @@ export function Header() {
           </button>
 
           <div className="mt-16 px-6">
+            <Link
+              href="/search"
+              onClick={() => setMobileOpen(false)}
+              className="block py-4 font-mono text-sm font-bold uppercase tracking-[0.08em] border-b border-[var(--border)] text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
+            >
+              Search
+            </Link>
             {centerLinks.map((link) => (
               <Link
                 key={link.href}
@@ -222,6 +258,13 @@ export function Header() {
               </Link>
             ))}
             <Link
+              href="/account"
+              onClick={() => setMobileOpen(false)}
+              className="block py-4 font-mono text-sm font-bold uppercase tracking-[0.08em] border-b border-[var(--border)] text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
+            >
+              {user ? "My Account" : "Sign In"}
+            </Link>
+            <Link
               href="/donate"
               onClick={() => setMobileOpen(false)}
               className="block py-4 font-mono text-sm font-bold uppercase tracking-[0.08em] border-b border-[var(--border)] text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
@@ -231,12 +274,12 @@ export function Header() {
           </div>
 
           <div className="px-6 mt-8 flex items-center gap-2">
-            <div className="flex border-2 border-[var(--text-primary)] overflow-hidden font-mono text-[11px] font-bold uppercase tracking-[0.05em]">
+            <div className="flex border-2 border-[var(--text-primary)] overflow-hidden font-mono text-[11px] font-bold uppercase tracking-[0.06em]">
               <button
                 className={`px-3 py-1.5 transition-colors ${
                   lang === "en"
-                    ? "bg-[var(--text-primary)] text-[var(--bg)]"
-                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg)]"
+                    ? "bg-[var(--text-primary)] text-inverted"
+                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted"
                 }`}
                 onClick={() => setLang("en")}
               >
@@ -246,8 +289,8 @@ export function Header() {
               <button
                 className={`px-3 py-1.5 transition-colors ${
                   lang === "km"
-                    ? "bg-[var(--text-primary)] text-[var(--bg)]"
-                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg)]"
+                    ? "bg-[var(--text-primary)] text-inverted"
+                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted"
                 }`}
                 onClick={() => setLang("km")}
               >
@@ -274,6 +317,17 @@ export function Header() {
               ))}
             </div>
           </div>
+
+          {user && (
+            <div className="px-6 mt-8">
+              <button
+                onClick={() => { handleSignOut(); setMobileOpen(false) }}
+                className="w-full py-3 font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)] border-2 border-[var(--border)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+              >
+                Sign Out
+              </button>
+            </div>
+          )}
         </div>
       )}
     </>

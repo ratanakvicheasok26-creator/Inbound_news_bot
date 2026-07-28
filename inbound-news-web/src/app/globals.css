@@ -101,22 +101,38 @@ h1, h2, h3, h4 {
   color: var(--text-primary);
 }
 
-.display-h1 { font-size: 64px; line-height: 1.0; letter-spacing: -0.04em; font-weight: 800; }
-.display-h2 { font-size: 48px; line-height: 1.05; letter-spacing: -0.03em; font-weight: 800; }
-.display-h3 { font-size: 32px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; }
+/* Page titles — the single source of truth for all page headings */
+.page-title {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 36px;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+  color: var(--text-primary);
+}
 
-.body-text { font-size: 18px; line-height: 1.6; }
-.body-small { font-size: 14px; line-height: 1.5; }
-.body-meta {
+/* Story titles — consistent across all card components */
+.story-title {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Label/meta text — mono, uppercase, tracked */
+.label-meta {
   font-family: "JetBrains Mono", monospace;
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.4;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  color: var(--text-secondary);
 }
 
-.font-serif { font-family: "Inter", system-ui, sans-serif; font-weight: 800; letter-spacing: -0.03em; }
+.body-small { font-size: 14px; line-height: 1.5; }
+
 .font-sans { font-family: "Inter", system-ui, sans-serif; }
 .font-mono {
   font-family: "JetBrains Mono", ui-monospace, monospace;
@@ -129,9 +145,6 @@ h1, h2, h3, h4 {
 .font-khmer {
   font-family: "Noto Sans Khmer", "Inter", system-ui, sans-serif;
 }
-.kh-body { font-size: 20px; line-height: 1.8; }
-.kh-headline { font-size: 40px; line-height: 1.2; }
-.kh-meta { font-size: 13px; line-height: 1.5; }
 
 a {
   color: inherit;
@@ -139,6 +152,14 @@ a {
 }
 a:hover {
   color: var(--accent);
+}
+
+/* Inverted button text — forces opposite color of background */
+.text-inverted {
+  color: var(--bg) !important;
+}
+.hover\:text-inverted:hover {
+  color: var(--bg) !important;
 }
 
 /* ===== Container ===== */
@@ -231,7 +252,7 @@ header {
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   border-radius: 0;
 }
 
@@ -429,7 +450,7 @@ footer {
   font-family: "JetBrains Mono", monospace;
   font-size: 13px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
 /* ===== Theme Toggle ===== */
@@ -461,7 +482,7 @@ footer {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 .lang-toggle button {
   padding: 6px 12px;
@@ -548,14 +569,104 @@ footer {
   color: var(--accent);
 }
 
+/* ===== Legal Prose ===== */
+.legal-prose {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.legal-prose h2 {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 8px;
+  margin-top: 8px;
+}
+
+.legal-prose p {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.legal-prose ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legal-prose li {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.legal-prose li::before {
+  content: "+";
+  font-family: "JetBrains Mono", monospace;
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.legal-prose ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: legal-counter;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legal-prose ol li {
+  counter-increment: legal-counter;
+}
+
+.legal-prose ol li::before {
+  content: counter(legal-counter) ".";
+  font-family: "JetBrains Mono", monospace;
+  color: var(--accent);
+  flex-shrink: 0;
+  min-width: 1.5em;
+}
+
+.legal-prose strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.legal-prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.legal-prose a:hover {
+  color: var(--red-hover);
+}
+
+.legal-prose .khmer {
+  line-height: 1.8;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 1024px) {
   .footer-grid {
     grid-template-columns: 1fr 1fr;
   }
-  .display-h1 { font-size: 48px; }
-  .display-h2 { font-size: 36px; }
-  .display-h3 { font-size: 24px; }
+  .page-title { font-size: 28px; }
 }
 
 @media (max-width: 640px) {
@@ -565,9 +676,7 @@ footer {
   .footer-grid {
     grid-template-columns: 1fr;
   }
-  .display-h1 { font-size: 36px; }
-  .display-h2 { font-size: 28px; }
-  .display-h3 { font-size: 20px; }
+  .page-title { font-size: 28px; }
   body { font-size: 16px; }
   .section-number { font-size: 32px; }
 }

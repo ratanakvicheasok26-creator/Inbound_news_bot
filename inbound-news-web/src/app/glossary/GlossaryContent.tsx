@@ -22,7 +22,7 @@ export function GlossaryContent() {
     <div className="container">
       <section className="py-10 max-w-[720px] mx-auto">
         <div className="section-header">
-          <h1 className="font-serif text-[28px] font-bold">Tech Glossary</h1>
+          <h1 className="page-title">Tech Glossary</h1>
         </div>
 
         <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed mb-8">
@@ -76,7 +76,7 @@ export function GlossaryContent() {
             <article key={term.slug} className="py-6 border-b border-[var(--border)] last:border-0">
               <div className="flex items-start justify-between gap-4 mb-2">
                 <div>
-                  <h2 className="font-serif text-[20px] font-bold text-[var(--text-primary)]">
+                  <h2 className="story-title text-[20px]">
                     {term.term_en}
                   </h2>
                 </div>

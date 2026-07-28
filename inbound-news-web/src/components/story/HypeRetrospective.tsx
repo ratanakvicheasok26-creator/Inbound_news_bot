@@ -148,7 +148,7 @@ export function HypeRetrospective({ storyId, storyTitle, createdAt }: HypeRetros
                     onClick={() => handleVote(v)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider border transition-all ${
                       active
-                        ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg)]"
+                        ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-inverted"
                         : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-primary)] hover:text-[var(--text-primary)]"
                     }`}
                   >

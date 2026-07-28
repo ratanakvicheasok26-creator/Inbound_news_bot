@@ -58,15 +58,15 @@ export function LocalLensBox({ category, storyTitle, storySummary }: LocalLensBo
   }, [category, storyTitle, storySummary, text])
 
   return (
-    <div className="bg-[var(--text-primary)] p-5 text-[var(--bg)] border-t-3 border-[var(--accent)]">
+    <div className="bg-[var(--text-primary)] p-5 text-inverted border-t-3 border-[var(--accent)]">
       <p className="font-mono text-[10px] uppercase tracking-[0.12em] font-bold text-[var(--accent)] mb-2">
         Local Lens — Cambodia
       </p>
       {loading ? (
         <div className="space-y-2">
-          <div className="h-3 bg-[#333] animate-pulse w-full" />
-          <div className="h-3 bg-[#333] animate-pulse w-4/5" />
-          <div className="h-3 bg-[#333] animate-pulse w-3/5" />
+          <div className="h-3 bg-[var(--surface-alt)] animate-pulse w-full" />
+          <div className="h-3 bg-[var(--surface-alt)] animate-pulse w-4/5" />
+          <div className="h-3 bg-[var(--surface-alt)] animate-pulse w-3/5" />
         </div>
       ) : (
         <p className="text-[13px] leading-relaxed opacity-90">

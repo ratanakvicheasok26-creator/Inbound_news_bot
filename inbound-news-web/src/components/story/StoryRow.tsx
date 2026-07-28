@@ -1,13 +1,19 @@
+"use client"
+
 import Link from "next/link"
+import { useState } from "react"
 import type { Story } from "@/lib/types"
 import { getCategoryLabel } from "@/lib/categories"
 import { formatDistanceToNow } from "@/lib/utils"
 import { HypeRealityBar } from "./HypeRealityBar"
 import { DnaTag } from "./DnaTag"
 import { JargonText } from "./JargonText"
-import { ArrowUpRight } from "lucide-react"
+import { ArrowUpRight, Bookmark, BookmarkCheck } from "lucide-react"
+import { toggleSavedStory, isStorySaved } from "@/lib/profile"
 
 export function StoryRow({ story }: { story: Story }) {
+  const [saved, setSaved] = useState(() => isStorySaved(story.id))
+
   const categoryLabel = getCategoryLabel(story.category || "")
   const tags = story.tags || []
   const isBreaking = tags.includes("breaking")
@@ -50,12 +56,29 @@ export function StoryRow({ story }: { story: Story }) {
         </div>
       </div>
 
-      <Link
-        href={`/story/${story.id}`}
-        className="mt-1 flex-shrink-0 w-11 h-11 flex items-center justify-center text-[var(--text-secondary)] transition-colors group-hover:text-[var(--accent)]"
-      >
-        <ArrowUpRight className="h-5 w-5" />
-      </Link>
+      <div className="flex flex-col items-center gap-1 mt-1 flex-shrink-0">
+        <button
+          onClick={(e) => {
+            e.preventDefault()
+            const next = toggleSavedStory(story.id)
+            setSaved(next)
+          }}
+          className={`w-11 h-11 flex items-center justify-center transition-colors ${
+            saved
+              ? "text-[var(--accent)]"
+              : "text-[var(--text-secondary)] hover:text-[var(--accent)]"
+          }`}
+          aria-label={saved ? "Unsave story" : "Save story"}
+        >
+          {saved ? <BookmarkCheck className="h-5 w-5" /> : <Bookmark className="h-5 w-5" />}
+        </button>
+        <Link
+          href={`/story/${story.id}`}
+          className="w-11 h-11 flex items-center justify-center text-[var(--text-secondary)] transition-colors group-hover:text-[var(--accent)]"
+        >
+          <ArrowUpRight className="h-5 w-5" />
+        </Link>
+      </div>
     </article>
   )
 }

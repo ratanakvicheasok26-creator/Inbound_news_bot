@@ -22,7 +22,7 @@ export default async function TopicPage({
     <div className="container">
       <section className="py-10">
         <div className="section-header">
-          <h1 className="font-serif text-[24px] font-bold">{label}</h1>
+          <h1 className="page-title text-[24px]">{label}</h1>
           <span className="font-mono text-[11px] text-[var(--text-secondary)]">
             {stories.length} stor{stories.length !== 1 ? "ies" : "y"}
           </span>

@@ -73,7 +73,7 @@ export default async function SourcePage({ params }: { params: Promise<{ slug: s
           <Shield className="h-4 w-4 text-[var(--accent)]" />
           <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--accent)]">Source Profile</span>
         </div>
-        <h1 className="font-serif text-[28px] md:text-[36px] font-bold leading-[1.1] tracking-[-0.02em]">
+        <h1 className="page-title">
           {source.name}
         </h1>
         <a href={`https://${source.domain}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-2 font-mono text-[12px] text-[var(--text-secondary)] hover:text-[var(--red-hover)] transition-colors">

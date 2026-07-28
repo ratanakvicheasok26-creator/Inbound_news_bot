@@ -4,7 +4,7 @@ import { BlindspotCard } from "@/components/story/BlindspotCard"
 import { Eye } from "lucide-react"
 
 export const metadata = {
-  title: "Blindspot — Inbound Reports",
+  title: "Blindspot — Inbound Reporter",
   description: "Tech stories that mainstream media is ignoring.",
 }
 
@@ -17,7 +17,7 @@ export default async function BlindspotPage() {
         <div className="section-header">
           <div className="flex items-center gap-2">
             <Eye className="h-4 w-4 text-[var(--red-alert)]" />
-            <h1 className="font-serif text-[28px] font-bold">Tech Media Blindspots</h1>
+            <h1 className="page-title">Tech Media Blindspots</h1>
           </div>
         </div>
 

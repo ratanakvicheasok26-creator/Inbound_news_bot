@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { HighlightText } from "@/components/HighlightText"
 import { JargonPopover } from "@/components/JargonPopover"
 import { LocalLensBox } from "@/components/story/LocalLensBox"
@@ -14,6 +14,7 @@ import { DnaTag } from "@/components/story/DnaTag"
 import { GLOSSARY_TERMS } from "@/lib/glossary"
 import { getCategoryLabel } from "@/lib/categories"
 import { formatDistanceToNow } from "@/lib/utils"
+import { trackStoryRead, recordTierSwitch, recordSourceComparison, recordJargonTap } from "@/lib/profile"
 import type { StoryWithArticles, GlossaryTerm } from "@/lib/types"
 import { ArrowLeft, Newspaper } from "lucide-react"
 import Link from "next/link"
@@ -69,12 +70,31 @@ export function StoryContent({ story }: StoryContentProps) {
     term: GlossaryTerm
     position: { x: number; y: number }
   } | null>(null)
+  const sourceViewed = useRef(false)
+
+  useEffect(() => {
+    trackStoryRead({ id: story.id, title: story.title, category: story.category || "" })
+  }, [story.id, story.title, story.category])
+
+  const handleTierChange = useCallback((tier: "eli5" | "standard" | "deep") => {
+    setActiveTier((prev) => {
+      if (prev !== tier) recordTierSwitch()
+      return tier
+    })
+  }, [])
 
   const categoryLabel = getCategoryLabel(story.category || "")
   const articles = story.articles || []
   const tags = story.tags || []
   const isHype = tags.includes("hype")
   const hypeScore = Math.min(100, 30 + (story.source_count || 1) * 8)
+
+  useEffect(() => {
+    if (!sourceViewed.current && articles.length > 0) {
+      sourceViewed.current = true
+      recordSourceComparison()
+    }
+  })
 
   const timelineNodes = deriveTimelineNodes(articles)
 
@@ -106,7 +126,7 @@ export function StoryContent({ story }: StoryContentProps) {
               {formatDistanceToNow(story.created_at)}
             </span>
           </div>
-          <ReadingTierToggle active={activeTier} onChange={setActiveTier} />
+          <ReadingTierToggle active={activeTier} onChange={handleTierChange} />
         </div>
 
         <h1 className="text-[36px] md:text-[56px] font-extrabold leading-[0.95] tracking-[-0.04em]">
@@ -151,7 +171,10 @@ export function StoryContent({ story }: StoryContentProps) {
                 <HighlightText
                   text={displaySummary}
                   terms={GLOSSARY_TERMS}
-                  onTermClick={(term, position) => setActiveTerm({ term, position })}
+                  onTermClick={(term, position) => {
+                    recordJargonTap()
+                    setActiveTerm({ term, position })
+                  }}
                 />
               </p>
             </div>

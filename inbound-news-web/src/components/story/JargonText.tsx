@@ -9,9 +9,10 @@ import type { GlossaryTerm } from "@/lib/types"
 interface JargonTextProps {
   text: string
   className?: string
+  onJargonTap?: () => void
 }
 
-export function JargonText({ text, className }: JargonTextProps) {
+export function JargonText({ text, className, onJargonTap }: JargonTextProps) {
   const [activeTerm, setActiveTerm] = useState<{
     term: GlossaryTerm
     position: { x: number; y: number }
@@ -23,7 +24,10 @@ export function JargonText({ text, className }: JargonTextProps) {
         <HighlightText
           text={text}
           terms={GLOSSARY_TERMS}
-          onTermClick={(term, position) => setActiveTerm({ term, position })}
+          onTermClick={(term, position) => {
+            onJargonTap?.()
+            setActiveTerm({ term, position })
+          }}
         />
       </p>
       {activeTerm && (

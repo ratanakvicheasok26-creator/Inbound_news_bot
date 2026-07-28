@@ -16,7 +16,7 @@ export function BlindspotCard({ title, summary, sourceCount, sourceNames }: Blin
           Underreported
         </span>
       </div>
-      <h3 className="text-[16px] font-bold leading-snug text-[var(--text-primary)]">
+      <h3 className="story-title">
         {title}
       </h3>
       {summary && (

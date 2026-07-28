@@ -29,7 +29,7 @@ export function TrendingStrip({ stories }: TrendingStripProps) {
                 [{story.source_count} src]
               </span>
             </div>
-            <h3 className="text-[16px] font-bold leading-snug text-[var(--text-primary)] line-clamp-2 mb-2 tracking-tight">
+            <h3 className="story-title line-clamp-2 mb-2">
               {story.title}
             </h3>
             {story.summary_en && (

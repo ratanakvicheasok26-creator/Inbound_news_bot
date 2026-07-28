@@ -29,7 +29,7 @@ const notoKhmer = Noto_Sans_Khmer({
 });
 
 export const metadata: Metadata = {
-  title: "Inbound Reports — Decode the Tech.",
+  title: "Inbound Reporter — Decode the Tech.",
   description:
     "Independent technology journalism from Phnom Penh — startups, AI, cybersecurity, and more.",
 };

@@ -34,7 +34,7 @@ export function ThemeToggle({ variant = "default" }: ThemeToggleProps) {
   if (variant === "header") {
     return (
       <button
-        className="flex items-center justify-center w-[34px] h-[30px] border-2 border-[var(--text-primary)] bg-transparent text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg)] transition-colors"
+        className="flex items-center justify-center w-[34px] h-[30px] border-2 border-[var(--text-primary)] bg-transparent text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
         onClick={toggle}
         aria-label="Toggle theme"
       >
