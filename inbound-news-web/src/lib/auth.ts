@@ -1,9 +1,6 @@
-import { createClient } from "@supabase/supabase-js"
+import { supabase } from "./supabase"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export { supabase }
 
 export async function signUp(email: string, password: string) {
   return supabase.auth.signUp({ email, password })

@@ -1,4 +1,4 @@
-import { supabase } from "./auth"
+import { supabase } from "./supabase"
 
 const STORAGE_KEY = "ib_profile"
 
