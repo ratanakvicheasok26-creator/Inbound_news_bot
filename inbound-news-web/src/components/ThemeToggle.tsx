@@ -7,13 +7,19 @@ interface ThemeToggleProps {
 }
 
 export function ThemeToggle({ variant = "default" }: ThemeToggleProps) {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (typeof document === "undefined") return "light";
+    const v = document.documentElement.getAttribute("data-theme");
+    return v === "dark" ? "dark" : "light";
+  });
 
   useEffect(() => {
-    const current = document.documentElement.getAttribute("data-theme");
-    if (current === "dark" || current === "light") {
-      setTheme(current);
-    }
+    const observer = new MutationObserver(() => {
+      const v = document.documentElement.getAttribute("data-theme");
+      if (v === "dark" || v === "light") setTheme(v);
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
   }, []);
 
   function toggle() {

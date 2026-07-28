@@ -13,18 +13,10 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [topicsOpen, setTopicsOpen] = useState(false)
   const [lang, setLang] = useState<"en" | "km">("en")
-  const [theme, setTheme] = useState<"light" | "dark">("light")
   const topicsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const current = document.documentElement.getAttribute("data-theme")
-    if (current === "dark" || current === "light") {
-      setTheme(current)
-    }
-    const observer = new MutationObserver(() => {
-      const t = document.documentElement.getAttribute("data-theme")
-      if (t === "dark" || t === "light") setTheme(t)
-    })
+    const observer = new MutationObserver(() => {})
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] })
     return () => observer.disconnect()
   }, [])
@@ -39,10 +31,12 @@ export function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setMobileOpen(false)
     setTopicsOpen(false)
   }, [pathname])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (mobileOpen) {
@@ -52,8 +46,6 @@ export function Header() {
     }
     return () => { document.body.style.overflow = "" }
   }, [mobileOpen])
-
-  const isDark = theme === "dark"
 
   const centerLinks = [
     { href: "/blindspot", label: "Blindspot" },
@@ -119,7 +111,7 @@ export function Header() {
           <Link href="/" className="flex items-center">
             <Image
               src="/logo-dark.png"
-              alt="Inbound Reports"
+              alt="Inbound Reporter"
               width={1983}
               height={467}
               priority
@@ -127,7 +119,7 @@ export function Header() {
             />
             <Image
               src="/logo-light.png"
-              alt="Inbound Reports"
+              alt="Inbound Reporter"
               width={1982}
               height={467}
               priority

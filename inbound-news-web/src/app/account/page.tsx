@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
+
 import { User, Bookmark, Eye, Settings, Shield } from "lucide-react"
 
 const tabs = [

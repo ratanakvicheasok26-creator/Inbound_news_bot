@@ -20,28 +20,22 @@ const FALLBACK: Record<string, string> = {
 }
 
 export function LocalLensBox({ category, storyTitle, storySummary }: LocalLensBoxProps) {
-  const [text, setText] = useState<string | null>(null)
+  const [text, setText] = useState<string | null>(() => {
+    if (!storyTitle) return FALLBACK[category || ""] || FALLBACK.ai;
+    const cacheKey = `lens-${storyTitle.slice(0, 80)}`;
+    return typeof window !== "undefined" ? localStorage.getItem(cacheKey) : null;
+  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
   const fetched = useRef(false)
 
   useEffect(() => {
-    if (fetched.current) return
-    if (!storyTitle) {
-      setText(FALLBACK[category || ""] || FALLBACK.ai)
-      return
-    }
-
-    const cacheKey = `lens-${storyTitle.slice(0, 80)}`
-    const cached = typeof window !== "undefined" ? localStorage.getItem(cacheKey) : null
-    if (cached) {
-      setText(cached)
-      return
-    }
+    if (fetched.current || text !== null || !storyTitle) return
 
     fetched.current = true
     setLoading(true)
 
+    const cacheKey = `lens-${storyTitle.slice(0, 80)}`
     fetch("/api/local-lens", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -61,7 +55,7 @@ export function LocalLensBox({ category, storyTitle, storySummary }: LocalLensBo
         setText(FALLBACK[category || ""] || FALLBACK.ai)
       })
       .finally(() => setLoading(false))
-  }, [category, storyTitle, storySummary])
+  }, [category, storyTitle, storySummary, text])
 
   return (
     <div className="bg-[var(--text-primary)] p-5 text-[var(--bg)] border-t-3 border-[var(--accent)]">

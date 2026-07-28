@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useState } from "react"
 import { AlertTriangle, Clock, CheckCircle, XCircle, MinusCircle } from "lucide-react"
 
 interface Prediction {
@@ -88,19 +88,16 @@ function savePrediction(pred: Prediction) {
 }
 
 export function HypeRetrospective({ storyId, storyTitle, createdAt }: HypeRetrospectiveProps) {
-  const [myVote, setMyVote] = useState<"hyped" | "will_deliver" | "too_early" | null>(null)
-  const [pastPredictions, setPastPredictions] = useState<Prediction[]>([])
-  const [showHistory, setShowHistory] = useState(false)
-  const fetched = useRef(false)
-
-  useEffect(() => {
-    if (fetched.current) return
-    fetched.current = true
+  const [myVote, setMyVote] = useState<"hyped" | "will_deliver" | "too_early" | null>(() => {
     const all = loadPredictions()
     const existing = all.find((p) => p.storyId === storyId)
-    if (existing) setMyVote(existing.verdict)
-    setPastPredictions(all.filter((p) => p.storyId !== storyId))
-  }, [storyId])
+    return existing?.verdict ?? null
+  })
+  const [pastPredictions] = useState<Prediction[]>(() => {
+    const all = loadPredictions()
+    return all.filter((p) => p.storyId !== storyId)
+  })
+  const [showHistory, setShowHistory] = useState(false)
 
   const checkIn = getCheckInDate(createdAt)
   const days = daysUntil(checkIn)
@@ -176,7 +173,7 @@ export function HypeRetrospective({ storyId, storyTitle, createdAt }: HypeRetros
                 <div className="mt-3 space-y-2">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="font-mono text-[10px] text-[var(--text-secondary)]">
-                      {hypeRate}% of past predictions voted "overhyped"
+                      {hypeRate}% of past predictions voted &ldquo;overhyped&rdquo;
                     </span>
                     <div className="flex-1 h-[2px] bg-[var(--border)]">
                       <div

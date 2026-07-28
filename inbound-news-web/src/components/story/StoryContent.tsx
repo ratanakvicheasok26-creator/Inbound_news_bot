@@ -28,7 +28,7 @@ function deriveTierSummary(summary: string, tier: "eli5" | "standard" | "deep"):
     const simplified = sentences
       .slice(0, Math.max(2, Math.ceil(sentences.length / 3)))
       .map((s) => {
-        let t = s
+        const t = s
           .replace(/\b(?:utilize|implement|facilitateleverage|infrastructure|paradigm|methodology|comprehensive|significant|substantial|innovative|ecosystem)\b/gi, (m) => {
             const map: Record<string, string> = {
               utilize: "use",

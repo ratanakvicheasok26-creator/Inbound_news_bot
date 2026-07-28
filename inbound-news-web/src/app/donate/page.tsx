@@ -1,5 +1,5 @@
 import Image from "next/image"
-import { Heart, ExternalLink } from "lucide-react"
+import { Heart } from "lucide-react"
 
 export default function DonatePage() {
   return (
@@ -10,8 +10,8 @@ export default function DonatePage() {
         </div>
 
         <p className="text-[16px] text-[var(--text-secondary)] leading-[1.7] mb-8">
-          Inbound Reports is independent technology journalism from Phnom Penh.
-          We run on 15 RSS feeds monitored 24/7, AI-powered story clustering, and
+          Inbound Reporter is independent technology journalism from Phnom Penh.
+          We aggregate 900+ tech sources with AI-powered story clustering, and
           zero ad revenue. Your support keeps the wire running.
         </p>
 
