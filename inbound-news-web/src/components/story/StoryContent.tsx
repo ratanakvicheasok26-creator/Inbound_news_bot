@@ -157,7 +157,7 @@ export function StoryContent({ story }: StoryContentProps) {
       <StoryTimeline nodes={timelineNodes} />
 
       {displaySummary && (
-        <section className="py-8 border-b border-[var(--border)]">
+        <section className="py-8">
           <div className="grid gap-8 md:grid-cols-[7fr_3fr]">
             <div>
               {activeTier !== "standard" && (
@@ -189,12 +189,12 @@ export function StoryContent({ story }: StoryContentProps) {
         </section>
       )}
 
-      <section className="py-6 border-b border-[var(--border)]">
+      <section className="py-6">
         <RelatedConcepts concepts={["Transformer", "RAG", "LLM", "GPU"]} />
       </section>
 
       {articles.length > 0 && (
-        <section className="py-8 border-b border-[var(--border)]">
+        <section className="py-8">
           <div className="section-header">
             <h2 className="section-title">
               <Newspaper className="mr-2 inline h-3.5 w-3.5" />

@@ -17,6 +17,7 @@ export function Header() {
   const [topicsOpen, setTopicsOpen] = useState(false)
   const [lang, setLang] = useState<"en" | "km">("en")
   const [user, setUser] = useState<User | null>(null)
+  const [scrolled, setScrolled] = useState(false)
   const topicsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -59,6 +60,13 @@ export function Header() {
     return () => { document.body.style.overflow = "" }
   }, [mobileOpen])
 
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 70)
+    window.addEventListener("scroll", onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
+
   const centerLinks = [
     { href: "/blindspot", label: "Blindspot" },
     { href: "/", label: "Timeline" },
@@ -82,147 +90,265 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-[100] w-full bg-[var(--bg)] text-[var(--text-primary)] border-b-2 border-[var(--text-primary)] relative">
+      <header className="fixed top-0 left-0 right-0 z-[100] w-full">
+        <div className={`transition-all duration-[250ms] ease-in-out ${
+          scrolled
+            ? "bg-[var(--bg)] shadow-sm border-b border-[#E5E5E5]"
+            : "bg-transparent"
+        }`}>
 
-        {/* TIER 1 — Top Meta Bar */}
-        <div className="flex justify-between items-center border-b border-[var(--border)] px-4 md:px-10 h-[36px]">
-          <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)]">
-            {today} · {fullDate}
-          </span>
-          <div className="flex items-center gap-3 md:gap-4">
-            <div className="hidden md:flex w-[64px] h-[30px] border-2 border-[var(--text-primary)] overflow-hidden font-mono text-[9px] font-bold uppercase tracking-[0.06em]">
-              <button
-                className={`flex-1 flex items-center justify-center transition-colors ${
-                  lang === "en"
-                    ? "bg-[var(--text-primary)] text-inverted"
-                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted"
-                }`}
-                onClick={() => setLang("en")}
-              >
-                EN
-              </button>
-              <button
-                className={`flex-1 flex items-center justify-center transition-colors ${
-                  lang === "km"
-                    ? "bg-[var(--text-primary)] text-inverted"
-                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted"
-                }`}
-                onClick={() => setLang("km")}
-              >
-                ខ្មែរ
-              </button>
-            </div>
-            <ThemeToggle variant="header" />
-            <SearchBar />
-            <Link
-              href="/account"
-              className="flex items-center justify-center h-[30px] border-2 border-[var(--text-primary)] px-2.5 font-mono text-[10px] md:text-[11px] uppercase tracking-[0.12em] font-bold text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
-            >
-              {user ? (
-                <span className="font-bold text-[9px]">
-                  {(user.email?.[0] || "R").toUpperCase()}
-                </span>
-              ) : (
-                "Sign In"
-              )}
-            </Link>
-            <Link
-              href="/donate"
-              className="flex items-center justify-center h-[30px] border-2 border-[var(--text-primary)] px-2.5 font-mono text-[10px] md:text-[11px] uppercase tracking-[0.12em] font-bold text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
-            >
-              Donate
-            </Link>
-          </div>
-        </div>
+          {/* COLLAPSIBLE TOP SECTION — Meta bar + Logo */}
+          <div className={`transition-all duration-[250ms] ease-in-out overflow-hidden ${
+            scrolled ? "max-h-0 opacity-0" : "max-h-[250px] opacity-100"
+          }`}>
 
-        {/* TIER 2 — Cursive Logo (Masthead) */}
-        <div className="flex justify-center items-center border-b-2 border-[var(--text-primary)] py-4 md:py-6">
-          <Link href="/" className="flex items-center">
-            <Image
-              src="/logo-dark.png"
-              alt="Inbound Reporter"
-              width={1983}
-              height={467}
-              priority
-              className="block h-[48px] w-auto md:h-[72px] dark:hidden"
-            />
-            <Image
-              src="/logo-light.png"
-              alt="Inbound Reporter"
-              width={1982}
-              height={467}
-              priority
-              className="hidden h-[48px] w-auto md:h-[72px] dark:block"
-            />
-          </Link>
-        </div>
-
-        {/* TIER 3 — Main Navigation (Strict 3-Column Grid) */}
-        <div className="grid grid-cols-3 items-center px-4 md:px-10 h-[44px]">
-
-          {/* LEFT COLUMN — Mobile menu button only */}
-          <nav className="flex justify-start items-center">
-            <button
-              className="flex items-center justify-center w-8 h-8 md:hidden"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label="Toggle menu"
-            >
-              <Menu className="h-4 w-4" />
-            </button>
-          </nav>
-
-          {/* CENTER COLUMN — Blindspot, Timeline, Glossary, Topics */}
-          <nav className="flex justify-center items-center gap-4 md:gap-6">
-            {centerLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`hidden md:inline font-mono text-[11px] font-bold uppercase tracking-[0.1em] px-2 py-1 transition-colors ${
-                  pathname === link.href
-                    ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                    : "text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)]"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-
-            <div className="hidden md:block relative" ref={topicsRef}>
-              <button
-                onClick={() => setTopicsOpen(!topicsOpen)}
-                className="flex items-center gap-1 font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)] px-2 py-1 transition-colors"
-              >
-                Topics
-                <ChevronDown className={`h-3 w-3 transition-transform ${topicsOpen ? "rotate-180" : ""}`} />
-              </button>
-              {topicsOpen && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-[1px] w-[360px] bg-[var(--bg)] border-2 border-[var(--text-primary)] z-50">
-                  <div className="grid grid-cols-2 gap-0">
-                    {CATEGORIES.map((cat) => (
-                      <Link
-                        key={cat.slug}
-                        href={`/topic/${cat.slug}`}
-                        className={`block px-4 py-3 font-mono text-[11px] uppercase tracking-[0.06em] font-medium transition-colors border-b border-[var(--border)] ${
-                          pathname === `/topic/${cat.slug}`
-                            ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                            : "text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)]"
-                        }`}
-                      >
-                        {cat.label}
-                      </Link>
-                    ))}
-                  </div>
+            {/* TIER 1 — Top Meta Bar */}
+            <div className="flex justify-between items-center border-b border-[var(--border)] px-4 md:px-10 h-[36px]">
+              <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+                {today} · {fullDate}
+              </span>
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="hidden md:flex w-[64px] h-[30px] border-2 border-[var(--text-primary)] overflow-hidden font-mono text-[9px] font-bold uppercase tracking-[0.06em]">
+                  <button
+                    className={`flex-1 flex items-center justify-center transition-colors ${
+                      lang === "en"
+                        ? "bg-[var(--text-primary)] text-inverted"
+                        : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted"
+                    }`}
+                    onClick={() => setLang("en")}
+                  >
+                    EN
+                  </button>
+                  <button
+                    className={`flex-1 flex items-center justify-center transition-colors ${
+                      lang === "km"
+                        ? "bg-[var(--text-primary)] text-inverted"
+                        : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted"
+                    }`}
+                    onClick={() => setLang("km")}
+                  >
+                    ខ្មែរ
+                  </button>
                 </div>
-              )}
+                <ThemeToggle variant="header" />
+                <SearchBar />
+                <Link
+                  href="/account"
+                  className="flex items-center justify-center h-[30px] border-2 border-[var(--text-primary)] px-2.5 font-mono text-[10px] md:text-[11px] uppercase tracking-[0.12em] font-bold text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
+                >
+                  {user ? (
+                    <span className="font-bold text-[9px]">
+                      {(user.email?.[0] || "R").toUpperCase()}
+                    </span>
+                  ) : (
+                    "Sign In"
+                  )}
+                </Link>
+                <Link
+                  href="/donate"
+                  className="flex items-center justify-center h-[30px] border-2 border-[var(--text-primary)] px-2.5 font-mono text-[10px] md:text-[11px] uppercase tracking-[0.12em] font-bold text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
+                >
+                  Donate
+                </Link>
+              </div>
             </div>
-          </nav>
 
-          {/* RIGHT COLUMN — Spacer (keeps center nav visually centered) */}
-          <div />
+            {/* TIER 2 — Logo Masthead */}
+            <div className="flex justify-center items-center border-b-2 border-[var(--text-primary)] py-4 md:py-6">
+              <Link href="/" className="flex items-center">
+                <Image
+                  src="/logo-dark.png"
+                  alt="Inbound Reporter"
+                  width={1983}
+                  height={467}
+                  priority
+                  className="block h-[48px] w-auto md:h-[72px] dark:hidden"
+                />
+                <Image
+                  src="/logo-light.png"
+                  alt="Inbound Reporter"
+                  width={1982}
+                  height={467}
+                  priority
+                  className="hidden h-[48px] w-auto md:h-[72px] dark:block"
+                />
+              </Link>
+            </div>
+
+            {/* TIER 3 — Main Navigation (desktop only, shown in expanded state) */}
+            <div className="hidden md:grid grid-cols-3 items-center px-4 md:px-10 h-[44px]">
+              <nav className="flex justify-start items-center">
+                <button
+                  className="flex items-center justify-center w-8 h-8 md:hidden"
+                  onClick={() => setMobileOpen(!mobileOpen)}
+                  aria-label="Toggle menu"
+                >
+                  <Menu className="h-4 w-4" />
+                </button>
+              </nav>
+              <nav className="flex justify-center items-center gap-4 md:gap-6">
+                {centerLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`hidden md:inline font-mono text-[11px] font-bold uppercase tracking-[0.1em] px-2 py-1 transition-colors ${
+                      pathname === link.href
+                        ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+                        : "text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)]"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                <div className="hidden md:block relative">
+                  <button
+                    onClick={() => setTopicsOpen(!topicsOpen)}
+                    className="flex items-center gap-1 font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)] px-2 py-1 transition-colors"
+                  >
+                    Topics
+                    <ChevronDown className={`h-3 w-3 transition-transform ${topicsOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {topicsOpen && (
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-[1px] w-[360px] bg-[var(--bg)] border-2 border-[var(--text-primary)] z-50">
+                      <div className="grid grid-cols-2 gap-0">
+                        {CATEGORIES.map((cat) => (
+                          <Link
+                            key={cat.slug}
+                            href={`/topic/${cat.slug}`}
+                            className={`block px-4 py-3 font-mono text-[11px] uppercase tracking-[0.06em] font-medium transition-colors border-b border-[var(--border)] ${
+                              pathname === `/topic/${cat.slug}`
+                                ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+                                : "text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)]"
+                            }`}
+                          >
+                            {cat.label}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </nav>
+              <div />
+            </div>
+          </div>
+
+          {/* COMPACT ROW — Always rendered; full height when scrolled, minimal on desktop when at top */}
+          <div className={`grid grid-cols-3 items-center px-4 md:px-10 transition-all duration-[250ms] ease-in-out ${
+            scrolled ? "h-14 md:h-16" : "h-[44px] md:hidden"
+          }`}>
+            {/* Left */}
+            <nav className="flex items-center gap-2">
+              <button
+                className="flex items-center justify-center w-8 h-8 md:hidden"
+                onClick={() => setMobileOpen(!mobileOpen)}
+                aria-label="Toggle menu"
+              >
+                <Menu className="h-4 w-4" />
+              </button>
+              <Link href="/" className={`transition-all duration-[250ms] ${
+                scrolled ? "opacity-100" : "opacity-0 pointer-events-none"
+              }`}>
+                <Image
+                  src="/logo-dark.png"
+                  alt="Inbound Reporter"
+                  width={1983}
+                  height={467}
+                  priority
+                  className="hidden md:block h-8 w-auto dark:hidden"
+                />
+                <Image
+                  src="/logo-light.png"
+                  alt="Inbound Reporter"
+                  width={1982}
+                  height={467}
+                  priority
+                  className="hidden md:block h-8 w-auto dark:block"
+                />
+              </Link>
+            </nav>
+
+            {/* Center */}
+            <nav className={`flex justify-center items-center gap-4 md:gap-6 transition-all duration-[250ms] ${
+              scrolled ? "opacity-100" : "opacity-100"
+            }`}>
+              {centerLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`hidden md:inline font-mono text-[11px] font-bold uppercase tracking-[0.1em] px-2 py-1 transition-colors ${
+                    pathname === link.href
+                      ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+                      : "text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)]"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <div className="hidden md:block relative" ref={topicsRef}>
+                <button
+                  onClick={() => setTopicsOpen(!topicsOpen)}
+                  className="flex items-center gap-1 font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)] px-2 py-1 transition-colors"
+                >
+                  Topics
+                  <ChevronDown className={`h-3 w-3 transition-transform ${topicsOpen ? "rotate-180" : ""}`} />
+                </button>
+                {topicsOpen && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-[1px] w-[360px] bg-[var(--bg)] border-2 border-[var(--text-primary)] z-50">
+                    <div className="grid grid-cols-2 gap-0">
+                      {CATEGORIES.map((cat) => (
+                        <Link
+                          key={cat.slug}
+                          href={`/topic/${cat.slug}`}
+                          className={`block px-4 py-3 font-mono text-[11px] uppercase tracking-[0.06em] font-medium transition-colors border-b border-[var(--border)] ${
+                            pathname === `/topic/${cat.slug}`
+                              ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+                              : "text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)]"
+                          }`}
+                        >
+                          {cat.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </nav>
+
+            {/* Right */}
+            <div className={`flex items-center justify-end gap-2 transition-all duration-[250ms] ${
+              scrolled ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}>
+              <SearchBar />
+              <ThemeToggle variant="header" />
+              <Link
+                href="/account"
+                className="flex items-center justify-center h-[28px] border-2 border-[var(--text-primary)] px-2 font-mono text-[9px] md:text-[10px] uppercase tracking-[0.12em] font-bold text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
+              >
+                {user ? (
+                  <span className="font-bold text-[8px]">
+                    {(user.email?.[0] || "R").toUpperCase()}
+                  </span>
+                ) : (
+                  "Sign In"
+                )}
+              </Link>
+              <Link
+                href="/donate"
+                className="hidden sm:flex items-center justify-center h-[28px] border-2 border-[var(--text-primary)] px-2 font-mono text-[9px] md:text-[10px] uppercase tracking-[0.12em] font-bold text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
+              >
+                Donate
+              </Link>
+            </div>
+          </div>
 
         </div>
-
       </header>
+
+      {/* SPACER — Prevents fixed header from covering content */}
+      <div className={`transition-all duration-[250ms] ease-in-out ${
+        scrolled ? "h-14 md:h-16" : "h-[160px] md:h-[200px]"
+      }`} />
 
       {/* Mobile Overlay — Full Screen */}
       {mobileOpen && (
