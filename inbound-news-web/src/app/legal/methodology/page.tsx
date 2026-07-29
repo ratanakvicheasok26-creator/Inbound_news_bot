@@ -2,25 +2,30 @@ import type { Metadata } from "next"
 import { LegalPageLayout } from "@/components/legal/LegalPageLayout"
 
 export const metadata: Metadata = {
-  title: "AI & Editorial Methodology — Inbound Reporter",
-  description: "How Inbound Reporter aggregates, processes, and presents tech news.",
+  title: "AI & Editorial Methodology — Inbound Reports",
+  description: "How Inbound Reports aggregates, processes, and presents tech news.",
 }
 
 export default function MethodologyPage() {
   return (
     <LegalPageLayout title="How We Operate">
+      <p className="label-meta !normal-case tracking-normal mb-6">
+        Last updated: July 29, 2026
+      </p>
+
       <p>
         <strong>Transparency is core to our mission.</strong> This page documents exactly how Inbound
-        Reporter aggregates, processes, and presents news. Nothing here is aspirational — this
+        Reports aggregates, processes, and presents news. Nothing here is aspirational — this
         describes the system as it currently functions.
       </p>
 
       <h2>1. Source Aggregation</h2>
       <p>
-        We maintain a curated directory of over 1,000 technology news sources — including RSS feeds,
-        APIs, developer communities, and regional publications. Each source is manually vetted for
-        relevance. Our ingestion workers fetch new content periodically from these sources, parse
-        article metadata, and store them for processing.
+        We maintain a curated directory of <strong>900+ active</strong> technology news sources —
+        including RSS feeds, APIs, developer communities, and regional publications — scaling daily.
+        New sources are added by editing the YAML configuration; no code or database changes are
+        required. Each source is manually vetted for relevance. Our ingestion workers fetch new
+        content periodically, parse article metadata, and store them for processing.
       </p>
 
       <h2>2. Story Clustering</h2>
@@ -116,7 +121,7 @@ export default function MethodologyPage() {
       <h2>8. Updates to This Methodology</h2>
       <p>
         As our system evolves, this page will be updated to reflect changes. The &quot;Last
-        Updated&quot; date at the top of this page indicates when the methodology documentation
+        updated&quot; date at the top of this page indicates when the methodology documentation
         was last reviewed.
       </p>
     </LegalPageLayout>

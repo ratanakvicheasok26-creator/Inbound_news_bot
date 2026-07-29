@@ -88,7 +88,7 @@ export function SourceComparisonRow({ article, trustScore = 3, trustAxes, framin
 
           <div className="mt-3 grid grid-cols-2 gap-4">
             <div>
-              <p className="font-mono text-[9px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
+              <p className="font-mono text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
                 Hype Level
               </p>
               <div className="relative h-[8px] bg-gradient-to-r from-[var(--text-primary)] via-[var(--text-secondary)] to-[var(--red-alert)]">
@@ -99,12 +99,12 @@ export function SourceComparisonRow({ article, trustScore = 3, trustAxes, framin
                 />
               </div>
               <div className="flex justify-between mt-1">
-                <span className="font-mono text-[8px] text-[var(--text-secondary)]">Substance</span>
-                <span className="font-mono text-[8px] text-[var(--text-secondary)]">Hype</span>
+                <span className="font-mono text-[10px] text-[var(--text-secondary)]">Substance</span>
+                <span className="font-mono text-[10px] text-[var(--text-secondary)]">Hype</span>
               </div>
             </div>
             <div>
-              <p className="font-mono text-[9px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
+              <p className="font-mono text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
                 Source Trust
               </p>
               <TrustRadar score={Math.round((axes.primary_sourcing + axes.technical_accuracy + axes.originality + axes.corrections + axes.funding_disclosure) / 5)} axes={Object.entries(axes).map(([key, val]) => ({ label: key, score: val }))} size="sm" />

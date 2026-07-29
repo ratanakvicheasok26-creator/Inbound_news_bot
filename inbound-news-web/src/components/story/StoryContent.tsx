@@ -113,7 +113,7 @@ export function StoryContent({ story }: StoryContentProps) {
       </div>
 
       <header className="pb-8 border-b-2 border-[var(--text-primary)]">
-        <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--accent)] font-bold border-2 border-[var(--accent)] px-2 py-0.5">
               {categoryLabel}
@@ -167,7 +167,7 @@ export function StoryContent({ story }: StoryContentProps) {
                   </span>
                 </div>
               )}
-              <p className="text-[18px] leading-[1.6] text-[var(--text-primary)]">
+              <p className="text-[18px] leading-[1.6] text-[var(--text-primary)] max-w-[65ch]">
                 <HighlightText
                   text={displaySummary}
                   terms={GLOSSARY_TERMS}

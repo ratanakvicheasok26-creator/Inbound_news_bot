@@ -38,7 +38,7 @@ export function SearchBar() {
       {/* Search icon trigger — Tier 1 meta bar */}
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center justify-center w-[30px] h-[30px] border-2 border-[var(--text-primary)] text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
+        className="flex items-center justify-center w-[30px] h-[30px] border border-[var(--text-primary)] text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
         aria-label="Search"
         aria-expanded={open}
         aria-controls={SEARCH_PANEL_ID}
@@ -50,11 +50,11 @@ export function SearchBar() {
       {open && (
         <div
           id={SEARCH_PANEL_ID}
-          className="absolute top-full left-0 w-full border-b-2 border-[var(--text-primary)] bg-[var(--bg)] z-[110]"
+          className="absolute top-full left-0 w-full border-b border-[var(--text-primary)] bg-[var(--bg)] z-[110]"
         >
           <form onSubmit={handleSubmit} className="max-w-[960px] mx-auto px-4 md:px-10 py-4">
-            <div className="flex items-center border-2 border-[var(--text-primary)]">
-              <span className="flex items-center justify-center w-[40px] h-[40px] border-r-2 border-[var(--text-primary)] text-[var(--text-secondary)]">
+            <div className="flex items-center border border-[var(--text-primary)]">
+              <span className="flex items-center justify-center w-[40px] h-[40px] border-r border-[var(--text-primary)] text-[var(--text-secondary)]">
                 <Search className="h-4 w-4" />
               </span>
               <input
@@ -68,12 +68,12 @@ export function SearchBar() {
               <button
                 type="button"
                 onClick={() => { setOpen(false); setQuery("") }}
-                className="flex items-center justify-center w-[40px] h-[40px] border-l-2 border-[var(--text-primary)] text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
+                className="flex items-center justify-center w-[40px] h-[40px] border-l border-[var(--text-primary)] text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">
               Press Enter to search &middot; Esc to close
             </p>
           </form>

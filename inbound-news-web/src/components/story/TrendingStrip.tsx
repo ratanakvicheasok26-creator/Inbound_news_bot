@@ -22,10 +22,10 @@ export function TrendingStrip({ stories }: TrendingStripProps) {
             className="story-card snap-start shrink-0 w-[280px] md:w-[320px]"
           >
             <div className="mb-2 flex items-center gap-2">
-              <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--accent)] font-bold">
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--accent)] font-bold">
                 {getCategoryLabel(story.category || "")}
               </span>
-              <span className="font-mono text-[9px] text-[var(--text-secondary)] tabular-nums font-medium">
+              <span className="font-mono text-[10px] text-[var(--text-secondary)] tabular-nums font-medium">
                 [{story.source_count} src]
               </span>
             </div>
@@ -41,7 +41,7 @@ export function TrendingStrip({ stories }: TrendingStripProps) {
               <div className="w-12 shrink-0">
                 <HypeRealityBar score={hypeScore} size="sm" />
               </div>
-              <span className="font-mono text-[9px] text-[var(--text-secondary)]">
+              <span className="font-mono text-[10px] text-[var(--text-secondary)]">
                 {formatDistanceToNow(story.created_at)}
               </span>
             </div>

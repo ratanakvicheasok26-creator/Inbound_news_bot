@@ -25,6 +25,33 @@
   --green-subtle-bg: #F0F0F0;
 
   --radius: 0;
+
+  /* Type scale */
+  --text-xs: 10px;
+  --text-sm: 11px;
+  --text-base: 12px;
+  --text-md: 14px;
+  --text-body: 16px;
+  --text-lg: 20px;
+  --text-xl: 24px;
+  --text-2xl: 32px;
+  --text-3xl: 48px;
+  --text-4xl: 64px;
+  --text-5xl: 96px;
+
+  /* Spacing scale (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
 }
 
 [data-theme="dark"] {
@@ -97,15 +124,15 @@ h1, h2, h3, h4 {
 /* Label/meta text — mono, uppercase, tracked */
 .label-meta {
   font-family: var(--font-mono), monospace;
-  font-size: 11px;
+  font-size: var(--text-sm);
   line-height: 1.4;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: var(--text-secondary);
 }
 
-.body-small { font-size: 14px; line-height: 1.5; }
+.body-small { font-size: var(--text-md); line-height: 1.5; }
 
 .font-sans { font-family: var(--font-sans), system-ui, sans-serif; }
 .font-mono {
@@ -147,7 +174,7 @@ a:hover {
 
 /* ===== Header ===== */
 header {
-  border-bottom: 2px solid var(--text-primary);
+  border-bottom: 1px solid var(--text-primary);
   background: var(--bg);
   position: sticky;
   top: 0;
@@ -160,24 +187,24 @@ header {
   justify-content: space-between;
   align-items: flex-end;
   margin-bottom: 24px;
-  border-bottom: 2px solid var(--text-primary);
+  border-bottom: 1px solid var(--text-primary);
   padding-bottom: 8px;
 }
 
 .section-title {
   font-family: var(--font-mono), monospace;
-  font-size: 11px;
+  font-size: var(--text-sm);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   color: var(--text-primary);
 }
 
 .section-number {
   font-family: var(--font-mono), monospace;
-  font-size: 48px;
+  font-size: var(--text-3xl);
   font-weight: 700;
-  color: var(--accent);
+  color: var(--text-secondary);
   line-height: 1;
   letter-spacing: -0.02em;
   user-select: none;
@@ -285,9 +312,9 @@ header {
   display: flex;
   justify-content: space-between;
   font-family: var(--font-mono), monospace;
-  font-size: 10px;
+  font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   color: var(--text-secondary);
   margin-top: 4px;
 }
@@ -335,47 +362,51 @@ header {
   border-bottom: none;
 }
 
-/* ===== Ticker ===== */
+/* ===== Ticker (static latest-stories strip) ===== */
 .ticker {
   background: var(--text-primary);
   color: var(--bg);
   padding: 10px 0;
-  overflow: hidden;
   border-bottom: 1px solid var(--border);
 }
 
 .ticker-track {
   display: flex;
-  gap: 48px;
-  animation: ticker-scroll 40s linear infinite;
-  white-space: nowrap;
-  width: max-content;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+.ticker-label {
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  flex-shrink: 0;
 }
 
 .ticker-item {
   font-family: var(--font-mono), monospace;
-  font-size: 12px;
+  font-size: var(--text-base);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
+  min-width: 0;
 }
 .ticker-item::before {
   content: "+";
   color: var(--accent);
   font-weight: bold;
+  flex-shrink: 0;
 }
 .ticker-item.breaking::before {
   content: "\25CF";
   color: var(--red-breaking);
-}
-
-@keyframes ticker-scroll {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ticker-track { animation: none; }
 }
 
 /* ===== Footer ===== */
@@ -418,13 +449,13 @@ footer {
 
 /* ===== Empty State ===== */
 .empty-state {
-  padding: 96px 0;
+  padding: var(--space-24) 0;
   text-align: center;
   color: var(--text-secondary);
   font-family: var(--font-mono), monospace;
-  font-size: 13px;
+  font-size: var(--text-md);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
 }
 
 /* ===== Theme Toggle ===== */
@@ -434,7 +465,7 @@ footer {
   justify-content: center;
   width: 36px;
   height: 36px;
-  border: 2px solid var(--text-primary);
+  border: 1px solid var(--text-primary);
   border-radius: 0;
   background: transparent;
   color: var(--text-primary);
@@ -449,11 +480,11 @@ footer {
 /* ===== Language Toggle ===== */
 .lang-toggle {
   display: flex;
-  border: 2px solid var(--text-primary);
+  border: 1px solid var(--text-primary);
   border-radius: 0;
   overflow: hidden;
   font-family: var(--font-mono), monospace;
-  font-size: 11px;
+  font-size: var(--text-sm);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -484,7 +515,7 @@ footer {
 /* ===== Reading Tier Toggle (segmented control) ===== */
 .tier-toggle {
   display: inline-flex;
-  border: 2px solid var(--text-primary);
+  border: 1px solid var(--text-primary);
   overflow: hidden;
 }
 
@@ -552,18 +583,23 @@ footer {
 
 .legal-prose h2 {
   font-family: var(--font-mono), monospace;
-  font-size: 11px;
+  font-size: var(--text-sm);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.06em;
   color: var(--text-primary);
-  border-bottom: 2px solid var(--accent);
+  border-bottom: 1px solid var(--text-primary);
   padding-bottom: 8px;
   margin-top: 8px;
 }
 
+.legal-prose p,
+.legal-prose li {
+  max-width: 65ch;
+}
+
 .legal-prose p {
-  font-size: 16px;
+  font-size: var(--text-body);
   line-height: 1.7;
   color: var(--text-secondary);
 }
@@ -578,7 +614,7 @@ footer {
 }
 
 .legal-prose li {
-  font-size: 16px;
+  font-size: var(--text-body);
   line-height: 1.7;
   color: var(--text-secondary);
   display: flex;
@@ -589,7 +625,7 @@ footer {
 .legal-prose li::before {
   content: "+";
   font-family: var(--font-mono), monospace;
-  color: var(--accent);
+  color: var(--text-secondary);
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -611,7 +647,7 @@ footer {
 .legal-prose ol li::before {
   content: counter(legal-counter) ".";
   font-family: var(--font-mono), monospace;
-  color: var(--accent);
+  color: var(--text-secondary);
   flex-shrink: 0;
   min-width: 1.5em;
 }
@@ -652,5 +688,6 @@ footer {
   }
   .page-title { font-size: 28px; }
   body { font-size: 16px; }
-  .section-number { font-size: 32px; }
+  .section-number { font-size: var(--text-2xl); }
+  .ticker-track { padding: 0 16px; }
 }

@@ -35,7 +35,7 @@ export function SettingsTab({ user, onSignOut }: SettingsTabProps) {
     <div className="max-w-[560px]">
       {/* Default Language */}
       <div className="flex items-center justify-between py-4 border-b border-[var(--border)]">
-        <label className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold">
+        <label className="font-mono text-[11px] uppercase tracking-[0.06em] text-[var(--text-secondary)] font-bold">
           Default Language
         </label>
         <div className="flex border-2 border-[var(--text-primary)] overflow-hidden">
@@ -65,7 +65,7 @@ export function SettingsTab({ user, onSignOut }: SettingsTabProps) {
 
       {/* Default Reading Tier */}
       <div className="flex items-center justify-between py-4 border-b border-[var(--border)]">
-        <label className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold">
+        <label className="font-mono text-[11px] uppercase tracking-[0.06em] text-[var(--text-secondary)] font-bold">
           Default Tier
         </label>
         <div className="flex border-2 border-[var(--text-primary)] overflow-hidden">
@@ -90,7 +90,7 @@ export function SettingsTab({ user, onSignOut }: SettingsTabProps) {
       {/* Telegram Digest */}
       <div className="flex items-center justify-between py-4 border-b border-[var(--border)]">
         <div>
-          <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold block">
+          <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[var(--text-secondary)] font-bold block">
             Telegram Digest
           </span>
           <span className="font-mono text-[10px] text-[var(--text-secondary)]">
@@ -118,7 +118,7 @@ export function SettingsTab({ user, onSignOut }: SettingsTabProps) {
       {/* Stealth Mode */}
       <div className="flex items-center justify-between py-4 border-b border-[var(--border)]">
         <div>
-          <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold block">
+          <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[var(--text-secondary)] font-bold block">
             Stealth Mode
           </span>
           <span className="font-mono text-[10px] text-[var(--text-secondary)]">
@@ -145,14 +145,14 @@ export function SettingsTab({ user, onSignOut }: SettingsTabProps) {
 
       {/* Account Info */}
       <div className="pt-8 mt-4 border-t-2 border-[var(--text-primary)]">
-        <h3 className="font-mono text-[11px] uppercase tracking-[0.12em] font-bold text-[var(--text-secondary)] mb-3">
+        <h3 className="font-mono text-[11px] uppercase tracking-[0.06em] font-bold text-[var(--text-secondary)] mb-3">
           Account
         </h3>
         <div className="flex items-center justify-between py-3 border-b border-[var(--border)]">
           <span className="font-mono text-[11px] text-[var(--text-secondary)]">{user.email}</span>
           <button
             onClick={onSignOut}
-            className="font-mono text-[11px] uppercase tracking-[0.12em] font-bold text-[var(--text-secondary)] border-2 border-[var(--border)] px-3 py-1 hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+            className="font-mono text-[11px] uppercase tracking-[0.06em] font-bold text-[var(--text-secondary)] border-2 border-[var(--border)] px-3 py-1 hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
           >
             Sign Out
           </button>
@@ -163,7 +163,7 @@ export function SettingsTab({ user, onSignOut }: SettingsTabProps) {
       <div className="pt-6 mt-4">
         <button
           onClick={handleDelete}
-          className="font-mono text-[11px] uppercase tracking-[0.12em] font-bold text-[var(--accent)] hover:text-[var(--red-hover)] transition-colors"
+          className="font-mono text-[11px] uppercase tracking-[0.06em] font-bold text-[var(--accent)] hover:text-[var(--red-hover)] transition-colors"
         >
           Delete Local Data
         </button>

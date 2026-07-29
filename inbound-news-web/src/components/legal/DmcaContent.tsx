@@ -16,7 +16,7 @@ export function DmcaContent() {
       <FadeIn>
         <section id="our-policy" className="scroll-mt-[200px]">
           <p>
-            Inbound Reporter respects the intellectual property rights of others. We are a news aggregator
+            Inbound Reports respects the intellectual property rights of others. We are a news aggregator
             that provides short excerpts, AI-generated summaries, and direct links to original sources.
             We operate in compliance with the{" "}
             <strong>Cambodian Law on Copyright and Related Rights</strong> and applicable international
@@ -49,14 +49,14 @@ export function DmcaContent() {
         <section id="filing-notice" className="scroll-mt-[200px]">
           <h2>Filing a Takedown Notice</h2>
           <p>
-            If you believe that your copyrighted work has been used on Inbound Reporter in a way that
+            If you believe that your copyrighted work has been used on Inbound Reports in a way that
             constitutes infringement, please provide us with the following information in writing:
           </p>
           <ol>
             <li>A physical or electronic signature of the copyright owner or authorized agent.</li>
             <li>Identification of the copyrighted work claimed to have been infringed.</li>
             <li>
-              The specific URL(s) on Inbound Reporter where the allegedly infringing material appears.
+              The specific URL(s) on Inbound Reports where the allegedly infringing material appears.
             </li>
             <li>Your contact information (address, telephone number, and email address).</li>
             <li>

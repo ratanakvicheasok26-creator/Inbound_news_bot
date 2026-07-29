@@ -22,10 +22,10 @@ export function SignalSidebar({ stories }: { stories: Story[] }) {
               </span>
               <div className="min-w-0 flex-1">
                 <div className="mb-1 flex items-center gap-2">
-                  <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">
                     {getCategoryLabel(story.category || "")}
                   </span>
-                  <span className="font-mono text-[9px] text-[var(--text-secondary)]">
+                  <span className="font-mono text-[10px] text-[var(--text-secondary)]">
                     {formatDistanceToNow(story.created_at)}
                   </span>
                 </div>

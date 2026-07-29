@@ -14,13 +14,13 @@ export function DashboardTab() {
       {/* HERO — Score + Streak */}
       <div className="grid gap-8 md:grid-cols-[1fr_auto] md:items-end pb-8 border-b-2 border-[var(--text-primary)]">
         <div>
-          <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold block mb-3">
+          <span className="font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)] font-bold block mb-3">
             Literacy Score
           </span>
           <div className="font-mono text-[72px] md:text-[96px] font-extrabold leading-none tracking-[-0.04em] tabular-nums text-[var(--text-primary)]">
             {profile.literacyScore.toLocaleString()}
           </div>
-          <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] mt-2">
+          <div className="font-mono text-[11px] uppercase tracking-[0.06em] text-[var(--text-secondary)] mt-2">
             Points earned
           </div>
         </div>
@@ -30,7 +30,7 @@ export function DashboardTab() {
             <div className="font-mono text-[36px] font-extrabold leading-none tabular-nums text-[var(--accent)]">
               {profile.readingStreak.current}
             </div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--text-secondary)] mt-1 font-bold">
+            <div className="font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)] mt-1 font-bold">
               Day Streak
             </div>
           </div>
@@ -38,7 +38,7 @@ export function DashboardTab() {
             <div className="font-mono text-[36px] font-extrabold leading-none tabular-nums">
               {profile.savedStoryIds.length}
             </div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--text-secondary)] mt-1 font-bold">
+            <div className="font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)] mt-1 font-bold">
               Saved
             </div>
           </div>
@@ -46,7 +46,7 @@ export function DashboardTab() {
             <div className="font-mono text-[36px] font-extrabold leading-none tabular-nums">
               {profile.followedConcepts.length}
             </div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--text-secondary)] mt-1 font-bold">
+            <div className="font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)] mt-1 font-bold">
               Followed
             </div>
           </div>

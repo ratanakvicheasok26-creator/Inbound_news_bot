@@ -139,7 +139,7 @@ function SearchResults() {
                       </span>
                     )}
                     {article.published_at && (
-                      <span className="block font-mono text-[9px] text-[var(--text-secondary)] mt-0.5">
+                      <span className="block font-mono text-[10px] text-[var(--text-secondary)] mt-0.5">
                         {new Date(article.published_at).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",

@@ -29,7 +29,7 @@ export function MobileBottomNav() {
               }`}
             >
               <item.icon className="h-4 w-4" />
-              <span className="font-mono text-[8px] uppercase tracking-wider font-bold">{item.label}</span>
+              <span className="font-mono text-[10px] uppercase tracking-wider font-bold">{item.label}</span>
             </Link>
           )
         })}

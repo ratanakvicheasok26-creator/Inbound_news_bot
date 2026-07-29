@@ -106,9 +106,9 @@ export function StoryTimeline({ nodes }: StoryTimelineProps) {
       <div className="relative">
         <div className="absolute top-[7px] left-0 right-0 h-[2px] bg-[var(--text-primary)]" />
 
-        <div className="relative flex justify-between">
+        <div className="relative flex justify-between gap-2 overflow-x-auto">
           {nodes.map((node, i) => (
-            <div key={i} className="flex flex-col items-center text-center" style={{ width: `${100 / nodes.length}%` }}>
+            <div key={i} className="flex flex-col items-center text-center min-w-[120px] shrink-0" style={{ width: `${100 / nodes.length}%` }}>
               <div
                 className="w-3.5 h-3.5 rounded-full border-2 mb-2 relative z-10"
                 style={{
@@ -116,14 +116,14 @@ export function StoryTimeline({ nodes }: StoryTimelineProps) {
                   backgroundColor: i === 0 ? phaseColors[node.phase] : "var(--bg)",
                 }}
               />
-              <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--text-secondary)] mb-1 font-bold">
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1 font-bold">
                 {node.date}
               </span>
               <span className="text-[11px] text-[var(--text-primary)] font-bold leading-tight">
                 {node.label}
               </span>
               {node.sourceCount > 1 && (
-                <span className="font-mono text-[8px] text-[var(--text-secondary)] mt-0.5 font-medium">
+                <span className="font-mono text-[10px] text-[var(--text-secondary)] mt-0.5 font-medium">
                   {node.sourceCount} sources
                 </span>
               )}

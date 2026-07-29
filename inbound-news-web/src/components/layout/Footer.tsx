@@ -16,8 +16,8 @@ export function Footer() {
         <div className="footer-grid">
           <div>
             <Link href="/" className="flex items-center mb-4">
-              <Image src="/logo-dark.png" alt="Inbound Reporter" width={1983} height={467} className="block h-[28px] w-auto dark:hidden" />
-              <Image src="/logo-light.png" alt="Inbound Reporter" width={1982} height={467} className="hidden h-[28px] w-auto dark:block" />
+              <Image src="/logo-dark.png" alt="Inbound Reports" width={1983} height={467} className="block h-[28px] w-auto dark:hidden" />
+              <Image src="/logo-light.png" alt="Inbound Reports" width={1982} height={467} className="hidden h-[28px] w-auto dark:block" />
             </Link>
             <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed max-w-[280px]">
               Independent technology journalism, published from Phnom Penh, Cambodia.
@@ -29,7 +29,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] font-bold text-[var(--text-primary)]">
+            <h4 className="mb-3 font-mono text-[10px] uppercase tracking-[0.06em] font-bold text-[var(--text-primary)]">
               Sections
             </h4>
             <ul className="space-y-1.5">
@@ -44,7 +44,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] font-bold text-[var(--text-primary)]">
+            <h4 className="mb-3 font-mono text-[10px] uppercase tracking-[0.06em] font-bold text-[var(--text-primary)]">
               Platform
             </h4>
             <ul className="space-y-1.5 text-[13px]">
@@ -57,7 +57,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] font-bold text-[var(--text-primary)]">
+            <h4 className="mb-3 font-mono text-[10px] uppercase tracking-[0.06em] font-bold text-[var(--text-primary)]">
               Legal &amp; Trust
             </h4>
             <ul className="space-y-1.5 text-[13px]">
@@ -83,7 +83,7 @@ export function Footer() {
         </div>
 
         <div className="footer-bottom">
-          <span>&copy; {new Date().getFullYear()} Inbound Reporter. Built by the Inbound Crew.</span>
+          <span>&copy; {new Date().getFullYear()} Inbound Reports. Built by the Inbound Crew.</span>
           <span>AI-processed. Human-reviewed. Always sourced.</span>
         </div>
       </div>

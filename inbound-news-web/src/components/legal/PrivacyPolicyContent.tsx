@@ -97,7 +97,7 @@ export function PrivacyPolicyContent() {
             Privacy Policy
           </h1>
           <p className="text-[16px] leading-relaxed text-[var(--text-secondary)] mt-3 max-w-[640px]">
-            How Inbound Reporter handles your information when you use our website and services.
+            How Inbound Reports handles your information when you use our website and services.
           </p>
           <div className="flex items-center gap-3 mt-6 pb-8 border-b border-[var(--border)]">
             <Clock className="h-4 w-4 text-[var(--text-secondary)]" />
@@ -146,7 +146,7 @@ export function PrivacyPolicyContent() {
             {/* Intro */}
             <FadeIn>
               <p className="text-[16px] leading-[1.8] text-[var(--text-secondary)] mb-12">
-                <strong className="text-[var(--text-primary)]">Inbound Reporter</strong> (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;)
+                <strong className="text-[var(--text-primary)]">Inbound Reports</strong> (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;)
                 is committed to protecting your privacy. This Privacy Policy explains how we collect,
                 use, store, and safeguard your information when you use our website and services. We
                 operate from Phnom Penh, Cambodia, and align our practices with internationally
@@ -157,7 +157,7 @@ export function PrivacyPolicyContent() {
             {/* Section 1 */}
             <FadeIn delay={50}>
               <section id="info-collect" className="mb-12 scroll-mt-[200px]">
-                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-primary)] border-b-2 border-[var(--accent)] pb-2 mt-2 mb-6">
+                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-primary)] border-b border-[var(--text-primary)] pb-2 mt-2 mb-6">
                   1. Information We Collect
                 </h2>
                 <p className="text-[16px] text-[var(--text-secondary)] mb-5">
@@ -188,7 +188,7 @@ export function PrivacyPolicyContent() {
             {/* Section 2 */}
             <FadeIn delay={100}>
               <section id="info-not-collect" className="mb-12 scroll-mt-[200px]">
-                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-primary)] border-b-2 border-[var(--accent)] pb-2 mt-2 mb-6">
+                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-primary)] border-b border-[var(--text-primary)] pb-2 mt-2 mb-6">
                   2. Information We Do Not Collect
                 </h2>
                 <div className="space-y-3 mt-5">
@@ -212,7 +212,7 @@ export function PrivacyPolicyContent() {
             {/* Section 3 */}
             <FadeIn delay={150}>
               <section id="how-we-use" className="mb-12 scroll-mt-[200px]">
-                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-primary)] border-b-2 border-[var(--accent)] pb-2 mt-2 mb-6">
+                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-primary)] border-b border-[var(--text-primary)] pb-2 mt-2 mb-6">
                   3. How We Use Your Information
                 </h2>
                 <ul className="space-y-2 mt-5">
@@ -238,7 +238,7 @@ export function PrivacyPolicyContent() {
             {/* Section 4 */}
             <FadeIn delay={200}>
               <section id="third-party" className="mb-12 scroll-mt-[200px]">
-                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-primary)] border-b-2 border-[var(--accent)] pb-2 mt-2 mb-6">
+                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-primary)] border-b border-[var(--text-primary)] pb-2 mt-2 mb-6">
                   4. Third-Party Services
                 </h2>
                 <p className="text-[16px] text-[var(--text-secondary)] mb-5">
@@ -269,7 +269,7 @@ export function PrivacyPolicyContent() {
             {/* Section 5 */}
             <FadeIn delay={250}>
               <section id="data-retention" className="mb-12 scroll-mt-[200px]">
-                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-primary)] border-b-2 border-[var(--accent)] pb-2 mt-2 mb-6">
+                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-primary)] border-b border-[var(--text-primary)] pb-2 mt-2 mb-6">
                   5. Data Retention
                 </h2>
                 <p className="text-[16px] leading-[1.8] text-[var(--text-secondary)]">
@@ -289,7 +289,7 @@ export function PrivacyPolicyContent() {
             {/* Section 6 */}
             <FadeIn delay={300}>
               <section id="data-security" className="mb-12 scroll-mt-[200px]">
-                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-primary)] border-b-2 border-[var(--accent)] pb-2 mt-2 mb-6">
+                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-primary)] border-b border-[var(--text-primary)] pb-2 mt-2 mb-6">
                   6. Data Security
                 </h2>
                 <p className="text-[16px] leading-[1.8] text-[var(--text-secondary)]">
@@ -304,7 +304,7 @@ export function PrivacyPolicyContent() {
             {/* Section 7 */}
             <FadeIn delay={350}>
               <section id="your-rights" className="mb-12 scroll-mt-[200px]">
-                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-primary)] border-b-2 border-[var(--accent)] pb-2 mt-2 mb-6">
+                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-primary)] border-b border-[var(--text-primary)] pb-2 mt-2 mb-6">
                   7. Your Rights
                 </h2>
                 <p className="text-[16px] text-[var(--text-secondary)] mb-4">You have the right to:</p>
@@ -334,7 +334,7 @@ export function PrivacyPolicyContent() {
             {/* Section 8 */}
             <FadeIn delay={400}>
               <section id="transfers" className="mb-12 scroll-mt-[200px]">
-                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-primary)] border-b-2 border-[var(--accent)] pb-2 mt-2 mb-6">
+                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-primary)] border-b border-[var(--text-primary)] pb-2 mt-2 mb-6">
                   8. International Data Transfers
                 </h2>
                 <p className="text-[16px] leading-[1.8] text-[var(--text-secondary)]">
@@ -349,7 +349,7 @@ export function PrivacyPolicyContent() {
             {/* Section 9 */}
             <FadeIn delay={450}>
               <section id="children" className="mb-12 scroll-mt-[200px]">
-                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-primary)] border-b-2 border-[var(--accent)] pb-2 mt-2 mb-6">
+                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-primary)] border-b border-[var(--text-primary)] pb-2 mt-2 mb-6">
                   9. Children&apos;s Privacy
                 </h2>
                 <p className="text-[16px] leading-[1.8] text-[var(--text-secondary)]">
@@ -364,7 +364,7 @@ export function PrivacyPolicyContent() {
             {/* Section 10 */}
             <FadeIn delay={500}>
               <section id="changes" className="mb-12 scroll-mt-[200px]">
-                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-primary)] border-b-2 border-[var(--accent)] pb-2 mt-2 mb-6">
+                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-primary)] border-b border-[var(--text-primary)] pb-2 mt-2 mb-6">
                   10. Changes to This Policy
                 </h2>
                 <p className="text-[16px] leading-[1.8] text-[var(--text-secondary)]">
@@ -378,7 +378,7 @@ export function PrivacyPolicyContent() {
             {/* Section 11 */}
             <FadeIn delay={550}>
               <section id="contact" className="mb-12 scroll-mt-[200px]">
-                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-primary)] border-b-2 border-[var(--accent)] pb-2 mt-2 mb-6">
+                <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-primary)] border-b border-[var(--text-primary)] pb-2 mt-2 mb-6">
                   11. Contact
                 </h2>
                 <div className="p-5 md:p-6 border border-[var(--border)] rounded-xl bg-[var(--surface)]">
@@ -405,7 +405,7 @@ export function PrivacyPolicyContent() {
             {/* Bottom divider */}
             <div className="border-t border-[var(--border)] pt-8 mt-8">
               <p className="text-[13px] text-[var(--text-secondary)] text-center">
-                Inbound Reporter &mdash; Independent technology journalism from Phnom Penh, Cambodia.
+                Inbound Reports &mdash; Independent technology journalism from Phnom Penh, Cambodia.
               </p>
             </div>
           </div>

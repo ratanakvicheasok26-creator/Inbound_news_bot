@@ -142,7 +142,7 @@ export default function AuthPage() {
             href="/"
             className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
           >
-            &larr; Back to Inbound Reporter
+            &larr; Back to Inbound Reports
           </Link>
         </div>
       </section>

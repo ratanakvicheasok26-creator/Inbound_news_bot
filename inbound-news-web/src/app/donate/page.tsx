@@ -9,8 +9,8 @@ export default function DonatePage() {
           <h1 className="page-title">Support Inbound</h1>
         </div>
 
-        <p className="text-[16px] text-[var(--text-secondary)] leading-[1.7] mb-8">
-          Inbound Reporter is independent technology journalism from Phnom Penh.
+        <p className="text-[16px] text-[var(--text-secondary)] leading-[1.7] mb-8 max-w-[65ch]">
+          Inbound Reports is independent technology journalism from Phnom Penh.
           We aggregate 900+ tech sources with AI-powered story clustering, and
           zero ad revenue. Your support keeps the wire running.
         </p>
@@ -19,12 +19,12 @@ export default function DonatePage() {
         <div className="bg-[var(--surface)] border border-[var(--border)] p-8 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Heart className="h-4 w-4 text-[var(--accent)]" />
-            <span className="font-mono text-[11px] uppercase tracking-[0.12em] font-medium text-[var(--text-secondary)]">
+            <span className="font-mono text-[11px] uppercase tracking-[0.06em] font-medium text-[var(--text-secondary)]">
               KHQR Donation
             </span>
           </div>
 
-          <div className="relative w-[240px] h-[240px] mx-auto mb-6 bg-[var(--surface)] p-2">
+          <div className="relative w-full max-w-[240px] aspect-square mx-auto mb-6 bg-[var(--surface)] p-2">
             <Image
               src="/khqr.png"
               alt="KHQR Donation Code"

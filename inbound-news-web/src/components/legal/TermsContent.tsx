@@ -23,7 +23,7 @@ export function TermsContent() {
     <LegalPageLayout title="Terms of Service" sections={SECTIONS}>
       <FadeIn>
         <p>
-          Welcome to <strong>Inbound Reporter</strong> (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;),
+          Welcome to <strong>Inbound Reports</strong> (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;),
           operated from Phnom Penh, Cambodia. By accessing or using our website at inboundreporter.com
           and any associated services (collectively, the &quot;Service&quot;), you agree to be bound by
           these Terms of Service. If you do not agree to all terms, do not use the Service.
@@ -34,7 +34,7 @@ export function TermsContent() {
         <section id="service-desc" className="scroll-mt-[200px]">
           <h2>1. Service Description</h2>
           <p>
-            Inbound Reporter is a technology news aggregator. We do not produce original journalism but
+            Inbound Reports is a technology news aggregator. We do not produce original journalism but
             provide summaries, analyses, and links to articles sourced from over 1,000 third-party
             publications. Our platform uses artificial intelligence to cluster related stories, classify
             content by category, and generate simplified reading tiers. All original content remains
@@ -137,7 +137,7 @@ export function TermsContent() {
         <section id="limitation-liability" className="scroll-mt-[200px]">
           <h2>9. Limitation of Liability</h2>
           <p>
-            To the maximum extent permitted under the laws of the Kingdom of Cambodia, Inbound Reporter
+            To the maximum extent permitted under the laws of the Kingdom of Cambodia, Inbound Reports
             and the Inbound Crew disclaim all warranties, express or implied, regarding the Service.
             The Service is provided &quot;as is&quot; and &quot;as available.&quot; We are not liable
             for any direct, indirect, incidental, consequential, or punitive damages arising from your

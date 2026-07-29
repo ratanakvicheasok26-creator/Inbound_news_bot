@@ -45,7 +45,6 @@ export function Header() {
   useEffect(() => {
     setMobileOpen(false)
     setTopicsOpen(false)
-    setSearchQuery("")
   }, [pathname])
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -111,11 +110,11 @@ export function Header() {
 
             {/* TIER 1 — Top Meta Bar (hidden on mobile) */}
             <div className="hidden md:flex justify-between items-center border-b border-[var(--border)] px-4 md:px-10 h-[36px]">
-              <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+              <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">
                 {today} · {fullDate}
               </span>
               <div className="flex items-center gap-3 md:gap-4">
-                <div className="hidden md:flex w-[64px] h-[30px] border-2 border-[var(--text-primary)] overflow-hidden font-mono text-[9px] font-bold uppercase tracking-[0.06em]">
+                <div className="hidden md:flex w-[64px] h-[30px] border border-[var(--text-primary)] overflow-hidden font-mono text-[10px] font-bold uppercase tracking-[0.06em]">
                   <button
                     className={`flex-1 flex items-center justify-center transition-colors ${
                       lang === "en"
@@ -141,10 +140,10 @@ export function Header() {
                 <SearchBar />
                 <Link
                   href="/account"
-                  className="flex items-center justify-center h-[30px] border-2 border-[var(--text-primary)] px-2.5 font-mono text-[10px] md:text-[11px] uppercase tracking-[0.12em] font-bold text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
+                  className="flex items-center justify-center h-[30px] border border-[var(--text-primary)] px-3 font-mono text-[10px] md:text-[11px] uppercase tracking-[0.06em] font-bold text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
                 >
                   {user ? (
-                    <span className="font-bold text-[9px]">
+                    <span className="font-bold text-[10px]">
                       {(user.email?.[0] || "R").toUpperCase()}
                     </span>
                   ) : (
@@ -153,7 +152,7 @@ export function Header() {
                 </Link>
                 <Link
                   href="/donate"
-                  className="flex items-center justify-center h-[30px] border-2 border-[var(--text-primary)] px-2.5 font-mono text-[10px] md:text-[11px] uppercase tracking-[0.12em] font-bold text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
+                  className="flex items-center justify-center h-[30px] border border-[var(--text-primary)] px-3 font-mono text-[10px] md:text-[11px] uppercase tracking-[0.06em] font-bold text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
                 >
                   Donate
                 </Link>
@@ -165,7 +164,7 @@ export function Header() {
               <Link href="/" className="flex items-center max-w-[85vw] md:max-w-none">
                 <Image
                   src="/logo-dark.png"
-                  alt="Inbound Reporter"
+                  alt="Inbound Reports"
                   width={1983}
                   height={467}
                   priority
@@ -173,7 +172,7 @@ export function Header() {
                 />
                 <Image
                   src="/logo-light.png"
-                  alt="Inbound Reporter"
+                  alt="Inbound Reports"
                   width={1982}
                   height={467}
                   priority
@@ -200,7 +199,7 @@ export function Header() {
                     key={link.href}
                     href={link.href}
                     aria-current={pathname === link.href ? "page" : undefined}
-                    className={`hidden md:inline font-mono text-[11px] font-bold uppercase tracking-[0.1em] px-2 py-1 transition-colors ${
+                    className={`hidden md:inline font-mono text-[11px] font-bold uppercase tracking-[0.06em] px-2 py-1 transition-colors ${
                       pathname === link.href
                         ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
                         : "text-[var(--text-secondary)] hover:text-[var(--accent)]"
@@ -213,13 +212,13 @@ export function Header() {
                   <button
                     onClick={() => setTopicsOpen(!topicsOpen)}
                     aria-expanded={topicsOpen}
-                    className="flex items-center gap-1 font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)] hover:text-[var(--accent)] px-2 py-1 transition-colors"
+                    className="flex items-center gap-1 font-mono text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] hover:text-[var(--accent)] px-2 py-1 transition-colors"
                   >
                     Topics
                     <ChevronDown className={`h-3 w-3 transition-transform ${topicsOpen ? "rotate-180" : ""}`} />
                   </button>
                   {topicsOpen && (
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-[1px] w-[360px] bg-[var(--bg)] border-2 border-[var(--text-primary)] z-50">
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-[1px] w-[360px] bg-[var(--bg)] border border-[var(--text-primary)] z-50">
                       <div className="grid grid-cols-2 gap-0">
                         {CATEGORIES.map((cat) => (
                           <Link
@@ -263,7 +262,7 @@ export function Header() {
               }`}>
                 <Image
                   src="/logo-dark.png"
-                  alt="Inbound Reporter"
+                  alt="Inbound Reports"
                   width={1983}
                   height={467}
                   priority
@@ -271,7 +270,7 @@ export function Header() {
                 />
                 <Image
                   src="/logo-light.png"
-                  alt="Inbound Reporter"
+                  alt="Inbound Reports"
                   width={1982}
                   height={467}
                   priority
@@ -288,7 +287,7 @@ export function Header() {
                     key={link.href}
                     href={link.href}
                     aria-current={pathname === link.href ? "page" : undefined}
-                    className={`font-mono text-[11px] font-bold uppercase tracking-[0.1em] px-2 py-1 transition-colors ${
+                    className={`font-mono text-[11px] font-bold uppercase tracking-[0.06em] px-2 py-1 transition-colors ${
                       pathname === link.href
                         ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
                         : "text-[var(--text-secondary)] hover:text-[var(--accent)]"
@@ -301,13 +300,13 @@ export function Header() {
                   <button
                     onClick={() => setTopicsOpen(!topicsOpen)}
                     aria-expanded={topicsOpen}
-                    className="flex items-center gap-1 font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)] hover:text-[var(--accent)] px-2 py-1 transition-colors"
+                    className="flex items-center gap-1 font-mono text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] hover:text-[var(--accent)] px-2 py-1 transition-colors"
                   >
                     Topics
                     <ChevronDown className={`h-3 w-3 transition-transform ${topicsOpen ? "rotate-180" : ""}`} />
                   </button>
                   {topicsOpen && (
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-[1px] w-[360px] bg-[var(--bg)] border-2 border-[var(--text-primary)] z-50">
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-[1px] w-[360px] bg-[var(--bg)] border border-[var(--text-primary)] z-50">
                       <div className="grid grid-cols-2 gap-0">
                         {CATEGORIES.map((cat) => (
                           <Link
@@ -336,10 +335,10 @@ export function Header() {
               <ThemeToggle variant="header" />
               <Link
                 href="/account"
-                className="flex items-center justify-center h-[28px] border-2 border-[var(--text-primary)] px-2 font-mono text-[9px] md:text-[10px] uppercase tracking-[0.12em] font-bold text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
+                className="flex items-center justify-center h-[28px] border border-[var(--text-primary)] px-2 font-mono text-[10px] md:text-[10px] uppercase tracking-[0.06em] font-bold text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
               >
                 {user ? (
-                  <span className="font-bold text-[8px]">
+                  <span className="font-bold text-[10px]">
                     {(user.email?.[0] || "R").toUpperCase()}
                   </span>
                 ) : (
@@ -348,7 +347,7 @@ export function Header() {
               </Link>
               <Link
                 href="/donate"
-                className="flex items-center justify-center h-[28px] border-2 border-[var(--text-primary)] px-2 font-mono text-[9px] md:text-[10px] uppercase tracking-[0.12em] font-bold text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
+                className="flex items-center justify-center h-[28px] border border-[var(--text-primary)] px-2 font-mono text-[10px] md:text-[10px] uppercase tracking-[0.06em] font-bold text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
               >
                 Donate
               </Link>
@@ -391,7 +390,7 @@ export function Header() {
                   }
                 }}
               >
-                <div className="flex items-center border-2 border-[var(--text-primary)]">
+                <div className="flex items-center border border-[var(--text-primary)]">
                   <input
                     ref={searchInputRef}
                     type="text"
@@ -402,7 +401,7 @@ export function Header() {
                   />
                   <button
                     type="submit"
-                    className="flex items-center justify-center w-[44px] h-[44px] border-l-2 border-[var(--text-primary)] text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
+                    className="flex items-center justify-center w-[44px] h-[44px] border-l border-[var(--text-primary)] text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
                   >
                     <Search className="h-4 w-4" />
                   </button>
@@ -445,7 +444,7 @@ export function Header() {
 
             {/* Language + Theme */}
             <div className="px-6 mt-6 flex items-center gap-3">
-              <div className="flex border-2 border-[var(--text-primary)] overflow-hidden font-mono text-[11px] font-bold uppercase tracking-[0.06em]">
+              <div className="flex border border-[var(--text-primary)] overflow-hidden font-mono text-[11px] font-bold uppercase tracking-[0.06em]">
                 <button
                   className={`px-3 py-1.5 transition-colors ${
                     lang === "en"
@@ -473,7 +472,7 @@ export function Header() {
 
             {/* Topics */}
             <div className="px-6 mt-8">
-              <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--text-secondary)] mb-4 font-bold">
+              <p className="font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-4 font-bold">
                 Topics
               </p>
               <div className="grid grid-cols-2 gap-x-4 gap-y-0">
@@ -496,7 +495,7 @@ export function Header() {
               <div className="px-6 mt-8 pb-10">
                 <button
                   onClick={() => { handleSignOut(); closeMobileMenu() }}
-                  className="w-full py-3 font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)] border-2 border-[var(--border)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+                  className="w-full py-3 font-mono text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-secondary)] border border-[var(--border)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
                 >
                   Sign Out
                 </button>

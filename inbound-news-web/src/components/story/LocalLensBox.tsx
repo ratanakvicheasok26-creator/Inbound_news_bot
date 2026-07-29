@@ -74,7 +74,7 @@ export function LocalLensBox({ category, storyTitle, storySummary }: LocalLensBo
         </p>
       )}
       {error && (
-        <p className="mt-2 font-mono text-[9px] opacity-50">
+        <p className="mt-2 font-mono text-[10px] opacity-50">
           Fallback text shown — AI generation unavailable
         </p>
       )}

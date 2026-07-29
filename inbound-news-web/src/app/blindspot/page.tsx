@@ -4,7 +4,7 @@ import { BlindspotCard } from "@/components/story/BlindspotCard"
 import { Eye } from "lucide-react"
 
 export const metadata = {
-  title: "Blindspot — Inbound Reporter",
+  title: "Blindspot — Inbound Reports",
   description: "Tech stories that mainstream media is ignoring.",
 }
 

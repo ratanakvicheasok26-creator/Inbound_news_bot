@@ -3,47 +3,55 @@ import Link from "next/link"
 import { LegalPageLayout } from "@/components/legal/LegalPageLayout"
 
 export const metadata: Metadata = {
-  title: "About — Inbound Reporter",
-  description: "About Inbound Reporter — bilingual tech news aggregation from Phnom Penh, Cambodia.",
+  title: "About — Inbound Reports",
+  description: "About Inbound Reports — bilingual tech news aggregation from Phnom Penh, Cambodia.",
 }
 
 export default function AboutPage() {
   return (
-    <LegalPageLayout title="About Inbound Reporter">
+    <LegalPageLayout title="About Inbound Reports">
       <p>
-        <strong>Established:</strong> July 2026
+        <strong>Established:</strong> 2026
         <br />
         <strong>Location:</strong> Phnom Penh, Cambodia
         <br />
         <strong>Founded by:</strong> The Inbound Crew
       </p>
 
-      <h2>Our Mission</h2>
+      <h2>What this is</h2>
       <p>
-        Cambodians consume news primarily through social media algorithms that prioritize hype, outrage, and
-        untranslated jargon. Inbound Reporter was built to change that. We are a bilingual (English/Khmer)
-        tech news aggregator designed to increase digital literacy, not just feed information.
+        Inbound Reports is a bilingual (English/Khmer) tech news aggregator based in Phnom Penh.
+        We collect stories from a shared source network, cluster related coverage, and present
+        concise summaries with literacy tools — jargon highlighting, an ELI5 reading tier, and a
+        hype-versus-substance score — so readers can decode tech news instead of only scrolling it.
       </p>
 
-      <h2>What We Do</h2>
+      <h2>Source network</h2>
       <p>
-        We aggregate signals from a dynamically scaling network of over 900 global and regional tech sources.
-        Instead of just showing you a headline, we use AI to decode it.
+        We run <strong>900+ active global and regional tech sources</strong>, scaling daily.
+        Adding a source is as simple as editing a YAML file — no application code or database
+        schema changes required.
       </p>
 
-      <h2>The &quot;Inbound Crew&quot;</h2>
+      <h2>AI stack</h2>
       <p>
-        We are a lean, tech-focused crew operating out of Phnom Penh. We believe that by exposing how the
-        media frames tech stories (the Hype-Reality Bar) and explaining the jargon in real-time (the
-        Glossary), we can train a generation of Cambodians to think critically about the technology shaping
-        their future.
+        Summarization and classification use a multi-provider router: <strong>Groq</strong> as
+        primary, <strong>OpenRouter</strong> as fallback, and <strong>Google Gemini</strong> as
+        last resort when upstream providers are unavailable. If every provider fails, the bot
+        falls back to pre-written template text rather than posting nothing.
       </p>
 
-      <h2>Support Us</h2>
+      <h2>The Inbound Crew</h2>
       <p>
-        If you find our platform valuable, consider supporting us via{" "}
-        <Link href="/donate">KHQR or ABA</Link>. Your support helps us cover server and AI API costs to
-        keep the platform free for everyone.
+        We are a small tech crew in Phnom Penh. The product exists to increase digital literacy —
+        exposing how stories are framed (Hype-Reality Bar) and explaining jargon in context
+        (Glossary) — not to maximize engagement.
+      </p>
+
+      <h2>Support</h2>
+      <p>
+        If the platform is useful, you can support server and API costs via{" "}
+        <Link href="/donate">KHQR or ABA</Link>. The site stays free for readers.
       </p>
 
       <h2>Contact</h2>
