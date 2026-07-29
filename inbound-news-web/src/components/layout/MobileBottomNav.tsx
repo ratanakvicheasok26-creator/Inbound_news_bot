@@ -23,6 +23,7 @@ export function MobileBottomNav() {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive ? "page" : undefined}
               className={`flex flex-col items-center justify-center gap-0.5 w-full h-full transition-colors ${
                 isActive ? "text-[var(--accent)]" : "text-[var(--text-secondary)]"
               }`}

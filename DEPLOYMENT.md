@@ -12,21 +12,74 @@ This bot is a **background worker**, not a web server — it doesn't listen on a
 
 Make sure these two files exist in the repo root (create them if missing):
 
-**`requirements.txt`**
-```
-python-telegram-bot[job-queue]
-feedparser
-openai
-pytz
-python-dotenv
-```
+**`requirements.txt`** — keep in sync with the repo (includes `openai==1.82.0`, `google-genai`, Redis, Supabase, etc.)
 
 **`Procfile`** (no file extension, just `Procfile`)
 ```
 worker: python news_bot.py
 ```
 
+**`runtime.txt`**
+```
+python-3.12
+```
+
 Commit and push both to the repo before deploying.
+
+---
+
+## Rotate all secrets (do this before / after any leak)
+
+You cannot rotate provider keys from this repo — do it in each provider's console, then update Railway/Render **Environment Variables**. Never commit `.env`.
+
+Checklist — revoke the old value, create a new one, then set it in the host:
+
+| Secret | Where to rotate | Env var(s) |
+|---|---|---|
+| Telegram bot token | [@BotFather](https://t.me/BotFather) → `/revoke` or new bot | `TELEGRAM_BOT_TOKEN` |
+| Groq API key(s) | [console.groq.com](https://console.groq.com) | `GROQ_API_KEY` (comma-separated OK) |
+| Gemini API key(s) | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | `GOOGLE_GEMINI_API_KEY` |
+| OpenRouter API key(s) | [openrouter.ai/keys](https://openrouter.ai/keys) | `OPENROUTER_API_KEY` |
+| Supabase service role | Supabase project → Settings → API | `SUPABASE_SERVICE_ROLE_KEY` (+ `SUPABASE_URL`) |
+| Redis password / URL | Upstash (or your Redis host) | `REDIS_URL` |
+
+Also re-check channel/group IDs if you recreate chats: `TELEGRAM_CHANNEL_ID`, `TELEGRAM_THREAD_ID`, `TELEGRAM_GROUP_CHAT_ID`.
+
+After rotating: redeploy (or restart) so the worker picks up the new variables. Delete any stale local `.env` copies that still hold old secrets.
+
+---
+
+## Environment variables (match `.env.example`)
+
+Set these in Railway/Render **Variables** (not in git):
+
+**Telegram**
+- `TELEGRAM_BOT_TOKEN` (required)
+- `TELEGRAM_CHANNEL_ID`
+- `TELEGRAM_THREAD_ID`
+- `TELEGRAM_GROUP_CHAT_ID`
+
+**Redis** (optional — persistent state across restarts)
+- `REDIS_URL` — e.g. `redis://default:PASSWORD@HOST:6379`
+
+**Supabase** (bot → website)
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+**AI providers** (comma-separated keys for rotation)
+- `GROQ_API_KEY` (required)
+- `GOOGLE_GEMINI_API_KEY`
+- `OPENROUTER_API_KEY`
+- `OPENROUTER_MODEL` (optional override)
+
+**Scheduling / tuning** (optional — defaults in `newsbot/config.py`)
+- `POLL_INTERVAL_SECONDS`
+- `DIGEST_SCHEDULE_HOUR_AM` / `DIGEST_SCHEDULE_HOUR_PM`
+- `MAX_ITEMS_PER_FEED`, `MAX_ENTRY_AGE_HOURS`, `FEED_TIMEOUT_SECONDS`
+- `CLUSTER_SIMILARITY_THRESHOLD`
+- `PREPARE_ENTRIES_TIMEOUT_SECONDS`, `AI_HTTP_TIMEOUT_SECONDS`
+- `SPAM_FILTER_ENABLED`, `SPAM_BLOCK_NON_LATIN_SCRIPTS`
+- `DONATION_TEXT`, `DONATION_QR_IMAGE`, `DIGEST_HEADER_TEXT`
 
 ---
 
@@ -39,13 +92,8 @@ Commit and push both to the repo before deploying.
    ```
    python news_bot.py
    ```
-5. Go to the service's **Variables** tab and add:
-   - `TELEGRAM_BOT_TOKEN` = (the real token)
-   - `GROQ_API_KEY` = (the real key)
-6. Deploy. Check the **Logs** tab — you should see:
-   ```
-   Bot running. Anyone can /start to subscribe. Scheduled for 5 AM / 5 PM (Phnom Penh time).
-   ```
+5. Go to the service's **Variables** tab and add the secrets from the list above (at minimum `TELEGRAM_BOT_TOKEN` and `GROQ_API_KEY`).
+6. Deploy. Check the **Logs** tab — you should see a "Bot running..." line mentioning the 5 AM / 5 PM digest schedule.
 7. Test it — send `/fetch` to the bot on Telegram and confirm the logs show activity and a message lands in the subscribed chat.
 
 **Cost note:** Railway's free tier gives a small monthly credit (check current limits on their pricing page — this changes over time). A lightweight polling bot like this uses very little compute, so it should comfortably fit unless the trial credit runs out — worth checking the billing tab after the first week.
@@ -61,9 +109,7 @@ Commit and push both to the repo before deploying.
    - **Environment**: Python 3
    - **Build Command**: `pip install -r requirements.txt`
    - **Start Command**: `python news_bot.py`
-5. Under **Environment Variables**, add:
-   - `TELEGRAM_BOT_TOKEN` = (the real token)
-   - `GROQ_API_KEY` = (the real key)
+5. Under **Environment Variables**, add the secrets from the list above (at minimum `TELEGRAM_BOT_TOKEN` and `GROQ_API_KEY`).
 6. Click **Create Background Worker** and wait for the build/deploy to finish
 7. Check the **Logs** tab for the "Bot running..." message, then test with `/fetch`
 
@@ -73,9 +119,9 @@ Commit and push both to the repo before deploying.
 
 ## After deploying (either platform)
 
-- **`subscribers.json` and `posted_ids.json`** are created locally at runtime and are gitignored — meaning on a fresh deploy, they start empty. Everyone (including previous subscribers) will need to send `/start` again to the deployed bot once it's live, since the local subscriber list from anyone's laptop testing doesn't carry over.
+- **`subscribers.json` and `posted_ids.json`** are created locally at runtime and are gitignored — meaning on a fresh deploy, they start empty. With `REDIS_URL` set, subscribers and posted IDs persist across restarts. Without Redis, everyone may need to send `/start` again after a fresh deploy.
 - **Only one instance of the bot can poll Telegram at a time** with the same token. Once it's deployed and running on Railway/Render, make sure nobody is also running `python news_bot.py` locally with the same `TELEGRAM_BOT_TOKEN` — you'll get a `Conflict: terminated by other getUpdates request` error if two instances run simultaneously.
-- If you rotate the Telegram bot token or Groq key for security reasons, remember to update the environment variables on Railway/Render too, not just in your local `.env`.
+- If you rotate any secret, update Environment Variables on Railway/Render — never commit `.env`.
 
 ## Quick platform comparison
 

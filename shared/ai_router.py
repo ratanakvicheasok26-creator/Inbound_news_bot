@@ -20,6 +20,16 @@ logger = logging.getLogger(__name__)
 _MAX_RETRIES = 3
 _RETRY_BASE_DELAY = 2.0
 _KEY_COOLDOWN_SECONDS = 60
+_DEFAULT_HTTP_TIMEOUT = float(os.environ.get("AI_HTTP_TIMEOUT_SECONDS", "30"))
+
+
+def _http_timeout_seconds() -> float:
+    try:
+        from newsbot.config import AI_HTTP_TIMEOUT_SECONDS
+
+        return float(AI_HTTP_TIMEOUT_SECONDS)
+    except Exception:
+        return _DEFAULT_HTTP_TIMEOUT
 
 
 @dataclass
@@ -194,7 +204,11 @@ class AIRouter:
 
             try:
                 from openai import OpenAI
-                client = OpenAI(api_key=key_state.key, base_url=provider.base_url)
+                client = OpenAI(
+                    api_key=key_state.key,
+                    base_url=provider.base_url,
+                    timeout=_http_timeout_seconds(),
+                )
 
                 response = client.chat.completions.create(
                     model=provider.model,
@@ -232,7 +246,14 @@ class AIRouter:
 
             try:
                 from google import genai
-                client = genai.Client(api_key=key_state.key)
+                from google.genai import types
+
+                # google-genai timeout is milliseconds
+                timeout_ms = int(_http_timeout_seconds() * 1000)
+                client = genai.Client(
+                    api_key=key_state.key,
+                    http_options=types.HttpOptions(timeout=timeout_ms),
+                )
 
                 response = client.models.generate_content(
                     model=provider.model,

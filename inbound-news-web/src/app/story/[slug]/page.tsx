@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { getStoryBySlug } from "@/lib/posts"
+import { getStoryById } from "@/lib/posts"
 import { StoryContent } from "@/components/story/StoryContent"
 
 export default async function StoryPage({
@@ -7,8 +7,9 @@ export default async function StoryPage({
 }: {
   params: Promise<{ slug: string }>
 }) {
+  // `slug` route segment is the story UUID (no slug column on stories).
   const { slug } = await params
-  const story = await getStoryBySlug(slug)
+  const story = await getStoryById(slug)
 
   if (!story) {
     notFound()

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Inter, JetBrains_Mono, Noto_Sans_Khmer } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
@@ -34,24 +35,38 @@ export const metadata: Metadata = {
     "Independent technology journalism from Phnom Penh — startups, AI, cybersecurity, and more.",
 };
 
+/** Sync localStorage → cookie on first visit / when cookie missing; apply theme ASAP. */
 const themeInitScript = `
 (function() {
   try {
+    var cookieMatch = document.cookie.match(/(?:^|; )theme=(dark|light)(?:;|$)/);
+    var cookieTheme = cookieMatch ? cookieMatch[1] : null;
     var saved = localStorage.getItem('theme');
     var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var theme = saved || (prefersDark ? 'dark' : 'light');
+    var theme = cookieTheme || saved || (prefersDark ? 'dark' : 'light');
+    if (theme !== 'dark' && theme !== 'light') theme = 'light';
     document.documentElement.setAttribute('data-theme', theme);
+    if (!cookieTheme || cookieTheme !== theme) {
+      document.cookie = 'theme=' + theme + '; path=/; max-age=31536000; SameSite=Lax';
+    }
+    if (saved !== theme) {
+      try { localStorage.setItem('theme', theme); } catch (e) {}
+    }
   } catch (e) {}
 })();
 `;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const themeCookie = cookieStore.get("theme")?.value;
+  const theme = themeCookie === "dark" || themeCookie === "light" ? themeCookie : "light";
+
   return (
-    <html lang="en" data-theme="light" className={cn(inter.variable, mono.variable, notoKhmer.variable, "font-sans")}>
+    <html lang="en" data-theme={theme} className={cn(inter.variable, mono.variable, notoKhmer.variable, "font-sans")}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

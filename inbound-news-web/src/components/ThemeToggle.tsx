@@ -29,6 +29,9 @@ export function ThemeToggle({ variant = "default" }: ThemeToggleProps) {
     try {
       localStorage.setItem("theme", next);
     } catch {}
+    try {
+      document.cookie = `theme=${next}; path=/; max-age=31536000; SameSite=Lax`;
+    } catch {}
   }
 
   if (variant === "header") {

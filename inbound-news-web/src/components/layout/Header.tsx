@@ -2,29 +2,26 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useState, useEffect, useRef } from "react"
 import { CATEGORIES } from "@/lib/categories"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { SearchBar } from "@/components/layout/SearchBar"
-import { Menu, X, ChevronDown } from "lucide-react"
+import { Menu, X, ChevronDown, Search } from "lucide-react"
 import { supabase, signOut } from "@/lib/auth"
 import type { User } from "@supabase/supabase-js"
 
 export function Header() {
   const pathname = usePathname()
+  const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [topicsOpen, setTopicsOpen] = useState(false)
   const [lang, setLang] = useState<"en" | "km">("en")
   const [user, setUser] = useState<User | null>(null)
   const [scrolled, setScrolled] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
   const topicsRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const observer = new MutationObserver(() => {})
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] })
-    return () => observer.disconnect()
-  }, [])
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user: u } }) => setUser(u))
@@ -48,15 +45,20 @@ export function Header() {
   useEffect(() => {
     setMobileOpen(false)
     setTopicsOpen(false)
+    setSearchQuery("")
   }, [pathname])
   /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (mobileOpen) {
       document.body.style.overflow = "hidden"
-    } else {
-      document.body.style.overflow = ""
+      const t = setTimeout(() => searchInputRef.current?.focus(), 200)
+      return () => {
+        clearTimeout(t)
+        document.body.style.overflow = ""
+      }
     }
+    document.body.style.overflow = ""
     return () => { document.body.style.overflow = "" }
   }, [mobileOpen])
 
@@ -72,6 +74,11 @@ export function Header() {
     { href: "/", label: "Timeline" },
     { href: "/glossary", label: "Glossary" },
   ]
+
+  function closeMobileMenu() {
+    setMobileOpen(false)
+    setSearchQuery("")
+  }
 
   async function handleSignOut() {
     await signOut()
@@ -102,8 +109,8 @@ export function Header() {
             scrolled ? "max-h-0 opacity-0" : "max-h-[250px] opacity-100"
           }`}>
 
-            {/* TIER 1 — Top Meta Bar */}
-            <div className="flex justify-between items-center border-b border-[var(--border)] px-4 md:px-10 h-[36px]">
+            {/* TIER 1 — Top Meta Bar (hidden on mobile) */}
+            <div className="hidden md:flex justify-between items-center border-b border-[var(--border)] px-4 md:px-10 h-[36px]">
               <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)]">
                 {today} · {fullDate}
               </span>
@@ -154,15 +161,15 @@ export function Header() {
             </div>
 
             {/* TIER 2 — Logo Masthead */}
-            <div className="flex justify-center items-center border-b-2 border-[var(--text-primary)] py-4 md:py-6">
-              <Link href="/" className="flex items-center">
+            <div className="flex justify-center items-center border-b-2 border-[var(--text-primary)] py-2 md:py-6">
+              <Link href="/" className="flex items-center max-w-[85vw] md:max-w-none">
                 <Image
                   src="/logo-dark.png"
                   alt="Inbound Reporter"
                   width={1983}
                   height={467}
                   priority
-                  className="block h-[48px] w-auto md:h-[72px] dark:hidden"
+                  className="block h-[32px] w-auto md:h-[72px] dark:hidden"
                 />
                 <Image
                   src="/logo-light.png"
@@ -170,7 +177,7 @@ export function Header() {
                   width={1982}
                   height={467}
                   priority
-                  className="hidden h-[48px] w-auto md:h-[72px] dark:block"
+                  className="hidden h-[32px] w-auto md:h-[72px] dark:block"
                 />
               </Link>
             </div>
@@ -180,8 +187,9 @@ export function Header() {
               <nav className="flex justify-start items-center">
                 <button
                   className="flex items-center justify-center w-8 h-8 md:hidden"
-                  onClick={() => setMobileOpen(!mobileOpen)}
+                  onClick={() => (mobileOpen ? closeMobileMenu() : setMobileOpen(true))}
                   aria-label="Toggle menu"
+                  aria-expanded={mobileOpen}
                 >
                   <Menu className="h-4 w-4" />
                 </button>
@@ -191,10 +199,11 @@ export function Header() {
                   <Link
                     key={link.href}
                     href={link.href}
+                    aria-current={pathname === link.href ? "page" : undefined}
                     className={`hidden md:inline font-mono text-[11px] font-bold uppercase tracking-[0.1em] px-2 py-1 transition-colors ${
                       pathname === link.href
                         ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                        : "text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)]"
+                        : "text-[var(--text-secondary)] hover:text-[var(--accent)]"
                     }`}
                   >
                     {link.label}
@@ -203,7 +212,8 @@ export function Header() {
                 <div className="hidden md:block relative">
                   <button
                     onClick={() => setTopicsOpen(!topicsOpen)}
-                    className="flex items-center gap-1 font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)] px-2 py-1 transition-colors"
+                    aria-expanded={topicsOpen}
+                    className="flex items-center gap-1 font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)] hover:text-[var(--accent)] px-2 py-1 transition-colors"
                   >
                     Topics
                     <ChevronDown className={`h-3 w-3 transition-transform ${topicsOpen ? "rotate-180" : ""}`} />
@@ -215,10 +225,11 @@ export function Header() {
                           <Link
                             key={cat.slug}
                             href={`/topic/${cat.slug}`}
+                            aria-current={pathname === `/topic/${cat.slug}` ? "page" : undefined}
                             className={`block px-4 py-3 font-mono text-[11px] uppercase tracking-[0.06em] font-medium transition-colors border-b border-[var(--border)] ${
                               pathname === `/topic/${cat.slug}`
                                 ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                                : "text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)]"
+                                : "text-[var(--text-secondary)] hover:text-[var(--accent)]"
                             }`}
                           >
                             {cat.label}
@@ -233,20 +244,21 @@ export function Header() {
             </div>
           </div>
 
-          {/* COMPACT ROW — Always rendered; full height when scrolled, minimal on desktop when at top */}
+          {/* COMPACT ROW — Always rendered; sleek on mobile, full nav when scrolled on desktop */}
           <div className={`grid grid-cols-3 items-center px-4 md:px-10 transition-all duration-[250ms] ease-in-out ${
             scrolled ? "h-14 md:h-16" : "h-[44px] md:hidden"
           }`}>
-            {/* Left */}
+            {/* Left — hamburger on mobile, logo+fade on desktop */}
             <nav className="flex items-center gap-2">
               <button
                 className="flex items-center justify-center w-8 h-8 md:hidden"
-                onClick={() => setMobileOpen(!mobileOpen)}
+                onClick={() => (mobileOpen ? closeMobileMenu() : setMobileOpen(true))}
                 aria-label="Toggle menu"
+                aria-expanded={mobileOpen}
               >
                 <Menu className="h-4 w-4" />
               </button>
-              <Link href="/" className={`transition-all duration-[250ms] ${
+              <Link href="/" className={`hidden md:block transition-all duration-[250ms] ${
                 scrolled ? "opacity-100" : "opacity-0 pointer-events-none"
               }`}>
                 <Image
@@ -255,7 +267,7 @@ export function Header() {
                   width={1983}
                   height={467}
                   priority
-                  className="hidden md:block h-8 w-auto dark:hidden"
+                  className="h-8 w-auto dark:hidden"
                 />
                 <Image
                   src="/logo-light.png"
@@ -263,62 +275,63 @@ export function Header() {
                   width={1982}
                   height={467}
                   priority
-                  className="hidden md:block h-8 w-auto dark:block"
+                  className="h-8 w-auto hidden dark:block"
                 />
               </Link>
             </nav>
 
-            {/* Center */}
-            <nav className={`flex justify-center items-center gap-4 md:gap-6 transition-all duration-[250ms] ${
-              scrolled ? "opacity-100" : "opacity-100"
-            }`}>
-              {centerLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`hidden md:inline font-mono text-[11px] font-bold uppercase tracking-[0.1em] px-2 py-1 transition-colors ${
-                    pathname === link.href
-                      ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                      : "text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)]"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              <div className="hidden md:block relative" ref={topicsRef}>
-                <button
-                  onClick={() => setTopicsOpen(!topicsOpen)}
-                  className="flex items-center gap-1 font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)] px-2 py-1 transition-colors"
-                >
-                  Topics
-                  <ChevronDown className={`h-3 w-3 transition-transform ${topicsOpen ? "rotate-180" : ""}`} />
-                </button>
-                {topicsOpen && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-[1px] w-[360px] bg-[var(--bg)] border-2 border-[var(--text-primary)] z-50">
-                    <div className="grid grid-cols-2 gap-0">
-                      {CATEGORIES.map((cat) => (
-                        <Link
-                          key={cat.slug}
-                          href={`/topic/${cat.slug}`}
-                          className={`block px-4 py-3 font-mono text-[11px] uppercase tracking-[0.06em] font-medium transition-colors border-b border-[var(--border)] ${
-                            pathname === `/topic/${cat.slug}`
-                              ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                              : "text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--accent-contrast)]"
-                          }`}
-                        >
-                          {cat.label}
-                        </Link>
-                      ))}
+            {/* Center — nav links on desktop only */}
+            <div className="flex justify-center items-center">
+              <nav className="hidden md:flex items-center gap-4 md:gap-6">
+                {centerLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    aria-current={pathname === link.href ? "page" : undefined}
+                    className={`font-mono text-[11px] font-bold uppercase tracking-[0.1em] px-2 py-1 transition-colors ${
+                      pathname === link.href
+                        ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+                        : "text-[var(--text-secondary)] hover:text-[var(--accent)]"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                <div className="relative" ref={topicsRef}>
+                  <button
+                    onClick={() => setTopicsOpen(!topicsOpen)}
+                    aria-expanded={topicsOpen}
+                    className="flex items-center gap-1 font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)] hover:text-[var(--accent)] px-2 py-1 transition-colors"
+                  >
+                    Topics
+                    <ChevronDown className={`h-3 w-3 transition-transform ${topicsOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {topicsOpen && (
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-[1px] w-[360px] bg-[var(--bg)] border-2 border-[var(--text-primary)] z-50">
+                      <div className="grid grid-cols-2 gap-0">
+                        {CATEGORIES.map((cat) => (
+                          <Link
+                            key={cat.slug}
+                            href={`/topic/${cat.slug}`}
+                            aria-current={pathname === `/topic/${cat.slug}` ? "page" : undefined}
+                            className={`block px-4 py-3 font-mono text-[11px] uppercase tracking-[0.06em] font-medium transition-colors border-b border-[var(--border)] ${
+                              pathname === `/topic/${cat.slug}`
+                                ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+                                : "text-[var(--text-secondary)] hover:text-[var(--accent)]"
+                            }`}
+                          >
+                            {cat.label}
+                          </Link>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </nav>
+                  )}
+                </div>
+              </nav>
+            </div>
 
-            {/* Right */}
-            <div className={`flex items-center justify-end gap-2 transition-all duration-[250ms] ${
-              scrolled ? "opacity-100" : "opacity-0 pointer-events-none"
-            }`}>
+            {/* Right — hidden on mobile, full on desktop */}
+            <div className="hidden md:flex items-center justify-end gap-2">
               <SearchBar />
               <ThemeToggle variant="header" />
               <Link
@@ -335,7 +348,7 @@ export function Header() {
               </Link>
               <Link
                 href="/donate"
-                className="hidden sm:flex items-center justify-center h-[28px] border-2 border-[var(--text-primary)] px-2 font-mono text-[9px] md:text-[10px] uppercase tracking-[0.12em] font-bold text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
+                className="flex items-center justify-center h-[28px] border-2 border-[var(--text-primary)] px-2 font-mono text-[9px] md:text-[10px] uppercase tracking-[0.12em] font-bold text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
               >
                 Donate
               </Link>
@@ -347,113 +360,149 @@ export function Header() {
 
       {/* SPACER — Prevents fixed header from covering content */}
       <div className={`transition-all duration-[250ms] ease-in-out ${
-        scrolled ? "h-14 md:h-16" : "h-[160px] md:h-[200px]"
+        scrolled ? "h-14 md:h-16" : "h-[110px] md:h-[200px]"
       }`} />
 
-      {/* Mobile Overlay — Full Screen */}
+      {/* Mobile Overlay — Slide-in panel */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-[200] bg-[var(--bg)] flex flex-col overflow-y-auto">
-          <button
-            className="absolute top-5 right-5 w-11 h-11 flex items-center justify-center"
-            onClick={() => setMobileOpen(false)}
-            aria-label="Close menu"
+        <div className="mobile-overlay-backdrop" onClick={closeMobileMenu}>
+          <div
+            className="mobile-overlay-panel"
+            onClick={(e) => e.stopPropagation()}
           >
-            <X className="h-6 w-6" />
-          </button>
+            {/* Close button */}
+            <button
+              className="absolute top-5 right-5 w-10 h-10 flex items-center justify-center text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
+              onClick={closeMobileMenu}
+              aria-label="Close menu"
+            >
+              <X className="h-5 w-5" />
+            </button>
 
-          <div className="mt-16 px-6">
-            <Link
-              href="/search"
-              onClick={() => setMobileOpen(false)}
-              className="block py-4 font-mono text-sm font-bold uppercase tracking-[0.08em] border-b border-[var(--border)] text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
-            >
-              Search
-            </Link>
-            {centerLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileOpen(false)}
-                className={`block py-4 font-mono text-sm font-bold uppercase tracking-[0.08em] border-b border-[var(--border)] transition-colors ${
-                  pathname === link.href
-                    ? "text-[var(--accent)]"
-                    : "text-[var(--text-primary)] hover:text-[var(--accent)]"
-                }`}
+            {/* Search */}
+            <div className="px-6 pt-12 pb-4">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  const q = searchQuery.trim()
+                  if (q.length >= 2) {
+                    router.push(`/search?q=${encodeURIComponent(q)}`)
+                    closeMobileMenu()
+                  }
+                }}
               >
-                {link.label}
-              </Link>
-            ))}
-            <Link
-              href="/account"
-              onClick={() => setMobileOpen(false)}
-              className="block py-4 font-mono text-sm font-bold uppercase tracking-[0.08em] border-b border-[var(--border)] text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
-            >
-              {user ? "My Account" : "Sign In"}
-            </Link>
-            <Link
-              href="/donate"
-              onClick={() => setMobileOpen(false)}
-              className="block py-4 font-mono text-sm font-bold uppercase tracking-[0.08em] border-b border-[var(--border)] text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
-            >
-              Donate
-            </Link>
-          </div>
-
-          <div className="px-6 mt-8 flex items-center gap-2">
-            <div className="flex border-2 border-[var(--text-primary)] overflow-hidden font-mono text-[11px] font-bold uppercase tracking-[0.06em]">
-              <button
-                className={`px-3 py-1.5 transition-colors ${
-                  lang === "en"
-                    ? "bg-[var(--text-primary)] text-inverted"
-                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted"
-                }`}
-                onClick={() => setLang("en")}
-              >
-                EN
-              </button>
-              <div className="w-px bg-[var(--border)]" />
-              <button
-                className={`px-3 py-1.5 transition-colors ${
-                  lang === "km"
-                    ? "bg-[var(--text-primary)] text-inverted"
-                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted"
-                }`}
-                onClick={() => setLang("km")}
-              >
-                ខ្មែរ
-              </button>
+                <div className="flex items-center border-2 border-[var(--text-primary)]">
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search stories, sources, topics..."
+                    className="flex-1 px-4 h-[44px] bg-transparent font-mono text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    className="flex items-center justify-center w-[44px] h-[44px] border-l-2 border-[var(--text-primary)] text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
+                  >
+                    <Search className="h-4 w-4" />
+                  </button>
+                </div>
+              </form>
             </div>
-            <ThemeToggle variant="header" />
-          </div>
 
-          <div className="px-6 mt-8">
-            <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--text-secondary)] mb-4 font-bold">
-              Topics
-            </p>
-            <div className="grid grid-cols-2 gap-0">
-              {CATEGORIES.map((cat) => (
+            {/* Nav links */}
+            <div className="px-6">
+              {centerLinks.map((link) => (
                 <Link
-                  key={cat.slug}
-                  href={`/topic/${cat.slug}`}
-                  onClick={() => setMobileOpen(false)}
-                  className="block px-0 py-3 font-mono text-[11px] uppercase tracking-wider font-medium text-[var(--text-secondary)] border-b border-[var(--border)] hover:text-[var(--text-primary)] transition-colors"
+                  key={link.href}
+                  href={link.href}
+                  onClick={closeMobileMenu}
+                  aria-current={pathname === link.href ? "page" : undefined}
+                  className={`block py-4 font-mono text-sm font-bold uppercase tracking-[0.08em] border-b border-[var(--border)] transition-colors ${
+                    pathname === link.href
+                      ? "text-[var(--accent)]"
+                      : "text-[var(--text-primary)] hover:text-[var(--accent)]"
+                  }`}
                 >
-                  {cat.label}
+                  {link.label}
                 </Link>
               ))}
-            </div>
-          </div>
-
-          {user && (
-            <div className="px-6 mt-8">
-              <button
-                onClick={() => { handleSignOut(); setMobileOpen(false) }}
-                className="w-full py-3 font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)] border-2 border-[var(--border)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+              <Link
+                href="/account"
+                onClick={closeMobileMenu}
+                className="block py-4 font-mono text-sm font-bold uppercase tracking-[0.08em] border-b border-[var(--border)] text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
               >
-                Sign Out
-              </button>
+                {user ? "My Account" : "Sign In"}
+              </Link>
+              <Link
+                href="/donate"
+                onClick={closeMobileMenu}
+                className="block py-4 font-mono text-sm font-bold uppercase tracking-[0.08em] border-b border-[var(--border)] text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
+              >
+                Donate
+              </Link>
             </div>
-          )}
+
+            {/* Language + Theme */}
+            <div className="px-6 mt-6 flex items-center gap-3">
+              <div className="flex border-2 border-[var(--text-primary)] overflow-hidden font-mono text-[11px] font-bold uppercase tracking-[0.06em]">
+                <button
+                  className={`px-3 py-1.5 transition-colors ${
+                    lang === "en"
+                      ? "bg-[var(--text-primary)] text-inverted"
+                      : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted"
+                  }`}
+                  onClick={() => setLang("en")}
+                >
+                  EN
+                </button>
+                <div className="w-px bg-[var(--border)]" />
+                <button
+                  className={`px-3 py-1.5 transition-colors ${
+                    lang === "km"
+                      ? "bg-[var(--text-primary)] text-inverted"
+                      : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted"
+                  }`}
+                  onClick={() => setLang("km")}
+                >
+                  ខ្មែរ
+                </button>
+              </div>
+              <ThemeToggle variant="header" />
+            </div>
+
+            {/* Topics */}
+            <div className="px-6 mt-8">
+              <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--text-secondary)] mb-4 font-bold">
+                Topics
+              </p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-0">
+                {CATEGORIES.map((cat) => (
+                  <Link
+                    key={cat.slug}
+                    href={`/topic/${cat.slug}`}
+                    onClick={closeMobileMenu}
+                    aria-current={pathname === `/topic/${cat.slug}` ? "page" : undefined}
+                    className="block py-3 font-mono text-[11px] uppercase tracking-wider font-medium text-[var(--text-secondary)] border-b border-[var(--border)] hover:text-[var(--text-primary)] transition-colors"
+                  >
+                    {cat.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Sign Out */}
+            {user && (
+              <div className="px-6 mt-8 pb-10">
+                <button
+                  onClick={() => { handleSignOut(); closeMobileMenu() }}
+                  className="w-full py-3 font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)] border-2 border-[var(--border)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+                >
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </>

@@ -38,7 +38,12 @@ export async function getStoriesByCategory(category: string): Promise<Story[]> {
   }
 }
 
-export async function getStoryBySlug(id: string): Promise<StoryWithArticles | null> {
+/**
+ * Fetch a story by UUID id.
+ * Route param is named `slug` (`/story/[slug]`) but stories have no slug column —
+ * the segment is the story id.
+ */
+export async function getStoryById(id: string): Promise<StoryWithArticles | null> {
   try {
     const { data: story, error: storyError } = await supabase
       .from("stories")
@@ -88,8 +93,11 @@ export async function getStoryStats(): Promise<{
   categoryCount: number
 }> {
   try {
+    // storyCount: exact head count (no row payload).
+    // sourceCount / categoryCount: PostgREST has no COUNT(DISTINCT) without a DB RPC.
+    // We select only the distinct-key columns and unique in JS (no inventing migrations).
     const [storyResult, sourceResult, catResult] = await Promise.all([
-      supabase.from("stories").select("id", { count: "exact", head: true }),
+      supabase.from("stories").select("*", { count: "exact", head: true }),
       supabase.from("articles").select("source_domain"),
       supabase.from("stories").select("category"),
     ])

@@ -3,32 +3,6 @@
 @custom-variant dark (&:is([data-theme="dark"] *));
 
 /* ===== Brutalist Color System ===== */
-@theme {
-  --color-paper: #FFFFFF;
-  --color-ink: #000000;
-  --color-slate: #666666;
-  --color-mist: #E5E5E5;
-  --color-bone: #F5F5F5;
-
-  --color-signal: #C01020;
-  --color-signal-contrast: #FFFFFF;
-
-  --color-alert-red: #C01020;
-  --color-critical-red: #8B0000;
-  --color-breaking-red: #C01020;
-  --color-hover-red: #8B0000;
-  --color-subtle-red: #F5E0E0;
-
-  --color-substance: #000000;
-  --color-info: #0000FF;
-  --color-hype: #C01020;
-
-  --color-coal: #000000;
-  --color-graphite: #111111;
-  --color-chalk: #FFFFFF;
-  --color-ember: #C01020;
-}
-
 :root {
   --bg: #FFFFFF;
   --surface: #FFFFFF;
@@ -84,7 +58,7 @@
 body {
   background-color: var(--bg);
   color: var(--text-primary);
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
   font-size: 18px;
   line-height: 1.6;
   overflow-x: hidden;
@@ -94,7 +68,7 @@ body {
 
 /* ===== Typography — Brutalist Hierarchy ===== */
 h1, h2, h3, h4 {
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
   font-weight: 800;
   line-height: 1.05;
   letter-spacing: -0.03em;
@@ -103,7 +77,7 @@ h1, h2, h3, h4 {
 
 /* Page titles — the single source of truth for all page headings */
 .page-title {
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
   font-size: 36px;
   line-height: 0.95;
   letter-spacing: -0.04em;
@@ -113,7 +87,7 @@ h1, h2, h3, h4 {
 
 /* Story titles — consistent across all card components */
 .story-title {
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.35;
   font-weight: 700;
@@ -122,7 +96,7 @@ h1, h2, h3, h4 {
 
 /* Label/meta text — mono, uppercase, tracked */
 .label-meta {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
   line-height: 1.4;
   font-weight: 500;
@@ -133,9 +107,9 @@ h1, h2, h3, h4 {
 
 .body-small { font-size: 14px; line-height: 1.5; }
 
-.font-sans { font-family: "Inter", system-ui, sans-serif; }
+.font-sans { font-family: var(--font-sans), system-ui, sans-serif; }
 .font-mono {
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-family: var(--font-mono), ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
 }
 
@@ -143,7 +117,7 @@ h1, h2, h3, h4 {
 
 /* Khmer typography — slightly larger for readability */
 .font-khmer {
-  font-family: "Noto Sans Khmer", "Inter", system-ui, sans-serif;
+  font-family: var(--font-khmer), var(--font-sans), system-ui, sans-serif;
 }
 
 a {
@@ -191,7 +165,7 @@ header {
 }
 
 .section-title {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -200,7 +174,7 @@ header {
 }
 
 .section-number {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 48px;
   font-weight: 700;
   color: var(--accent);
@@ -248,7 +222,7 @@ header {
   align-items: center;
   gap: 4px;
   padding: 2px 8px;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
@@ -310,7 +284,7 @@ header {
 .hype-bar-labels {
   display: flex;
   justify-content: space-between;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -379,7 +353,7 @@ header {
 }
 
 .ticker-item {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 12px;
   display: flex;
   align-items: center;
@@ -428,7 +402,7 @@ footer {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
   color: var(--text-secondary);
   position: relative;
@@ -447,7 +421,7 @@ footer {
   padding: 96px 0;
   text-align: center;
   color: var(--text-secondary);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -478,7 +452,7 @@ footer {
   border: 2px solid var(--text-primary);
   border-radius: 0;
   overflow: hidden;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -516,7 +490,7 @@ footer {
 
 .tier-toggle button {
   padding: 6px 14px;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
@@ -541,32 +515,32 @@ footer {
   color: var(--bg);
 }
 
-/* ===== Mobile Full-Screen Overlay ===== */
-.mobile-overlay {
+/* ===== Mobile Slide-in Overlay ===== */
+.mobile-overlay-backdrop {
   position: fixed;
   inset: 0;
   z-index: 200;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  animation: fadeIn 200ms ease-out;
+}
+
+.mobile-overlay-panel {
+  width: 85%;
+  max-width: 360px;
   background: var(--bg);
-  display: flex;
-  flex-direction: column;
-  padding: 24px 32px;
   overflow-y: auto;
+  animation: slideIn 250ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.mobile-overlay a {
-  font-size: 32px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-  display: block;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-.mobile-overlay a:hover {
-  color: var(--accent);
+@keyframes slideIn {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
 }
 
 /* ===== Legal Prose ===== */
@@ -577,7 +551,7 @@ footer {
 }
 
 .legal-prose h2 {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -614,7 +588,7 @@ footer {
 
 .legal-prose li::before {
   content: "+";
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono), monospace;
   color: var(--accent);
   flex-shrink: 0;
   margin-top: 2px;
@@ -636,7 +610,7 @@ footer {
 
 .legal-prose ol li::before {
   content: counter(legal-counter) ".";
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono), monospace;
   color: var(--accent);
   flex-shrink: 0;
   min-width: 1.5em;

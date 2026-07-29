@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+import html
 import json
 import logging
 import os
+import re
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -20,8 +22,10 @@ from newsbot import config
 from newsbot.config import (
     BATCH_MAX_STORIES,
     BATCH_STORIES,
+    DIGEST_HEADER_TEXT,
     DIGEST_MAX_STORIES,
     MAX_URGENT_POSTS_PER_RUN,
+    PREPARE_ENTRIES_TIMEOUT_SECONDS,
     TELEGRAM_CHANNEL_ID,
     TELEGRAM_THREAD_ID,
     TIMEZONE,
@@ -41,6 +45,41 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 _pipeline_lock = asyncio.Lock()
+
+_HTML_TAG_RE = re.compile(r"</?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*/?>")
+_VOID_TAGS = frozenset({"br", "hr", "img", "meta", "input", "link"})
+# Reserve room so reopen/close tags don't push a segment past Telegram's 4096 limit.
+_TRUNCATE_TAG_RESERVE = 180
+
+
+def _html_escape(text: str) -> str:
+    return html.escape(text, quote=False)
+
+
+def _apply_html_tags_to_stack(stack: list[tuple[str, str]], fragment: str) -> list[tuple[str, str]]:
+    """Update an open-tag stack by walking HTML tags in fragment."""
+    stack = list(stack)
+    for match in _HTML_TAG_RE.finditer(fragment):
+        full = match.group(0)
+        name = match.group(1).lower()
+        if name in _VOID_TAGS or full.endswith("/>"):
+            continue
+        if full.startswith("</"):
+            for i in range(len(stack) - 1, -1, -1):
+                if stack[i][0] == name:
+                    stack.pop(i)
+                    break
+        else:
+            stack.append((name, full))
+    return stack
+
+
+def _close_html_tags(stack: list[tuple[str, str]]) -> str:
+    return "".join(f"</{name}>" for name, _ in reversed(stack))
+
+
+def _reopen_html_tags(stack: list[tuple[str, str]]) -> str:
+    return "".join(full for _, full in stack)
 
 
 @dataclass
@@ -255,7 +294,9 @@ def _cluster_to_story(
 def _source_line(links: list[tuple[str, str]], limit: int = 3) -> str:
     parts = []
     for url, name in links[:limit]:
-        parts.append(f'<a href="{url}">{name}</a>')
+        safe_url = html.escape(url, quote=True)
+        safe_name = _html_escape(name)
+        parts.append(f'<a href="{safe_url}">{safe_name}</a>')
     return " · ".join(parts)
 
 
@@ -294,14 +335,14 @@ def _compile_batch_message(batched: list[BatchedStory]) -> str:
     now = datetime.now(TIMEZONE).strftime("%b %d, %Y · %I:%M %p")
     separator = "━" * 20
     parts: list[str] = [
-        f"📰 <b>Inbound Reports</b> — {now}",
+        f"{DIGEST_HEADER_TEXT} — {now}",
         separator,
     ]
 
     for s in batched:
         parts.append("")
-        parts.append(f"▸ <b>{s.title}</b>")
-        parts.append(s.summary)
+        parts.append(f"▸ <b>{_html_escape(s.title)}</b>")
+        parts.append(_html_escape(s.summary) if s.summary else "")
         if s.source_line:
             parts.append(s.source_line)
 
@@ -311,22 +352,38 @@ def _compile_batch_message(batched: list[BatchedStory]) -> str:
 
 
 def _truncate_batch(text: str) -> list[str]:
+    """Split long batch messages at paragraph boundaries, keeping HTML tags balanced."""
     _MAX = 4096
     if len(text) <= _MAX:
         return [text]
 
     parts: list[str] = []
-    while text:
-        if len(text) <= _MAX:
-            parts.append(text)
-            break
-        cut = text.rfind("\n\n", 0, _MAX)
-        if cut == -1:
-            cut = text.rfind("\n", 0, _MAX)
-        if cut == -1:
-            cut = _MAX - 1
-        parts.append(text[:cut].rstrip())
-        text = text[cut:].strip()
+    open_stack: list[tuple[str, str]] = []
+    remaining = text
+
+    while remaining:
+        reopen = _reopen_html_tags(open_stack)
+        budget = _MAX - len(reopen) - _TRUNCATE_TAG_RESERVE
+        if budget < 256:
+            budget = max(256, _MAX // 2)
+
+        if len(remaining) <= budget:
+            body = remaining
+            remaining = ""
+        else:
+            cut = remaining.rfind("\n\n", 0, budget)
+            if cut == -1:
+                cut = remaining.rfind("\n", 0, budget)
+            if cut == -1:
+                cut = budget
+            body = remaining[:cut].rstrip()
+            remaining = remaining[cut:].lstrip()
+
+        stack_after = _apply_html_tags_to_stack(open_stack, body)
+        close = _close_html_tags(stack_after)
+        parts.append(f"{reopen}{body}{close}")
+        open_stack = stack_after
+
     return parts
 
 
@@ -452,7 +509,19 @@ async def _run_pipeline(
 ) -> int:
     """Shared pipeline: prepare → broadcast → mark posted (individual path)."""
     async with _pipeline_lock:
-        stories = await asyncio.to_thread(_prepare_entries, urgent=urgent)
+        try:
+            stories = await asyncio.wait_for(
+                asyncio.to_thread(_prepare_entries, urgent=urgent),
+                timeout=PREPARE_ENTRIES_TIMEOUT_SECONDS,
+            )
+        except asyncio.TimeoutError:
+            label = "urgent" if urgent else "digest"
+            logger.error(
+                "_prepare_entries timed out after %.0fs (%s run)",
+                PREPARE_ENTRIES_TIMEOUT_SECONDS,
+                label,
+            )
+            return 0
         if not stories:
             label = "urgent" if urgent else "digest"
             logger.info("No posts generated this %s run.", label)
@@ -486,7 +555,17 @@ async def _run_batched_pipeline(context: ContextTypes.DEFAULT_TYPE) -> int:
 
         # 1 story → individual path (full rewrite + keyboard)
         if len(all_clusters) == 1:
-            stories = await asyncio.to_thread(_prepare_entries, urgent=False)
+            try:
+                stories = await asyncio.wait_for(
+                    asyncio.to_thread(_prepare_entries, urgent=False),
+                    timeout=PREPARE_ENTRIES_TIMEOUT_SECONDS,
+                )
+            except asyncio.TimeoutError:
+                logger.error(
+                    "_prepare_entries timed out after %.0fs (batched single-story)",
+                    PREPARE_ENTRIES_TIMEOUT_SECONDS,
+                )
+                return 0
             if not stories:
                 return 0
             succeeded = await broadcast_stories(context, stories)

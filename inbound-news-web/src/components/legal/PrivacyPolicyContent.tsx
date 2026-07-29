@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { FadeIn } from "@/components/FadeIn"
+import { useActiveSection } from "@/hooks/useActiveSection"
 import {
   ArrowLeft,
   User,
@@ -35,29 +36,7 @@ const SECTIONS = [
   { id: "contact", label: "Contact" },
 ]
 
-function useActiveSection(sectionIds: string[]) {
-  const [active, setActive] = useState("")
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActive(entry.target.id)
-          }
-        }
-      },
-      { rootMargin: "-20% 0px -70% 0px" }
-    )
-    for (const id of sectionIds) {
-      const el = document.getElementById(id)
-      if (el) observer.observe(el)
-    }
-    return () => observer.disconnect()
-  }, [sectionIds])
-  return active
-}
-
-
+const SECTION_IDS = SECTIONS.map((s) => s.id)
 
 interface CardItemProps {
   icon: React.ReactNode
@@ -95,7 +74,7 @@ function InfoBox({ children }: InfoBoxProps) {
 
 export function PrivacyPolicyContent() {
   const [mobileTocOpen, setMobileTocOpen] = useState(false)
-  const activeSection = useActiveSection(SECTIONS.map((s) => s.id))
+  const activeSection = useActiveSection(SECTION_IDS)
 
   return (
     <div className="relative min-h-screen bg-[var(--bg)]">

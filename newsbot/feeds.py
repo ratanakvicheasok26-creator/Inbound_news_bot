@@ -27,6 +27,8 @@ from newsbot.config import (
     MAX_ENTRY_AGE_HOURS,
     MAX_ITEMS_PER_FEED,
     RSS_FEEDS,
+    SPAM_BLOCK_NON_LATIN_SCRIPTS,
+    SPAM_FILTER_ENABLED,
     SUMMARY_SIM_WORD_LIMIT,
     URGENT_KEYWORDS,
 )
@@ -115,13 +117,23 @@ _HASHTAG_STUFFING_RE = re.compile(r"(#\S+.*){3,}")
 
 
 def _looks_like_spam(title: str) -> bool:
-    """Heuristic check to catch spam/off-topic content that slips past feed curation."""
+    """Heuristic check to catch spam/off-topic content that slips past feed curation.
+
+    Controlled by env:
+      SPAM_FILTER_ENABLED (default true) — master switch
+      SPAM_BLOCK_NON_LATIN_SCRIPTS (default true) — Arabic/Cyrillic/Hebrew ratio check
+    Phone-number and hashtag-stuffing checks always run when the filter is enabled.
+    """
+    if not SPAM_FILTER_ENABLED:
+        return False
+
     if not title:
         return True
 
-    non_target_chars = len(_NON_TARGET_SCRIPT_RE.findall(title))
-    if non_target_chars / max(len(title), 1) > 0.15:
-        return True
+    if SPAM_BLOCK_NON_LATIN_SCRIPTS:
+        non_target_chars = len(_NON_TARGET_SCRIPT_RE.findall(title))
+        if non_target_chars / max(len(title), 1) > 0.15:
+            return True
 
     if _PHONE_NUMBER_RE.search(title):
         return True

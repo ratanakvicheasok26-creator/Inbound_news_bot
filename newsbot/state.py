@@ -84,18 +84,29 @@ class RedisState(StateBackend):
                 break
         return result
 
+    # Atomic replace: SCAN+DEL old prefix keys, then SET new values with TTL.
+    # Runs server-side so concurrent readers never see a half-cleared set.
+    _SAVE_SET_LUA = """
+    local cursor = '0'
+    local prefix = ARGV[1]
+    local ttl = tonumber(ARGV[2])
+    repeat
+      local result = redis.call('SCAN', cursor, 'MATCH', prefix .. '*', 'COUNT', 200)
+      cursor = result[1]
+      local keys = result[2]
+      if #keys > 0 then
+        redis.call('DEL', unpack(keys))
+      end
+    until cursor == '0'
+    for i = 3, #ARGV do
+      redis.call('SET', prefix .. ARGV[i], '1', 'EX', ttl)
+    end
+    return #ARGV - 2
+    """
+
     def _save_redis_set(self, prefix: str, values: set[str]) -> None:
-        pipe = self._r.pipeline()
-        cursor = 0
-        while True:
-            cursor, keys = self._r.scan(cursor, match=f"{prefix}*", count=200)
-            if keys:
-                pipe.delete(*keys)
-            if cursor == 0:
-                break
-        for value in values:
-            pipe.set(f"{prefix}{value}", "1", ex=POSTED_ID_TTL_SECONDS)
-        pipe.execute()
+        args = [prefix, str(POSTED_ID_TTL_SECONDS), *values]
+        self._r.eval(self._SAVE_SET_LUA, 0, *args)
 
     def _add_redis_set(self, prefix: str, values: set[str]) -> None:
         pipe = self._r.pipeline()

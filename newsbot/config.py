@@ -44,6 +44,8 @@ __all__ = [
     "DIGEST_SCHEDULE_HOUR_PM",
     "DONATION_SCHEDULE_HOUR",
     "DONATION_QR_IMAGE",
+    "DONATION_TEXT",
+    "DIGEST_HEADER_TEXT",
     "URGENT_CHECK_INTERVAL_SECONDS",
     "URGENT_FIRST_DELAY_SECONDS",
     "MAX_URGENT_POSTS_PER_RUN",
@@ -56,6 +58,10 @@ __all__ = [
     "FETCH_COOLDOWN_SECONDS",
     "LINK_CAP_URGENT",
     "LINK_CAP_NORMAL",
+    "PREPARE_ENTRIES_TIMEOUT_SECONDS",
+    "AI_HTTP_TIMEOUT_SECONDS",
+    "SPAM_FILTER_ENABLED",
+    "SPAM_BLOCK_NON_LATIN_SCRIPTS",
     "TELEGRAM_BOT_TOKEN",
     "PORT",
     "TELEGRAM_CHANNEL_ID",
@@ -70,31 +76,56 @@ REDIS_URL: str = os.environ.get("REDIS_URL", "").strip()
 from newsbot.source_registry import get_rss_feeds as _get_rss_feeds
 RSS_FEEDS: list[str] = _get_rss_feeds(tier=1)
 
-MAX_ITEMS_PER_FEED: int = 3
-MAX_ENTRY_AGE_HOURS: int = 24
-FEED_TIMEOUT_SECONDS: int = 10
+MAX_ITEMS_PER_FEED: int = int(os.environ.get("MAX_ITEMS_PER_FEED", "3"))
+MAX_ENTRY_AGE_HOURS: int = int(os.environ.get("MAX_ENTRY_AGE_HOURS", "24"))
+FEED_TIMEOUT_SECONDS: int = int(os.environ.get("FEED_TIMEOUT_SECONDS", "10"))
 FEED_GLOBAL_TIMEOUT_EXTRA: int = 50
 
 # ---- Clustering ----
-CLUSTER_SIMILARITY_THRESHOLD: float = 0.45
-CLUSTER_TITLE_WEIGHT: float = 0.7
-CLUSTER_SUMMARY_WEIGHT: float = 0.3
-CONTENT_DEDUP_THRESHOLD: float = 0.65
+CLUSTER_SIMILARITY_THRESHOLD: float = float(os.environ.get("CLUSTER_SIMILARITY_THRESHOLD", "0.45"))
+CLUSTER_TITLE_WEIGHT: float = float(os.environ.get("CLUSTER_TITLE_WEIGHT", "0.7"))
+CLUSTER_SUMMARY_WEIGHT: float = float(os.environ.get("CLUSTER_SUMMARY_WEIGHT", "0.3"))
+CONTENT_DEDUP_THRESHOLD: float = float(os.environ.get("CONTENT_DEDUP_THRESHOLD", "0.65"))
 SUMMARY_SIM_WORD_LIMIT: int = 100
 
 # ---- AI ----
 GROQ_MODEL: str = "llama-3.3-70b-versatile"
 GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
 GROQ_MAX_TOKENS: int = 2200
+AI_HTTP_TIMEOUT_SECONDS: float = float(os.environ.get("AI_HTTP_TIMEOUT_SECONDS", "30"))
+PREPARE_ENTRIES_TIMEOUT_SECONDS: float = float(
+    os.environ.get("PREPARE_ENTRIES_TIMEOUT_SECONDS", "300")
+)
+
+# ---- Spam filter ----
+SPAM_FILTER_ENABLED: bool = os.environ.get("SPAM_FILTER_ENABLED", "true").lower() in (
+    "1", "true", "yes", "on",
+)
+# Default true: block Arabic/Cyrillic/Hebrew-dominated titles. Set false to reduce false positives.
+SPAM_BLOCK_NON_LATIN_SCRIPTS: bool = os.environ.get(
+    "SPAM_BLOCK_NON_LATIN_SCRIPTS", "true"
+).lower() in ("1", "true", "yes", "on")
 
 # ---- Scheduling ----
 TIMEZONE = ZoneInfo("Asia/Phnom_Penh")
 DIGEST_MIN_SOURCES: int = 2
 DIGEST_MAX_STORIES: int = 10
-DIGEST_SCHEDULE_HOUR_AM: int = 5
-DIGEST_SCHEDULE_HOUR_PM: int = 17
-DONATION_SCHEDULE_HOUR: int = 22  # 10 PM
+DIGEST_SCHEDULE_HOUR_AM: int = int(os.environ.get("DIGEST_SCHEDULE_HOUR_AM", "5"))
+DIGEST_SCHEDULE_HOUR_PM: int = int(os.environ.get("DIGEST_SCHEDULE_HOUR_PM", "17"))
+DONATION_SCHEDULE_HOUR: int = int(os.environ.get("DONATION_SCHEDULE_HOUR", "22"))  # 10 PM
 DONATION_QR_IMAGE: str = os.environ.get("DONATION_QR_IMAGE", "qr_aba_news.jpg")
+_DEFAULT_DONATION_TEXT = (
+    "<b>Support Inbound Reports</b>\n\n"
+    "We aggregate tech news from multiple sources and APIs across the web "
+    "to deliver concise, multi-perspective coverage.\n\n"
+    "Running this engine takes resources. "
+    "If you find value in having a balanced tech feed, consider supporting our work:\n\n"
+    '<a href="https://pay.ababank.com/oRF8/puropy03">ABA Payment Link</a>'
+)
+DONATION_TEXT: str = os.environ.get("DONATION_TEXT", "").strip() or _DEFAULT_DONATION_TEXT
+DIGEST_HEADER_TEXT: str = os.environ.get(
+    "DIGEST_HEADER_TEXT", "📰 <b>Inbound Reports</b>"
+).strip() or "📰 <b>Inbound Reports</b>"
 URGENT_CHECK_INTERVAL_SECONDS: int = 60 * 30  # every 30 minutes
 URGENT_FIRST_DELAY_SECONDS: int = 60
 POLL_INTERVAL_SECONDS: int = int(os.environ.get("POLL_INTERVAL_SECONDS", "7200"))

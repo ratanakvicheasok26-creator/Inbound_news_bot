@@ -51,8 +51,8 @@ export function HighlightText({ text, terms, onTermClick }: HighlightTextProps) 
     return result
   }, [text, terms])
 
-  function handleClick(term: GlossaryTerm, e: React.MouseEvent) {
-    const rect = (e.target as HTMLElement).getBoundingClientRect()
+  function openTerm(term: GlossaryTerm, el: HTMLElement) {
+    const rect = el.getBoundingClientRect()
     onTermClick(term, { x: rect.left, y: rect.bottom })
   }
 
@@ -64,13 +64,13 @@ export function HighlightText({ text, terms, onTermClick }: HighlightTextProps) 
             <span
               key={`${part.term.slug}-${i}`}
               className="jargon-term"
-              onClick={(e) => handleClick(part.term!, e)}
+              onClick={(e) => openTerm(part.term!, e.currentTarget)}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
-                  const rect = (e.target as HTMLElement).getBoundingClientRect()
-                  handleClick(part.term!, { target: e.target, clientX: rect.left, clientY: rect.bottom } as unknown as React.MouseEvent)
+                  e.preventDefault()
+                  openTerm(part.term!, e.currentTarget)
                 }
               }}
             >
