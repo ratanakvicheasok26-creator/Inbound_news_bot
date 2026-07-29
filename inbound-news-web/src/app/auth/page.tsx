@@ -52,7 +52,7 @@ export default function AuthPage() {
           <h1 className="page-title">
             {mode === "sign-in" ? "SIGN IN" : "SIGN UP"}
           </h1>
-          <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+          <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">
             {mode === "sign-in"
               ? "Welcome back. Track your literacy progress."
               : "Create an account to save your progress."}
@@ -87,7 +87,7 @@ export default function AuthPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold block mb-2">
+            <label className="font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)] font-bold block mb-2">
               Email
             </label>
             <input
@@ -101,7 +101,7 @@ export default function AuthPage() {
           </div>
 
           <div>
-            <label className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold block mb-2">
+            <label className="font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)] font-bold block mb-2">
               Password
             </label>
             <input
@@ -140,7 +140,7 @@ export default function AuthPage() {
         <div className="mt-8 pt-6 border-t border-[var(--border)] text-center">
           <Link
             href="/"
-            className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+            className="font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
           >
             &larr; Back to Inbound Reports
           </Link>

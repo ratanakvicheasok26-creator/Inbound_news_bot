@@ -24,7 +24,12 @@ export default function DonatePage() {
             </span>
           </div>
 
-          <div className="relative w-full max-w-[240px] aspect-square mx-auto mb-6 bg-[var(--surface)] p-2">
+          <a
+            href="https://pay.ababank.com/oRF8/puropy03"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative block w-full max-w-[240px] aspect-square mx-auto mb-6 bg-[var(--surface)] p-2 transition-opacity hover:opacity-80"
+          >
             <Image
               src="/khqr.png"
               alt="KHQR Donation Code"
@@ -32,7 +37,7 @@ export default function DonatePage() {
               className="object-contain"
               priority
             />
-          </div>
+          </a>
 
           <p className="font-mono text-[12px] text-[var(--text-secondary)] mb-2">
             Scan with any KHQR-compatible app

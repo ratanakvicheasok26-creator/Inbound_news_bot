@@ -48,11 +48,21 @@ logger = logging.getLogger(__name__)
 _thread_local = threading.local()
 
 
+_USER_AGENT = (
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+)
+
+
 def _get_http_client() -> httpx.Client:
     """Return a per-thread httpx.Client instance."""
     client = getattr(_thread_local, "client", None)
     if client is None:
-        client = httpx.Client(timeout=FEED_TIMEOUT_SECONDS, follow_redirects=True)
+        client = httpx.Client(
+            timeout=FEED_TIMEOUT_SECONDS,
+            follow_redirects=True,
+            headers={"User-Agent": _USER_AGENT},
+        )
         _thread_local.client = client
     return client
 

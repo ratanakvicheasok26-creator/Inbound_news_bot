@@ -49,7 +49,7 @@ function SearchResults() {
             SEARCH
           </h1>
           {q && (
-            <div className="mt-3 font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+            <div className="mt-3 font-mono text-[11px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">
               {loading ? (
                 "Searching..."
               ) : searched ? (
@@ -63,7 +63,7 @@ function SearchResults() {
         {!q && (
           <div className="py-20 text-center">
             <Search className="h-8 w-8 mx-auto mb-4 text-[var(--text-secondary)]" />
-            <p className="font-mono text-[12px] uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+            <p className="font-mono text-[12px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">
               Use the search icon in the header to search stories and sources.
             </p>
           </div>
@@ -75,7 +75,7 @@ function SearchResults() {
             <p className="font-mono text-[14px] text-[var(--text-secondary)] mb-2">
               No results for &ldquo;{q}&rdquo;
             </p>
-            <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+            <p className="font-mono text-[11px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">
               Try a different keyword or check your spelling.
             </p>
           </div>
@@ -162,7 +162,7 @@ export default function SearchPage() {
     <Suspense fallback={
       <div className="container">
         <section className="py-16 md:py-24 max-w-[960px] mx-auto text-center">
-          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)]">Loading...</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">Loading...</p>
         </section>
       </div>
     }>

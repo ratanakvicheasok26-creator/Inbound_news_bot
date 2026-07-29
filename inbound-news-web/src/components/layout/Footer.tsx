@@ -29,11 +29,11 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="mb-3 font-mono text-[10px] uppercase tracking-[0.06em] font-bold text-[var(--text-primary)]">
+            <h4 className="mb-2 font-mono text-[10px] uppercase tracking-[0.06em] font-bold text-[var(--accent)] border-b border-[var(--accent)] pb-1">
               Sections
             </h4>
             <ul className="space-y-1.5">
-              {CATEGORIES.slice(0, 8).map((cat) => (
+              {CATEGORIES.map((cat) => (
                 <li key={cat.slug}>
                   <Link href={`/topic/${cat.slug}`} className="text-[13px] text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">
                     {cat.label}
@@ -44,7 +44,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="mb-3 font-mono text-[10px] uppercase tracking-[0.06em] font-bold text-[var(--text-primary)]">
+            <h4 className="mb-2 font-mono text-[10px] uppercase tracking-[0.06em] font-bold text-[var(--accent)] border-b border-[var(--accent)] pb-1">
               Platform
             </h4>
             <ul className="space-y-1.5 text-[13px]">
@@ -57,7 +57,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="mb-3 font-mono text-[10px] uppercase tracking-[0.06em] font-bold text-[var(--text-primary)]">
+            <h4 className="mb-2 font-mono text-[10px] uppercase tracking-[0.06em] font-bold text-[var(--accent)] border-b border-[var(--accent)] pb-1">
               Legal &amp; Trust
             </h4>
             <ul className="space-y-1.5 text-[13px]">
@@ -65,20 +65,16 @@ export function Footer() {
               <li><Link href="/legal/privacy" className="text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Privacy Policy</Link></li>
               <li><Link href="/legal/dmca" className="text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">DMCA / Copyright</Link></li>
             </ul>
-            <div className="mt-4 space-y-2">
-              <span className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">
-                Telegram Bot
-                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
-              </span>
-              <div>
-                <a
-                  href="mailto:inboundcrew82@gmail.com"
-                  className="font-mono text-[10px] uppercase tracking-widest text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
-                >
-                  inboundcrew82@gmail.com
-                </a>
-              </div>
-            </div>
+            {/* Connect with us */}
+            <h4 className="mb-2 mt-6 font-mono text-[10px] uppercase tracking-[0.06em] font-bold text-[var(--accent)] border-b border-[var(--accent)] pb-1">
+              Connect with us
+            </h4>
+            <ul className="space-y-1.5 text-[13px]">
+              <li><a href="https://t.me/inboundreports" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Telegram</a></li>
+              <li><a href="https://x.com/inboundreports" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">X / Twitter</a></li>
+              <li><a href="https://www.facebook.com/InboundReports" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Facebook</a></li>
+              <li><a href="mailto:inboundcrew82@gmail.com" className="inline-flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">inboundcrew82@gmail.com</a></li>
+            </ul>
           </div>
         </div>
 

@@ -9,7 +9,7 @@ export function RelatedConcepts({ concepts }: RelatedConceptsProps) {
 
   return (
     <div>
-      <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--text-secondary)] mb-2">
+      <p className="font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
         Related Concepts
       </p>
       <div className="flex flex-wrap gap-2">

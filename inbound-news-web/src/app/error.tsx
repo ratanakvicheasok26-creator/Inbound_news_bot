@@ -17,7 +17,7 @@ export default function HomeError({
         <button
           type="button"
           onClick={reset}
-          className="inline-flex items-center justify-center h-[36px] border-2 border-[var(--text-primary)] px-4 font-mono text-[11px] uppercase tracking-[0.12em] font-bold text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
+          className="inline-flex items-center justify-center h-[36px] border-2 border-[var(--text-primary)] px-4 font-mono text-[11px] uppercase tracking-[0.06em] font-bold text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
         >
           Try again
         </button>

@@ -30,7 +30,7 @@ export function LegalPageLayout({
         </span>
         <h1 className="page-title mt-1">{title}</h1>
       </div>
-      <p className="font-mono text-[10px] uppercase tracking-widest text-[var(--text-secondary)] mt-6 mb-10 pb-6 border-b border-[var(--border)]">
+      <p className="font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)] mt-6 mb-10 pb-6 border-b border-[var(--border)]">
         Last Updated: {lastUpdated}
       </p>
     </>

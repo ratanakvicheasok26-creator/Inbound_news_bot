@@ -59,7 +59,7 @@ export function LocalLensBox({ category, storyTitle, storySummary }: LocalLensBo
 
   return (
     <div className="bg-[var(--text-primary)] p-5 text-inverted border-t-3 border-[var(--accent)]">
-      <p className="font-mono text-[10px] uppercase tracking-[0.12em] font-bold text-[var(--accent)] mb-2">
+      <p className="font-mono text-[10px] uppercase tracking-[0.06em] font-bold text-[var(--accent)] mb-2">
         Local Lens — Cambodia
       </p>
       {loading ? (
