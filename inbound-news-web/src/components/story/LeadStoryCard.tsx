@@ -5,7 +5,6 @@ import { DnaTag } from "./DnaTag"
 import { HypeRealityBar } from "./HypeRealityBar"
 import { JargonText } from "./JargonText"
 import Link from "next/link"
-import Image from "next/image"
 
 export function LeadStoryCard({ story }: { story: Story }) {
   const categoryLabel = getCategoryLabel(story.category || "")
@@ -26,6 +25,7 @@ export function LeadStoryCard({ story }: { story: Story }) {
         <span className="font-mono text-[11px] text-[var(--text-secondary)]">
           {formatDistanceToNow(story.created_at)}
         </span>
+        {isBreaking && <DnaTag type="breaking" label="Breaking" />}
       </div>
 
       <Link href={`/story/${story.id}`} className="group block">
@@ -34,42 +34,27 @@ export function LeadStoryCard({ story }: { story: Story }) {
         </h1>
       </Link>
 
-      <div className="mt-4 grid gap-6 md:grid-cols-[1fr_1fr]">
-        <div>
-          {story.summary_en && (
-            <JargonText
-              text={story.summary_en}
-              className="text-[18px] text-[var(--text-secondary)] leading-[1.6]"
-            />
-          )}
-
-          {tags.length > 0 && (
-            <div className="mt-4 flex items-center gap-2 flex-wrap">
-              {tags.includes("hype") && <DnaTag type="hype" label="Hype" />}
-              {tags.includes("kh_relevant") && <DnaTag type="kh" label="KH-relevant" />}
-              {tags.includes("new_concept") && <DnaTag type="concept" label="New concept" />}
-            </div>
-          )}
-
-          <div className="mt-4">
-            <HypeRealityBar score={hypeScore} showLabels />
-          </div>
-        </div>
-
-        <div className="relative w-full aspect-[16/9] bg-[var(--surface-alt)] overflow-hidden">
-          <Image
-            src="/window.svg"
-            alt=""
-            fill
-            className="object-cover"
-            priority
-            aria-hidden
+      <div className="mt-4 max-w-[65ch]">
+        {story.summary_en && (
+          <JargonText
+            text={story.summary_en}
+            className="text-[18px] text-[var(--text-secondary)] leading-[1.6]"
           />
-          {isBreaking && (
-            <div className="absolute top-3 left-3">
-              <DnaTag type="breaking" label="Breaking" />
-            </div>
-          )}
+        )}
+
+        {tags.length > 0 && (
+          <div className="mt-4 flex items-center gap-2 flex-wrap">
+            {tags.includes("hype") && <DnaTag type="hype" label="Hype" />}
+            {tags.includes("kh_relevant") && <DnaTag type="kh" label="KH-relevant" />}
+            {tags.includes("new_concept") && <DnaTag type="concept" label="New concept" />}
+          </div>
+        )}
+
+        <div className="mt-4">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">
+            Coverage intensity
+          </p>
+          <HypeRealityBar score={hypeScore} showLabels />
         </div>
       </div>
     </article>

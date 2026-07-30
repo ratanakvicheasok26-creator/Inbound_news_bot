@@ -322,7 +322,11 @@ def collect_new_entries(posted_ids: set[str], posted_titles: set[str] | None = N
                     logger.warning("Feed %s HTTP %d", feed_url, status)
                 continue
             except Exception:
-                logger.warning("Failed to fetch feed %s (unexpected error)", feed_url)
+                logger.warning(
+                    "Failed to fetch feed %s (unexpected error)",
+                    feed_url,
+                    exc_info=True,
+                )
                 continue
 
             completed += 1

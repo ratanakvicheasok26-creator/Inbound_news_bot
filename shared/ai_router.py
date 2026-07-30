@@ -109,6 +109,7 @@ class AIRouter:
             ))
 
         # Tier 2: OpenRouter
+        # Future: paid DeepSeek as additional tier — not wired.
         openrouter_keys = self._parse_keys(os.environ.get("OPENROUTER_API_KEY", ""))
         if openrouter_keys:
             providers.append(_ProviderConfig(

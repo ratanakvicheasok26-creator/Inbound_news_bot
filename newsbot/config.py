@@ -276,6 +276,7 @@ OPENROUTER_MODEL: str = os.environ.get(
 # can lose its :free tier with no notice. Check https://openrouter.ai/models
 # (filter: Price = Free) periodically and override via OPENROUTER_MODEL env var
 # if this default stops working.
+# Future: paid DeepSeek as additional tier — not wired.
 OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
 
 

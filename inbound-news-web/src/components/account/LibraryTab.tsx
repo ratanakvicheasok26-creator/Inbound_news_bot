@@ -118,8 +118,18 @@ export function LibraryTab() {
 
         {concepts.length === 0 ? (
           <div className="empty-state py-12">
-            <p className="story-title mb-2">No followed concepts</p>
-            <p>Visit a story and follow a concept to start tracking.</p>
+            <p className="story-title mb-2">No followed concepts yet</p>
+            <p>
+              Browse the{" "}
+              <Link href="/glossary" className="text-[var(--accent)] hover:underline">
+                glossary
+              </Link>{" "}
+              or explore{" "}
+              <Link href="/concept/llm" className="text-[var(--accent)] hover:underline">
+                concept pages
+              </Link>{" "}
+              to learn more. Follow from stories is not available yet.
+            </p>
           </div>
         ) : (
           <div className="flex flex-wrap gap-2">

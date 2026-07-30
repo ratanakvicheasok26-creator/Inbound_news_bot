@@ -1,20 +1,21 @@
-# Deploying the Inbound News Bot (Railway / Render)
+# Deploying Inbound Reports (Railway / Render)
 
-This bot needs to run 24/7 to catch the 5 AM / 5 PM scheduled posts — it can't rely on anyone's laptop staying open. This doc covers deploying it to either **Railway** or **Render**, both of which have free/cheap tiers that work for this.
+Inbound Reports has **two pipelines**. This doc is mainly for the **Telegram bot** worker (24/7 schedule). Website stories are filled by a **separate** ingestion path — the bot does **not** write to Supabase `stories`.
 
-Pick one — you don't need both. Railway is generally the faster setup; Render's free tier has more restrictions (see notes below).
+| Pipeline | How it runs | Writes |
+|---|---|---|
+| **Telegram bot** | Railway/Render `worker: python news_bot.py` | Channel + DMs only |
+| **Website ingestion** | Cron / Actions / manual `workers.ingest_apis` + `workers.dedup` | Supabase → Next.js |
+
+Pick **Railway** or **Render** for the bot — you don't need both. Railway is usually faster to set up; Render's free tier has more restrictions.
 
 ---
 
-## Before you start (either platform)
+## Before you start (Telegram bot)
 
-This bot is a **background worker** that long-polls Telegram. It also starts a small **HTTP health server** on `PORT` (default `10000`) at `/` and `/health` for platform health checks. Prefer a **worker** service type on Railway/Render; if the platform requires a web process, point health checks at `/health`.
+The bot long-polls Telegram and starts a small HTTP health server on `PORT` (default `10000`) at `/` and `/health`. Prefer a **worker** service; if the platform requires a web process, point health checks at `/health`.
 
-Make sure these files exist in the repo root (create them if missing):
-
-**`requirements.txt`** — keep in sync with the repo (includes `openai==1.82.0`, `google-genai`, Redis, Supabase, etc.)
-
-**`Procfile`** (no file extension, just `Procfile`)
+**`Procfile`**
 ```
 worker: python news_bot.py
 ```
@@ -24,125 +25,128 @@ worker: python news_bot.py
 python-3.12
 ```
 
-Commit and push both to the repo before deploying.
+Keep `requirements.txt` in sync with the repo.
 
-### Production checklist (beyond the two required secrets)
+### Production checklist (bot)
 
 | Variable | Required? | Why |
 |---|---|---|
 | `TELEGRAM_BOT_TOKEN` | **Yes** | Bot API |
 | `GROQ_API_KEY` | **Yes** | Primary AI |
-| `TELEGRAM_CHANNEL_ID` | Strongly recommended | Channel digests (without it, only `/start` DMs) |
-| `REDIS_URL` | Strongly recommended | Durable posted-id state across redeploys |
-| `GOOGLE_GEMINI_API_KEY` / `OPENROUTER_API_KEY` | Recommended | AI fallback chain |
-| `SUPABASE_*` | Optional for Telegram worker | Needed for website ingestion / health DB probe |
-| `BOT_MAX_FEEDS` | Optional (default 130) | Caps RSS fetches so digests finish within the global timeout |
+| `TELEGRAM_CHANNEL_ID` | Strongly recommended | Channel digests |
+| `REDIS_URL` | Strongly recommended | Durable state across redeploys |
+| `GOOGLE_GEMINI_API_KEY` / `OPENROUTER_API_KEY` | Recommended | AI fallback chain (Groq → OpenRouter → Gemini) |
+| `SUPABASE_*` | Optional for Telegram | Needed for website workers / health DB probe only |
+| `BOT_MAX_FEEDS` | Optional (default 130) | Caps RSS fetches for digest timeout |
 
-Website (Vercel/etc.) needs `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and you must run `supabase/migrations/001_ingestion_schema.sql` so `stories` / `articles` / `story_sources` exist.
+Website (Vercel/etc.) needs `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Apply SQL migrations under `supabase/migrations/` (including `003_match_stories.sql`) so `stories` / `articles` / `story_sources` and the `match_stories` RPC exist.
+
+**Future (not now):** paid DeepSeek AI tier and a Supabase plan upgrade — not wired in this repo yet.
 
 ---
 
-## Rotate all secrets (do this before / after any leak)
+## Website ingestion
 
-You cannot rotate provider keys from this repo — do it in each provider's console, then update Railway/Render **Environment Variables**. Never commit `.env`.
+The Telegram worker never populates the site. Run migrations, set worker env, then schedule:
 
-Checklist — revoke the old value, create a new one, then set it in the host:
+```bash
+python -m workers.ingest_apis
+python -m workers.dedup
+```
+
+Or use `.github/workflows/website-ingest.yml` (every 6 hours + `workflow_dispatch`).
+
+### Migrations
+
+1. Enable **pgvector** in Supabase (Dashboard → Extensions).
+2. Run `001_ingestion_schema.sql`, `002_profiles_and_auth.sql` (if using auth), `003_match_stories.sql`, then `004_profiles_insert_policy.sql`.
+
+### Worker environment
+
+| Variable | Required? | Why |
+|---|---|---|
+| `SUPABASE_URL` | **Yes** | Project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Yes** | Service-role writes (not anon) |
+| `GROQ_API_KEY` | Recommended | AI rewrite / shared router if used |
+| `COHERE_API_KEY` | Optional | Embeddings for dedup; Jaccard fallback if missing |
+| `NEWSDATA_API_KEY` | Optional | NewsData.io ingest |
+| `GOOGLE_GEMINI_API_KEY` / `OPENROUTER_API_KEY` | Optional | AI fallbacks |
+| `EXA_API_KEY` / `FIRECRAWL_API_KEY` / `CURRENTS_API_KEY` | Optional | Extra API sources |
+
+---
+
+## Rotate all secrets
+
+Rotate keys in each provider console, then update Railway/Render **Environment Variables**. Never commit `.env`.
 
 | Secret | Where to rotate | Env var(s) |
 |---|---|---|
-| Telegram bot token | [@BotFather](https://t.me/BotFather) → `/revoke` or new bot | `TELEGRAM_BOT_TOKEN` |
-| Groq API key(s) | [console.groq.com](https://console.groq.com) | `GROQ_API_KEY` (comma-separated OK) |
-| Gemini API key(s) | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | `GOOGLE_GEMINI_API_KEY` |
-| OpenRouter API key(s) | [openrouter.ai/keys](https://openrouter.ai/keys) | `OPENROUTER_API_KEY` |
-| Supabase service role | Supabase project → Settings → API | `SUPABASE_SERVICE_ROLE_KEY` (+ `SUPABASE_URL`) |
-| Redis password / URL | Upstash (or your Redis host) | `REDIS_URL` |
+| Telegram bot token | [@BotFather](https://t.me/BotFather) | `TELEGRAM_BOT_TOKEN` |
+| Groq | [console.groq.com](https://console.groq.com) | `GROQ_API_KEY` |
+| Gemini | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | `GOOGLE_GEMINI_API_KEY` |
+| OpenRouter | [openrouter.ai/keys](https://openrouter.ai/keys) | `OPENROUTER_API_KEY` |
+| Supabase service role | Project → Settings → API | `SUPABASE_SERVICE_ROLE_KEY` (+ `SUPABASE_URL`) |
+| Redis | Upstash (or host) | `REDIS_URL` |
+| Cohere / NewsData / etc. | Provider consoles | `COHERE_API_KEY`, `NEWSDATA_API_KEY`, … |
 
-Also re-check channel/group IDs if you recreate chats: `TELEGRAM_CHANNEL_ID`, `TELEGRAM_THREAD_ID`, `TELEGRAM_GROUP_CHAT_ID`.
-
-After rotating: redeploy (or restart) so the worker picks up the new variables. Delete any stale local `.env` copies that still hold old secrets.
+Redeploy/restart after rotating.
 
 ---
 
 ## Environment variables (match `.env.example`)
 
-Set these in Railway/Render **Variables** (not in git):
-
 **Telegram**
 - `TELEGRAM_BOT_TOKEN` (required)
-- `TELEGRAM_CHANNEL_ID`
-- `TELEGRAM_THREAD_ID`
-- `TELEGRAM_GROUP_CHAT_ID`
+- `TELEGRAM_CHANNEL_ID`, `TELEGRAM_THREAD_ID`, `TELEGRAM_GROUP_CHAT_ID`
 
-**Redis** (optional — persistent state across restarts)
-- `REDIS_URL` — e.g. `redis://default:PASSWORD@HOST:6379`
+**Redis** (optional)
+- `REDIS_URL`
 
-**Supabase** (bot → website)
+**Supabase** (optional for bot; **required** for website workers — not “bot → website”)
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
 
-**AI providers** (comma-separated keys for rotation)
-- `GROQ_API_KEY` (required)
-- `GOOGLE_GEMINI_API_KEY`
-- `OPENROUTER_API_KEY`
-- `OPENROUTER_MODEL` (optional override)
+**AI** (comma-separated keys for rotation)
+- `GROQ_API_KEY` (required for bot)
+- `GOOGLE_GEMINI_API_KEY`, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`
 
 **Scheduling / tuning** (optional — defaults in `newsbot/config.py`)
-- `POLL_INTERVAL_SECONDS`
-- `DIGEST_SCHEDULE_HOUR_AM` / `DIGEST_SCHEDULE_HOUR_PM`
-- `MAX_ITEMS_PER_FEED`, `MAX_ENTRY_AGE_HOURS`, `FEED_TIMEOUT_SECONDS`
-- `CLUSTER_SIMILARITY_THRESHOLD`
-- `PREPARE_ENTRIES_TIMEOUT_SECONDS`, `AI_HTTP_TIMEOUT_SECONDS`
-- `SPAM_FILTER_ENABLED`, `SPAM_BLOCK_NON_LATIN_SCRIPTS`
-- `DONATION_TEXT`, `DONATION_QR_IMAGE`, `DIGEST_HEADER_TEXT`
+- `POLL_INTERVAL_SECONDS`, `DIGEST_SCHEDULE_HOUR_AM` / `DIGEST_SCHEDULE_HOUR_PM`
+- `BOT_MAX_FEEDS`, `MAX_ITEMS_PER_FEED`, `MAX_ENTRY_AGE_HOURS`, `FEED_TIMEOUT_SECONDS`
+- `CLUSTER_SIMILARITY_THRESHOLD`, `PREPARE_ENTRIES_TIMEOUT_SECONDS`, `AI_HTTP_TIMEOUT_SECONDS`
+- `SPAM_FILTER_ENABLED`, `DONATION_TEXT`, `DIGEST_HEADER_TEXT`, …
 
 ---
 
 ## Option A: Railway
 
-1. Go to [railway.app](https://railway.app) and sign in with GitHub
-2. Click **New Project → Deploy from GitHub repo**
-3. Select `sothunly-alt/Inbound_news_bot`
-4. Railway will detect the `Procfile` and set up a worker service automatically. If it instead tries to spin up a web service, go to the service's **Settings → Deploy** and manually set the **Start Command** to:
-   ```
-   python news_bot.py
-   ```
-5. Go to the service's **Variables** tab and add the secrets from the list above (at minimum `TELEGRAM_BOT_TOKEN` and `GROQ_API_KEY`).
-6. Deploy. Check the **Logs** tab — you should see a "Bot running..." line mentioning the 5 AM / 5 PM digest schedule.
-7. Test it — send `/fetch` to the bot on Telegram and confirm the logs show activity and a message lands in the subscribed chat.
-
-**Cost note:** Railway's free tier gives a small monthly credit (check current limits on their pricing page — this changes over time). A lightweight polling bot like this uses very little compute, so it should comfortably fit unless the trial credit runs out — worth checking the billing tab after the first week.
-
----
+1. [railway.app](https://railway.app) → **New Project → Deploy from GitHub** → `sothunly-alt/Inbound_news_bot`
+2. Prefer Procfile worker; else set start command to `python news_bot.py`
+3. Add Variables (at least `TELEGRAM_BOT_TOKEN`, `GROQ_API_KEY`)
+4. Deploy; logs should mention the 5 AM / 5 PM Phnom Penh digest schedule
+5. Test `/fetch` on Telegram
 
 ## Option B: Render
 
-1. Go to [render.com](https://render.com) and sign in with GitHub
-2. Click **New → Background Worker** (preferred) — or a Web Service if you need the platform to hit `/health` on `PORT`
-3. Connect the `sothunly-alt/Inbound_news_bot` repo
-4. Configure:
-   - **Environment**: Python 3
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `python news_bot.py`
-5. Under **Environment Variables**, add the secrets from the list above (at minimum `TELEGRAM_BOT_TOKEN` and `GROQ_API_KEY`). Also set `REDIS_URL` and `TELEGRAM_CHANNEL_ID` for production.
-6. Click **Create Background Worker** and wait for the build/deploy to finish
-7. Check the **Logs** tab for the "Bot running..." message, then test with `/fetch`
+1. [render.com](https://render.com) → **Background Worker** (or Web Service if you need `/health` on `PORT`)
+2. Build: `pip install -r requirements.txt` · Start: `python news_bot.py`
+3. Set the same secrets; prefer `REDIS_URL` + `TELEGRAM_CHANNEL_ID` in production
+4. Confirm logs, then test `/fetch`
 
-**Free tier note:** Render's free tier for background workers may have monthly runtime limits or spin-down behavior — check Render's current free tier docs before relying on it long-term, since these limits change. If the free tier doesn't support always-on background workers, their cheapest paid tier (a few dollars/month) is the reliable option for a bot that needs to fire on a schedule.
+**Free tier note:** Render free workers may spin down or hit runtime limits — check current docs.
 
 ---
 
-## After deploying (either platform)
+## After deploying
 
-- **`subscribers.json` and `posted_ids.json`** are created locally at runtime and are gitignored — meaning on a fresh deploy, they start empty. With `REDIS_URL` set, subscribers and posted IDs persist across restarts. Without Redis, everyone may need to send `/start` again after a fresh deploy.
-- **Only one instance of the bot can poll Telegram at a time** with the same token. Once it's deployed and running on Railway/Render, make sure nobody is also running `python news_bot.py` locally with the same `TELEGRAM_BOT_TOKEN` — you'll get a `Conflict: terminated by other getUpdates request` error if two instances run simultaneously.
-- If you rotate any secret, update Environment Variables on Railway/Render — never commit `.env`.
+- With `REDIS_URL`, subscribers and posted IDs persist. Without Redis, fresh deploys may reset local JSON state.
+- **One** long-poll instance per bot token (local + cloud together → `Conflict` on `getUpdates`).
+- Never commit `.env`. Website content still needs the ingestion workers (or Actions cron), not just the bot.
 
-## Quick platform comparison
+## Quick comparison
 
 | | Railway | Render |
 |---|---|---|
-| Setup speed | Faster, auto-detects Procfile | Slightly more manual (must pick "Background Worker" explicitly) |
-| Free tier | Small monthly usage credit | Free tier may not support always-on workers — check current docs |
-| Best for | Getting this running today | Fine too, just double-check worker support on free tier first |
-
-If unsure, try Railway first — it's the more forgiving setup for a first deploy.
+| Setup | Often auto-detects Procfile | Pick Background Worker explicitly |
+| Free tier | Small monthly credit | May not suit always-on workers |
+| Best for | Fast first deploy | Fine if worker support checks out |

@@ -93,6 +93,27 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.skip-to-content {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 300;
+  padding: 8px 16px;
+  background: var(--text-primary);
+  color: var(--bg);
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+}
+
+.skip-to-content:focus {
+  left: 16px;
+  top: 16px;
+}
+
 /* ===== Typography — Brutalist Hierarchy ===== */
 h1, h2, h3, h4 {
   font-family: var(--font-sans), system-ui, sans-serif;

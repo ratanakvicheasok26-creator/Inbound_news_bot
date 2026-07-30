@@ -2,6 +2,7 @@ import type { Article } from "@/lib/types"
 import { formatDistanceToNow } from "@/lib/utils"
 import { TrustRadar } from "./TrustRadar"
 import { ExternalLink } from "lucide-react"
+import Link from "next/link"
 
 interface SourceTrust {
   primary_sourcing: number
@@ -17,6 +18,23 @@ interface SourceComparisonRowProps {
   trustAxes?: SourceTrust
   hypeScore?: number
   framing?: string
+}
+
+/** Domains that have dedicated /source/[slug] pages. */
+const SOURCE_DOMAIN_SLUGS: Record<string, string> = {
+  "reuters.com": "reuters",
+  "techcrunch.com": "techcrunch",
+  "theverge.com": "the-verge",
+  "arstechnica.com": "arstechnica",
+}
+
+function sourcePageSlug(domain: string): string | null {
+  const normalized = domain.toLowerCase().replace(/^www\./, "")
+  if (SOURCE_DOMAIN_SLUGS[normalized]) return SOURCE_DOMAIN_SLUGS[normalized]
+  for (const [d, slug] of Object.entries(SOURCE_DOMAIN_SLUGS)) {
+    if (normalized === d || normalized.endsWith(`.${d}`)) return slug
+  }
+  return null
 }
 
 function deriveTrustAxes(article: Article, baseScore: number): SourceTrust {
@@ -55,6 +73,7 @@ export function SourceComparisonRow({ article, trustScore = 3, trustAxes, framin
   const axes = trustAxes || deriveTrustAxes(article, trustScore)
   const hypeScore = deriveHypeScore(article)
   const domain = article.source_domain || ""
+  const sourceSlug = domain ? sourcePageSlug(domain) : null
 
   return (
     <div className="source-row">
@@ -66,9 +85,18 @@ export function SourceComparisonRow({ article, trustScore = 3, trustAxes, framin
               {article.source_name || domain || "Unknown"}
             </span>
             {domain && (
-              <span className="font-mono text-[10px] text-[var(--text-secondary)] bg-[var(--surface-alt)] px-1.5 py-0.5 font-medium border border-[var(--border)]">
-                {domain}
-              </span>
+              sourceSlug ? (
+                <Link
+                  href={`/source/${sourceSlug}`}
+                  className="font-mono text-[10px] text-[var(--accent)] bg-[var(--surface-alt)] px-1.5 py-0.5 font-medium border border-[var(--border)] hover:border-[var(--accent)] transition-colors"
+                >
+                  {domain}
+                </Link>
+              ) : (
+                <span className="font-mono text-[10px] text-[var(--text-secondary)] bg-[var(--surface-alt)] px-1.5 py-0.5 font-medium border border-[var(--border)]">
+                  {domain}
+                </span>
+              )
             )}
           </div>
 
@@ -89,18 +117,18 @@ export function SourceComparisonRow({ article, trustScore = 3, trustAxes, framin
           <div className="mt-3 grid grid-cols-2 gap-4">
             <div>
               <p className="font-mono text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
-                Hype Level
+                Coverage intensity
               </p>
               <div className="relative h-[8px] bg-gradient-to-r from-[var(--text-primary)] via-[var(--text-secondary)] to-[var(--red-alert)]">
                 <div
                   className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-[8px] h-[8px] rounded-full border border-[var(--text-primary)] bg-[var(--surface)] ${hypeScore > 75 ? "!border-[var(--red-alert)]" : ""}`}
                   style={{ left: `${hypeScore}%` }}
-                  title={`Hype: ${hypeScore}/100`}
+                  title={`Coverage: ${hypeScore}/100`}
                 />
               </div>
               <div className="flex justify-between mt-1">
-                <span className="font-mono text-[10px] text-[var(--text-secondary)]">Substance</span>
-                <span className="font-mono text-[10px] text-[var(--text-secondary)]">Hype</span>
+                <span className="font-mono text-[10px] text-[var(--text-secondary)]">Quiet</span>
+                <span className="font-mono text-[10px] text-[var(--text-secondary)]">Wide</span>
               </div>
             </div>
             <div>

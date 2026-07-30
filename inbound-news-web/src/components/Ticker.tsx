@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { getAllStories } from "@/lib/posts"
 import { formatDistanceToNow } from "@/lib/utils"
 
@@ -11,15 +12,16 @@ export async function Ticker() {
       <div className="ticker-track">
         <span className="ticker-label">Latest Stories</span>
         {items.map((story) => (
-          <span
+          <Link
             key={story.id}
+            href={`/story/${story.id}`}
             className={`ticker-item ${story.category === "cybersecurity" ? "breaking" : ""}`}
           >
             <span className="truncate">{story.title}</span>
             <span className="text-[var(--accent)] text-[10px] shrink-0">
               {formatDistanceToNow(story.created_at)}
             </span>
-          </span>
+          </Link>
         ))}
       </div>
     </div>

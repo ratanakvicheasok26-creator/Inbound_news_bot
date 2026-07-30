@@ -89,9 +89,12 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="pb-14 md:pb-0">
+        <a href="#main-content" className="skip-to-content">
+          Skip to content
+        </a>
         <Header />
         <Ticker />
-        <main>{children}</main>
+        <main id="main-content">{children}</main>
         <Footer />
         <MobileBottomNav />
       </body>

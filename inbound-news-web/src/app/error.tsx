@@ -12,7 +12,7 @@ export default function HomeError({
       <div className="empty-state">
         <p className="page-title mb-3">Something went wrong</p>
         <p className="mb-6 normal-case tracking-normal font-sans text-[var(--text-secondary)]">
-          {error.message || "The home page failed to load."}
+          {error.message || "Something went wrong. Please try again."}
         </p>
         <button
           type="button"

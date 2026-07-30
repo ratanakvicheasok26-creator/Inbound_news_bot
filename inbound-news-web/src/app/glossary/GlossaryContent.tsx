@@ -73,7 +73,11 @@ export function GlossaryContent() {
 
         <div className="space-y-0">
           {filtered.map((term) => (
-            <article key={term.slug} className="py-6 border-b border-[var(--border)] last:border-0">
+            <article
+              key={term.slug}
+              id={term.slug}
+              className="py-6 border-b border-[var(--border)] last:border-0 scroll-mt-24"
+            >
               <div className="flex items-start justify-between gap-4 mb-2">
                 <div>
                   <h2 className="story-title text-[20px]">

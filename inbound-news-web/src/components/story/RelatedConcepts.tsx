@@ -1,6 +1,8 @@
 import Link from "next/link"
 
-export type RelatedConcept = string | { label: string; slug: string }
+export type RelatedConcept =
+  | string
+  | { label: string; slug: string; href?: string }
 
 const SLUG_ALIASES: Record<string, string> = {
   transformer: "transformers",
@@ -10,10 +12,17 @@ const SLUG_ALIASES: Record<string, string> = {
   gpu: "gpu",
 }
 
-function resolveConcept(concept: RelatedConcept): { label: string; slug: string } {
-  if (typeof concept !== "string") return concept
+function resolveConcept(concept: RelatedConcept): { label: string; slug: string; href: string } {
+  if (typeof concept !== "string") {
+    return {
+      label: concept.label,
+      slug: concept.slug,
+      href: concept.href || `/concept/${concept.slug}`,
+    }
+  }
   const key = concept.toLowerCase().replace(/\s+/g, "-")
-  return { label: concept, slug: SLUG_ALIASES[key] || key }
+  const slug = SLUG_ALIASES[key] || key
+  return { label: concept, slug, href: `/concept/${slug}` }
 }
 
 interface RelatedConceptsProps {
@@ -30,11 +39,11 @@ export function RelatedConcepts({ concepts }: RelatedConceptsProps) {
       </p>
       <div className="flex flex-wrap gap-2">
         {concepts.map((concept) => {
-          const { label, slug } = resolveConcept(concept)
+          const { label, slug, href } = resolveConcept(concept)
           return (
             <Link
               key={slug}
-              href={`/concept/${slug}`}
+              href={href}
               className="px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] font-mono text-[11px] text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
             >
               {label}

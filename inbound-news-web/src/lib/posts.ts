@@ -1,6 +1,10 @@
 import { supabase } from "./supabase"
 import type { Story, Article, StoryWithArticles } from "./types"
 
+/**
+ * Fetch helpers return [] / null on failure so SSR pages can show empty states.
+ * Empty vs error are indistinguishable to callers — check server logs for failures.
+ */
 export async function getAllStories(): Promise<Story[]> {
   try {
     const { data, error } = await supabase
@@ -14,7 +18,8 @@ export async function getAllStories(): Promise<Story[]> {
       return []
     }
     return data || []
-  } catch {
+  } catch (err) {
+    console.error(err)
     return []
   }
 }
@@ -33,7 +38,8 @@ export async function getStoriesByCategory(category: string): Promise<Story[]> {
       return []
     }
     return data || []
-  } catch {
+  } catch (err) {
+    console.error(err)
     return []
   }
 }
@@ -82,7 +88,8 @@ export async function getStoryById(id: string): Promise<StoryWithArticles | null
       primary_source_domain: primary?.source_domain || null,
       articles,
     }
-  } catch {
+  } catch (err) {
+    console.error(err)
     return null
   }
 }
@@ -139,7 +146,8 @@ export async function getStoriesBySourceDomain(domain: string): Promise<Story[]>
       return []
     }
     return stories || []
-  } catch {
+  } catch (err) {
+    console.error(err)
     return []
   }
 }
@@ -171,7 +179,8 @@ export async function getStoryStats(): Promise<{
       sourceCount: uniqueSources.size,
       categoryCount: uniqueCategories.size,
     }
-  } catch {
+  } catch (err) {
+    console.error(err)
     return { storyCount: 0, sourceCount: 0, categoryCount: 0 }
   }
 }

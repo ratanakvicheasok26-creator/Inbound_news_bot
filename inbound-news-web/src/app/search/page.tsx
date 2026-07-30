@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback, Suspense } from "react"
-import { useSearchParams } from "next/navigation"
+import { useState, useEffect, useCallback, Suspense, FormEvent } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { StoryRow } from "@/components/story/StoryRow"
 import type { Story, Article } from "@/lib/types"
@@ -9,8 +9,10 @@ import { Search } from "lucide-react"
 
 function SearchResults() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const q = searchParams.get("q") || ""
 
+  const [input, setInput] = useState(q)
   const [stories, setStories] = useState<Story[]>([])
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(false)
@@ -35,8 +37,21 @@ function SearchResults() {
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
+    setInput(q)
     if (q) runSearch(q)
+    else {
+      setStories([])
+      setArticles([])
+      setSearched(false)
+    }
   }, [q, runSearch])
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    const trimmed = input.trim()
+    if (trimmed.length < 2) return
+    router.push(`/search?q=${encodeURIComponent(trimmed)}`)
+  }
 
   const totalResults = stories.length + articles.length
 
@@ -59,12 +74,39 @@ function SearchResults() {
           )}
         </div>
 
+        {/* On-page search form */}
+        <form onSubmit={handleSubmit} className="mt-6 mb-8">
+          <div className="flex items-stretch border-2 border-[var(--text-primary)]">
+            <span className="flex items-center justify-center w-11 shrink-0 border-r-2 border-[var(--text-primary)] text-[var(--text-secondary)]">
+              <Search className="h-4 w-4" aria-hidden />
+            </span>
+            <input
+              type="search"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Search stories, sources, topics..."
+              aria-label="Search query"
+              className="min-w-0 flex-1 px-3 md:px-4 h-11 bg-transparent font-mono text-[14px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none"
+              autoComplete="off"
+              enterKeyHint="search"
+            />
+            <button
+              type="submit"
+              className="shrink-0 px-4 md:px-5 h-11 bg-[var(--text-primary)] text-inverted font-mono text-[11px] uppercase tracking-[0.06em] font-bold hover:opacity-90 transition-opacity"
+            >
+              Search
+            </button>
+          </div>
+          <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">
+            Enter at least 2 characters
+          </p>
+        </form>
+
         {/* No query state */}
         {!q && (
-          <div className="py-20 text-center">
-            <Search className="h-8 w-8 mx-auto mb-4 text-[var(--text-secondary)]" />
+          <div className="py-12 text-center">
             <p className="font-mono text-[12px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">
-              Use the search icon in the header to search stories and sources.
+              Type a keyword above to search stories and sources.
             </p>
           </div>
         )}

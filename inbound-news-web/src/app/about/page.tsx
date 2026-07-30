@@ -4,7 +4,7 @@ import { LegalPageLayout } from "@/components/legal/LegalPageLayout"
 
 export const metadata: Metadata = {
   title: "About — Inbound Reports",
-  description: "About Inbound Reports — bilingual tech news aggregation from Phnom Penh, Cambodia.",
+  description: "About Inbound Reports — tech news aggregation from Phnom Penh, Cambodia.",
 }
 
 export default function AboutPage() {
@@ -20,10 +20,12 @@ export default function AboutPage() {
 
       <h2>What this is</h2>
       <p>
-        Inbound Reports is a bilingual (English/Khmer) tech news aggregator based in Phnom Penh.
-        We collect stories from a shared source network, cluster related coverage, and present
-        concise summaries with literacy tools — jargon highlighting, an ELI5 reading tier, and a
-        hype-versus-substance score — so readers can decode tech news instead of only scrolling it.
+        Inbound Reports is a tech news aggregator based in Phnom Penh. We collect stories from a
+        shared source network, cluster related coverage, and present concise summaries with literacy
+        tools — jargon highlighting, an ELI5 reading tier, and a coverage-intensity signal — so
+        readers can decode tech news instead of only scrolling it. The interface includes a Khmer
+        language toggle and glossary terms with Khmer definitions; full story Khmer translations
+        are planned (see our methodology page).
       </p>
 
       <h2>Source network</h2>

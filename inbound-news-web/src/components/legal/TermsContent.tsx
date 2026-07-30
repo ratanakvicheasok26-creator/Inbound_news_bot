@@ -24,7 +24,7 @@ export function TermsContent() {
       <FadeIn>
         <p>
           Welcome to <strong>Inbound Reports</strong> (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;),
-          operated from Phnom Penh, Cambodia. By accessing or using our website at inboundreporter.com
+          operated from Phnom Penh, Cambodia. By accessing or using our website at inboundreports.com
           and any associated services (collectively, the &quot;Service&quot;), you agree to be bound by
           these Terms of Service. If you do not agree to all terms, do not use the Service.
         </p>

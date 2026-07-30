@@ -94,25 +94,57 @@ def _jaccard_similarity(a: str, b: str) -> float:
 
 
 def _fetch_unprocessed(supabase, limit: int = 500) -> list[dict[str, Any]]:
-    """Fetch articles that haven't been linked to a story yet."""
-    result = supabase.table("articles").select("*").not_.in_(
-        "id",
-        supabase.table("story_sources").select("article_id")
-    ).order("ingested_at", desc=True).limit(limit).execute()
+    """Fetch articles that haven't been linked to a story yet.
 
-    return result.data or []
+    Two-step query: load recent story_sources article_ids, then filter articles
+    in Python. Nested ``not_.in_(subquery)`` is fragile with PostgREST.
+    """
+    linked_result = (
+        supabase.table("story_sources")
+        .select("article_id")
+        .limit(max(limit * 20, 5000))
+        .execute()
+    )
+    linked_ids = {
+        row["article_id"]
+        for row in (linked_result.data or [])
+        if row.get("article_id")
+    }
+
+    # Over-fetch recent articles, then drop ones already linked.
+    fetch_n = limit * 3 if linked_ids else limit
+    articles_result = (
+        supabase.table("articles")
+        .select("*")
+        .order("ingested_at", desc=True)
+        .limit(fetch_n)
+        .execute()
+    )
+    articles = articles_result.data or []
+    unprocessed = [a for a in articles if a.get("id") not in linked_ids]
+    return unprocessed[:limit]
 
 
 def _search_similar_stories(supabase, embedding: list[float], threshold: float = 0.85) -> str | None:
-    """Search for existing stories with similar embeddings. Returns story_id or None."""
+    """Search for existing stories with similar embeddings. Returns story_id or None.
+
+    On RPC failure, logs a warning and returns None so the caller can use Jaccard.
+    """
     import json
     embedding_str = json.dumps(embedding)
 
-    result = supabase.rpc("match_stories", {
-        "query_embedding": embedding_str,
-        "match_threshold": threshold,
-        "match_count": 1,
-    }).execute()
+    try:
+        result = supabase.rpc("match_stories", {
+            "query_embedding": embedding_str,
+            "match_threshold": threshold,
+            "match_count": 1,
+        }).execute()
+    except Exception as exc:
+        logger.warning(
+            "match_stories RPC failed (%s) — Jaccard fallback will run",
+            exc,
+        )
+        return None
 
     matches = result.data or []
     if matches:
@@ -230,6 +262,10 @@ def _run_inner() -> None:
 
             if use_embeddings and embedding is not None:
                 story_id = _search_similar_stories(supabase, embedding, _SIMILARITY_THRESHOLD)
+                if story_id is None:
+                    story_id = _search_similar_stories_jaccard(
+                        supabase, article.get("title", ""), threshold=0.6
+                    )
             else:
                 story_id = _search_similar_stories_jaccard(
                     supabase, article.get("title", ""), threshold=0.6
@@ -242,10 +278,14 @@ def _run_inner() -> None:
                 _create_story(supabase, article, embedding)
                 new_stories += 1
 
-        except Exception:
+        except Exception as exc:
             errors += 1
-            logger.warning("Failed to process article '%.60s' (id=%s)",
-                           article.get("title", ""), article.get("id"))
+            logger.warning(
+                "Failed to process article '%.60s' (id=%s): %s",
+                article.get("title", ""),
+                article.get("id"),
+                exc,
+            )
             continue
 
     logger.info("Dedup complete: %d new stories, %d merged, %d errors",

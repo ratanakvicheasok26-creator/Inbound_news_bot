@@ -6,7 +6,7 @@ export default function DonatePage() {
     <div className="container">
       <section className="py-10 max-w-[640px] mx-auto">
         <div className="section-header">
-          <h1 className="page-title">Support Inbound</h1>
+          <h1 className="page-title">Support Inbound Reports</h1>
         </div>
 
         <p className="text-[16px] text-[var(--text-secondary)] leading-[1.7] mb-8 max-w-[65ch]">

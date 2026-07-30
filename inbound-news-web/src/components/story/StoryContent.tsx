@@ -14,13 +14,66 @@ import { DnaTag } from "@/components/story/DnaTag"
 import { GLOSSARY_TERMS } from "@/lib/glossary"
 import { getCategoryLabel } from "@/lib/categories"
 import { formatDistanceToNow } from "@/lib/utils"
-import { trackStoryRead, recordTierSwitch, recordSourceComparison, recordJargonTap } from "@/lib/profile"
+import {
+  getProfile,
+  trackStoryRead,
+  recordTierSwitch,
+  recordSourceComparison,
+  recordJargonTap,
+} from "@/lib/profile"
 import type { StoryWithArticles, GlossaryTerm } from "@/lib/types"
 import { ArrowLeft, Newspaper } from "lucide-react"
 import Link from "next/link"
 
 interface StoryContentProps {
   story: StoryWithArticles
+}
+
+/** Concept page slugs that have dedicated /concept/[slug] pages. */
+const KNOWN_CONCEPT_SLUGS: Record<string, { label: string; slug: string }> = {
+  transformer: { label: "Transformer", slug: "transformers" },
+  transformers: { label: "Transformers", slug: "transformers" },
+  rag: { label: "RAG", slug: "rag" },
+  llm: { label: "LLM", slug: "llm" },
+  gpu: { label: "GPU", slug: "gpu" },
+}
+
+function deriveRelatedConcepts(
+  tags: string[],
+  title: string,
+  summary: string
+): { label: string; slug: string; href: string }[] {
+  const found = new Map<string, { label: string; slug: string; href: string }>()
+
+  for (const tag of tags) {
+    const key = tag.toLowerCase().replace(/\s+/g, "-")
+    const known = KNOWN_CONCEPT_SLUGS[key]
+    if (known) {
+      found.set(known.slug, { ...known, href: `/concept/${known.slug}` })
+    }
+  }
+
+  const haystack = `${title} ${summary}`
+  for (const term of GLOSSARY_TERMS) {
+    const needle = term.term_en.toLowerCase()
+    const re = new RegExp(
+      `(?:^|[^a-z0-9])${needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:[^a-z0-9]|$)`,
+      "i"
+    )
+    if (!re.test(haystack)) continue
+    const known = KNOWN_CONCEPT_SLUGS[term.slug]
+    if (known) {
+      found.set(known.slug, { ...known, href: `/concept/${known.slug}` })
+    } else {
+      found.set(term.slug, {
+        label: term.term_en,
+        slug: term.slug,
+        href: `/glossary#${term.slug}`,
+      })
+    }
+  }
+
+  return Array.from(found.values())
 }
 
 function deriveTierSummary(summary: string, tier: "eli5" | "standard" | "deep"): string {
@@ -72,6 +125,17 @@ export function StoryContent({ story }: StoryContentProps) {
     trackStoryRead({ id: story.id, title: story.title, category: story.category || "" })
   }, [story.id, story.title, story.category])
 
+  useEffect(() => {
+    try {
+      const tier = getProfile().preferences?.defaultTier
+      if (tier === "eli5" || tier === "standard" || tier === "deep") {
+        setActiveTier(tier)
+      }
+    } catch {
+      // Soft-fail when profile helpers are unavailable
+    }
+  }, [])
+
   const handleTierChange = useCallback((tier: "eli5" | "standard" | "deep") => {
     setActiveTier((prev) => {
       if (prev !== tier) recordTierSwitch()
@@ -84,6 +148,7 @@ export function StoryContent({ story }: StoryContentProps) {
   const tags = story.tags || []
   const isHype = tags.includes("hype")
   const hypeScore = Math.min(100, 30 + (story.source_count || 1) * 8)
+  const relatedConcepts = deriveRelatedConcepts(tags, story.title, story.summary_en || "")
 
   useEffect(() => {
     if (!sourceViewed.current && articles.length > 0) {
@@ -138,6 +203,9 @@ export function StoryContent({ story }: StoryContentProps) {
         )}
 
         <div className="mt-4 max-w-md">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">
+            Coverage intensity
+          </p>
           <HypeRealityBar score={hypeScore} showLabels />
         </div>
       </header>
@@ -185,16 +253,11 @@ export function StoryContent({ story }: StoryContentProps) {
         </section>
       )}
 
-      <section className="py-6">
-        <RelatedConcepts
-          concepts={[
-            { label: "Transformer", slug: "transformers" },
-            { label: "RAG", slug: "rag" },
-            { label: "LLM", slug: "llm" },
-            { label: "GPU", slug: "gpu" },
-          ]}
-        />
-      </section>
+      {relatedConcepts.length > 0 && (
+        <section className="py-6">
+          <RelatedConcepts concepts={relatedConcepts} />
+        </section>
+      )}
 
       {articles.length > 0 && (
         <section className="py-8">
@@ -206,6 +269,9 @@ export function StoryContent({ story }: StoryContentProps) {
           </div>
 
           <div className="mb-6">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">
+              Coverage intensity
+            </p>
             <HypeRealityBar
               score={hypeScore}
               sources={articles.map((a) => ({
