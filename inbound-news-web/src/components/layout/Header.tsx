@@ -183,17 +183,7 @@ export function Header() {
 
             {/* TIER 3 — Main Navigation (desktop only, shown in expanded state) */}
             <div className="hidden md:grid grid-cols-3 items-center px-4 md:px-10 h-[44px]">
-              <nav className="flex justify-start items-center">
-                <button
-                  type="button"
-                  className="flex items-center justify-center min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 md:hidden cursor-pointer touch-manipulation"
-                  onClick={() => setMobileOpen(prev => !prev)}
-                  aria-label="Toggle menu"
-                  aria-expanded={mobileOpen}
-                >
-                  <Menu className="h-5 w-5 pointer-events-none" />
-                </button>
-              </nav>
+              <nav />
               <nav className="flex justify-center items-center gap-4 md:gap-6">
                 {centerLinks.map((link) => (
                   <Link

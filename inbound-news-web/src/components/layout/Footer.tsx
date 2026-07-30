@@ -19,7 +19,7 @@ export function Footer() {
               <Image src="/logo-dark.png" alt="Inbound Reports" width={1983} height={467} className="block h-[28px] w-auto dark:hidden" />
               <Image src="/logo-light.png" alt="Inbound Reports" width={1982} height={467} className="hidden h-[28px] w-auto dark:block" />
             </Link>
-            <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed max-w-[280px]">
+            <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed max-w-[280px] md:max-w-none">
               Independent technology journalism, published from Phnom Penh, Cambodia.
               Aggregating from a dynamically scaling network of 900+ tech sources.
             </p>

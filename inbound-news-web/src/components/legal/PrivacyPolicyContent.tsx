@@ -108,7 +108,7 @@ export function PrivacyPolicyContent() {
         </div>
 
         {/* Mobile ToC */}
-        <div className="md:hidden mb-8">
+        <div className="lg:hidden mb-8">
           <button
             onClick={() => setMobileTocOpen(!mobileTocOpen)}
             className="w-full flex items-center justify-between border border-[var(--border)] rounded-lg px-4 py-3 bg-[var(--surface)] text-sm font-medium text-[var(--text-primary)] hover:border-[var(--text-secondary)] transition-colors"

@@ -173,13 +173,6 @@ a:hover {
 }
 
 /* ===== Header ===== */
-header {
-  border-bottom: 1px solid var(--text-primary);
-  background: var(--bg);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
 
 /* ===== Section Headers (numbered) ===== */
 .section-header {
