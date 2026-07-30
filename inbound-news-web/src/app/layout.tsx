@@ -33,6 +33,10 @@ export const metadata: Metadata = {
   title: "Inbound Reports — Decode the Tech.",
   description:
     "Independent technology journalism from Phnom Penh — startups, AI, cybersecurity, and more.",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 /** Sync localStorage → cookie on first visit / when cookie missing; apply theme ASAP. */
