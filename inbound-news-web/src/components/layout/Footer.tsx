@@ -7,7 +7,7 @@ export function Footer() {
     <footer className="border-t-2 border-[var(--text-primary)]">
       {/* Massive headline */}
       <div className="overflow-hidden py-12 md:py-20">
-        <h2 className="text-[64px] md:text-[96px] lg:text-[120px] font-extrabold leading-[0.85] tracking-[-0.04em] text-[var(--accent)] whitespace-nowrap">
+        <h2 className="text-[max(7vw,32px)] sm:text-[64px] md:text-[96px] lg:text-[120px] font-extrabold leading-[0.85] tracking-[-0.04em] text-[var(--accent)] whitespace-nowrap">
           DECODE THE TECH.
         </h2>
       </div>

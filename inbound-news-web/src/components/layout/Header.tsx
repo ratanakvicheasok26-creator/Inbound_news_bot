@@ -185,12 +185,13 @@ export function Header() {
             <div className="hidden md:grid grid-cols-3 items-center px-4 md:px-10 h-[44px]">
               <nav className="flex justify-start items-center">
                 <button
-                  className="flex items-center justify-center w-8 h-8 md:hidden"
-                  onClick={() => (mobileOpen ? closeMobileMenu() : setMobileOpen(true))}
+                  type="button"
+                  className="flex items-center justify-center min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 md:hidden cursor-pointer touch-manipulation"
+                  onClick={() => setMobileOpen(prev => !prev)}
                   aria-label="Toggle menu"
                   aria-expanded={mobileOpen}
                 >
-                  <Menu className="h-4 w-4" />
+                  <Menu className="h-5 w-5 pointer-events-none" />
                 </button>
               </nav>
               <nav className="flex justify-center items-center gap-4 md:gap-6">
@@ -250,12 +251,13 @@ export function Header() {
             {/* Left — hamburger on mobile, logo+fade on desktop */}
             <nav className="flex items-center gap-2">
               <button
-                className="flex items-center justify-center w-8 h-8 md:hidden"
-                onClick={() => (mobileOpen ? closeMobileMenu() : setMobileOpen(true))}
+                type="button"
+                className="flex items-center justify-center min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 md:hidden cursor-pointer touch-manipulation"
+                onClick={() => setMobileOpen(prev => !prev)}
                 aria-label="Toggle menu"
                 aria-expanded={mobileOpen}
               >
-                <Menu className="h-4 w-4" />
+                <Menu className="h-5 w-5 pointer-events-none" />
               </button>
               <Link href="/" className={`hidden md:block transition-all duration-[250ms] ${
                 scrolled ? "opacity-100" : "opacity-0 pointer-events-none"
