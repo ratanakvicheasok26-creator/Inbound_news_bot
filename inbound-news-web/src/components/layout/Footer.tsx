@@ -70,7 +70,8 @@ export function Footer() {
               Connect with us
             </h4>
             <ul className="space-y-1.5 text-[13px]">
-              <li><a href="https://t.me/inboundreports" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Telegram</a></li>
+              <li><a href="https://t.me/+n3p4DMJ5mspmMGE1" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Telegram (English)</a></li>
+              <li><a href="https://t.me/+XGZesNq7wqsxYWE1" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Telegram (Khmer)</a></li>
               <li><a href="https://x.com/inboundreports" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">X / Twitter</a></li>
               <li><a href="https://www.facebook.com/InboundReports" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Facebook</a></li>
               <li><a href="mailto:inboundcrew82@gmail.com" className="inline-flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">inboundcrew82@gmail.com</a></li>

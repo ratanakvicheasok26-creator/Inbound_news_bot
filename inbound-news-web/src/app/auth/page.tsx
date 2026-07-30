@@ -22,6 +22,31 @@ export default function AuthPage() {
 
     try {
       if (mode === "sign-up") {
+        if (password.length < 8) {
+          setError("Password must be at least 8 characters.")
+          setLoading(false)
+          return
+        }
+        if (!/[A-Z]/.test(password)) {
+          setError("Password must contain at least one uppercase letter.")
+          setLoading(false)
+          return
+        }
+        if (!/[a-z]/.test(password)) {
+          setError("Password must contain at least one lowercase letter.")
+          setLoading(false)
+          return
+        }
+        if (!/[0-9]/.test(password)) {
+          setError("Password must contain at least one number.")
+          setLoading(false)
+          return
+        }
+        if (!/[^A-Za-z0-9]/.test(password)) {
+          setError("Password must contain at least one special character.")
+          setLoading(false)
+          return
+        }
         const { error: authError } = await signUp(email, password)
         if (authError) {
           setError(authError.message)
@@ -107,11 +132,11 @@ export default function AuthPage() {
             <input
               type="password"
               required
-              minLength={6}
+              minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 bg-transparent border-2 border-[var(--text-primary)] font-mono text-[14px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)] transition-colors"
-              placeholder="Min 6 characters"
+              placeholder="Min 8 chars, upper + lower + number + special"
             />
           </div>
 
