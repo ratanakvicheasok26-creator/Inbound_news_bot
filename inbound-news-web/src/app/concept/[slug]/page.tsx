@@ -4,8 +4,14 @@ import { getAllStories } from "@/lib/posts"
 import { StoryRow } from "@/components/story/StoryRow"
 import { ArrowLeft, TrendingUp } from "lucide-react"
 
-const CONCEPTS: Record<string, { name: string; definition: string; inflectionPoints: { date: string; event: string }[] }> = {
-  "transformers": {
+type ConceptEntry = {
+  name: string
+  definition: string
+  inflectionPoints: { date: string; event: string }[]
+}
+
+const CONCEPTS: Record<string, ConceptEntry> = {
+  transformers: {
     name: "Transformers",
     definition: "A neural network architecture introduced by Google in 2017 ('Attention Is All You Need') that processes sequential data in parallel. It replaced RNNs/LSTMs as the dominant architecture for language, vision, and multimodal AI.",
     inflectionPoints: [
@@ -16,7 +22,7 @@ const CONCEPTS: Record<string, { name: string; definition: string; inflectionPoi
       { date: "2023-03", event: "GPT-4 released with multimodal capabilities" },
     ],
   },
-  "rag": {
+  rag: {
     name: "RAG (Retrieval-Augmented Generation)",
     definition: "A technique that combines a language model with an external knowledge retrieval system. The model generates answers grounded in retrieved documents, reducing hallucinations and enabling knowledge updates without retraining.",
     inflectionPoints: [
@@ -25,7 +31,7 @@ const CONCEPTS: Record<string, { name: string; definition: string; inflectionPoi
       { date: "2023-08", event: "Major enterprises adopt RAG for customer-facing AI" },
     ],
   },
-  "llm": {
+  llm: {
     name: "Large Language Models",
     definition: "Neural networks trained on massive text datasets (billions to trillions of tokens) that can generate, translate, summarize, and reason about human language. Examples include GPT-4, Claude, Gemini, and LLaMA.",
     inflectionPoints: [
@@ -35,17 +41,33 @@ const CONCEPTS: Record<string, { name: string; definition: string; inflectionPoi
       { date: "2024-02", event: "Mistral and Gemini push efficiency and multimodal boundaries" },
     ],
   },
+  gpu: {
+    name: "GPU (Graphics Processing Unit)",
+    definition: "A specialized processor originally designed for rendering graphics, now the primary hardware for training and running AI models. GPUs excel at parallel math, which is why they dominate deep learning workloads.",
+    inflectionPoints: [
+      { date: "1999-08", event: "NVIDIA launches GeForce 256, popularizing the GPU name" },
+      { date: "2006-11", event: "CUDA unlocks GPUs for general-purpose computing" },
+      { date: "2012-09", event: "AlexNet wins ImageNet using GPUs, kickstarting the deep learning boom" },
+      { date: "2022-09", event: "H100 / A100 scarcity becomes a strategic constraint for AI labs" },
+    ],
+  },
+}
+
+/** Singular / alternate slugs that resolve to a canonical concept entry. */
+const CONCEPT_ALIASES: Record<string, string> = {
+  transformer: "transformers",
 }
 
 export default async function ConceptPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const concept = CONCEPTS[slug]
+  const canonicalSlug = CONCEPT_ALIASES[slug] || slug
+  const concept = CONCEPTS[canonicalSlug]
 
   if (!concept) notFound()
 
   const stories = await getAllStories()
   const relatedStories = stories.filter((s) =>
-    s.tags?.some((t) => t.toLowerCase().includes(slug)) ||
+    s.tags?.some((t) => t.toLowerCase().includes(canonicalSlug) || t.toLowerCase().includes(slug)) ||
     s.title.toLowerCase().includes(concept.name.toLowerCase())
   ).slice(0, 10)
 

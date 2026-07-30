@@ -86,6 +86,7 @@ class RedisState(StateBackend):
 
     # Atomic replace: SCAN+DEL old prefix keys, then SET new values with TTL.
     # Runs server-side so concurrent readers never see a half-cleared set.
+    # Delete keys one-by-one to avoid Lua unpack() stack limits on large SCAN batches.
     _SAVE_SET_LUA = """
     local cursor = '0'
     local prefix = ARGV[1]
@@ -94,8 +95,8 @@ class RedisState(StateBackend):
       local result = redis.call('SCAN', cursor, 'MATCH', prefix .. '*', 'COUNT', 200)
       cursor = result[1]
       local keys = result[2]
-      if #keys > 0 then
-        redis.call('DEL', unpack(keys))
+      for j = 1, #keys do
+        redis.call('DEL', keys[j])
       end
     until cursor == '0'
     for i = 3, #ARGV do

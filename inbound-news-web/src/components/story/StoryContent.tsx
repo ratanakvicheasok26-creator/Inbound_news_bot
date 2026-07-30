@@ -54,12 +54,8 @@ function deriveTierSummary(summary: string, tier: "eli5" | "standard" | "deep"):
     return simplified.join(" ")
   }
   if (tier === "deep") {
-    const expanded = summary + 
-      " This development has broader implications for the tech landscape in Southeast Asia. " +
-      "Industry observers note that this could accelerate regional adoption patterns and influence " +
-      "regulatory approaches across similar markets. The intersection of this trend with existing " +
-      "infrastructure gaps presents both opportunities and challenges that warrant close monitoring."
-    return expanded
+    // Use the full original summary — never invent extra prose.
+    return summary
   }
   return summary
 }
@@ -190,7 +186,14 @@ export function StoryContent({ story }: StoryContentProps) {
       )}
 
       <section className="py-6">
-        <RelatedConcepts concepts={["Transformer", "RAG", "LLM", "GPU"]} />
+        <RelatedConcepts
+          concepts={[
+            { label: "Transformer", slug: "transformers" },
+            { label: "RAG", slug: "rag" },
+            { label: "LLM", slug: "llm" },
+            { label: "GPU", slug: "gpu" },
+          ]}
+        />
       </section>
 
       {articles.length > 0 && (

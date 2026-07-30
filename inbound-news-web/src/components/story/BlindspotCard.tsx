@@ -1,13 +1,16 @@
+import Link from "next/link"
+
 interface BlindspotCardProps {
   title: string
   summary?: string
   sourceCount: number
-  sourceNames: string[]
+  sourceNames?: string[]
+  href?: string
 }
 
-export function BlindspotCard({ title, summary, sourceCount, sourceNames }: BlindspotCardProps) {
-  return (
-    <div className="blindspot-card">
+export function BlindspotCard({ title, summary, sourceCount, sourceNames = [], href }: BlindspotCardProps) {
+  const body = (
+    <>
       <div className="flex items-center gap-2 mb-2">
         <span className="dna-tag dna-tag-hype">
           &#9888; Blindspot
@@ -19,7 +22,7 @@ export function BlindspotCard({ title, summary, sourceCount, sourceNames }: Blin
       <h3 className="story-title">
         {title}
       </h3>
-      {summary && (
+      {(summary || sourceCount > 0) && (
         <p className="mt-1 text-[13px] text-[var(--text-secondary)] line-clamp-2">
           Only {sourceCount} source{sourceCount !== 1 ? "s" : ""} covering this
           {sourceNames.length > 0 && (
@@ -27,6 +30,16 @@ export function BlindspotCard({ title, summary, sourceCount, sourceNames }: Blin
           )}
         </p>
       )}
-    </div>
+    </>
   )
+
+  if (href) {
+    return (
+      <Link href={href} className="blindspot-card block hover:border-[var(--accent)] transition-colors">
+        {body}
+      </Link>
+    )
+  }
+
+  return <div className="blindspot-card">{body}</div>
 }

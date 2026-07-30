@@ -8,9 +8,9 @@ Pick one — you don't need both. Railway is generally the faster setup; Render'
 
 ## Before you start (either platform)
 
-This bot is a **background worker**, not a web server — it doesn't listen on an HTTP port, it just polls Telegram continuously. Both platforms default to expecting a web service, so we need to explicitly tell them this is a worker/background process. Details below per platform.
+This bot is a **background worker** that long-polls Telegram. It also starts a small **HTTP health server** on `PORT` (default `10000`) at `/` and `/health` for platform health checks. Prefer a **worker** service type on Railway/Render; if the platform requires a web process, point health checks at `/health`.
 
-Make sure these two files exist in the repo root (create them if missing):
+Make sure these files exist in the repo root (create them if missing):
 
 **`requirements.txt`** — keep in sync with the repo (includes `openai==1.82.0`, `google-genai`, Redis, Supabase, etc.)
 
@@ -25,6 +25,20 @@ python-3.12
 ```
 
 Commit and push both to the repo before deploying.
+
+### Production checklist (beyond the two required secrets)
+
+| Variable | Required? | Why |
+|---|---|---|
+| `TELEGRAM_BOT_TOKEN` | **Yes** | Bot API |
+| `GROQ_API_KEY` | **Yes** | Primary AI |
+| `TELEGRAM_CHANNEL_ID` | Strongly recommended | Channel digests (without it, only `/start` DMs) |
+| `REDIS_URL` | Strongly recommended | Durable posted-id state across redeploys |
+| `GOOGLE_GEMINI_API_KEY` / `OPENROUTER_API_KEY` | Recommended | AI fallback chain |
+| `SUPABASE_*` | Optional for Telegram worker | Needed for website ingestion / health DB probe |
+| `BOT_MAX_FEEDS` | Optional (default 130) | Caps RSS fetches so digests finish within the global timeout |
+
+Website (Vercel/etc.) needs `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and you must run `supabase/migrations/001_ingestion_schema.sql` so `stories` / `articles` / `story_sources` exist.
 
 ---
 
@@ -103,13 +117,13 @@ Set these in Railway/Render **Variables** (not in git):
 ## Option B: Render
 
 1. Go to [render.com](https://render.com) and sign in with GitHub
-2. Click **New → Background Worker** (important — NOT "Web Service", since this bot has no HTTP endpoint)
+2. Click **New → Background Worker** (preferred) — or a Web Service if you need the platform to hit `/health` on `PORT`
 3. Connect the `sothunly-alt/Inbound_news_bot` repo
 4. Configure:
    - **Environment**: Python 3
    - **Build Command**: `pip install -r requirements.txt`
    - **Start Command**: `python news_bot.py`
-5. Under **Environment Variables**, add the secrets from the list above (at minimum `TELEGRAM_BOT_TOKEN` and `GROQ_API_KEY`).
+5. Under **Environment Variables**, add the secrets from the list above (at minimum `TELEGRAM_BOT_TOKEN` and `GROQ_API_KEY`). Also set `REDIS_URL` and `TELEGRAM_CHANNEL_ID` for production.
 6. Click **Create Background Worker** and wait for the build/deploy to finish
 7. Check the **Logs** tab for the "Bot running..." message, then test with `/fetch`
 

@@ -1,12 +1,13 @@
 """Configuration constants and environment variable loading.
 
 Feed Tier System:
-  Tier 1 (this file): ~130 curated feeds — Telegram bot (fast, reliable, <15s)
-  Tier 2 (feeds_bulk.txt): ~4,400 feeds — website ingestion pipeline (future)
-  Tier 3 (APIs): GDELT, NewsData.io, Guardian, NYTimes — website ingestion (future)
+  Tier 1 intent: curated feeds for the Telegram bot (fast, reliable).
+  Tier 2: broader website ingestion set.
+  Tier 3: APIs / deep research.
 
-The Telegram bot only fetches Tier 1 feeds. Tier 2/3 are for the website
-at inboundreports.com and are not loaded by the bot.
+Note: sources.yaml currently tags most RSS as tier [1, 2]. The Telegram bot
+therefore loads a capped curated subset via get_bot_rss_feeds(BOT_MAX_FEEDS)
+instead of every tier-1 URL.
 """
 
 from __future__ import annotations
@@ -72,14 +73,16 @@ __all__ = [
 # ---- Redis (optional — enables persistent state on Railway/Render) ----
 REDIS_URL: str = os.environ.get("REDIS_URL", "").strip()
 
-# ---- RSS (loaded from sources.yaml via source_registry) ----
-from newsbot.source_registry import get_rss_feeds as _get_rss_feeds
-RSS_FEEDS: list[str] = _get_rss_feeds(tier=1)
+# ---- RSS (curated subset — sources.yaml tags almost all RSS as tier [1,2]) ----
+from newsbot.source_registry import get_bot_rss_feeds as _get_bot_rss_feeds
+
+BOT_MAX_FEEDS: int = int(os.environ.get("BOT_MAX_FEEDS", "130"))
+RSS_FEEDS: list[str] = _get_bot_rss_feeds(limit=BOT_MAX_FEEDS)
 
 MAX_ITEMS_PER_FEED: int = int(os.environ.get("MAX_ITEMS_PER_FEED", "3"))
 MAX_ENTRY_AGE_HOURS: int = int(os.environ.get("MAX_ENTRY_AGE_HOURS", "24"))
 FEED_TIMEOUT_SECONDS: int = int(os.environ.get("FEED_TIMEOUT_SECONDS", "10"))
-FEED_GLOBAL_TIMEOUT_EXTRA: int = 50
+FEED_GLOBAL_TIMEOUT_EXTRA: int = int(os.environ.get("FEED_GLOBAL_TIMEOUT_EXTRA", "50"))
 
 # ---- Clustering ----
 CLUSTER_SIMILARITY_THRESHOLD: float = float(os.environ.get("CLUSTER_SIMILARITY_THRESHOLD", "0.45"))
@@ -187,6 +190,10 @@ def validate_config() -> None:
     """
     global TELEGRAM_BOT_TOKEN, PORT, TELEGRAM_CHANNEL_ID, TELEGRAM_THREAD_ID, TELEGRAM_GROUP_CHAT_ID
 
+    import logging
+
+    _log = logging.getLogger(__name__)
+
     required_vars = ["TELEGRAM_BOT_TOKEN", "GROQ_API_KEY"]
     missing = [v for v in required_vars if not os.environ.get(v)]
     if missing:
@@ -201,6 +208,10 @@ def validate_config() -> None:
             TELEGRAM_CHANNEL_ID = int(channel_raw)
         except (ValueError, TypeError):
             raise SystemExit(f"Invalid TELEGRAM_CHANNEL_ID: {channel_raw!r} — must be an integer.")
+    else:
+        _log.warning(
+            "TELEGRAM_CHANNEL_ID unset — digests will only go to /start subscribers, not a channel."
+        )
 
     thread_raw = os.environ.get("TELEGRAM_THREAD_ID", "").strip()
     if thread_raw:
@@ -215,6 +226,14 @@ def validate_config() -> None:
             TELEGRAM_GROUP_CHAT_ID = int(group_raw)
         except (ValueError, TypeError):
             raise SystemExit(f"Invalid TELEGRAM_GROUP_CHAT_ID: {group_raw!r} — must be an integer.")
+
+    if not REDIS_URL:
+        _log.warning(
+            "REDIS_URL unset — posted-id state is ephemeral (lost on redeploy). "
+            "Set REDIS_URL for production."
+        )
+
+    _log.info("Telegram bot RSS feed budget: %d URLs (BOT_MAX_FEEDS=%d)", len(RSS_FEEDS), BOT_MAX_FEEDS)
 
 
 def create_groq_client():

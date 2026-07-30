@@ -87,6 +87,63 @@ export async function getStoryById(id: string): Promise<StoryWithArticles | null
   }
 }
 
+/**
+ * Stories linked to articles whose source_domain matches `domain`
+ * (via story_sources join), newest first.
+ */
+export async function getStoriesBySourceDomain(domain: string): Promise<Story[]> {
+  try {
+    const normalized = domain.toLowerCase().replace(/^www\./, "")
+
+    const { data: articles, error: articlesError } = await supabase
+      .from("articles")
+      .select("id, source_domain")
+      .ilike("source_domain", `%${normalized}%`)
+
+    if (articlesError) {
+      console.error("Failed to fetch articles by domain:", articlesError)
+      return []
+    }
+
+    const articleIds = (articles || [])
+      .filter((a) => {
+        const d = (a.source_domain || "").toLowerCase().replace(/^www\./, "")
+        return d === normalized || d.endsWith(`.${normalized}`)
+      })
+      .map((a) => a.id)
+
+    if (articleIds.length === 0) return []
+
+    const { data: storySources, error: ssError } = await supabase
+      .from("story_sources")
+      .select("story_id")
+      .in("article_id", articleIds)
+
+    if (ssError) {
+      console.error("Failed to fetch story_sources for domain:", ssError)
+      return []
+    }
+
+    const storyIds = [...new Set((storySources || []).map((s) => s.story_id).filter(Boolean))]
+    if (storyIds.length === 0) return []
+
+    const { data: stories, error: storiesError } = await supabase
+      .from("stories")
+      .select("*")
+      .in("id", storyIds)
+      .order("created_at", { ascending: false })
+      .limit(50)
+
+    if (storiesError) {
+      console.error("Failed to fetch stories by source domain:", storiesError)
+      return []
+    }
+    return stories || []
+  } catch {
+    return []
+  }
+}
+
 export async function getStoryStats(): Promise<{
   storyCount: number
   sourceCount: number

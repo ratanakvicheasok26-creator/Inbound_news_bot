@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { getAllStories } from "@/lib/posts"
+import { getStoriesBySourceDomain } from "@/lib/posts"
 import { StoryRow } from "@/components/story/StoryRow"
 import { TrustRadar } from "@/components/story/TrustRadar"
 import { ArrowLeft, ExternalLink, Shield } from "lucide-react"
@@ -48,11 +48,7 @@ export default async function SourcePage({ params }: { params: Promise<{ slug: s
 
   if (!source) notFound()
 
-  const stories = await getAllStories()
-  const recentStories = stories.filter((s) =>
-    s.primary_source?.toLowerCase() === source.name.toLowerCase() ||
-    s.primary_source_domain?.toLowerCase() === source.domain.toLowerCase()
-  ).slice(0, 20)
+  const recentStories = (await getStoriesBySourceDomain(source.domain)).slice(0, 20)
 
   const scores = source.trust_scores
   const avgScore = Math.round(

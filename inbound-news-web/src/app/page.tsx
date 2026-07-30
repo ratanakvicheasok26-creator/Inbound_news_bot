@@ -13,6 +13,10 @@ export default async function HomePage() {
   const signalStories = stories.slice(1, 6)
   const trendingStories = stories.slice(0, 8)
   const latestStories = stories.slice(0, 15)
+  const blindspotStories = [...stories]
+    .filter((s) => (s.source_count ?? 0) <= 3)
+    .sort((a, b) => (a.source_count ?? 0) - (b.source_count ?? 0))
+    .slice(0, 2)
 
   if (!leadStory) {
     return (
@@ -55,20 +59,23 @@ export default async function HomePage() {
             Underreported stories
           </span>
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <BlindspotCard
-            title="Cambodia's new data privacy law takes effect with unclear enforcement"
-            summary="Only 2 sources covering this — both from regional tech press"
-            sourceCount={2}
-            sourceNames={["Tech in Asia", "Rest of World"]}
-          />
-          <BlindspotCard
-            title="Southeast Asian startups shifting from growth to profitability ahead of global peers"
-            summary="Mainstream media has not picked this up"
-            sourceCount={3}
-            sourceNames={["e27", "KrASIA"]}
-          />
-        </div>
+        {blindspotStories.length === 0 ? (
+          <p className="font-mono text-[12px] text-[var(--text-secondary)]">
+            No underreported clusters yet.
+          </p>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {blindspotStories.map((story) => (
+              <BlindspotCard
+                key={story.id}
+                title={story.title}
+                summary={story.summary_en || undefined}
+                sourceCount={story.source_count ?? 0}
+                href={`/story/${story.id}`}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* LATEST COVERAGE */}

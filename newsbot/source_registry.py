@@ -83,6 +83,91 @@ def get_rss_feeds(tier: int = 1, category: str | None = None) -> list[str]:
     return feeds
 
 
+# Prefer these outlets when capping the Telegram bot feed list (name substring match).
+_BOT_CURATED_NAME_HINTS: tuple[str, ...] = (
+    "TechCrunch",
+    "The Verge",
+    "Ars Technica",
+    "Wired",
+    "MIT Technology Review",
+    "Reuters",
+    "Hacker News",
+    "Lobsters",
+    "The Hacker News",
+    "Phnom Penh Post",
+    "Khmer Times",
+    "Rest of World",
+    "Tech in Asia",
+    "Bloomberg",
+    "Financial Times",
+    "CNBC",
+    "BBC",
+    "Guardian",
+    "NYTimes",
+    "New York Times",
+    "Hugging Face",
+    "OpenAI",
+    "Google AI",
+    "DeepMind",
+    "Anthropic",
+    "Cloudflare",
+    "GitHub Blog",
+)
+
+
+def get_bot_rss_feeds(limit: int = 130) -> list[str]:
+    """Curated subset of tier-1 RSS feeds for the Telegram bot.
+
+    sources.yaml currently tags nearly all RSS as tier [1, 2], so a naive
+    tier=1 load returns ~900+ URLs and blows the ~60s global fetch budget.
+    This picks curated majors first, then one feed per category, then fills
+    stably up to ``limit``.
+    """
+    if limit <= 0:
+        return []
+
+    sources = get_all_sources(source_type="rss")
+    tier1 = [s for s in sources if 1 in s.get("tier", []) and s.get("url")]
+    if not tier1:
+        return []
+
+    selected: list[dict[str, Any]] = []
+    seen_urls: set[str] = set()
+
+    def _add(src: dict[str, Any]) -> bool:
+        url = src["url"]
+        if url in seen_urls:
+            return False
+        seen_urls.add(url)
+        selected.append(src)
+        return True
+
+    for hint in _BOT_CURATED_NAME_HINTS:
+        hint_l = hint.lower()
+        for s in tier1:
+            if hint_l in str(s.get("name", "")).lower():
+                _add(s)
+                if len(selected) >= limit:
+                    return [s["url"] for s in selected]
+
+    cats_seen: set[str] = {str(s.get("category") or "") for s in selected}
+    for s in tier1:
+        cat = str(s.get("category") or "uncategorized")
+        if cat in cats_seen:
+            continue
+        if _add(s):
+            cats_seen.add(cat)
+        if len(selected) >= limit:
+            return [s["url"] for s in selected]
+
+    for s in tier1:
+        _add(s)
+        if len(selected) >= limit:
+            break
+
+    return [s["url"] for s in selected[:limit]]
+
+
 def get_api_sources(tier: int = 2) -> list[dict[str, Any]]:
     """Return API source configs for the given tier.
 

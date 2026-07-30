@@ -80,9 +80,11 @@ export function GlossaryContent() {
                     {term.term_en}
                   </h2>
                 </div>
-                <span className="font-mono text-[10px] text-[var(--text-secondary)] tabular-nums shrink-0">
-                  {term.story_count} stories
-                </span>
+                {term.story_count > 0 && (
+                  <span className="font-mono text-[10px] text-[var(--text-secondary)] tabular-nums shrink-0">
+                    {term.story_count} stories
+                  </span>
+                )}
               </div>
 
               <p className="text-[14px] text-[var(--text-primary)] leading-relaxed mb-3">
