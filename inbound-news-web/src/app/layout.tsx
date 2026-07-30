@@ -34,8 +34,22 @@ export const metadata: Metadata = {
   description:
     "Independent technology journalism from Phnom Penh — startups, AI, cybersecurity, and more.",
   icons: {
-    icon: "/icon.svg",
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }, { url: "/icon.svg", sizes: "any" }],
     apple: "/icon.svg",
+  },
+  openGraph: {
+    title: "Inbound Reports — Decode the Tech.",
+    description:
+      "Independent technology journalism from Phnom Penh — startups, AI, cybersecurity, and more.",
+    type: "website",
+    locale: "en_US",
+    siteName: "Inbound Reports",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Inbound Reports — Decode the Tech.",
+    description:
+      "Independent technology journalism from Phnom Penh — startups, AI, cybersecurity, and more.",
   },
 };
 

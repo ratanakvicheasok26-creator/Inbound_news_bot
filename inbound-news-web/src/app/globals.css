@@ -132,8 +132,6 @@ h1, h2, h3, h4 {
   color: var(--text-secondary);
 }
 
-.body-small { font-size: var(--text-md); line-height: 1.5; }
-
 .font-sans { font-family: var(--font-sans), system-ui, sans-serif; }
 .font-mono {
   font-family: var(--font-mono), ui-monospace, monospace;
@@ -141,11 +139,6 @@ h1, h2, h3, h4 {
 }
 
 .tabular-nums { font-variant-numeric: tabular-nums; }
-
-/* Khmer typography — slightly larger for readability */
-.font-khmer {
-  font-family: var(--font-khmer), var(--font-sans), system-ui, sans-serif;
-}
 
 a {
   color: inherit;
@@ -266,50 +259,6 @@ a:hover {
   background: var(--green-subtle-bg);
   color: var(--text-primary);
   border: 1px solid var(--text-primary);
-}
-
-/* ===== Hype-Reality Bar (Architectural Scale) ===== */
-.hype-bar {
-  height: 8px;
-  border-radius: 0;
-  background: linear-gradient(
-    to right,
-    var(--text-primary) 0%,
-    var(--text-secondary) 50%,
-    var(--red-alert) 100%
-  );
-  position: relative;
-}
-
-.hype-bar-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--text-primary);
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  transition: width 0.15s ease, height 0.15s ease;
-}
-
-.hype-bar-dot:hover {
-  width: 14px;
-  height: 14px;
-}
-
-.hype-bar-dot.high-hype {
-  background: var(--red-alert);
-}
-
-.hype-bar-labels {
-  display: flex;
-  justify-content: space-between;
-  font-family: var(--font-mono), monospace;
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
-  margin-top: 4px;
 }
 
 /* ===== Trust Radar Mini ===== */
@@ -466,31 +415,6 @@ footer {
   transition: background 0.15s ease, color 0.15s ease;
 }
 .theme-toggle:hover {
-  background: var(--text-primary);
-  color: var(--bg) !important;
-}
-
-/* ===== Language Toggle ===== */
-.lang-toggle {
-  display: flex;
-  border: 1px solid var(--text-primary);
-  border-radius: 0;
-  overflow: hidden;
-  font-family: var(--font-mono), monospace;
-  font-size: var(--text-sm);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-.lang-toggle button {
-  padding: 6px 12px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-.lang-toggle button.active {
   background: var(--text-primary);
   color: var(--bg) !important;
 }

@@ -183,7 +183,7 @@ export function Header() {
 
             {/* TIER 3 — Main Navigation (desktop only, shown in expanded state) */}
             <div className="hidden md:grid grid-cols-3 items-center px-4 md:px-10 h-[44px]">
-              <nav />
+              <div />
               <nav className="flex justify-center items-center gap-4 md:gap-6">
                 {centerLinks.map((link) => (
                   <Link

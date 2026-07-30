@@ -24,7 +24,7 @@ export function Footer() {
               Aggregating from a dynamically scaling network of 900+ tech sources.
             </p>
             <div className="mt-3 font-mono text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">
-              Last updated: July 2026
+              Last updated: {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
             </div>
           </div>
 

@@ -14,7 +14,7 @@ interface LegalPageLayoutProps {
 
 export function LegalPageLayout({
   title,
-  lastUpdated = "July 29, 2026",
+  lastUpdated = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
   sections,
   children,
 }: LegalPageLayoutProps) {

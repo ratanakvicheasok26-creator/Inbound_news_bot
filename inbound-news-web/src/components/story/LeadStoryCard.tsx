@@ -59,10 +59,11 @@ export function LeadStoryCard({ story }: { story: Story }) {
         <div className="relative w-full aspect-[16/9] bg-[var(--surface-alt)] overflow-hidden">
           <Image
             src="/window.svg"
-            alt={story.title}
+            alt=""
             fill
             className="object-cover"
             priority
+            aria-hidden
           />
           {isBreaking && (
             <div className="absolute top-3 left-3">

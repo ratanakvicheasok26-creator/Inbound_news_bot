@@ -2,7 +2,7 @@
 
 interface ReadingTierToggleProps {
   onChange: (tier: "eli5" | "standard" | "deep") => void
-  active: string
+  active: "eli5" | "standard" | "deep"
 }
 
 export function ReadingTierToggle({ onChange, active }: ReadingTierToggleProps) {

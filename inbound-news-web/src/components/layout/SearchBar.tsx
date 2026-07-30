@@ -69,6 +69,7 @@ export function SearchBar() {
                 type="button"
                 onClick={() => { setOpen(false); setQuery("") }}
                 className="flex items-center justify-center w-[40px] h-[40px] border-l border-[var(--text-primary)] text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
+                aria-label="Close search"
               >
                 <X className="h-4 w-4" />
               </button>
