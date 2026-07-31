@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { Source_Serif_4, Source_Sans_3, JetBrains_Mono, Noto_Sans_Khmer } from "next/font/google";
+import {
+  Source_Serif_4,
+  Source_Sans_3,
+  JetBrains_Mono,
+  Noto_Sans_Khmer,
+  Space_Grotesk,
+} from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Ticker } from "@/components/Ticker";
@@ -26,6 +32,13 @@ const mono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
   weight: ["400", "500", "700"],
+  display: "swap",
+});
+
+const displayModern = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-display-modern",
+  weight: ["500", "600", "700"],
   display: "swap",
 });
 
@@ -103,7 +116,14 @@ export default async function RootLayout({
     <html
       lang="en"
       data-theme={theme}
-      className={cn(display.variable, sans.variable, mono.variable, notoKhmer.variable, "font-sans")}
+      className={cn(
+        display.variable,
+        sans.variable,
+        mono.variable,
+        notoKhmer.variable,
+        displayModern.variable,
+        "font-sans"
+      )}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />

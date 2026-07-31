@@ -28,16 +28,20 @@ export default async function HomePage() {
 
   return (
     <div>
-      {/* Brand + lead hero */}
+      {/* Hero — brand positioning + lead story */}
       <section className="border-b border-[var(--border)] bg-[var(--surface)]">
-        <div className="container pt-8 pb-10 md:pt-10 md:pb-12">
+        <div className="container pt-8 pb-10 md:pt-12 md:pb-14">
           <div className="mb-8 md:mb-10 animate-[riseIn_350ms_ease-out]">
-            <p className="font-display text-[clamp(26px,3.6vw,38px)] font-semibold leading-none tracking-[-0.03em] text-[var(--text-primary)]">
+            <p className="chip mb-4">
+              <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
               Inbound Reports
             </p>
-            <p className="mt-2 text-[14px] md:text-[15px] text-[var(--text-secondary)] max-w-[42ch]">
-              Decode the Tech. Aggregated coverage from Phnom Penh —
-              clustered sources, cut jargon, Local Lens.
+            <h1 className="font-display-modern text-[clamp(32px,5vw,56px)] font-bold leading-[1.04] tracking-[-0.025em]">
+              Decode the Tech.
+            </h1>
+            <p className="mt-4 max-w-[46ch] text-[15px] md:text-[17px] leading-[1.6] text-[var(--text-secondary)]">
+              Aggregated coverage from Phnom Penh — clustered sources, cut jargon, read with
+              Local Lens.
             </p>
           </div>
 
@@ -48,7 +52,10 @@ export default async function HomePage() {
       {/* Latest stories — equal 3-column grid */}
       <section className="container pt-10 pb-12 md:pt-14 md:pb-16">
         <div className="section-header">
-          <h2 className="section-title">Latest stories</h2>
+          <h2 className="section-title flex items-center gap-2.5">
+            <span className="inline-block h-4 w-1 rounded-full bg-[var(--accent)]" aria-hidden="true" />
+            Latest stories
+          </h2>
           <Link
             href="/search"
             className="meta-text hover:text-[var(--accent)] transition-colors"
@@ -57,7 +64,7 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        <div className="grid gap-x-5 gap-y-8 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-10 lg:grid-cols-3">
+        <div className="grid gap-5 gap-y-8 sm:grid-cols-2 sm:gap-6 sm:gap-y-10 lg:grid-cols-3">
           {latestStories.map((story) => (
             <StoryCard key={story.id} story={story} />
           ))}
