@@ -4511,7 +4511,7 @@ sources:
   url: https://qiskit.org/blog/feed.xml
   category: quantum
   tier: *id001
-  enabled: true
+  enabled: false  # disabled: dead/malformed feed, verified 2026-07-31
 - name: The Quantum Insider
   type: rss
   url: https://thequantuminsider.com/feed/
@@ -4589,7 +4589,7 @@ sources:
   url: https://realestatetech.news/feed/
   category: proptech
   tier: *id001
-  enabled: true
+  enabled: false  # disabled: dead/malformed feed, verified 2026-07-31
 - name: PropTech Today
   type: rss
   url: https://proptechtoday.com/feed/
@@ -4775,7 +4775,7 @@ sources:
   url: https://menabytes.com/feed/
   category: middle_east
   tier: *id001
-  enabled: true
+  enabled: false  # disabled: dead/malformed feed, verified 2026-07-31
 - name: Startup MGZN
   type: rss
   url: https://startupmgzn.com/feed/
@@ -4877,7 +4877,7 @@ sources:
   url: https://www.insurancethoughtleadership.com/feed
   category: insurtech
   tier: *id001
-  enabled: true
+  enabled: false  # disabled: dead/malformed feed, verified 2026-07-31
 - name: InsurTech Insights
   type: rss
   url: https://insurtechinsights.com/feed/
@@ -4961,7 +4961,7 @@ sources:
   url: https://www.edsurge.com/feed
   category: edtech
   tier: *id001
-  enabled: true
+  enabled: false  # disabled: dead/malformed feed, verified 2026-07-31
 - name: eLearning Industry
   type: rss
   url: https://elearningindustry.com/feed
@@ -5063,7 +5063,7 @@ sources:
   url: https://saasmag.net/feed/
   category: saas
   tier: *id001
-  enabled: true
+  enabled: false  # disabled: dead/malformed feed, verified 2026-07-31
 - name: SaaS Capital Blog
   type: rss
   url: https://www.saascapital.com/blog/feed
@@ -5255,7 +5255,7 @@ sources:
   url: https://www.nzherald.co.nz/arc/outboundfeeds/rss/section/technology/
   category: oceania
   tier: *id001
-  enabled: true
+  enabled: false  # disabled: dead/malformed feed, verified 2026-07-31
 - name: Startup Daily AU
   type: rss
   url: https://www.startupdaily.net/feed/
@@ -5333,7 +5333,7 @@ sources:
   url: https://www.iotworldtoday.com/rss
   category: iot
   tier: *id001
-  enabled: true
+  enabled: false  # disabled: dead/malformed feed, verified 2026-07-31
 - name: Stacey on IoT
   type: rss
   url: https://staceyoniot.com/feed/
@@ -5911,7 +5911,7 @@ sources:
   url: https://blogs.thomsonreuters.com/regulatory/feed/
   category: regtech
   tier: *id002
-  enabled: true
+  enabled: false  # disabled: dead/malformed feed, verified 2026-07-31
 - name: Cockroach Labs Blog
   type: rss
   url: https://www.cockroachlabs.com/blog/feed/
