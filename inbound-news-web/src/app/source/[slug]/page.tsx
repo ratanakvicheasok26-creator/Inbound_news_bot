@@ -81,7 +81,7 @@ export default async function SourcePage({ params }: { params: Promise<{ slug: s
       {/* Trust Radar */}
       <section className="py-8 border-b border-[var(--border)]">
         <div className="section-header">
-          <h2 className="section-title">Trust Radar</h2>
+          <h2 className="section-title">Trust radar</h2>
           <span className="font-mono text-[14px] font-bold tabular-nums text-[var(--text-primary)]">
             {avgScore}/5
           </span>
@@ -105,7 +105,7 @@ export default async function SourcePage({ params }: { params: Promise<{ slug: s
       {/* Ownership */}
       <section className="py-8 border-b border-[var(--border)]">
         <div className="section-header">
-          <h2 className="section-title">Ownership & Funding</h2>
+          <h2 className="section-title">Ownership &amp; funding</h2>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="p-4 bg-[var(--surface)] border border-[var(--border)]">
@@ -122,7 +122,7 @@ export default async function SourcePage({ params }: { params: Promise<{ slug: s
       {/* Recent Stories */}
       <section className="py-8">
         <div className="section-header">
-          <h2 className="section-title">Recent Stories from {source.name}</h2>
+          <h2 className="section-title">Recent stories from {source.name}</h2>
           <span className="font-mono text-[10px] text-[var(--text-secondary)]">
             {recentStories.length} stories
           </span>

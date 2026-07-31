@@ -62,7 +62,7 @@ export function SearchBar() {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search stories, sources, topics..."
+                placeholder="Search stories and sources…"
                 className="flex-1 px-4 h-[40px] bg-transparent font-mono text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none"
               />
               <button

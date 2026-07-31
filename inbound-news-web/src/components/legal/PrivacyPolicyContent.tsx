@@ -405,7 +405,7 @@ export function PrivacyPolicyContent() {
             {/* Bottom divider */}
             <div className="border-t border-[var(--border)] pt-8 mt-8">
               <p className="text-[13px] text-[var(--text-secondary)] text-center">
-                Inbound Reports &mdash; Independent technology journalism from Phnom Penh, Cambodia.
+                Inbound Reports &mdash; Tech news aggregation from Phnom Penh, Cambodia.
               </p>
             </div>
           </div>

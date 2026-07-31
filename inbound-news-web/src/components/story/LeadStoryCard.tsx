@@ -1,60 +1,52 @@
 import type { Story } from "@/lib/types"
 import { getCategoryLabel } from "@/lib/categories"
+import { resolveStoryDek } from "@/lib/story-body"
 import { formatDistanceToNow } from "@/lib/utils"
-import { DnaTag } from "./DnaTag"
-import { HypeRealityBar } from "./HypeRealityBar"
-import { JargonText } from "./JargonText"
+import { StoryImage } from "@/components/story/StoryImage"
 import Link from "next/link"
 
 export function LeadStoryCard({ story }: { story: Story }) {
-  const categoryLabel = getCategoryLabel(story.category || "")
-  const tags = story.tags || []
-  const isBreaking = tags.includes("breaking")
-  const hypeScore = Math.min(100, 30 + (story.source_count || 1) * 8)
+  const categoryLabel = getCategoryLabel(story.category || "") || "News"
+  const dek = resolveStoryDek(story.summary_en, 180)
 
   return (
-    <article className={`${isBreaking ? "breaking-border" : ""}`}>
-      <div className="mb-4 flex items-center gap-2 flex-wrap">
-        <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--accent)] font-bold border-2 border-[var(--accent)] px-2 py-0.5">
-          {categoryLabel}
-        </span>
-        <span className="font-mono text-[11px] text-[var(--text-secondary)] tabular-nums font-medium">
-          {story.source_count} source{story.source_count !== 1 ? "s" : ""}
-        </span>
-        <span className="font-mono text-[11px] text-[var(--text-secondary)]">&middot;</span>
-        <span className="font-mono text-[11px] text-[var(--text-secondary)]">
-          {formatDistanceToNow(story.created_at)}
-        </span>
-        {isBreaking && <DnaTag type="breaking" label="Breaking" />}
-      </div>
+    <article className="animate-[riseIn_400ms_ease-out]">
+      <div className="grid gap-6 md:grid-cols-2 md:gap-8 lg:grid-cols-[1.35fr_1fr] lg:gap-10 lg:items-end">
+        <StoryImage
+          imageUrl={story.image_url}
+          pageUrl={story.primary_url}
+          alt={story.title}
+          variant="lead"
+          priority
+          className="rounded-[var(--radius)]"
+        />
 
-      <Link href={`/story/${story.id}`} className="group block">
-        <h1 className="text-[40px] md:text-[64px] font-extrabold leading-[0.95] tracking-[-0.04em] group-hover:text-[var(--accent)] transition-colors">
-          {story.title}
-        </h1>
-      </Link>
-
-      <div className="mt-4 max-w-[65ch]">
-        {story.summary_en && (
-          <JargonText
-            text={story.summary_en}
-            className="text-[18px] text-[var(--text-secondary)] leading-[1.6]"
-          />
-        )}
-
-        {tags.length > 0 && (
-          <div className="mt-4 flex items-center gap-2 flex-wrap">
-            {tags.includes("hype") && <DnaTag type="hype" label="Hype" />}
-            {tags.includes("kh_relevant") && <DnaTag type="kh" label="KH-relevant" />}
-            {tags.includes("new_concept") && <DnaTag type="concept" label="New concept" />}
+        <div>
+          <div className="mb-3 flex items-center gap-3 flex-wrap">
+            <span className="meta-text text-[var(--accent)]">{categoryLabel}</span>
+            <span className="meta-text">
+              {story.source_count} source{story.source_count !== 1 ? "s" : ""}
+            </span>
+            <span className="meta-text">{formatDistanceToNow(story.created_at)}</span>
           </div>
-        )}
 
-        <div className="mt-4">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">
-            Coverage intensity
-          </p>
-          <HypeRealityBar score={hypeScore} showLabels />
+          <Link href={`/story/${story.id}`} className="group block">
+            <h1 className="font-display text-[clamp(26px,3.8vw,40px)] font-semibold leading-[1.12] tracking-[-0.025em] group-hover:text-[var(--accent)] transition-colors">
+              {story.title}
+            </h1>
+          </Link>
+
+          {dek && (
+            <p className="mt-4 max-w-[52ch] text-[16px] leading-[1.55] text-[var(--text-secondary)]">
+              {dek}
+            </p>
+          )}
+
+          <div className="mt-6">
+            <Link href={`/story/${story.id}`} className="btn-primary">
+              Decode this story
+            </Link>
+          </div>
         </div>
       </div>
     </article>

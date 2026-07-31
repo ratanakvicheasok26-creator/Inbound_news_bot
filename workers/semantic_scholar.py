@@ -57,15 +57,33 @@ def fetch_semantic_scholar(
     if fields_of_study:
         params["fieldsOfStudy"] = fields_of_study
 
-    try:
-        resp = httpx.get(f"{_BASE}/paper/search", params=params, timeout=_TIMEOUT)
-        resp.raise_for_status()
-        data = resp.json()
-    except httpx.TimeoutException:
-        logger.warning("Semantic Scholar timed out for query: %s", query)
-        return []
-    except Exception:
-        logger.exception("Semantic Scholar request failed")
+    data: dict[str, Any] | None = None
+    for attempt in range(1, 3):
+        try:
+            resp = httpx.get(f"{_BASE}/paper/search", params=params, timeout=_TIMEOUT)
+            if resp.status_code == 429:
+                delay = 3.0 * attempt
+                logger.warning(
+                    "Semantic Scholar 429 for '%s' (attempt %d/2), sleeping %.0fs",
+                    query, attempt, delay,
+                )
+                time.sleep(delay)
+                continue
+            resp.raise_for_status()
+            data = resp.json()
+            break
+        except httpx.TimeoutException:
+            logger.warning("Semantic Scholar timed out for query: %s", query)
+            return []
+        except Exception as exc:
+            if attempt < 2:
+                logger.warning("Semantic Scholar attempt %d/2 failed (%s), retrying", attempt, exc)
+                time.sleep(3.0)
+            else:
+                logger.warning("Semantic Scholar request failed after retries: %s", exc)
+                return []
+
+    if data is None:
         return []
 
     papers = data.get("data", [])
@@ -123,10 +141,6 @@ DEFAULT_QUERIES = [
     "artificial intelligence safety",
     "cybersecurity",
     "machine learning",
-    "computer vision",
-    "natural language processing",
-    "reinforcement learning",
-    "graph neural network",
 ]
 
 
@@ -140,14 +154,22 @@ def fetch_all_semantic_scholar(
 
     seen_urls: set[str] = set()
     all_articles: list[dict[str, Any]] = []
+    consecutive_empty = 0
 
     for q in queries:
         articles = fetch_semantic_scholar(query=q, limit=max_per_query)
+        if not articles:
+            consecutive_empty += 1
+            if consecutive_empty >= 2:
+                logger.warning("Semantic Scholar rate-limited — skipping remaining queries")
+                break
+        else:
+            consecutive_empty = 0
         for a in articles:
             if a["url"] not in seen_urls:
                 seen_urls.add(a["url"])
                 all_articles.append(a)
-        time.sleep(1.5)  # Respect rate limit (100 req/5min)
+        time.sleep(3.0)  # Unauthenticated tier is ~1 req / few seconds
 
     logger.info("Semantic Scholar total: %d unique papers", len(all_articles))
     return all_articles

@@ -1,5 +1,6 @@
 import type { Story } from "@/lib/types"
 import { getCategoryLabel } from "@/lib/categories"
+import { resolveStoryDek } from "@/lib/story-body"
 import { formatDistanceToNow } from "@/lib/utils"
 import { HypeRealityBar } from "./HypeRealityBar"
 import Link from "next/link"
@@ -15,6 +16,7 @@ export function TrendingStrip({ stories }: TrendingStripProps) {
     <div className="flex gap-4 overflow-x-auto pb-2 -mx-32 px-32 snap-x snap-mandatory">
       {stories.map((story) => {
         const hypeScore = Math.min(100, 30 + (story.source_count || 1) * 8)
+        const dek = resolveStoryDek(story.summary_en)
         return (
           <Link
             key={story.id}
@@ -32,9 +34,9 @@ export function TrendingStrip({ stories }: TrendingStripProps) {
             <h3 className="story-title line-clamp-2 mb-2">
               {story.title}
             </h3>
-            {story.summary_en && (
+            {dek && (
               <p className="text-[12px] text-[var(--text-secondary)] line-clamp-2 leading-relaxed mb-3">
-                {story.summary_en}
+                {dek}
               </p>
             )}
             <div className="flex items-center gap-3">

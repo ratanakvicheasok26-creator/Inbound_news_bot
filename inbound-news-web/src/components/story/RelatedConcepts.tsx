@@ -34,9 +34,7 @@ export function RelatedConcepts({ concepts }: RelatedConceptsProps) {
 
   return (
     <div>
-      <p className="font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)] mb-2">
-        Related Concepts
-      </p>
+      <p className="meta-text mb-3">Related concepts</p>
       <div className="flex flex-wrap gap-2">
         {concepts.map((concept) => {
           const { label, slug, href } = resolveConcept(concept)
@@ -44,7 +42,7 @@ export function RelatedConcepts({ concepts }: RelatedConceptsProps) {
             <Link
               key={slug}
               href={href}
-              className="px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] font-mono text-[11px] text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+              className="px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] rounded-full text-[13px] text-[var(--text-secondary)] hover:border-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
             >
               {label}
             </Link>

@@ -6,6 +6,7 @@ export type Story = {
   category: string | null
   tags: string[]
   created_at: string
+  image_url?: string | null
   primary_url?: string | null
   primary_source?: string | null
   primary_source_domain?: string | null
@@ -22,6 +23,8 @@ export type Article = {
   language: string | null
   published_at: string | null
   ingested_at: string
+  image_url?: string | null
+  raw_json?: unknown
 }
 
 export type StoryWithArticles = Story & {

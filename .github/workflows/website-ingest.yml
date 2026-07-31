@@ -41,6 +41,8 @@ jobs:
           COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
           GOOGLE_GEMINI_API_KEY: ${{ secrets.GOOGLE_GEMINI_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          # Cap rewrites so the job finishes within the 30m timeout
+          MAX_AI_REWRITE: "50"
         run: python -m workers.ingest_apis
 
       - name: Dedup into stories

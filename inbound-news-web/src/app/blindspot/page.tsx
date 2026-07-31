@@ -5,7 +5,7 @@ import { Eye } from "lucide-react"
 
 export const metadata = {
   title: "Blindspot — Inbound Reports",
-  description: "Tech stories that mainstream media is ignoring.",
+  description: "Clustered tech stories with few sources — easy to miss in mainstream feeds.",
 }
 
 export default async function BlindspotPage() {
@@ -21,13 +21,13 @@ export default async function BlindspotPage() {
         <div className="section-header">
           <div className="flex items-center gap-2">
             <Eye className="h-4 w-4 text-[var(--red-alert)]" />
-            <h1 className="page-title">Tech Media Blindspots</h1>
+            <h1 className="page-title">Coverage blindspots</h1>
           </div>
         </div>
 
         <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed max-w-[640px] mb-8">
-          Stories highly covered by technical and primary sources but ignored by mainstream aggregators.
-          These are the stories that matter but aren&apos;t making the rounds.
+          Clustered stories with few sources — coverage that is easy to miss in mainstream
+          tech feeds. Source count is the signal; literacy is the goal.
         </p>
 
         {featured.length === 0 ? (
@@ -49,7 +49,7 @@ export default async function BlindspotPage() {
         )}
 
         <div className="section-header">
-          <h2 className="section-title">All Underreported Stories</h2>
+          <h2 className="section-title">All underreported stories</h2>
           <span className="font-mono text-[10px] text-[var(--text-secondary)]">
             {underreported.length} stories
           </span>

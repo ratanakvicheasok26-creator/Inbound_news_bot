@@ -3,22 +3,22 @@ import { getAllStories } from "@/lib/posts"
 import { formatDistanceToNow } from "@/lib/utils"
 
 export async function Ticker() {
-  const stories = await getAllStories()
+  const stories = await getAllStories(8)
   const items = stories.slice(0, 4)
   if (items.length === 0) return null
 
   return (
     <div className="ticker">
       <div className="ticker-track">
-        <span className="ticker-label">Latest Stories</span>
+        <span className="ticker-label">Latest</span>
         {items.map((story) => (
           <Link
             key={story.id}
             href={`/story/${story.id}`}
             className={`ticker-item ${story.category === "cybersecurity" ? "breaking" : ""}`}
           >
-            <span className="truncate">{story.title}</span>
-            <span className="text-[var(--accent)] text-[10px] shrink-0">
+            <span className="truncate max-w-[220px] md:max-w-[280px]">{story.title}</span>
+            <span className="text-[11px] shrink-0 opacity-70">
               {formatDistanceToNow(story.created_at)}
             </span>
           </Link>

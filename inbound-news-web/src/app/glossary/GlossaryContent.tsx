@@ -22,19 +22,19 @@ export function GlossaryContent() {
     <div className="container">
       <section className="py-10 max-w-[720px] mx-auto">
         <div className="section-header">
-          <h1 className="page-title">Tech Glossary</h1>
+          <h1 className="page-title">Glossary</h1>
         </div>
 
         <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed mb-8">
-          The digital literacy engine. A persistent, searchable encyclopedia of tech jargon
-          that compounds in value over time.
+          Tech jargon explained in English and Khmer — so you can decode coverage instead of
+          scrolling past it.
         </p>
 
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-secondary)]" />
           <input
             type="text"
-            placeholder="Search tech terms..."
+            placeholder="Search glossary terms…"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setActiveLetter(null) }}
             className="w-full pl-10 pr-4 py-3 bg-[var(--surface)] border border-[var(--border)] text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)] transition-colors"

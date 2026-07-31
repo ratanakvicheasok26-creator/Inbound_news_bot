@@ -99,7 +99,7 @@ export default async function ConceptPage({ params }: { params: Promise<{ slug: 
       {/* Coverage Volume Sparkline (placeholder) */}
       <section className="py-8 border-b border-[var(--border)]">
         <div className="section-header">
-          <h2 className="section-title">Coverage Volume (12 months)</h2>
+          <h2 className="section-title">Coverage volume (12 months)</h2>
         </div>
         <div className="h-[120px] bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center">
           <span className="font-mono text-[11px] text-[var(--text-secondary)] uppercase tracking-wider">
@@ -111,7 +111,7 @@ export default async function ConceptPage({ params }: { params: Promise<{ slug: 
       {/* Key Inflection Points */}
       <section className="py-8 border-b border-[var(--border)]">
         <div className="section-header">
-          <h2 className="section-title">Key Inflection Points</h2>
+          <h2 className="section-title">Key inflection points</h2>
         </div>
         <div className="space-y-0">
           {concept.inflectionPoints.map((point) => (
@@ -130,7 +130,7 @@ export default async function ConceptPage({ params }: { params: Promise<{ slug: 
       {/* Related Stories */}
       <section className="py-8">
         <div className="section-header">
-          <h2 className="section-title">Related Stories</h2>
+          <h2 className="section-title">Related stories</h2>
         </div>
         {relatedStories.length === 0 ? (
           <div className="empty-state py-8">

@@ -12,19 +12,26 @@ export function LibraryTab() {
   const [savedIds, setSavedIds] = useState<string[]>(() => getProfile().savedStoryIds)
   const [concepts, setConcepts] = useState<string[]>(() => getProfile().followedConcepts)
   const [stories, setStories] = useState<Record<string, Story>>({})
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (savedIds.length === 0) return
+    let cancelled = false
     const fetchStories = async () => {
-      const { getAllStories } = await import("@/lib/posts")
-      const all = await getAllStories()
-      const map: Record<string, Story> = {}
-      for (const s of all) {
-        if (savedIds.includes(s.id)) map[s.id] = s
+      setLoading(true)
+      try {
+        const { getStoriesByIds } = await import("@/lib/posts")
+        const rows = await getStoriesByIds(savedIds)
+        if (cancelled) return
+        const map: Record<string, Story> = {}
+        for (const s of rows) map[s.id] = s
+        setStories(map)
+      } finally {
+        if (!cancelled) setLoading(false)
       }
-      setStories(map)
     }
     fetchStories()
+    return () => { cancelled = true }
   }, [savedIds])
 
   function handleUnsave(id: string) {
@@ -39,20 +46,19 @@ export function LibraryTab() {
 
   return (
     <div>
-      {/* Saved Stories */}
       <div className="mb-10">
         <div className="section-header">
-          <h2 className="section-title">Saved Stories</h2>
-          <span className="font-mono text-[10px] text-[var(--text-secondary)]">
-            {savedIds.length}
-          </span>
+          <h2 className="section-title">Saved stories</h2>
+          <span className="meta-text">{savedIds.length}</span>
         </div>
 
         {savedIds.length === 0 ? (
           <div className="empty-state py-12">
             <p className="story-title mb-2">No saved stories</p>
-            <p>Bookmark articles to build your library.</p>
+            <p>Bookmark stories to build your library.</p>
           </div>
+        ) : loading ? (
+          <p className="meta-text py-8">Loading saved stories…</p>
         ) : (
           <div>
             {savedIds.map((id) => {
@@ -60,10 +66,11 @@ export function LibraryTab() {
               if (!story) {
                 return (
                   <div key={id} className="flex items-center justify-between py-4 border-b border-[var(--border)]">
-                    <span className="font-mono text-[12px] text-[var(--text-secondary)]">{id}</span>
+                    <span className="meta-text">Story unavailable</span>
                     <button
                       onClick={() => handleUnsave(id)}
                       className="text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+                      aria-label="Remove saved story"
                     >
                       <Bookmark className="h-4 w-4 fill-current" />
                     </button>
@@ -74,10 +81,10 @@ export function LibraryTab() {
                 <div key={id} className="flex items-start gap-3 py-4 border-b border-[var(--border)]">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--accent)] font-bold">
+                      <span className="meta-text text-[var(--accent)]">
                         {getCategoryLabel(story.category || "")}
                       </span>
-                      <span className="font-mono text-[10px] text-[var(--text-secondary)]">
+                      <span className="meta-text">
                         {formatDistanceToNow(story.created_at)}
                       </span>
                     </div>
@@ -95,7 +102,7 @@ export function LibraryTab() {
                   </div>
                   <button
                     onClick={() => handleUnsave(id)}
-                    className="flex-shrink-0 mt-1 w-8 h-8 flex items-center justify-center text-[var(--accent)] hover:text-[var(--red-hover)] transition-colors"
+                    className="flex-shrink-0 mt-1 w-8 h-8 flex items-center justify-center text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
                     aria-label="Unsave story"
                   >
                     <Bookmark className="h-4 w-4 fill-current" />
@@ -107,13 +114,10 @@ export function LibraryTab() {
         )}
       </div>
 
-      {/* Followed Concepts */}
       <div>
         <div className="section-header">
-          <h2 className="section-title">Followed Concepts</h2>
-          <span className="font-mono text-[10px] text-[var(--text-secondary)]">
-            {concepts.length}
-          </span>
+          <h2 className="section-title">Followed concepts</h2>
+          <span className="meta-text">{concepts.length}</span>
         </div>
 
         {concepts.length === 0 ? (
@@ -124,11 +128,7 @@ export function LibraryTab() {
               <Link href="/glossary" className="text-[var(--accent)] hover:underline">
                 glossary
               </Link>{" "}
-              or explore{" "}
-              <Link href="/concept/llm" className="text-[var(--accent)] hover:underline">
-                concept pages
-              </Link>{" "}
-              to learn more. Follow from stories is not available yet.
+              to follow concepts.
             </p>
           </div>
         ) : (
@@ -136,7 +136,7 @@ export function LibraryTab() {
             {concepts.map((slug) => (
               <div
                 key={slug}
-                className="group flex items-center gap-1.5 border-2 border-[var(--text-primary)] px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider font-bold text-[var(--text-primary)]"
+                className="group flex items-center gap-1.5 border border-[var(--border)] px-3 py-1.5 text-[12px] font-medium text-[var(--text-primary)]"
               >
                 <Link href={`/concept/${slug}`} className="hover:text-[var(--accent)] transition-colors">
                   {slug}

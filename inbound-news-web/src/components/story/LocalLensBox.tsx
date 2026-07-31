@@ -19,23 +19,35 @@ const FALLBACK: Record<string, string> = {
   regulation: "Cambodia is developing its digital economy governance framework, balancing innovation with consumer protection.",
 }
 
+function fallbackText(category?: string) {
+  return FALLBACK[category || ""] || FALLBACK.ai
+}
+
+function readCached(storyTitle?: string): string | null {
+  if (!storyTitle || typeof window === "undefined") return null
+  try {
+    return localStorage.getItem(`lens-${storyTitle.slice(0, 80)}`)
+  } catch {
+    return null
+  }
+}
+
 export function LocalLensBox({ category, storyTitle, storySummary }: LocalLensBoxProps) {
-  const [text, setText] = useState<string | null>(() => {
-    if (!storyTitle) return FALLBACK[category || ""] || FALLBACK.ai;
-    const cacheKey = `lens-${storyTitle.slice(0, 80)}`;
-    return typeof window !== "undefined" ? localStorage.getItem(cacheKey) : null;
-  })
-  const [loading, setLoading] = useState(false)
+  const cached = readCached(storyTitle)
+  const [text, setText] = useState<string | null>(
+    () => cached || (storyTitle ? null : fallbackText(category))
+  )
+  const [loading, setLoading] = useState(() => Boolean(storyTitle) && !cached)
   const [error, setError] = useState(false)
   const fetched = useRef(false)
 
   useEffect(() => {
-    if (fetched.current || text !== null || !storyTitle) return
-
+    if (!storyTitle || cached || fetched.current) return
     fetched.current = true
-    setLoading(true)
 
     const cacheKey = `lens-${storyTitle.slice(0, 80)}`
+    let cancelled = false
+
     fetch("/api/local-lens", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -43,6 +55,7 @@ export function LocalLensBox({ category, storyTitle, storySummary }: LocalLensBo
     })
       .then((res) => res.json())
       .then((data) => {
+        if (cancelled) return
         if (data.text) {
           setText(data.text)
           try { localStorage.setItem(cacheKey, data.text) } catch {}
@@ -51,33 +64,36 @@ export function LocalLensBox({ category, storyTitle, storySummary }: LocalLensBo
         }
       })
       .catch(() => {
+        if (cancelled) return
         setError(true)
-        setText(FALLBACK[category || ""] || FALLBACK.ai)
+        setText(fallbackText(category))
       })
-      .finally(() => setLoading(false))
-  }, [category, storyTitle, storySummary, text])
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => { cancelled = true }
+  }, [category, storyTitle, storySummary, cached])
 
   return (
-    <div className="bg-[var(--text-primary)] p-5 text-inverted border-t-3 border-[var(--accent)]">
-      <p className="font-mono text-[10px] uppercase tracking-[0.06em] font-bold text-[var(--accent)] mb-2">
-        Local Lens — Cambodia
-      </p>
+    <aside className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-5 border-l-4 border-l-[var(--accent)]">
+      <p className="meta-text text-[var(--accent)] mb-3">Local Lens — Cambodia</p>
       {loading ? (
         <div className="space-y-2">
-          <div className="h-3 bg-[var(--surface-alt)] animate-pulse w-full" />
-          <div className="h-3 bg-[var(--surface-alt)] animate-pulse w-4/5" />
-          <div className="h-3 bg-[var(--surface-alt)] animate-pulse w-3/5" />
+          <div className="h-3 bg-[var(--surface-alt)] rounded animate-pulse w-full" />
+          <div className="h-3 bg-[var(--surface-alt)] rounded animate-pulse w-4/5" />
+          <div className="h-3 bg-[var(--surface-alt)] rounded animate-pulse w-3/5" />
         </div>
       ) : (
-        <p className="text-[13px] leading-relaxed opacity-90">
+        <p className="text-[14px] leading-relaxed text-[var(--text-secondary)]">
           {text}
         </p>
       )}
       {error && (
-        <p className="mt-2 font-mono text-[10px] opacity-50">
-          Fallback text shown — AI generation unavailable
+        <p className="mt-2 text-[11px] text-[var(--text-secondary)] opacity-70">
+          Context fallback — live lens unavailable
         </p>
       )}
-    </div>
+    </aside>
   )
 }

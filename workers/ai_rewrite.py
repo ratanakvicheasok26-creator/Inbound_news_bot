@@ -8,6 +8,7 @@ Falls back to original summary when all providers are exhausted.
 from __future__ import annotations
 
 import logging
+import os
 import time
 from typing import Any
 
@@ -16,6 +17,8 @@ from shared.ai_router import get_router
 logger = logging.getLogger(__name__)
 
 _BATCH_DELAY: float = 0.3
+# Cap so ingest does not hang for hours on 500+ article runs.
+_DEFAULT_MAX_REWRITE = 50
 
 _PROMPT_TEMPLATE = """Rewrite this summary into a clear, concise 2-3 sentence news summary.
 Rules:
@@ -54,17 +57,42 @@ def rewrite_batch(articles: list[dict[str, Any]]) -> list[dict[str, Any]]:
     Uses the shared AI router with 3-tier fallback and key rotation.
     Falls back to original summary when all providers are exhausted.
 
+    Env:
+        SKIP_AI_REWRITE=1 — skip entirely
+        MAX_AI_REWRITE — max articles to rewrite (default 50)
+
     Args:
         articles: List of article dicts with 'title', 'summary', 'source_name'.
 
     Returns:
         Same list with rewritten summaries.
     """
+    if os.environ.get("SKIP_AI_REWRITE", "").strip().lower() in {"1", "true", "yes"}:
+        logger.info("AI rewrite skipped (SKIP_AI_REWRITE set)")
+        return articles
+
+    try:
+        max_rewrite = int(os.environ.get("MAX_AI_REWRITE", str(_DEFAULT_MAX_REWRITE)))
+    except ValueError:
+        max_rewrite = _DEFAULT_MAX_REWRITE
+
+    if max_rewrite <= 0:
+        logger.info("AI rewrite skipped (MAX_AI_REWRITE=%d)", max_rewrite)
+        return articles
+
     router = get_router()
 
     rewritten = 0
+    attempted = 0
     for article in articles:
+        if attempted >= max_rewrite:
+            break
+
         original_summary = article.get("summary", "")
+        if len(original_summary) < 50:
+            continue
+
+        attempted += 1
         new_summary = _rewrite_single(article, router)
 
         if new_summary and new_summary != original_summary:
@@ -77,5 +105,12 @@ def rewrite_batch(articles: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
         time.sleep(_BATCH_DELAY)
 
-    logger.info("AI rewrite: %d/%d summaries updated", rewritten, len(articles))
+    logger.info(
+        "AI rewrite: %d/%d summaries updated (attempted %d, cap %d, total articles %d)",
+        rewritten,
+        attempted,
+        attempted,
+        max_rewrite,
+        len(articles),
+    )
     return articles

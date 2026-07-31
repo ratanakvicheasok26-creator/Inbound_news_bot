@@ -50,9 +50,9 @@ export default function AboutPage() {
         (Glossary) — not to maximize engagement.
       </p>
 
-      <h2>Support</h2>
+      <h2>Donation</h2>
       <p>
-        If the platform is useful, you can support server and API costs via{" "}
+        If the platform is useful, you can help with server and API costs via{" "}
         <Link href="/donate">KHQR or ABA</Link>. The site stays free for readers.
       </p>
 

@@ -36,6 +36,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["10.1.64.57"],
+  images: {
+    remotePatterns: [{ protocol: "https", hostname: "images.weserv.nl" }],
+  },
   async headers() {
     return [
       {

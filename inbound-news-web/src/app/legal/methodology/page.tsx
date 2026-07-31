@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { LegalPageLayout } from "@/components/legal/LegalPageLayout"
 
 export const metadata: Metadata = {
-  title: "AI & Editorial Methodology — Inbound Reports",
+  title: "AI & Aggregation Methodology — Inbound Reports",
   description: "How Inbound Reports aggregates, processes, and presents tech news.",
 }
 

@@ -27,37 +27,18 @@ export default function AuthPage() {
           setLoading(false)
           return
         }
-        if (!/[A-Z]/.test(password)) {
-          setError("Password must contain at least one uppercase letter.")
-          setLoading(false)
-          return
-        }
-        if (!/[a-z]/.test(password)) {
-          setError("Password must contain at least one lowercase letter.")
-          setLoading(false)
-          return
-        }
-        if (!/[0-9]/.test(password)) {
-          setError("Password must contain at least one number.")
-          setLoading(false)
-          return
-        }
-        if (!/[^A-Za-z0-9]/.test(password)) {
-          setError("Password must contain at least one special character.")
+        if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+          setError("Use upper + lower + number + special character.")
           setLoading(false)
           return
         }
         const { error: authError } = await signUp(email, password)
-        if (authError) {
-          setError(authError.message)
-        } else {
-          setSuccess("Check your email for a confirmation link.")
-        }
+        if (authError) setError(authError.message)
+        else setSuccess("Check your email for a confirmation link.")
       } else {
         const { error: authError } = await signIn(email, password)
-        if (authError) {
-          setError(authError.message)
-        } else {
+        if (authError) setError(authError.message)
+        else {
           router.push("/account")
           router.refresh()
         }
@@ -70,107 +51,82 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="container">
-      <section className="py-16 md:py-24 max-w-[480px] mx-auto">
-        {/* Header */}
-        <div className="pb-8 border-b-2 border-[var(--text-primary)] mb-8">
-          <h1 className="page-title">
-            {mode === "sign-in" ? "SIGN IN" : "SIGN UP"}
-          </h1>
-          <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">
-            {mode === "sign-in"
-              ? "Welcome back. Track your literacy progress."
-              : "Create an account to save your progress."}
-          </p>
-        </div>
+    <div className="container py-12 md:py-16">
+      <div className="max-w-[440px] mx-auto bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6 md:p-8">
+        <h1 className="page-title mb-2">
+          {mode === "sign-in" ? "Sign in" : "Create account"}
+        </h1>
+        <p className="text-[14px] text-[var(--text-secondary)] mb-6">
+          {mode === "sign-in"
+            ? "Welcome back. Track literacy progress across devices."
+            : "Save stories and sync preferences."}
+        </p>
 
-        {/* Toggle */}
-        <div className="flex border-2 border-[var(--text-primary)] overflow-hidden mb-8">
+        <div className="tier-toggle w-full mb-6">
           <button
+            type="button"
             onClick={() => { setMode("sign-in"); setError(""); setSuccess("") }}
-            className={`flex-1 px-4 py-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.1em] transition-colors ${
-              mode === "sign-in"
-                ? "bg-[var(--text-primary)] text-inverted"
-                : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted"
-            }`}
+            className={`flex-1 ${mode === "sign-in" ? "active" : ""}`}
           >
-            Sign In
+            Sign in
           </button>
-          <div className="w-px bg-[var(--border)]" />
           <button
+            type="button"
             onClick={() => { setMode("sign-up"); setError(""); setSuccess("") }}
-            className={`flex-1 px-4 py-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.1em] transition-colors ${
-              mode === "sign-up"
-                ? "bg-[var(--text-primary)] text-inverted"
-                : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted"
-            }`}
+            className={`flex-1 ${mode === "sign-up" ? "active" : ""}`}
           >
-            Sign Up
+            Sign up
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)] font-bold block mb-2">
-              Email
-            </label>
+            <label className="meta-text block mb-2">Email</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-transparent border-2 border-[var(--text-primary)] font-mono text-[14px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+              className="w-full px-3 h-11 bg-[var(--bg)] border border-[var(--border)] rounded-[var(--radius-sm)] text-[15px] focus:outline-none focus:border-[var(--text-secondary)]"
               placeholder="you@example.com"
             />
           </div>
 
           <div>
-            <label className="font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)] font-bold block mb-2">
-              Password
-            </label>
+            <label className="meta-text block mb-2">Password</label>
             <input
               type="password"
               required
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-transparent border-2 border-[var(--text-primary)] font-mono text-[14px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)] transition-colors"
-              placeholder="Min 8 chars, upper + lower + number + special"
+              className="w-full px-3 h-11 bg-[var(--bg)] border border-[var(--border)] rounded-[var(--radius-sm)] text-[15px] focus:outline-none focus:border-[var(--text-secondary)]"
+              placeholder="Min 8 characters"
             />
           </div>
 
           {error && (
-            <div className="p-3 border-2 border-[var(--accent)] bg-[var(--red-subtle-bg)]">
-              <p className="font-mono text-[11px] text-[var(--accent)]">{error}</p>
+            <div className="p-3 rounded-[var(--radius-sm)] bg-[var(--red-subtle-bg)] text-[13px] text-[var(--accent)]">
+              {error}
             </div>
           )}
-
           {success && (
-            <div className="p-3 border-2 border-[var(--text-primary)] bg-[var(--surface-alt)]">
-              <p className="font-mono text-[11px] text-[var(--text-primary)]">{success}</p>
+            <div className="p-3 rounded-[var(--radius-sm)] bg-[var(--surface-alt)] text-[13px] text-[var(--text-primary)]">
+              {success}
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full px-6 py-3 bg-[var(--text-primary)] text-inverted font-mono text-[12px] font-bold uppercase tracking-[0.1em] hover:bg-[var(--accent)] transition-colors disabled:opacity-50"
-          >
-            {loading ? "Loading..." : mode === "sign-in" ? "Sign In" : "Create Account"}
+          <button type="submit" disabled={loading} className="btn-primary w-full h-11 disabled:opacity-50">
+            {loading ? "Loading…" : mode === "sign-in" ? "Sign in" : "Create account"}
           </button>
         </form>
 
-        {/* Footer */}
-        <div className="mt-8 pt-6 border-t border-[var(--border)] text-center">
-          <Link
-            href="/"
-            className="font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
-          >
-            &larr; Back to Inbound Reports
+        <div className="mt-6 pt-4 border-t border-[var(--border)] text-center">
+          <Link href="/" className="text-[13px] text-[var(--text-secondary)] hover:text-[var(--accent)]">
+            ← Back to Inbound Reports
           </Link>
         </div>
-      </section>
+      </div>
     </div>
   )
 }

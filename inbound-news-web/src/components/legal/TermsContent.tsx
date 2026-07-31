@@ -34,11 +34,10 @@ export function TermsContent() {
         <section id="service-desc" className="scroll-mt-[200px]">
           <h2>1. Service Description</h2>
           <p>
-            Inbound Reports is a technology news aggregator. We do not produce original journalism but
-            provide summaries, analyses, and links to articles sourced from over 1,000 third-party
-            publications. Our platform uses artificial intelligence to cluster related stories, classify
-            content by category, and generate simplified reading tiers. All original content remains
-            the property of its respective owners.
+            Inbound Reports is a technology news aggregator based in Phnom Penh. We cluster related
+            coverage from third-party publications, generate summaries and literacy tools (including
+            simplified reading tiers), and link back to original sources. All original article content
+            remains the property of its respective owners.
           </p>
         </section>
       </FadeIn>
@@ -127,7 +126,7 @@ export function TermsContent() {
             We accept voluntary donations via KHQR and ABA payment links. All donations are
             non-refundable and constitute a voluntary contribution to support infrastructure costs
             (server hosting, AI API usage, domain registration). Donations do not confer ownership,
-            equity, membership, or any special privileges regarding the platform or its editorial
+            equity, membership, or any special privileges regarding the platform or its product
             direction.
           </p>
         </section>

@@ -110,6 +110,7 @@ def fetch_newsdata(
             "source_name": item.get("source_name", domain),
             "source_domain": domain,
             "summary": item.get("description", "") or "",
+            "image_url": item.get("image_url") or None,
             "published_at": published_at.isoformat() if published_at else None,
             "language": item.get("language", language),
             "category": item.get("category", [category])[0] if isinstance(item.get("category"), list) else item.get("category"),
