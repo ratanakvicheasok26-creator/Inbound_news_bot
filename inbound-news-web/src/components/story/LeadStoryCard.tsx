@@ -11,18 +11,24 @@ export function LeadStoryCard({ story }: { story: Story }) {
 
   return (
     <article className="animate-[riseIn_400ms_ease-out]">
-      <div className="grid gap-6 md:grid-cols-2 md:gap-8 lg:grid-cols-[1.35fr_1fr] lg:gap-10 lg:items-end">
-        <StoryImage
-          imageUrl={story.image_url}
-          pageUrl={story.primary_url}
-          alt={story.title}
-          variant="lead"
-          priority
-          className="rounded-[var(--radius)]"
-        />
+      <div className="grid gap-6 md:grid-cols-[1.2fr_1fr] md:gap-6 lg:grid-cols-[1.35fr_1fr] lg:gap-10 lg:items-center">
+        <div className="overflow-hidden rounded-[var(--radius)] border border-[var(--border)]">
+          <StoryImage
+            imageUrl={story.image_url}
+            pageUrl={story.primary_url}
+            alt={story.title}
+            variant="lead"
+            priority
+            className="rounded-none"
+          />
+        </div>
 
-        <div>
-          <div className="mb-3 flex items-center gap-3 flex-wrap">
+        <div className="lg:py-4">
+          <div className="mb-3 flex items-center gap-2.5 flex-wrap">
+            <span
+              className="inline-flex h-3.5 w-1 shrink-0 rounded-full bg-[var(--accent)]"
+              aria-hidden="true"
+            />
             <span className="meta-text text-[var(--accent)]">{categoryLabel}</span>
             <span className="meta-text">
               {story.source_count} source{story.source_count !== 1 ? "s" : ""}
@@ -31,18 +37,18 @@ export function LeadStoryCard({ story }: { story: Story }) {
           </div>
 
           <Link href={`/story/${story.id}`} className="group block">
-            <h1 className="font-display text-[clamp(26px,3.8vw,40px)] font-semibold leading-[1.12] tracking-[-0.025em] group-hover:text-[var(--accent)] transition-colors">
+            <h1 className="font-display text-[clamp(26px,3.6vw,38px)] font-semibold leading-[1.12] tracking-[-0.025em] group-hover:text-[var(--accent)] transition-colors">
               {story.title}
             </h1>
           </Link>
 
           {dek && (
-            <p className="mt-4 max-w-[52ch] text-[16px] leading-[1.55] text-[var(--text-secondary)]">
+            <p className="mt-3 max-w-[52ch] text-[15px] md:text-[16px] leading-[1.55] text-[var(--text-secondary)]">
               {dek}
             </p>
           )}
 
-          <div className="mt-6">
+          <div className="mt-5">
             <Link href={`/story/${story.id}`} className="btn-primary">
               Decode this story
             </Link>

@@ -15,18 +15,18 @@ export function StoryCard({ story }: { story: Story }) {
   const categoryLabel = getCategoryLabel(story.category || "") || "News"
 
   return (
-    <article className="story-card-tile group flex flex-col h-full">
-      <Link href={`/story/${story.id}`} className="block">
+    <article className="group flex h-full flex-col overflow-hidden rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] transition-colors hover:border-[var(--text-secondary)]">
+      <Link href={`/story/${story.id}`} className="block shrink-0">
         <StoryImage
           imageUrl={story.image_url}
           pageUrl={story.primary_url}
           alt={story.title}
           variant="card"
-          className="rounded-[var(--radius)]"
+          className="rounded-none"
         />
       </Link>
 
-      <div className="flex flex-1 flex-col pt-3.5">
+      <div className="flex flex-1 flex-col p-4 sm:p-5">
         <div className="mb-2 flex items-center gap-2 flex-wrap">
           <span className="meta-text text-[var(--accent)]">{categoryLabel}</span>
           <span className="meta-text tabular-nums">
@@ -41,7 +41,7 @@ export function StoryCard({ story }: { story: Story }) {
           </h3>
         </Link>
 
-        <div className="mt-3 flex items-center justify-between gap-2">
+        <div className="mt-3 flex items-center justify-between gap-2 border-t border-[var(--border)] pt-3">
           <Link
             href={`/story/${story.id}`}
             className="text-[13px] font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)]"

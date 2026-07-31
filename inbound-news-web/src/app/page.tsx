@@ -28,23 +28,25 @@ export default async function HomePage() {
 
   return (
     <div>
-      {/* Brand + lead */}
+      {/* Brand + lead hero */}
       <section className="border-b border-[var(--border)] bg-[var(--surface)]">
-        <div className="container pt-10 pb-12 md:pt-14 md:pb-16">
-          <p className="font-display text-[clamp(26px,4vw,40px)] font-semibold tracking-[-0.03em] text-[var(--text-primary)] mb-1 animate-[riseIn_350ms_ease-out]">
-            Inbound Reports
-          </p>
-          <p className="text-[15px] md:text-[16px] text-[var(--text-secondary)] max-w-[40ch] mb-12 md:mb-14 animate-[riseIn_450ms_ease-out]">
-            Decode the Tech. Aggregated coverage from Phnom Penh —
-            clustered sources, cut jargon, Local Lens.
-          </p>
+        <div className="container pt-8 pb-10 md:pt-10 md:pb-12">
+          <div className="mb-8 md:mb-10 animate-[riseIn_350ms_ease-out]">
+            <p className="font-display text-[clamp(26px,3.6vw,38px)] font-semibold leading-none tracking-[-0.03em] text-[var(--text-primary)]">
+              Inbound Reports
+            </p>
+            <p className="mt-2 text-[14px] md:text-[15px] text-[var(--text-secondary)] max-w-[42ch]">
+              Decode the Tech. Aggregated coverage from Phnom Penh —
+              clustered sources, cut jargon, Local Lens.
+            </p>
+          </div>
 
           <LeadStoryCard story={leadStory} />
         </div>
       </section>
 
-      {/* Latest — equal grid (Ground News–inspired balance, literacy signals) */}
-      <section className="container py-12 md:py-16">
+      {/* Latest stories — equal 3-column grid */}
+      <section className="container pt-10 pb-12 md:pt-14 md:pb-16">
         <div className="section-header">
           <h2 className="section-title">Latest stories</h2>
           <Link
@@ -64,7 +66,7 @@ export default async function HomePage() {
 
       {/* Literacy tools */}
       <section className="border-t border-[var(--border)]">
-        <div className="container py-10 md:py-12 flex flex-wrap gap-x-6 gap-y-2 text-[14px] text-[var(--text-secondary)]">
+        <div className="container py-8 md:py-10 flex flex-wrap gap-x-6 gap-y-2 text-[14px] text-[var(--text-secondary)]">
           <Link href="/glossary" className="hover:text-[var(--accent)] transition-colors">
             Glossary
           </Link>
