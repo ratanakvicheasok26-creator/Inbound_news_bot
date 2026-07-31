@@ -1,31 +1,48 @@
 import { NextRequest, NextResponse } from "next/server"
-import { supabase } from "@/lib/supabase"
+import { supabase, isSupabaseConfigured } from "@/lib/supabase"
+import { escapeOrValue } from "@/lib/posts"
 
 export async function GET(req: NextRequest) {
-  const q = req.nextUrl.searchParams.get("q")?.trim()
-  if (!q || q.length < 2) {
-    return NextResponse.json({ stories: [], articles: [] })
+  try {
+    if (!isSupabaseConfigured) {
+      return NextResponse.json(
+        { stories: [], articles: [], error: "Search is unavailable" },
+        { status: 503 },
+      )
+    }
+
+    const q = req.nextUrl.searchParams.get("q")?.trim()
+    if (!q || q.length < 2) {
+      return NextResponse.json({ stories: [], articles: [] })
+    }
+
+    const escaped = escapeOrValue(`%${q}%`)
+
+    const [storiesRes, articlesRes] = await Promise.all([
+      supabase
+        .from("stories")
+        .select("*")
+        .or(`title.ilike.${escaped},summary_en.ilike.${escaped}`)
+        .order("created_at", { ascending: false })
+        .limit(20),
+      supabase
+        .from("articles")
+        .select("*")
+        .or(`title.ilike.${escaped},source_name.ilike.${escaped},source_domain.ilike.${escaped}`)
+        .order("published_at", { ascending: false })
+        .limit(20),
+    ])
+
+    if (storiesRes.error) console.error("Search stories:", storiesRes.error)
+    if (articlesRes.error) console.error("Search articles:", articlesRes.error)
+
+    return NextResponse.json({
+      stories: storiesRes.data ?? [],
+      articles: articlesRes.data ?? [],
+      error: storiesRes.error?.message || articlesRes.error?.message || null,
+    })
+  } catch (error) {
+    console.error("Search API error:", error)
+    return NextResponse.json({ stories: [], articles: [], error: "Search failed" }, { status: 500 })
   }
-
-  const pattern = `%${q}%`
-
-  const [storiesRes, articlesRes] = await Promise.all([
-    supabase
-      .from("stories")
-      .select("*")
-      .or(`title.ilike.${pattern},summary_en.ilike.${pattern},tags.cs.{${q}}`)
-      .order("created_at", { ascending: false })
-      .limit(20),
-    supabase
-      .from("articles")
-      .select("*")
-      .or(`title.ilike.${pattern},source_name.ilike.${pattern},source_domain.ilike.${pattern}`)
-      .order("published_at", { ascending: false })
-      .limit(20),
-  ])
-
-  return NextResponse.json({
-    stories: storiesRes.data ?? [],
-    articles: articlesRes.data ?? [],
-  })
 }

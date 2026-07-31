@@ -9,6 +9,65 @@ interface SettingsTabProps {
   onSignOut: () => void
 }
 
+function Segmented<T extends string>({
+  value,
+  options,
+  onChange,
+}: {
+  value: T
+  options: { id: T; label: string }[]
+  onChange: (v: T) => void
+}) {
+  return (
+    <div className="tier-toggle">
+      {options.map((opt) => (
+        <button
+          key={opt.id}
+          type="button"
+          onClick={() => onChange(opt.id)}
+          className={value === opt.id ? "active" : ""}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function Switch({
+  checked,
+  onChange,
+  accent = false,
+}: {
+  checked: boolean
+  onChange: () => void
+  accent?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onChange}
+      className={`w-11 h-6 rounded-full relative transition-colors border border-[var(--border)] ${
+        checked
+          ? accent
+            ? "bg-[var(--accent)] border-[var(--accent)]"
+            : "bg-[var(--text-primary)] border-[var(--text-primary)]"
+          : "bg-[var(--surface-alt)]"
+      }`}
+      role="switch"
+      aria-checked={checked}
+    >
+      <span
+        className={`absolute top-0.5 w-4 h-4 rounded-full transition-transform ${
+          checked
+            ? "left-5 bg-[var(--accent-contrast)]"
+            : "left-0.5 bg-[var(--text-secondary)]"
+        }`}
+      />
+    </button>
+  )
+}
+
 export function SettingsTab({ user, onSignOut }: SettingsTabProps) {
   const [prefs, setPrefs] = useState(() => getProfile().preferences)
 
@@ -32,142 +91,76 @@ export function SettingsTab({ user, onSignOut }: SettingsTabProps) {
   }
 
   return (
-    <div className="max-w-[560px]">
-      {/* Default Language */}
-      <div className="flex items-center justify-between py-4 border-b border-[var(--border)]">
-        <label className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold">
-          Default Language
-        </label>
-        <div className="flex border-2 border-[var(--text-primary)] overflow-hidden">
-          <button
-            onClick={() => update("defaultLang", "en")}
-            className={`px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider transition-colors ${
-              prefs.defaultLang === "en"
-                ? "bg-[var(--text-primary)] text-inverted"
-                : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted"
-            }`}
-          >
-            EN
-          </button>
-          <div className="w-px bg-[var(--border)]" />
-          <button
-            onClick={() => update("defaultLang", "km")}
-            className={`px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider transition-colors ${
-              prefs.defaultLang === "km"
-                ? "bg-[var(--text-primary)] text-inverted"
-                : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted"
-            }`}
-          >
-            ខ្មែរ
-          </button>
-        </div>
+    <div className="max-w-[560px] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] px-5 divide-y divide-[var(--border)]">
+      <div className="flex items-center justify-between py-4 gap-4">
+        <label className="meta-text">Default language</label>
+        <Segmented
+          value={prefs.defaultLang}
+          options={[
+            { id: "en", label: "EN" },
+            { id: "km", label: "ខ្មែរ" },
+          ]}
+          onChange={(v) => update("defaultLang", v)}
+        />
       </div>
 
-      {/* Default Reading Tier */}
-      <div className="flex items-center justify-between py-4 border-b border-[var(--border)]">
-        <label className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold">
-          Default Tier
-        </label>
-        <div className="flex border-2 border-[var(--text-primary)] overflow-hidden">
-          {(["eli5", "standard", "deep"] as const).map((tier, i) => (
-            <div key={tier} className="flex">
-              {i > 0 && <div className="w-px bg-[var(--border)]" />}
-              <button
-                onClick={() => update("defaultTier", tier)}
-                className={`px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider transition-colors ${
-                  prefs.defaultTier === tier
-                    ? "bg-[var(--text-primary)] text-inverted"
-                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted"
-                }`}
-              >
-                {tier === "eli5" ? "ELI5" : tier === "standard" ? "Standard" : "Deep"}
-              </button>
-            </div>
-          ))}
-        </div>
+      <div className="flex items-center justify-between py-4 gap-4">
+        <label className="meta-text">Default tier</label>
+        <Segmented
+          value={prefs.defaultTier}
+          options={[
+            { id: "eli5", label: "ELI5" },
+            { id: "standard", label: "Standard" },
+            { id: "deep", label: "Deep" },
+          ]}
+          onChange={(v) => update("defaultTier", v)}
+        />
       </div>
 
-      {/* Telegram Digest */}
-      <div className="flex items-center justify-between py-4 border-b border-[var(--border)]">
+      <div className="flex items-center justify-between py-4 gap-4">
         <div>
-          <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold block">
-            Telegram Digest
-          </span>
-          <span className="font-mono text-[10px] text-[var(--text-secondary)]">
-            Receive daily digest via Telegram bot
-          </span>
+          <span className="text-[14px] font-semibold block">Telegram digest</span>
+          <span className="text-[13px] text-[var(--text-secondary)]">Daily digest via Telegram bot</span>
         </div>
-        <button
-          onClick={() => update("telegramDigest", !prefs.telegramDigest)}
-          className={`w-11 h-6 border-2 border-[var(--text-primary)] relative transition-colors ${
-            prefs.telegramDigest ? "bg-[var(--text-primary)]" : "bg-transparent"
-          }`}
-          role="switch"
-          aria-checked={prefs.telegramDigest}
-        >
-          <div
-            className={`absolute top-0.5 w-4 h-4 transition-transform ${
-              prefs.telegramDigest
-                ? "left-5 bg-[var(--bg)]"
-                : "left-0.5 bg-[var(--text-primary)]"
-            }`}
-          />
-        </button>
+        <Switch
+          checked={prefs.telegramDigest}
+          onChange={() => update("telegramDigest", !prefs.telegramDigest)}
+        />
       </div>
 
-      {/* Stealth Mode */}
-      <div className="flex items-center justify-between py-4 border-b border-[var(--border)]">
+      <div className="flex items-center justify-between py-4 gap-4">
         <div>
-          <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] font-bold block">
-            Stealth Mode
-          </span>
-          <span className="font-mono text-[10px] text-[var(--text-secondary)]">
-            Stops recording reading history and literacy points
+          <span className="text-[14px] font-semibold block">Stealth mode</span>
+          <span className="text-[13px] text-[var(--text-secondary)]">
+            Stop recording history and points
           </span>
         </div>
-        <button
-          onClick={() => update("stealthMode", !prefs.stealthMode)}
-          className={`w-11 h-6 border-2 border-[var(--text-primary)] relative transition-colors ${
-            prefs.stealthMode ? "bg-[var(--accent)]" : "bg-transparent"
-          }`}
-          role="switch"
-          aria-checked={prefs.stealthMode}
-        >
-          <div
-            className={`absolute top-0.5 w-4 h-4 transition-transform ${
-              prefs.stealthMode
-                ? "left-5 bg-[var(--accent-contrast)]"
-                : "left-0.5 bg-[var(--text-primary)]"
-            }`}
-          />
-        </button>
+        <Switch
+          checked={prefs.stealthMode}
+          onChange={() => update("stealthMode", !prefs.stealthMode)}
+          accent
+        />
       </div>
 
-      {/* Account Info */}
-      <div className="pt-8 mt-4 border-t-2 border-[var(--text-primary)]">
-        <h3 className="font-mono text-[11px] uppercase tracking-[0.12em] font-bold text-[var(--text-secondary)] mb-3">
-          Account
-        </h3>
-        <div className="flex items-center justify-between py-3 border-b border-[var(--border)]">
-          <span className="font-mono text-[11px] text-[var(--text-secondary)]">{user.email}</span>
-          <button
-            onClick={onSignOut}
-            className="font-mono text-[11px] uppercase tracking-[0.12em] font-bold text-[var(--text-secondary)] border-2 border-[var(--border)] px-3 py-1 hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
-          >
-            Sign Out
+      <div className="py-4">
+        <p className="meta-text mb-2">Account</p>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-[14px] text-[var(--text-secondary)] truncate">{user.email}</span>
+          <button type="button" onClick={onSignOut} className="btn-ghost shrink-0">
+            Sign out
           </button>
         </div>
       </div>
 
-      {/* Delete Local Data */}
-      <div className="pt-6 mt-4">
+      <div className="py-4">
         <button
+          type="button"
           onClick={handleDelete}
-          className="font-mono text-[11px] uppercase tracking-[0.12em] font-bold text-[var(--accent)] hover:text-[var(--red-hover)] transition-colors"
+          className="text-[13px] font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)]"
         >
-          Delete Local Data
+          Delete local data
         </button>
-        <p className="font-mono text-[10px] text-[var(--text-secondary)] mt-1">
+        <p className="text-[12px] text-[var(--text-secondary)] mt-1">
           Erase reading history, score, and saved stories from this device.
         </p>
       </div>

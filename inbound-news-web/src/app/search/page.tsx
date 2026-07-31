@@ -1,171 +1,178 @@
 "use client"
 
-import { useState, useEffect, useCallback, Suspense } from "react"
-import { useSearchParams } from "next/navigation"
+import { useState, useEffect, useCallback, Suspense, FormEvent } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { StoryRow } from "@/components/story/StoryRow"
 import type { Story, Article } from "@/lib/types"
 import { Search } from "lucide-react"
+import { formatDistanceToNow } from "@/lib/utils"
 
 function SearchResults() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const q = searchParams.get("q") || ""
 
+  const [input, setInput] = useState(q)
   const [stories, setStories] = useState<Story[]>([])
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const runSearch = useCallback(async (query: string) => {
     if (query.length < 2) return
     setLoading(true)
     setSearched(true)
+    setError(null)
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`)
       const data = await res.json()
       setStories(data.stories ?? [])
       setArticles(data.articles ?? [])
+      if (data.error) setError(data.error)
     } catch {
       setStories([])
       setArticles([])
+      setError("Search failed. Try again.")
     } finally {
       setLoading(false)
     }
   }, [])
 
-  /* eslint-disable react-hooks/set-state-in-effect */
+  /* eslint-disable react-hooks/set-state-in-effect -- sync search UI to URL */
   useEffect(() => {
+    setInput(q)
     if (q) runSearch(q)
+    else {
+      setStories([])
+      setArticles([])
+      setSearched(false)
+      setError(null)
+    }
   }, [q, runSearch])
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    const trimmed = input.trim()
+    if (trimmed.length < 2) return
+    router.push(`/search?q=${encodeURIComponent(trimmed)}`)
+  }
 
   const totalResults = stories.length + articles.length
 
   return (
-    <div className="container">
-      <section className="py-10 md:py-16 max-w-[960px] mx-auto">
-        {/* Header */}
-        <div className="pb-8 border-b-2 border-[var(--text-primary)]">
-          <h1 className="page-title">
-            SEARCH
-          </h1>
-          {q && (
-            <div className="mt-3 font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)]">
-              {loading ? (
-                "Searching..."
-              ) : searched ? (
-                <>{totalResults} result{totalResults !== 1 ? "s" : ""} for &ldquo;{q}&rdquo;</>
-              ) : null}
-            </div>
-          )}
+    <div className="container container-md py-10 md:py-14">
+      <h1 className="page-title mb-2">Search</h1>
+      {q && (
+        <p className="meta-text mb-6">
+          {loading
+            ? "Searching…"
+            : searched
+              ? `${totalResults} result${totalResults !== 1 ? "s" : ""} for “${q}”`
+              : null}
+        </p>
+      )}
+
+      <form onSubmit={handleSubmit} className="mb-8">
+        <div className="flex items-stretch border border-[var(--border)] rounded-[var(--radius)] overflow-hidden bg-[var(--surface)]">
+          <span className="flex items-center justify-center w-11 shrink-0 text-[var(--text-secondary)]">
+            <Search className="h-4 w-4" aria-hidden />
+          </span>
+          <input
+            type="search"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Search stories and sources…"
+            aria-label="Search query"
+            className="min-w-0 flex-1 px-2 h-11 bg-transparent text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none"
+            autoComplete="off"
+            enterKeyHint="search"
+          />
+          <button type="submit" className="btn-primary rounded-none h-11">
+            Search
+          </button>
         </div>
+        <p className="mt-2 text-[12px] text-[var(--text-secondary)]">At least 2 characters</p>
+      </form>
 
-        {/* No query state */}
-        {!q && (
-          <div className="py-20 text-center">
-            <Search className="h-8 w-8 mx-auto mb-4 text-[var(--text-secondary)]" />
-            <p className="font-mono text-[12px] uppercase tracking-[0.12em] text-[var(--text-secondary)]">
-              Use the search icon in the header to search stories and sources.
-            </p>
-          </div>
-        )}
+      {!q && (
+        <p className="text-[var(--text-secondary)] py-8">
+          Type a keyword to search stories and source articles.
+        </p>
+      )}
 
-        {/* Empty results */}
-        {q && searched && !loading && totalResults === 0 && (
-          <div className="py-20 text-center">
-            <p className="font-mono text-[14px] text-[var(--text-secondary)] mb-2">
-              No results for &ldquo;{q}&rdquo;
-            </p>
-            <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)]">
-              Try a different keyword or check your spelling.
-            </p>
-          </div>
-        )}
+      {error && (
+        <p className="text-[14px] text-[var(--accent)] mb-4">{error}</p>
+      )}
 
-        {/* Stories results */}
-        {stories.length > 0 && (
-          <div className="mt-10">
-            <div className="section-header mb-4">
-              <h2 className="section-title">
-                <span className="section-number mr-3">S</span>
-                Stories
-              </h2>
-              <span className="font-mono text-[10px] text-[var(--text-secondary)]">
-                {stories.length} result{stories.length !== 1 ? "s" : ""}
-              </span>
-            </div>
-            <div>
-              {stories.map((story) => (
-                <StoryRow key={story.id} story={story} />
-              ))}
-            </div>
-          </div>
-        )}
+      {q && searched && !loading && totalResults === 0 && !error && (
+        <div className="py-12">
+          <p className="text-[16px] text-[var(--text-primary)] mb-1">No results for “{q}”</p>
+          <p className="text-[14px] text-[var(--text-secondary)]">Try another keyword.</p>
+        </div>
+      )}
 
-        {/* Articles results */}
-        {articles.length > 0 && (
-          <div className="mt-10">
-            <div className="section-header mb-4">
-              <h2 className="section-title">
-                <span className="section-number mr-3">A</span>
-                Articles
-              </h2>
-              <span className="font-mono text-[10px] text-[var(--text-secondary)]">
-                {articles.length} result{articles.length !== 1 ? "s" : ""}
-              </span>
-            </div>
-            <div className="border-t-2 border-[var(--text-primary)]">
-              {articles.map((article) => (
-                <Link
-                  key={article.id}
-                  href={article.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-start justify-between gap-4 py-4 border-b border-[var(--border)] hover:bg-[var(--surface-alt)] transition-colors px-2 -mx-2"
-                >
-                  <div className="min-w-0">
-                    <p className="font-mono text-[13px] font-bold text-[var(--text-primary)] leading-tight line-clamp-2">
-                      {article.title}
-                    </p>
-                    {article.summary && (
-                      <p className="mt-1 font-mono text-[11px] text-[var(--text-secondary)] leading-relaxed line-clamp-2">
-                        {article.summary}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex-shrink-0 text-right">
-                    {article.source_name && (
-                      <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--text-secondary)] font-bold">
-                        {article.source_name}
-                      </span>
-                    )}
-                    {article.published_at && (
-                      <span className="block font-mono text-[9px] text-[var(--text-secondary)] mt-0.5">
-                        {new Date(article.published_at).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              ))}
-            </div>
+      {stories.length > 0 && (
+        <section className="mb-10">
+          <div className="section-header">
+            <h2 className="section-title">Stories</h2>
+            <span className="meta-text">{stories.length}</span>
           </div>
-        )}
-      </section>
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] px-5">
+            {stories.map((story) => (
+              <StoryRow key={story.id} story={story} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {articles.length > 0 && (
+        <section>
+          <div className="section-header">
+            <h2 className="section-title">Articles</h2>
+            <span className="meta-text">{articles.length}</span>
+          </div>
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] divide-y divide-[var(--border)]">
+            {articles.map((article) => (
+              <Link
+                key={article.id}
+                href={article.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block px-5 py-4 hover:bg-[var(--surface-alt)] transition-colors"
+              >
+                <p className="text-[15px] font-semibold leading-snug line-clamp-2">{article.title}</p>
+                {article.summary && (
+                  <p className="mt-1 text-[13px] text-[var(--text-secondary)] line-clamp-2">
+                    {article.summary}
+                  </p>
+                )}
+                <div className="mt-2 flex gap-3 meta-text">
+                  {article.source_name && <span>{article.source_name}</span>}
+                  {article.published_at && (
+                    <span>{formatDistanceToNow(article.published_at)}</span>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   )
 }
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={
-      <div className="container">
-        <section className="py-16 md:py-24 max-w-[960px] mx-auto text-center">
-          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)]">Loading...</p>
-        </section>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="container py-16 text-center text-[var(--text-secondary)]">
+          Loading…
+        </div>
+      }
+    >
       <SearchResults />
     </Suspense>
   )

@@ -6,8 +6,9 @@ regular digest stories on a fixed schedule, with urgent stories checked
 separately and posted anytime.
 
 Schedule:
-  - Regular digest: fixed times at 5am and 5pm (DIGEST_SCHEDULE_HOUR_AM/PM)
-  - Urgent keyword check: hourly, posts immediately regardless of time
+  - Regular digest: fixed times at DIGEST_SCHEDULE_HOUR_AM / DIGEST_SCHEDULE_HOUR_PM
+    (default 5am and 5pm, Asia/Phnom_Penh)
+  - Urgent keyword check: every URGENT_CHECK_INTERVAL_SECONDS, posts immediately
   - Use /fetch for on-demand checks (subject to cooldown)
 
 Setup:
@@ -24,7 +25,6 @@ How people join:
 
 from __future__ import annotations
 
-import asyncio
 import datetime as dt
 import logging
 import os
@@ -36,10 +36,12 @@ from telegram.ext import Application, CommandHandler, ContextTypes, filters
 from newsbot.bot import fetch_and_post, fetch_urgent_and_post
 from newsbot import config
 from newsbot.config import (
-    BATCH_POLL_INTERVAL_MINUTES,
     BATCH_STORIES,
+    DIGEST_SCHEDULE_HOUR_AM,
+    DIGEST_SCHEDULE_HOUR_PM,
     DONATION_QR_IMAGE,
     DONATION_SCHEDULE_HOUR,
+    DONATION_TEXT,
     FETCH_COOLDOWN_SECONDS,
     TIMEZONE,
     URGENT_CHECK_INTERVAL_SECONDS,
@@ -61,10 +63,11 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 _fetch_last_run: dict[int, float] = {}
+_fetch_cooldown_lock = threading.Lock()
 
 
 async def poll_job(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Periodic digest job — runs every BATCH_POLL_INTERVAL_MINUTES, posts new stories found since last run."""
+    """Scheduled digest job — runs at DIGEST_SCHEDULE_HOUR_AM / PM."""
     await fetch_and_post(context)
 
 
@@ -73,18 +76,8 @@ async def urgent_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     await fetch_urgent_and_post(context)
 
 
-DONATION_TEXT = (
-    "<b>Support Inbound Reports</b>\n\n"
-    "We aggregate tech news from multiple sources and APIs across the web "
-    "to deliver concise, multi-perspective coverage.\n\n"
-    "Running this engine takes resources. "
-    "If you find value in having a balanced tech feed, consider supporting our work:\n\n"
-    '<a href="https://pay.ababank.com/oRF8/puropy03">ABA Payment Link</a>'
-)
-
-
 async def donation_job(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send donation message to the group chat topic at 10 PM."""
+    """Send donation message to the group chat topic at DONATION_SCHEDULE_HOUR."""
     chat_id = config.TELEGRAM_CHANNEL_ID
     thread_id = config.TELEGRAM_THREAD_ID
     if chat_id is None:
@@ -138,12 +131,20 @@ async def start_command(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     chat_title = (effective_chat.title or effective_chat.first_name or "unknown") if effective_chat else "unknown"
     logger.info("[/start] chat_id=%s name=%s", chat_id, chat_title)
 
+    am = DIGEST_SCHEDULE_HOUR_AM
+    pm = DIGEST_SCHEDULE_HOUR_PM
+
+    def _hour_label(hour: int) -> str:
+        h12 = hour % 12 or 12
+        return f"{h12}{'am' if hour < 12 else 'pm'}"
+
     if chat_id not in subscribers:
         subscribers.add(chat_id)
         state.save_subscribers(subscribers)
         await _reply(
             update,
-            "Subscribed! Regular stories post at 5am and 5pm. Urgent alerts send anytime.",
+            f"Subscribed! Regular stories post at {_hour_label(am)} and {_hour_label(pm)}. "
+            "Urgent alerts send anytime.",
         )
     else:
         await _reply(update, "You're already subscribed.")
@@ -169,16 +170,20 @@ async def fetch_command(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     effective_chat = getattr(update, "effective_chat", None)
     chat_id = effective_chat.id if effective_chat else 0
 
-    now = time_mod.time()
-    last_run = _fetch_last_run.get(chat_id, 0)
-    remaining = FETCH_COOLDOWN_SECONDS - (now - last_run)
-    if remaining > 0:
-        minutes = int(remaining // 60) + 1
-        await _reply(update, f"Please wait {minutes} minute{'s' if minutes > 1 else ''} before requesting another fetch.")
-        return
+    with _fetch_cooldown_lock:
+        now = time_mod.time()
+        last_run = _fetch_last_run.get(chat_id, 0)
+        remaining = FETCH_COOLDOWN_SECONDS - (now - last_run)
+        if remaining > 0:
+            minutes = int(remaining // 60) + 1
+            await _reply(
+                update,
+                f"Please wait {minutes} minute{'s' if minutes > 1 else ''} before requesting another fetch.",
+            )
+            return
+        _fetch_last_run[chat_id] = now
 
     logger.info("[/fetch] from chat_id=%s", chat_id)
-    _fetch_last_run[chat_id] = now
     await _reply(update, "Fetching latest tech news...")
 
     try:
@@ -224,28 +229,37 @@ def main() -> None:
     if app.job_queue is None:
         raise RuntimeError("job_queue must be available (install python-telegram-bot[job-queue])")
 
-    # Digest schedule — every 30 min (or BATCH_POLL_INTERVAL_MINUTES).
-    # Urgent stories still get their own separate hourly check.
-    app.job_queue.run_repeating(
+    # Digest at fixed AM/PM times (not a repeating interval).
+    # Urgent stories keep a separate repeating check.
+    app.job_queue.run_daily(
         poll_job,
-        interval=BATCH_POLL_INTERVAL_MINUTES * 60,
-        first=60,
+        time=dt.time(hour=DIGEST_SCHEDULE_HOUR_AM, minute=0, tzinfo=TIMEZONE),
+        name="digest_am",
+    )
+    app.job_queue.run_daily(
+        poll_job,
+        time=dt.time(hour=DIGEST_SCHEDULE_HOUR_PM, minute=0, tzinfo=TIMEZONE),
+        name="digest_pm",
     )
     app.job_queue.run_repeating(
         urgent_job,
         interval=URGENT_CHECK_INTERVAL_SECONDS,
         first=URGENT_FIRST_DELAY_SECONDS,
+        name="urgent_check",
     )
     app.job_queue.run_daily(
         donation_job,
         time=dt.time(hour=DONATION_SCHEDULE_HOUR, minute=0, tzinfo=TIMEZONE),
+        name="donation",
     )
 
     mode = "batched" if BATCH_STORIES else "individual"
     logger.info(
-        "Bot running. %s digest every %d min (%s). Donation at %02d:00. Urgent checks every %ds. Use /fetch for on-demand.",
+        "Bot running. %s digest at %02d:00 and %02d:00 (%s). Donation at %02d:00. "
+        "Urgent checks every %ds. Use /fetch for on-demand.",
         mode.capitalize(),
-        BATCH_POLL_INTERVAL_MINUTES,
+        DIGEST_SCHEDULE_HOUR_AM,
+        DIGEST_SCHEDULE_HOUR_PM,
         TIMEZONE,
         DONATION_SCHEDULE_HOUR,
         URGENT_CHECK_INTERVAL_SECONDS,

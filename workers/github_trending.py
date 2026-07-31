@@ -41,6 +41,8 @@ def fetch_github_trending(
     Returns:
         List of dicts with standardized article schema.
     """
+    # gitterapp unofficial trending API is often down (404); prefer Search API.
+    # Keep a short probe so if it returns, we still use richer trending fields.
     url = "https://api.gitterapp.com/repositories"
     params: dict[str, str] = {"since": since}
     if language:
@@ -49,14 +51,16 @@ def fetch_github_trending(
         params["spoken_language_code"] = spoken_language
 
     try:
-        resp = httpx.get(url, params=params, timeout=_TIMEOUT, follow_redirects=True)
-        resp.raise_for_status()
+        resp = httpx.get(url, params=params, timeout=5, follow_redirects=True)
+        if resp.status_code != 200:
+            return _fetch_via_search(language=language, since=since)
         repos = resp.json()
+        if not isinstance(repos, list) or not repos:
+            return _fetch_via_search(language=language, since=since)
     except httpx.TimeoutException:
-        logger.warning("GitHub trending timed out")
-        return []
+        logger.debug("GitHub trending probe timed out — using Search API")
+        return _fetch_via_search(language=language, since=since)
     except Exception:
-        # Fallback: use GitHub Search API
         return _fetch_via_search(language=language, since=since)
 
     articles: list[dict[str, Any]] = []

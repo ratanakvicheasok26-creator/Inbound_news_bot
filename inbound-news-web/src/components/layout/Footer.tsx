@@ -3,39 +3,44 @@ import Image from "next/image"
 import { CATEGORIES } from "@/lib/categories"
 
 export function Footer() {
-  return (
-    <footer className="border-t-2 border-[var(--text-primary)]">
-      {/* Massive headline */}
-      <div className="overflow-hidden py-12 md:py-20">
-        <h2 className="text-[64px] md:text-[96px] lg:text-[120px] font-extrabold leading-[0.85] tracking-[-0.04em] text-[var(--accent)] whitespace-nowrap">
-          DECODE THE TECH.
-        </h2>
-      </div>
+  const topCategories = CATEGORIES.slice(0, 8)
 
-      <div className="container pb-12">
+  return (
+    <footer>
+      <div className="container">
         <div className="footer-grid">
           <div>
-            <Link href="/" className="flex items-center mb-4">
-              <Image src="/logo-dark.png" alt="Inbound Reporter" width={1983} height={467} className="block h-[28px] w-auto dark:hidden" />
-              <Image src="/logo-light.png" alt="Inbound Reporter" width={1982} height={467} className="hidden h-[28px] w-auto dark:block" />
+            <Link href="/" className="inline-flex items-center mb-4">
+              <Image
+                src="/logo-dark.png"
+                alt="Inbound Reports"
+                width={1983}
+                height={467}
+                className="block h-7 w-auto dark:hidden"
+              />
+              <Image
+                src="/logo-light.png"
+                alt="Inbound Reports"
+                width={1982}
+                height={467}
+                className="hidden h-7 w-auto dark:block"
+              />
             </Link>
-            <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed max-w-[280px]">
-              Independent technology journalism, published from Phnom Penh, Cambodia.
-              Aggregating from a dynamically scaling network of 900+ tech sources.
+            <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[320px]">
+              Tech news aggregation from Phnom Penh. We cluster sources and
+              explain jargon so readers can decode coverage — not chase hype.
             </p>
-            <div className="mt-3 font-mono text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">
-              Last updated: July 2026
-            </div>
           </div>
 
           <div>
-            <h4 className="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] font-bold text-[var(--text-primary)]">
-              Sections
-            </h4>
-            <ul className="space-y-1.5">
-              {CATEGORIES.slice(0, 8).map((cat) => (
+            <h4 className="meta-text text-[var(--text-primary)] mb-3">Topics</h4>
+            <ul className="space-y-2">
+              {topCategories.map((cat) => (
                 <li key={cat.slug}>
-                  <Link href={`/topic/${cat.slug}`} className="text-[13px] text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">
+                  <Link
+                    href={`/topic/${cat.slug}`}
+                    className="text-[14px] text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+                  >
                     {cat.label}
                   </Link>
                 </li>
@@ -44,52 +49,95 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] font-bold text-[var(--text-primary)]">
-              Platform
-            </h4>
-            <ul className="space-y-1.5 text-[13px]">
-              <li><Link href="/blindspot" className="text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Blindspot Feed</Link></li>
-              <li><Link href="/glossary" className="text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Tech Glossary</Link></li>
-              <li><Link href="/donate" className="text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Support Us</Link></li>
-              <li><Link href="/legal/methodology" className="text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">AI & Editorial Methodology</Link></li>
-              <li><Link href="/about" className="text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">About Us</Link></li>
+            <h4 className="meta-text text-[var(--text-primary)] mb-3">Platform</h4>
+            <ul className="space-y-2 text-[14px]">
+              <li>
+                <Link href="/glossary" className="text-[var(--text-secondary)] hover:text-[var(--accent)]">
+                  Glossary
+                </Link>
+              </li>
+              <li>
+                <Link href="/search" className="text-[var(--text-secondary)] hover:text-[var(--accent)]">
+                  Search
+                </Link>
+              </li>
+              <li>
+                <Link href="/donate" className="text-[var(--text-secondary)] hover:text-[var(--accent)]">
+                  Donation
+                </Link>
+              </li>
+              <li>
+                <Link href="/about" className="text-[var(--text-secondary)] hover:text-[var(--accent)]">
+                  About
+                </Link>
+              </li>
+              <li>
+                <Link href="/legal/methodology" className="text-[var(--text-secondary)] hover:text-[var(--accent)]">
+                  Methodology
+                </Link>
+              </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] font-bold text-[var(--text-primary)]">
-              Legal &amp; Trust
-            </h4>
-            <ul className="space-y-1.5 text-[13px]">
-              <li><Link href="/legal/terms" className="text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Terms of Service</Link></li>
-              <li><Link href="/legal/privacy" className="text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/legal/dmca" className="text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">DMCA / Copyright</Link></li>
-            </ul>
-            <div className="mt-4 space-y-2">
-              {/* TODO: Replace "#" with actual Telegram bot link when available */}
-              <Link
-                href="#"
-                className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-[var(--accent)] font-bold hover:text-[var(--red-hover)] transition-colors"
-              >
-                Telegram Bot
-                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
-                Subscribe
-              </Link>
-              <div>
+            <h4 className="meta-text text-[var(--text-primary)] mb-3">Connect</h4>
+            <ul className="space-y-2 text-[14px]">
+              <li>
+                <a
+                  href="https://t.me/+n3p4DMJ5mspmMGE1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[var(--text-secondary)] hover:text-[var(--accent)]"
+                >
+                  Telegram (EN)
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://t.me/+XGZesNq7wqsxYWE1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[var(--text-secondary)] hover:text-[var(--accent)]"
+                >
+                  Telegram (KM)
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://x.com/inboundcrewm?s=11"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[var(--text-secondary)] hover:text-[var(--accent)]"
+                >
+                  X / Twitter
+                </a>
+              </li>
+              <li>
                 <a
                   href="mailto:inboundcrew82@gmail.com"
-                  className="font-mono text-[10px] uppercase tracking-widest text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+                  className="text-[var(--text-secondary)] hover:text-[var(--accent)]"
                 >
-                  inboundcrew82@gmail.com
+                  Email
                 </a>
-              </div>
+              </li>
+            </ul>
+            <div className="mt-6 space-y-2 text-[13px]">
+              <Link href="/legal/terms" className="block text-[var(--text-secondary)] hover:text-[var(--accent)]">
+                Terms
+              </Link>
+              <Link href="/legal/privacy" className="block text-[var(--text-secondary)] hover:text-[var(--accent)]">
+                Privacy
+              </Link>
+              <Link href="/legal/dmca" className="block text-[var(--text-secondary)] hover:text-[var(--accent)]">
+                DMCA
+              </Link>
             </div>
           </div>
         </div>
 
         <div className="footer-bottom">
-          <span>&copy; {new Date().getFullYear()} Inbound Reporter. Built by the Inbound Crew.</span>
-          <span>AI-processed. Human-reviewed. Always sourced.</span>
+          <span>&copy; {new Date().getFullYear()} Inbound Reports</span>
+          <span>Aggregated. Explained. Always sourced.</span>
         </div>
       </div>
     </footer>

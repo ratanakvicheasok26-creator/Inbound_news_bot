@@ -16,14 +16,6 @@ interface HypeRetrospectiveProps {
   createdAt: string
 }
 
-const SEED_PREDS: Prediction[] = [
-  { storyId: "seed-1", title: "GPT-5 will pass the bar exam with 95% accuracy", verdict: "hyped", createdAt: "2025-11-15" },
-  { storyId: "seed-2", title: "Quantum computing will break RSA encryption by 2026", verdict: "hyped", createdAt: "2025-09-03" },
-  { storyId: "seed-3", title: "Apple Vision Pro will redefine workplace productivity", verdict: "hyped", createdAt: "2025-06-20" },
-  { storyId: "seed-4", title: "Open source models will match GPT-4 by end of 2025", verdict: "will_deliver", createdAt: "2025-08-12" },
-  { storyId: "seed-5", title: "Cambodia will launch a national AI strategy by 2026", verdict: "will_deliver", createdAt: "2025-10-01" },
-]
-
 const VERDICT_ICONS = {
   hyped: XCircle,
   will_deliver: CheckCircle,
@@ -60,21 +52,14 @@ function formatDateShort(d: Date): string {
 const STORAGE_KEY = "hype_predictions"
 
 function loadPredictions(): Prediction[] {
-  if (typeof window === "undefined") return SEED_PREDS
+  if (typeof window === "undefined") return []
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_PREDS))
-      return SEED_PREDS
-    }
+    if (!raw) return []
     const stored = JSON.parse(raw) as Prediction[]
-    if (stored.length === 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_PREDS))
-      return SEED_PREDS
-    }
-    return stored
+    return Array.isArray(stored) ? stored : []
   } catch {
-    return SEED_PREDS
+    return []
   }
 }
 
@@ -146,7 +131,7 @@ export function HypeRetrospective({ storyId, storyTitle, createdAt }: HypeRetros
                   <button
                     key={v}
                     onClick={() => handleVote(v)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider border transition-all ${
+                    className={`flex items-center gap-1.5 px-4 py-2.5 md:px-3 md:py-1.5 font-mono text-[10px] uppercase tracking-wider border transition-all ${
                       active
                         ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-inverted"
                         : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-primary)] hover:text-[var(--text-primary)]"

@@ -35,8 +35,12 @@ import sys
 import time
 from typing import Any
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from workers.ai_rewrite import rewrite_batch
 from workers.db import get_supabase
+from workers.images import extract_image_url
 
 # --- All source imports ---
 from workers.gdelt import fetch_all_gdelt
@@ -83,6 +87,7 @@ def _upsert_articles(articles: list[dict[str, Any]]) -> int:
         rows = []
         for a in batch:
             raw = a.get("raw_json")
+            image_url = a.get("image_url") or extract_image_url(a)
             rows.append({
                 "title": a["title"],
                 "summary": a.get("summary", ""),
@@ -92,6 +97,7 @@ def _upsert_articles(articles: list[dict[str, Any]]) -> int:
                 "category": a.get("category"),
                 "language": a.get("language", "en"),
                 "published_at": a.get("published_at"),
+                "image_url": image_url,
                 "raw_json": json.dumps(raw) if raw else None,
             })
 
@@ -100,7 +106,19 @@ def _upsert_articles(articles: list[dict[str, Any]]) -> int:
                 rows, on_conflict="url", ignore_duplicates=True
             ).execute()
             inserted += len(result.data) if result.data else 0
-        except Exception:
+        except Exception as exc:
+            # Retry without image_url if migration 005 is not applied yet
+            if "image_url" in str(exc):
+                for row in rows:
+                    row.pop("image_url", None)
+                try:
+                    result = supabase.table("articles").upsert(
+                        rows, on_conflict="url", ignore_duplicates=True
+                    ).execute()
+                    inserted += len(result.data) if result.data else 0
+                    continue
+                except Exception:
+                    pass
             logger.exception("Failed to upsert batch %d–%d", i, i + batch_size)
 
     return inserted

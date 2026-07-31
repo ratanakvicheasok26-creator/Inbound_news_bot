@@ -52,6 +52,9 @@ def fetch_lobsters(
     except httpx.TimeoutException:
         logger.warning("Lobste.rs timed out (tag=%s)", tag or "all")
         return []
+    except httpx.HTTPStatusError as exc:
+        logger.warning("Lobste.rs HTTP %s (tag=%s)", exc.response.status_code, tag or "all")
+        return []
     except Exception:
         logger.exception("Lobste.rs request failed")
         return []
@@ -66,9 +69,12 @@ def fetch_lobsters(
         if not title:
             continue
 
-        tags = story.get("tags", [])
-        author = story.get("submitter_user", {})
-        username = author.get("username", "") if isinstance(author, dict) else ""
+        tags = story.get("tags", []) or []
+        author = story.get("submitter_user", "")
+        if isinstance(author, dict):
+            username = (author.get("username") or "").strip()
+        else:
+            username = str(author or "").strip()
 
         # Lobste.rs timestamps are ISO 8601
         created_at = story.get("created_at")
@@ -79,15 +85,26 @@ def fetch_lobsters(
             except (ValueError, TypeError):
                 pass
 
-        comments_url = story.get("comments_url", "")
-        score = story.get("score")
+        desc = (
+            (story.get("description_plain") or "")
+            or (story.get("description") or "")
+        ).strip()
+        tag_str = ", ".join(tags) if tags else "tech"
+        if desc:
+            summary = desc[:500]
+        else:
+            bits = [title]
+            bits.append(f"discussed on Lobste.rs ({tag_str})")
+            if username:
+                bits.append(f"submitted by {username}")
+            summary = " — ".join(bits) + "."
 
         articles.append({
             "title": title,
             "url": story_url,
             "source_name": "Lobste.rs",
             "source_domain": _extract_domain(story_url),
-            "summary": f"Tags: {', '.join(tags)}. Posted by {username}." if tags else f"Posted by {username}.",
+            "summary": summary,
             "published_at": published_at,
             "language": "en",
             "category": tags[0] if tags else None,
@@ -103,7 +120,7 @@ def fetch_all_lobsters(
 ) -> list[dict[str, Any]]:
     """Fetch Lobste.rs stories across multiple tags, deduplicated by URL."""
     if tags is None:
-        tags = [None, "rust", "python", "security", "ai", "database"]  # None = hottest
+        tags = [None, "rust", "python", "security", "ai", "compsci"]  # None = hottest
 
     seen_urls: set[str] = set()
     all_articles: list[dict[str, Any]] = []

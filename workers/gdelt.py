@@ -17,6 +17,9 @@ logger = logging.getLogger(__name__)
 
 _BASE = "https://api.gdeltproject.org/api/v2/doc/doc"
 _TIMEOUT = 20
+_MAX_RETRIES = 2
+_RETRY_BASE_DELAY = 3.0
+_QUERY_PACING = 2.0  # keep light; abort early when rate-limited
 
 
 def _extract_domain(url: str) -> str:
@@ -51,17 +54,43 @@ def fetch_gdelt(
         "sort": "DateDesc",
     }
 
-    articles: list[dict[str, Any]] = []
+    data: dict[str, Any] | None = None
+    for attempt in range(1, _MAX_RETRIES + 1):
+        try:
+            resp = httpx.get(_BASE, params=params, timeout=_TIMEOUT, follow_redirects=True)
+            if resp.status_code == 429:
+                delay = _RETRY_BASE_DELAY * (2 ** (attempt - 1))
+                logger.warning(
+                    "GDELT 429 for '%s' (attempt %d/%d), sleeping %.0fs",
+                    query, attempt, _MAX_RETRIES, delay,
+                )
+                time.sleep(delay)
+                continue
+            resp.raise_for_status()
+            content_type = (resp.headers.get("content-type") or "").lower()
+            body = resp.text.strip()
+            if not body or "json" not in content_type and not body.startswith("{"):
+                # GDELT sometimes returns empty/HTML bodies with HTTP 200
+                logger.warning("GDELT non-JSON body for '%s' (len=%d)", query, len(body))
+                return []
+            data = resp.json()
+            break
+        except httpx.TimeoutException:
+            logger.warning("GDELT query timed out: %s", query)
+            return []
+        except Exception as exc:
+            if attempt < _MAX_RETRIES:
+                delay = _RETRY_BASE_DELAY * (2 ** (attempt - 1))
+                logger.warning(
+                    "GDELT attempt %d/%d failed for '%s' (%s), retrying in %.0fs",
+                    attempt, _MAX_RETRIES, query, exc, delay,
+                )
+                time.sleep(delay)
+            else:
+                logger.warning("GDELT request failed after retries: %s (%s)", query, exc)
+                return []
 
-    try:
-        resp = httpx.get(_BASE, params=params, timeout=_TIMEOUT, follow_redirects=True)
-        resp.raise_for_status()
-        data = resp.json()
-    except httpx.TimeoutException:
-        logger.warning("GDELT query timed out: %s", query)
-        return []
-    except Exception:
-        logger.exception("GDELT request failed: %s", query)
+    if data is None:
         return []
 
     articles_raw = data.get("articles", [])
@@ -69,6 +98,7 @@ def fetch_gdelt(
         logger.debug("GDELT returned 0 articles for query: %s", query)
         return []
 
+    articles: list[dict[str, Any]] = []
     for item in articles_raw:
         url = item.get("url", "")
         if not url:
@@ -95,7 +125,8 @@ def fetch_gdelt(
             "url": url,
             "source_name": domain,
             "source_domain": domain,
-            "summary": item.get("socialimage", "") or item.get("title", ""),
+            "summary": item.get("title", "") or "",
+            "image_url": item.get("socialimage") or None,
             "published_at": published_at.isoformat() if published_at else None,
             "language": item.get("language", "en"),
             "category": None,
@@ -106,18 +137,13 @@ def fetch_gdelt(
     return articles
 
 
-# Default queries covering the categories in the platform plan
+# Default queries — keep short; GDELT rate-limits hard on burst traffic
 DEFAULT_QUERIES = [
     "technology OR tech OR startup",
     "artificial intelligence OR AI OR machine learning",
     "cybersecurity OR data breach OR ransomware",
     "blockchain OR cryptocurrency OR defi",
-    "cloud computing OR devops OR kubernetes",
     "Cambodia OR Cambodian OR Khmer",
-    "Southeast Asia OR ASEAN",
-    "semiconductor OR chip OR GPU",
-    "open source OR GitHub",
-    "climate tech OR green energy OR EV",
 ]
 
 
@@ -128,14 +154,23 @@ def fetch_all_gdelt(queries: list[str] | None = None, max_per_query: int = 50) -
 
     seen_urls: set[str] = set()
     all_articles: list[dict[str, Any]] = []
+    consecutive_empty = 0
 
     for q in queries:
         articles = fetch_gdelt(query=q, max_records=max_per_query)
+        if not articles:
+            consecutive_empty += 1
+            # After two dead queries (429 / empty body), stop burning the quota.
+            if consecutive_empty >= 2:
+                logger.warning("GDELT rate-limited or empty — skipping remaining queries")
+                break
+        else:
+            consecutive_empty = 0
         for a in articles:
             if a["url"] not in seen_urls:
                 seen_urls.add(a["url"])
                 all_articles.append(a)
-        time.sleep(0.5)  # polite pacing between requests
+        time.sleep(_QUERY_PACING)
 
     logger.info("GDELT total: %d unique articles from %d queries", len(all_articles), len(queries))
     return all_articles

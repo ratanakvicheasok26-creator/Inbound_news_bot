@@ -49,41 +49,27 @@ export default function AccountPage() {
 
   if (loading) {
     return (
-      <div className="container">
-        <section className="py-16 md:py-24 max-w-[960px] mx-auto text-center">
-          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)]">Loading...</p>
-        </section>
+      <div className="container py-16 text-center text-[var(--text-secondary)]">
+        Loading…
       </div>
     )
   }
 
   if (!user) {
     return (
-      <div className="container">
-        <section className="py-16 md:py-24 max-w-[480px] mx-auto text-center">
-          <div className="pb-8 border-b-2 border-[var(--text-primary)]">
-            <h1 className="page-title">
-              MY DASHBOARD
-            </h1>
-          </div>
-          <div className="mt-3 mb-8 font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)]">
-            Sign in to track your literacy progress across sessions and devices.
-          </div>
-          <Link
-            href="/auth"
-            className="inline-block px-8 py-3 bg-[var(--text-primary)] text-inverted font-mono text-[12px] font-bold uppercase tracking-[0.1em] hover:bg-[var(--accent)] transition-colors"
-          >
-            Sign In / Sign Up
+      <div className="container container-xs py-16 text-center">
+        <h1 className="page-title mb-3">Account</h1>
+        <p className="text-[15px] text-[var(--text-secondary)] mb-8">
+          Sign in to track literacy progress across sessions and devices.
+        </p>
+        <Link href="/auth" className="btn-primary">
+          Sign in / Sign up
+        </Link>
+        <div className="mt-6">
+          <Link href="/" className="text-[13px] text-[var(--text-secondary)] hover:text-[var(--accent)]">
+            ← Continue as guest
           </Link>
-          <div className="mt-6">
-            <Link
-              href="/"
-              className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
-            >
-              &larr; Continue as guest
-            </Link>
-          </div>
-        </section>
+        </div>
       </div>
     )
   }
@@ -91,65 +77,46 @@ export default function AccountPage() {
   const displayName = user.email?.split("@")[0] || "Reader"
 
   return (
-    <div className="container">
-      <section className="py-12 md:py-16 max-w-[960px] mx-auto">
-        {/* Header */}
-        <div className="pb-10 border-b-2 border-[var(--text-primary)]">
-          <div className="flex items-start justify-between gap-4">
-            <h1 className="page-title">
-              MY DASHBOARD
-            </h1>
-            <div className="flex items-center gap-3 flex-shrink-0 mt-2">
-              {stealthOn && (
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] font-bold text-[var(--accent)] border-2 border-[var(--accent)] px-2 py-1">
-                  Stealth Active
-                </span>
-              )}
-              <button
-                onClick={handleSignOut}
-                className="font-mono text-[10px] uppercase tracking-[0.12em] font-bold text-[var(--text-secondary)] border-2 border-[var(--border)] px-3 py-1 hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
-          <div className="mt-3 flex items-center gap-3 flex-wrap">
-            <span className="font-mono text-[11px] uppercase tracking-[0.12em] font-bold text-[var(--text-secondary)] border-2 border-[var(--text-primary)] px-2.5 py-1">
-              {displayName}
-            </span>
-            <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--text-secondary)] border-2 border-[var(--border)] px-2.5 py-1">
-              {user.email}
-            </span>
-            <span className="font-mono text-[10px] uppercase tracking-[0.12em] font-bold border-2 border-[var(--text-primary)] px-2.5 py-1">
-              {profile.literacyScore} PTS
-            </span>
+    <div className="container container-lg py-10 md:py-14">
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+        <div>
+          <h1 className="page-title mb-2">Account</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[14px] font-semibold">{displayName}</span>
+            <span className="text-[13px] text-[var(--text-secondary)]">{user.email}</span>
+            {stealthOn && (
+              <span className="meta-text text-[var(--accent)] bg-[var(--red-subtle-bg)] px-2 py-0.5 rounded-full">
+                Stealth
+              </span>
+            )}
           </div>
         </div>
-
-        {/* Tab Bar — 3-segment segmented control */}
-        <div className="flex border-2 border-[var(--text-primary)] overflow-hidden mt-8 mb-10 max-w-[480px]">
-          {tabs.map((tab, i) => (
-            <div key={tab.id} className="flex">
-              {i > 0 && <div className="w-px bg-[var(--border)]" />}
-              <button
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 px-5 py-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.1em] transition-colors ${
-                  activeTab === tab.id
-                    ? "bg-[var(--text-primary)] text-inverted"
-                    : "text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-inverted"
-                }`}
-              >
-                {tab.label}
-              </button>
-            </div>
-          ))}
+        <div className="flex items-center gap-2">
+          <span className="meta-text bg-[var(--surface)] border border-[var(--border)] px-3 py-1.5 rounded-full">
+            {profile.literacyScore} pts
+          </span>
+          <button type="button" onClick={handleSignOut} className="btn-ghost">
+            Sign out
+          </button>
         </div>
+      </div>
 
-        {/* Tab Content */}
-        {activeTab === "dashboard" && <DashboardTab />}
-        {activeTab === "library" && <LibraryTab />}
-        {activeTab === "settings" && <SettingsTab user={user} onSignOut={handleSignOut} />}
-      </section>
+      <div className="tier-toggle tier-toggle--full mb-8 max-w-md">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex-1 ${activeTab === tab.id ? "active" : ""}`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "dashboard" && <DashboardTab />}
+      {activeTab === "library" && <LibraryTab />}
+      {activeTab === "settings" && <SettingsTab user={user} onSignOut={handleSignOut} />}
     </div>
   )
 }

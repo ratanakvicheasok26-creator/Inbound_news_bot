@@ -22,7 +22,11 @@ import os
 import time
 from typing import Any
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from workers.db import get_supabase
+from workers.images import extract_image_url, fetch_og_image, is_valid_image_url
 
 logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -93,26 +97,58 @@ def _jaccard_similarity(a: str, b: str) -> float:
     return len(intersection) / len(union)
 
 
-def _fetch_unprocessed(supabase, limit: int = 500) -> list[dict[str, Any]]:
-    """Fetch articles that haven't been linked to a story yet."""
-    result = supabase.table("articles").select("*").not_.in_(
-        "id",
-        supabase.table("story_sources").select("article_id")
-    ).order("ingested_at", desc=True).limit(limit).execute()
+def _fetch_unprocessed(supabase, limit: int = 1000) -> list[dict[str, Any]]:
+    """Fetch articles that haven't been linked to a story yet.
 
-    return result.data or []
+    Two-step query: load recent story_sources article_ids, then filter articles
+    in Python. Nested ``not_.in_(subquery)`` is fragile with PostgREST.
+    """
+    linked_result = (
+        supabase.table("story_sources")
+        .select("article_id")
+        .limit(max(limit * 20, 5000))
+        .execute()
+    )
+    linked_ids = {
+        row["article_id"]
+        for row in (linked_result.data or [])
+        if row.get("article_id")
+    }
+
+    # Over-fetch recent articles, then drop ones already linked.
+    fetch_n = limit * 3 if linked_ids else limit
+    articles_result = (
+        supabase.table("articles")
+        .select("*")
+        .order("ingested_at", desc=True)
+        .limit(fetch_n)
+        .execute()
+    )
+    articles = articles_result.data or []
+    unprocessed = [a for a in articles if a.get("id") not in linked_ids]
+    return unprocessed[:limit]
 
 
 def _search_similar_stories(supabase, embedding: list[float], threshold: float = 0.85) -> str | None:
-    """Search for existing stories with similar embeddings. Returns story_id or None."""
+    """Search for existing stories with similar embeddings. Returns story_id or None.
+
+    On RPC failure, logs a warning and returns None so the caller can use Jaccard.
+    """
     import json
     embedding_str = json.dumps(embedding)
 
-    result = supabase.rpc("match_stories", {
-        "query_embedding": embedding_str,
-        "match_threshold": threshold,
-        "match_count": 1,
-    }).execute()
+    try:
+        result = supabase.rpc("match_stories", {
+            "query_embedding": embedding_str,
+            "match_threshold": threshold,
+            "match_count": 1,
+        }).execute()
+    except Exception as exc:
+        logger.warning(
+            "match_stories RPC failed (%s) — Jaccard fallback will run",
+            exc,
+        )
+        return None
 
     matches = result.data or []
     if matches:
@@ -141,8 +177,19 @@ def _search_similar_stories_jaccard(supabase, title: str, threshold: float = 0.6
     return None
 
 
+def _article_image(article: dict[str, Any], fetch_missing: bool = False) -> str | None:
+    """Best image for an article; optionally fetch og:image when missing."""
+    image = extract_image_url(article)
+    if image:
+        return image
+    if fetch_missing and article.get("url"):
+        return fetch_og_image(article["url"])
+    return None
+
+
 def _create_story(supabase, article: dict, embedding: list[float] | None = None) -> str:
     """Create a new story from an article. Returns the story ID."""
+    image_url = _article_image(article, fetch_missing=True)
     row = {
         "title": article["title"],
         "summary_en": article.get("summary", ""),
@@ -152,8 +199,15 @@ def _create_story(supabase, article: dict, embedding: list[float] | None = None)
     }
     if embedding is not None:
         row["embedding"] = embedding
+    if image_url:
+        row["image_url"] = image_url
 
-    result = supabase.table("stories").insert(row).execute()
+    try:
+        result = supabase.table("stories").insert(row).execute()
+    except Exception:
+        # Migration 005 not applied yet — retry without image_url
+        row.pop("image_url", None)
+        result = supabase.table("stories").insert(row).execute()
     story_id = result.data[0]["id"]
 
     supabase.table("story_sources").insert({
@@ -175,11 +229,24 @@ def _add_to_story(supabase, story_id: str, article: dict) -> None:
         "source_url": article.get("url", ""),
     }).execute()
 
-    # Increment source_count directly
-    current = supabase.table("stories").select("source_count").eq("id", story_id).execute()
+    current = (
+        supabase.table("stories")
+        .select("source_count")
+        .eq("id", story_id)
+        .execute()
+    )
     if current.data:
-        new_count = (current.data[0].get("source_count") or 0) + 1
-        supabase.table("stories").update({"source_count": new_count}).eq("id", story_id).execute()
+        row = current.data[0]
+        new_count = (row.get("source_count") or 0) + 1
+        update: dict[str, Any] = {"source_count": new_count}
+        image = _article_image(article, fetch_missing=False)
+        if image:
+            update["image_url"] = image
+        try:
+            supabase.table("stories").update(update).eq("id", story_id).execute()
+        except Exception:
+            update.pop("image_url", None)
+            supabase.table("stories").update(update).eq("id", story_id).execute()
 
 
 def run() -> None:
@@ -196,7 +263,7 @@ def _run_inner() -> None:
     use_embeddings = cohere_client is not None
 
     logger.info("Fetching unprocessed articles...")
-    articles = _fetch_unprocessed(supabase, limit=500)
+    articles = _fetch_unprocessed(supabase, limit=1000)
     logger.info("Found %d unprocessed articles", len(articles))
 
     if not articles:
@@ -230,6 +297,10 @@ def _run_inner() -> None:
 
             if use_embeddings and embedding is not None:
                 story_id = _search_similar_stories(supabase, embedding, _SIMILARITY_THRESHOLD)
+                if story_id is None:
+                    story_id = _search_similar_stories_jaccard(
+                        supabase, article.get("title", ""), threshold=0.6
+                    )
             else:
                 story_id = _search_similar_stories_jaccard(
                     supabase, article.get("title", ""), threshold=0.6
@@ -242,10 +313,14 @@ def _run_inner() -> None:
                 _create_story(supabase, article, embedding)
                 new_stories += 1
 
-        except Exception:
+        except Exception as exc:
             errors += 1
-            logger.warning("Failed to process article '%.60s' (id=%s)",
-                           article.get("title", ""), article.get("id"))
+            logger.warning(
+                "Failed to process article '%.60s' (id=%s): %s",
+                article.get("title", ""),
+                article.get("id"),
+                exc,
+            )
             continue
 
     logger.info("Dedup complete: %d new stories, %d merged, %d errors",

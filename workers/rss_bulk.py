@@ -31,6 +31,7 @@ import feedparser
 import httpx
 
 from workers.db import get_supabase
+from workers.images import extract_image_url
 
 logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -140,6 +141,7 @@ def _fetch_one(url: str) -> list[dict[str, Any]]:
                 pass
 
         summary = _strip_html(entry.get("summary", "") or "")[:500]
+        image_url = _extract_image(entry)
 
         articles.append({
             "title": title,
@@ -147,6 +149,7 @@ def _fetch_one(url: str) -> list[dict[str, Any]]:
             "source_name": source_name,
             "source_domain": _extract_domain(entry_url) or _extract_domain(url),
             "summary": summary,
+            "image_url": image_url,
             "published_at": published_at,
             "language": "en",
             "category": None,
@@ -168,6 +171,7 @@ def _upsert_articles(articles: list[dict[str, Any]]) -> int:
         batch = articles[i : i + _BATCH_SIZE]
         rows = []
         for a in batch:
+            image_url = a.get("image_url") or extract_image_url(a)
             rows.append({
                 "title": a["title"],
                 "summary": a.get("summary", ""),
@@ -177,6 +181,7 @@ def _upsert_articles(articles: list[dict[str, Any]]) -> int:
                 "category": a.get("category"),
                 "language": a.get("language", "en"),
                 "published_at": a.get("published_at"),
+                "image_url": image_url,
                 "raw_json": json.dumps(a.get("raw_json")) if a.get("raw_json") else None,
             })
 
@@ -185,7 +190,18 @@ def _upsert_articles(articles: list[dict[str, Any]]) -> int:
                 rows, on_conflict="url", ignore_duplicates=True
             ).execute()
             inserted += len(result.data) if result.data else 0
-        except Exception:
+        except Exception as exc:
+            if "image_url" in str(exc):
+                for row in rows:
+                    row.pop("image_url", None)
+                try:
+                    result = supabase.table("articles").upsert(
+                        rows, on_conflict="url", ignore_duplicates=True
+                    ).execute()
+                    inserted += len(result.data) if result.data else 0
+                    continue
+                except Exception:
+                    pass
             logger.exception("Failed to upsert batch %d–%d", i, i + _BATCH_SIZE)
 
     return inserted

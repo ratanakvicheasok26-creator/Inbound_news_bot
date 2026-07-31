@@ -1,30 +1,45 @@
-name: News Bot
+name: News Bot CI
+
+# Do NOT run the long-polling bot here — it never exits and burns Actions minutes.
+# Deploy the worker to Railway/Render. This workflow only smoke-checks the codebase.
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - "newsbot/**"
+      - "shared/**"
+      - "news_bot.py"
+      - "requirements.txt"
+      - "tests/**"
+  pull_request:
+    paths:
+      - "newsbot/**"
+      - "shared/**"
+      - "news_bot.py"
+      - "requirements.txt"
+      - "tests/**"
 
 jobs:
-  run-bot:
+  smoke:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run bot
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
-          TELEGRAM_THREAD_ID: ${{ secrets.TELEGRAM_THREAD_ID }}
-          REDIS_URL: ${{ secrets.REDIS_URL }}
-        run: python news_bot.py
+      - name: Import smoke
+        run: |
+          python -c "from newsbot import config, bot, feeds, state, ai; from shared.ai_router import get_router; print('imports ok', len(config.RSS_FEEDS), 'feeds')"
+
+      - name: Unit tests
+        run: python -m pytest tests/ -q

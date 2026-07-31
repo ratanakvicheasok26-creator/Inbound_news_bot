@@ -8,7 +8,7 @@ export const GLOSSARY_TERMS: GlossaryTerm[] = [
     definition_en: "Application Programming Interface. A set of rules that lets software components talk to each other.",
     definition_km: "ច្រកដែលអោយកម្មវិធីមួយនិយាយជាមួយកម្មវិធីផ្សេង។",
     analogy: "Like a restaurant menu — it tells you what you can order but not how the kitchen makes it.",
-    story_count: 47,
+    story_count: 0,
   },
   {
     slug: "transformer",
@@ -17,7 +17,7 @@ export const GLOSSARY_TERMS: GlossaryTerm[] = [
     definition_en: "A neural network architecture that processes data in parallel, forming the basis of modern large language models.",
     definition_km: "ស្ថាបត្យកម្មបណ្តាញសរសៃប្រសាទដែលដំណើរការទិន្នន័យជាមួយគ្នា។",
     analogy: "Like a librarian who can instantly find any page in any book by understanding context, not just keywords.",
-    story_count: 34,
+    story_count: 0,
   },
   {
     slug: "rag",
@@ -26,7 +26,7 @@ export const GLOSSARY_TERMS: GlossaryTerm[] = [
     definition_en: "Retrieval-Augmented Generation. Combines a language model with a search system to ground responses in real data.",
     definition_km: "ផ្សំម៉ូឌែលភាសាជាមួយប្រព័ន្ធស្វែងរកដើម្បីឆ្លើយតបដោយផ្អែកលើទិន្នន័យពិត។",
     analogy: "Like giving a student access to a library during an exam — they can still think, but now they have facts to reference.",
-    story_count: 28,
+    story_count: 0,
   },
   {
     slug: "llm",
@@ -35,7 +35,7 @@ export const GLOSSARY_TERMS: GlossaryTerm[] = [
     definition_en: "Large Language Model. An AI trained on massive text datasets that can generate, translate, and summarize human language.",
     definition_km: "AI បណ្តុះបណ្តាលលើទិន្នន័យភាសាដ៏ធំដែលអាចបង្កើត បកប្រែ និងសង្ខេបភាសាមនុស្ស។",
     analogy: "Like an extremely well-read person who has skimmed millions of books — knows a lot, but doesn't always get things right.",
-    story_count: 52,
+    story_count: 0,
   },
   {
     slug: "gpu",
@@ -44,7 +44,7 @@ export const GLOSSARY_TERMS: GlossaryTerm[] = [
     definition_en: "Graphics Processing Unit. Originally for rendering graphics, now the workhorse chip for AI training and inference.",
     definition_km: "ឈីបដំណើរការក្រាហ្វិច ដែលបច្ចុប្បន្នជាឈីបសម្រាប់បណ្តុះបណ្តាល AI។",
     analogy: "Like a kitchen with 10,000 tiny chefs — each one simple, but together they can cook a thousand dishes at once.",
-    story_count: 41,
+    story_count: 0,
   },
   {
     slug: "fine-tuning",
@@ -53,7 +53,7 @@ export const GLOSSARY_TERMS: GlossaryTerm[] = [
     definition_en: "Taking a pre-trained model and further training it on specific data to improve performance on a particular task.",
     definition_km: "យកម៉ូឌែលបណ្តុះបណ្តាលរួចហើយមកបណ្តុះបណ្តាលបន្ថែមលើទិន្នន័យជាក់លាក់។",
     analogy: "Like a chef trained in French cuisine learning Thai recipes — the base skills transfer, but the flavors change.",
-    story_count: 19,
+    story_count: 0,
   },
   {
     slug: "blockchain",
@@ -62,7 +62,7 @@ export const GLOSSARY_TERMS: GlossaryTerm[] = [
     definition_en: "A distributed digital ledger that records transactions across many computers so the record can't be altered retroactively.",
     definition_km: "សៀវភៅឌីជីថលដែលកត់ត្រាធនាគារនៅកុំព្យូទ័រជាច្រើន។",
     analogy: "Like a group project where everyone has a copy of the notes — nobody can cheat by erasing their mistakes.",
-    story_count: 23,
+    story_count: 0,
   },
   {
     slug: "zero-day",
@@ -71,7 +71,7 @@ export const GLOSSARY_TERMS: GlossaryTerm[] = [
     definition_en: "A software vulnerability that is unknown to the vendor and has no patch available, making it exploitable by attackers.",
     definition_km: "ចន្លោះប្រហោងកម្មវិធីដែលមិនទាន់ស្គាល់ដោយអ្នកផលិត។",
     analogy: "Like a lock manufacturer discovering their locks have a secret key — but they don't know about it yet.",
-    story_count: 15,
+    story_count: 0,
   },
   {
     slug: "edge-computing",
@@ -80,7 +80,7 @@ export const GLOSSARY_TERMS: GlossaryTerm[] = [
     definition_en: "Processing data near the source (on the device) instead of sending it to a distant cloud server.",
     definition_km: "ដំណើរការទិន្នន័យនៅជិតប្រភពជំនួសឱ្យការផ្ញើទៅម៉ាស៊ីនមេ។",
     analogy: "Like doing your math homework at your desk instead of mailing it to a tutor and waiting for the answer.",
-    story_count: 12,
+    story_count: 0,
   },
   {
     slug: "open-source",
@@ -89,6 +89,6 @@ export const GLOSSARY_TERMS: GlossaryTerm[] = [
     definition_en: "Software with source code that anyone can inspect, modify, and distribute freely.",
     definition_km: "កម្មវិធីដែលកូដរបស់វាអាចត្រួតពិនិត្យ កែប្រែ និងចែកចាយបានដោយសេរី។",
     analogy: "Like a recipe that everyone can see, improve, and share — nobody owns it, but everyone benefits.",
-    story_count: 31,
+    story_count: 0,
   },
 ]

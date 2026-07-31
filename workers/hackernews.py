@@ -89,18 +89,27 @@ def fetch_hn_search(
             continue
 
         domain = _extract_domain(url) if hit.get("url") else "news.ycombinator.com"
-        points = hit.get("points", 0)
-        num_comments = hit.get("num_comments", 0)
-        author = hit.get("author", "")
+        points = hit.get("points", 0) or 0
+        num_comments = hit.get("num_comments", 0) or 0
+        author = hit.get("author", "") or ""
 
         published_at = _parse_hn_date(hit.get("created_at"))
+        story_text = (hit.get("story_text") or "").strip()
+        if story_text:
+            summary = story_text[:500]
+        else:
+            summary = (
+                f"{title}. {points} points on Hacker News"
+                + (f" by {author}" if author else "")
+                + f" · {num_comments} comments."
+            )
 
         articles.append({
             "title": title,
             "url": url,
             "source_name": f"Hacker News ({domain})" if hit.get("url") else "Hacker News",
             "source_domain": domain,
-            "summary": hit.get("story_text", "") or f"{points} points by {author}. {num_comments} comments.",
+            "summary": summary,
             "published_at": published_at,
             "language": "en",
             "category": None,

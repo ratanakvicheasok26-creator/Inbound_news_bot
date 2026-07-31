@@ -1,7 +1,7 @@
 """HTTP health check server for Render / Railway deployments.
 
 Returns JSON diagnostics:
-  - Database connectivity + latency
+  - Database connectivity + latency (optional — Telegram worker does not require Supabase)
   - AI provider status per key
   - Overall system status (ok / degraded / down)
 """
@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -23,7 +24,14 @@ _start_time = time.time()
 
 
 def _check_database() -> dict:
-    """Check Supabase connectivity and latency."""
+    """Check Supabase connectivity when configured.
+
+    The Telegram worker does not write to Supabase; missing/unreachable DB is
+    ``skipped`` / ``degraded``, never a hard ``down`` for this process.
+    """
+    if not os.environ.get("SUPABASE_URL") or not os.environ.get("SUPABASE_SERVICE_ROLE_KEY"):
+        return {"status": "skipped", "reason": "SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set"}
+
     try:
         from workers.db import get_supabase
         supabase = get_supabase()
@@ -32,7 +40,7 @@ def _check_database() -> dict:
         latency_ms = round((time.time() - start) * 1000)
         return {"status": "ok", "latency_ms": latency_ms, "article_count": result.count or 0}
     except Exception as exc:
-        return {"status": "down", "error": str(exc)[:200]}
+        return {"status": "degraded", "error": str(exc)[:200]}
 
 
 def _check_ai_providers() -> dict:
@@ -50,20 +58,18 @@ def _build_health_response() -> dict:
     db_status = _check_database()
     ai_status = _check_ai_providers()
 
-    # Determine overall status
-    if db_status.get("status") == "down":
+    any_ai = False
+    for _name, info in ai_status.items() if isinstance(ai_status, dict) else []:
+        if isinstance(info, dict) and info.get("keys_available", 0) > 0:
+            any_ai = True
+            break
+
+    if not any_ai:
         status = "down"
+    elif db_status.get("status") == "degraded":
+        status = "degraded"
     else:
-        # Check if any AI provider is available
-        any_ai = False
-        for name, info in ai_status.items() if isinstance(ai_status, dict) else []:
-            if isinstance(info, dict) and info.get("keys_available", 0) > 0:
-                any_ai = True
-                break
-        if any_ai:
-            status = "ok"
-        else:
-            status = "degraded"  # DB works but all AI providers are rate-limited
+        status = "ok"
 
     return {
         "status": status,

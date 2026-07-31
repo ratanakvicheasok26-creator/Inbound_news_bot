@@ -102,6 +102,7 @@ def fetch_currents(
             "source_name": source_name or "Currents API",
             "source_domain": domain,
             "summary": description[:500],
+            "image_url": item.get("image") or None,
             "published_at": published_at,
             "language": language,
             "category": category,

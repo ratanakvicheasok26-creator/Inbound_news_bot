@@ -1,97 +1,90 @@
-import { getAllStories, getStoryStats } from "@/lib/posts"
+import { getAllStoriesSafe } from "@/lib/posts"
+import { prioritizeStoriesWithImages } from "@/lib/story-priority"
 import { LeadStoryCard } from "@/components/story/LeadStoryCard"
-import { SignalSidebar } from "@/components/story/SignalSidebar"
-import { StoryRow } from "@/components/story/StoryRow"
-import { BlindspotCard } from "@/components/story/BlindspotCard"
-import { StatsStrip } from "@/components/story/StatsStrip"
-import { TrendingStrip } from "@/components/story/TrendingStrip"
+import { StoryCard } from "@/components/story/StoryCard"
+import Link from "next/link"
 
 export default async function HomePage() {
-  const [stories, stats] = await Promise.all([getAllStories(), getStoryStats()])
+  const { stories, error } = await getAllStoriesSafe(24)
+  const storiesWithMedia = await prioritizeStoriesWithImages(stories)
 
-  const leadStory = stories[0] || null
-  const signalStories = stories.slice(1, 6)
-  const trendingStories = stories.slice(0, 8)
-  const latestStories = stories.slice(0, 15)
+  const leadStory = storiesWithMedia[0] || null
+  const latestStories = storiesWithMedia.slice(1, 13)
 
   if (!leadStory) {
     return (
-      <div className="container">
-        <div className="empty-state">
-          <p className="text-[32px] font-extrabold tracking-tight mb-2">THE WIRE IS QUIET</p>
-          <p>No dispatches yet. Stories will appear here as they come in.</p>
+      <div className="container py-20">
+        <div className="empty-state max-w-lg mx-auto">
+          <p className="page-title mb-3">No stories yet</p>
+          <p className="text-[var(--text-secondary)] normal-case tracking-normal">
+            {error
+              ? `Could not load stories: ${error}. Check Supabase env vars and migrations.`
+              : "Run website ingest to cluster sources and start decoding coverage."}
+          </p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="container">
-      {/* LEAD STORY + SIGNAL SIDEBAR */}
-      <section className="grid gap-12 py-10 border-b-2 border-[var(--text-primary)] md:grid-cols-[2fr_1fr]">
-        <LeadStoryCard story={leadStory} />
-        <SignalSidebar stories={signalStories} />
-      </section>
+    <div>
+      {/* Hero — brand positioning + lead story */}
+      <section className="border-b border-[var(--border)] bg-[var(--surface)]">
+        <div className="container pt-8 pb-10 md:pt-12 md:pb-14">
+          <div className="mb-8 md:mb-10 animate-[riseIn_350ms_ease-out]">
+            <p className="chip mb-4">
+              <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
+              Inbound Reports
+            </p>
+            <h1 className="font-display-modern text-[clamp(32px,5vw,56px)] font-bold leading-[1.04] tracking-[-0.025em]">
+              Decode the Tech.
+            </h1>
+            <p className="mt-4 max-w-[46ch] text-[15px] md:text-[17px] leading-[1.6] text-[var(--text-secondary)]">
+              Aggregated coverage from Phnom Penh — clustered sources, cut jargon, read with
+              Local Lens.
+            </p>
+          </div>
 
-      {/* TRENDING STRIP */}
-      <section className="py-10 border-b border-[var(--border)]">
-        <div className="section-header">
-          <h2 className="section-title">
-            <span className="section-number mr-3">01</span>
-            Trending
-          </h2>
-        </div>
-        <TrendingStrip stories={trendingStories} />
-      </section>
-
-      {/* BLINDSPOT SECTION */}
-      <section className="py-10 border-b border-[var(--border)]">
-        <div className="section-header">
-          <h2 className="section-title">
-            <span className="section-number mr-3">02</span>
-            Blindspot
-          </h2>
-          <span className="font-mono text-[10px] text-[var(--text-secondary)]">
-            Underreported stories
-          </span>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <BlindspotCard
-            title="Cambodia's new data privacy law takes effect with unclear enforcement"
-            summary="Only 2 sources covering this — both from regional tech press"
-            sourceCount={2}
-            sourceNames={["Tech in Asia", "Rest of World"]}
-          />
-          <BlindspotCard
-            title="Southeast Asian startups shifting from growth to profitability ahead of global peers"
-            summary="Mainstream media has not picked this up"
-            sourceCount={3}
-            sourceNames={["e27", "KrASIA"]}
-          />
+          <LeadStoryCard story={leadStory} />
         </div>
       </section>
 
-      {/* LATEST COVERAGE */}
-      <section className="py-10 border-b border-[var(--border)]">
+      {/* Latest stories — equal 3-column grid */}
+      <section className="container pt-10 pb-12 md:pt-14 md:pb-16">
         <div className="section-header">
-          <h2 className="section-title">
-            <span className="section-number mr-3">03</span>
-            Latest Coverage
+          <h2 className="section-title flex items-center gap-2.5">
+            <span className="inline-block h-4 w-1 rounded-full bg-[var(--accent)]" aria-hidden="true" />
+            Latest stories
           </h2>
-          <span className="font-mono text-[10px] text-[var(--text-secondary)]">
-            {latestStories.length} stories
-          </span>
+          <Link
+            href="/search"
+            className="meta-text hover:text-[var(--accent)] transition-colors"
+          >
+            Search all
+          </Link>
         </div>
-        <div>
+
+        <div className="grid gap-5 gap-y-8 sm:grid-cols-2 sm:gap-6 sm:gap-y-10 lg:grid-cols-3">
           {latestStories.map((story) => (
-            <StoryRow key={story.id} story={story} />
+            <StoryCard key={story.id} story={story} />
           ))}
         </div>
       </section>
 
-      {/* STATS */}
-      <section className="py-10 border-b-2 border-[var(--text-primary)]">
-        <StatsStrip stats={stats} />
+      {/* Literacy tools */}
+      <section className="border-t border-[var(--border)]">
+        <div className="container py-8 md:py-10 flex flex-wrap gap-x-6 gap-y-2 text-[14px] text-[var(--text-secondary)]">
+          <Link href="/glossary" className="hover:text-[var(--accent)] transition-colors">
+            Glossary
+          </Link>
+          <Link href="/legal/methodology" className="hover:text-[var(--accent)] transition-colors">
+            Methodology
+          </Link>
+          <Link href="/about" className="hover:text-[var(--accent)] transition-colors">
+            About
+          </Link>
+          <span>ELI5 · Standard · Deep on every story</span>
+        </div>
       </section>
     </div>
   )

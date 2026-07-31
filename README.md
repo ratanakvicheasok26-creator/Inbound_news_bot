@@ -1,193 +1,98 @@
-# Inbound News Bot
+# Inbound Reports
 
-A Telegram bot that fetches tech, crypto, and cybersecurity news from 15 RSS feeds, clusters related stories, rewrites them with AI into urgency-based templates, and broadcasts digests to subscribers.
+**Inbound Reports** digests tech, crypto, and cybersecurity news into Telegram posts and a website story feed. Two pipelines share AI and feed sources but do **not** write to the same store.
 
-- **Schedule**: 5 AM & 5 PM Phnom Penh time (UTC+7)
-- **On-demand**: `/fetch` triggers a digest immediately (5-minute cooldown)
-- **Format**: Facts only — no opinions, no speculation, no buy/sell advice
+## Dual pipeline
 
-## How It Works
+| | Telegram bot | Website ingestion |
+|---|---|---|
+| Entry | `news_bot.py` (Procfile `worker`) | `python -m workers.ingest_apis` then `python -m workers.dedup` |
+| Output | Channel + subscriber digests | Supabase `stories` → Next.js site |
+| Writes website `stories`? | **No** | **Yes** |
 
 ```
-15 RSS Feeds → fetch (with timeout) → cluster → looks_urgent → rewrite_with_ai → broadcast
+(A) ~130 curated RSS → fetch → cluster → AI rewrite → Telegram broadcast
+(B) APIs/RSS workers → articles → dedup/embeddings → stories → website
 ```
 
-1. **Fetch** — pulls latest items from 15 RSS feeds (5 per feed max, 15s timeout per feed)
-2. **Cluster** — groups related headlines using title+summary similarity (threshold 0.45)
-3. **Rewrite** — Groq (Llama 3.3 70B) classifies urgency + category and returns structured JSON
-4. **Render** — one of 5 templates is selected based on urgency level
-5. **Broadcast** — sends story to the channel thread + all subscribers
-6. **Dedup** — logs posted entry IDs so nothing repeats
+- **Feed budget**: ~130 curated URLs (`BOT_MAX_FEEDS`, default 130) from `sources.yaml` via `get_bot_rss_feeds`
+- **Schedule**: 5 AM & 5 PM Asia/Phnom_Penh (UTC+7); `/fetch` for on-demand (5-minute cooldown)
+- **AI chain**: Groq → OpenRouter → Gemini (paid DeepSeek planned later — not implemented)
+- **Deploy bot**: see [DEPLOYMENT.md](DEPLOYMENT.md) (Railway / Render). Website ingest can also run on a schedule (e.g. GitHub Actions).
 
-## Setup
+Format: facts only — no opinions, speculation, or buy/sell advice.
+
+## Setup (Telegram bot)
 
 ```bash
 git clone https://github.com/sothunly-alt/Inbound_news_bot.git
 cd Inbound_news_bot
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # then fill in your tokens
+cp .env.example .env   # fill tokens
 python news_bot.py
 ```
 
-### Environment Variables
+Minimum env: `TELEGRAM_BOT_TOKEN`, `GROQ_API_KEY`, `TELEGRAM_CHANNEL_ID`. Optional: Redis, AI fallbacks, `BOT_MAX_FEEDS`. Supabase is optional for Telegram; **required** for website workers.
 
-```
-TELEGRAM_BOT_TOKEN=     # from @BotFather (required)
-GROQ_API_KEY=           # from console.groq.com (required)
-TELEGRAM_CHANNEL_ID=    # group/channel chat ID (required)
-TELEGRAM_THREAD_ID=     # forum topic thread ID (optional)
-PORT=                   # health server port (default: 10000)
+### Website ingestion (local)
+
+```bash
+# After running supabase/migrations (001 + 003 match_stories)
+export SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=...
+python -m workers.ingest_apis
+python -m workers.dedup
 ```
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `/start` | Subscribe to daily digests |
+| `/start` | Subscribe to digests |
 | `/stop` | Unsubscribe |
-| `/fetch` | Trigger a digest right now (5-min cooldown) |
+| `/fetch` | Digest now (5-min cooldown) |
 
 ## News Categories
 
-Stories are classified into one of 8 categories:
-
 | Category | Topics |
 |----------|--------|
-| Startups | Funding rounds, launches, founder stories, acquisitions |
-| AI & ML | Models, tools, research breakthroughs, AI applications |
-| Cybersecurity | Vulnerabilities, breaches, threats, security research |
-| DeFi & Crypto | Tokens, protocols, blockchain, exchanges, Web3 |
-| Big Tech | Apple, Google, Meta, Microsoft, Amazon — product moves, antitrust |
-| Hardware & Devices | Chips, GPUs, phones, wearables, robotics |
-| Science & Research | Breakthroughs, quantum, materials, space, batteries |
-| Regulation & Policy | Government policy, legislation, privacy law, court rulings |
+| Startups | Funding, launches, acquisitions |
+| AI & ML | Models, tools, research |
+| Cybersecurity | Vulns, breaches, threats |
+| DeFi & Crypto | Tokens, protocols, Web3 |
+| Big Tech | Apple, Google, Meta, Microsoft, Amazon |
+| Hardware & Devices | Chips, phones, robotics |
+| Science & Research | Quantum, space, materials |
+| Regulation & Policy | Legislation, privacy, courts |
 
 ## Output Templates
 
-Each story is classified by urgency and rendered with the matching template:
+Urgency selects one of five templates (Breaking / Alert / Analysis / Market / Explainer). Example — **Breaking**:
 
-**Breaking** 🚨 — Active exploit, major outage, critical vulnerability:
 ```
 🚨 CRITICAL: <headline>
 📂 Cybersecurity
 
 <summary>
 
-📊 KEY METRICS:
-• metric 1
-• metric 2
-
-⚠️ WHY IT MATTERS:
-<context>
-
-🔍 DETAILS:
-• point 1
-• point 2
-
+📊 KEY METRICS: …
+⚠️ WHY IT MATTERS: …
+🔍 DETAILS: …
 ⏰ <timeline>
-
 📌 Source: <name> | <links>
-
-#Tag1 #Tag2
-```
-
-**Alert** ⚠️ — Vulnerability disclosed, action required:
-```
-⚠️ ALERT: <headline>
-📂 <category>
-
-<summary>
-
-🛡️ WHAT TO DO:
-• action 1
-• action 2
-
-📍 AFFECTED:
-• affected group
-
-⏰ <timeline>
-
-📌 Source: <name> | <links>
-
-#Tag1 #Tag2
-```
-
-**Analysis** 📊 — Regulation, governance, policy, research:
-```
-📊 <headline>
-📂 <category>
-
-<summary>
-
-💡 KEY POINTS:
-• point 1
-• point 2
-
-📈 MARKET IMPACT:
-<impact>
-
-🎯 WHO THIS AFFECTS:
-• group 1
-
-💬 CONTEXT:
-<context>
-
-📌 Source: <name> | <links>
-
-#Tag1 #Tag2
-```
-
-**Market** 💹 — Price action, trading volume, token launches:
-```
-💹 <headline>
-📂 <category>
-
-<summary>
-
-📊 KEY POINTS:
-• data 1
-• data 2
-
-📈 MARKET IMPACT:
-<impact>
-
-📌 Source: <name> | <links>
-
-#Tag1 #Tag2
-```
-
-**Explainer** 📚 — Education, how something works, deep dive:
-```
-📚 EXPLAINER: <headline>
-📂 <category>
-
-<summary>
-
-🔹 KEY POINTS:
-• point 1
-
-🔹 WHAT TO WATCH:
-• trend 1
-
-💡 TL;DR:
-<one-line summary>
-
-📌 Source: <name> | <links>
-
 #Tag1 #Tag2
 ```
 
 ## Project Structure
 
 ```
-news_bot.py     Entry point — scheduler, handlers, main loop
-config.py       RSS feeds (15), categories, urgency levels, constants
-feeds.py        RSS fetching (with timeout), normalization, clustering, urgency detection
-ai.py           AI prompt, structured JSON parsing (3-level fallback), 5 templates, retry logic
-bot.py          State management, broadcast logic, auto-unsubscribe on blocked users
-health.py       HTTP health server for Render
-tests/          83 tests (feeds, AI validation, templates, state management)
+news_bot.py          Telegram entry — scheduler, handlers
+newsbot/             Bot: config, feeds, AI, state, health
+workers/             Website: ingest_apis, dedup, db
+shared/              Shared AI router
+supabase/migrations/ Schema + match_stories RPC
+inbound-news-web/    Next.js site (reads Supabase stories)
+tests/
 ```
 
 ## Testing
@@ -197,34 +102,23 @@ python -m pytest tests/ -v
 ruff check . --exclude venv
 ```
 
-## Reliability Features
+## Reliability
 
-- **AI retry** — 3 attempts with exponential backoff on API failures
-- **Feed timeout** — 15s timeout per feed; slow/dead feeds don't block the pipeline
-- **Rate limiting** — `/fetch` limited to once per 5 minutes per chat
-- **Auto-unsubscribe** — users who block the bot are automatically removed
-- **Structured JSON** — AI output parsed with 3-level fallback (direct → code fence → regex)
+- AI retry with backoff; Groq → OpenRouter → Gemini
+- Per-feed timeout + global fetch budget
+- `/fetch` rate limit; auto-unsubscribe on blocked users
+- Redis optional for durable posted-id / subscriber state
 
-## Deployment
+## Adding news sources
 
-- **Render**: Health server on port 10000 keeps bot alive. Set env vars in dashboard.
-- **GitHub Actions**: Runs on cron `0 22` and `0 10` UTC (5 AM/5 PM Phnom Penh). Set secrets in repo settings.
+Prefer `sources.yaml` (registry). `BOT_MAX_FEEDS` caps how many the Telegram bot loads. Website workers use their own ingest paths (APIs + bulk RSS).
 
-## Adding News Sources
+## Known limitations
 
-Add a URL to `RSS_FEEDS` in `config.py`:
-```python
-RSS_FEEDS = [
-    "https://techcrunch.com/feed/",
-    "https://your-new-feed-url-here/",
-]
-```
-
-## Known Limitations
-
-- `posted_ids.json` is local/ephemeral — restarts can cause reposts
-- Clustering is similarity-based — very different headlines on the same topic may stay separate
-- Only one bot instance can run per token at a time
+- Without Redis, `posted_ids` / subscribers can reset on redeploy
+- Clustering is similarity-based; divergent headlines may not merge
+- One Telegram long-poll instance per bot token
+- Bot digests do **not** populate the website; run workers (or the website-ingest workflow) separately
 
 ## Questions / Bugs
 

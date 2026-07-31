@@ -1,26 +1,27 @@
+import Link from "next/link"
 import { getAllStories } from "@/lib/posts"
 import { formatDistanceToNow } from "@/lib/utils"
 
 export async function Ticker() {
-  const stories = await getAllStories()
-  const items = stories.slice(0, 10)
+  const stories = await getAllStories(8)
+  const items = stories.slice(0, 4)
   if (items.length === 0) return null
-
-  const duplicated = [...items, ...items]
 
   return (
     <div className="ticker">
       <div className="ticker-track">
-        {duplicated.map((story, i) => (
-          <span
-            key={`${story.id}-${i}`}
+        <span className="ticker-label">Latest</span>
+        {items.map((story) => (
+          <Link
+            key={story.id}
+            href={`/story/${story.id}`}
             className={`ticker-item ${story.category === "cybersecurity" ? "breaking" : ""}`}
           >
-            {story.title}
-            <span className="text-[var(--accent)] text-[10px] ml-1">
+            <span className="truncate max-w-[220px] md:max-w-[280px]">{story.title}</span>
+            <span className="text-[11px] shrink-0 opacity-70">
               {formatDistanceToNow(story.created_at)}
             </span>
-          </span>
+          </Link>
         ))}
       </div>
     </div>

@@ -33,7 +33,7 @@ export function TrustRadar({ score, axes, maxScore = 5, size = "sm" }: TrustRada
               <span className="font-mono text-[10px] text-[var(--text-secondary)] w-[90px] shrink-0 text-right uppercase tracking-wider">
                 {AXIS_LABELS[axis.label] || axis.label}
               </span>
-              <div className="flex gap-[3px]">
+              <div className="flex gap-1">
                 {Array.from({ length: axisMax }).map((_, i) => (
                   <div
                     key={i}

@@ -4,81 +4,66 @@ import Link from "next/link"
 import { useState } from "react"
 import type { Story } from "@/lib/types"
 import { getCategoryLabel } from "@/lib/categories"
+import { resolveStoryDek } from "@/lib/story-body"
 import { formatDistanceToNow } from "@/lib/utils"
-import { HypeRealityBar } from "./HypeRealityBar"
-import { DnaTag } from "./DnaTag"
-import { JargonText } from "./JargonText"
-import { ArrowUpRight, Bookmark, BookmarkCheck } from "lucide-react"
+import { Bookmark, BookmarkCheck } from "lucide-react"
 import { toggleSavedStory, isStorySaved } from "@/lib/profile"
+import { StoryImage } from "@/components/story/StoryImage"
 
 export function StoryRow({ story }: { story: Story }) {
   const [saved, setSaved] = useState(() => isStorySaved(story.id))
-
-  const categoryLabel = getCategoryLabel(story.category || "")
-  const tags = story.tags || []
-  const isBreaking = tags.includes("breaking")
-  const hypeScore = Math.min(100, 30 + (story.source_count || 1) * 8)
+  const categoryLabel = getCategoryLabel(story.category || "") || "News"
+  const dek = resolveStoryDek(story.summary_en)
 
   return (
-    <article className={`story-row group ${isBreaking ? "breaking-border" : ""}`}>
+    <article className="story-row group">
+      <Link href={`/story/${story.id}`} className="shrink-0">
+        <StoryImage
+          imageUrl={story.image_url}
+          pageUrl={story.primary_url}
+          alt=""
+          variant="thumb"
+        />
+      </Link>
+
       <div className="min-w-0 flex-1">
         <div className="mb-1.5 flex items-center gap-2 flex-wrap">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--accent)] font-bold">
-            {categoryLabel}
+          <span className="meta-text text-[var(--accent)]">{categoryLabel}</span>
+          <span className="meta-text tabular-nums">
+            {story.source_count} source{story.source_count !== 1 ? "s" : ""}
           </span>
-          <span className="font-mono text-[10px] text-[var(--text-secondary)] tabular-nums font-medium">
-            [{story.source_count} src]
-          </span>
-          <span className="font-mono text-[10px] text-[var(--text-secondary)]">
-            {formatDistanceToNow(story.created_at)}
-          </span>
+          <span className="meta-text">{formatDistanceToNow(story.created_at)}</span>
         </div>
 
-        <Link href={`/story/${story.id}`} className="group/link block">
-          <h3 className="text-[20px] md:text-[24px] font-extrabold leading-tight tracking-[-0.02em] group-hover/link:text-[var(--accent)] transition-colors">
+        <Link href={`/story/${story.id}`} className="block">
+          <h3 className="font-display text-[18px] md:text-[20px] font-semibold leading-snug tracking-[-0.015em] group-hover:text-[var(--accent)] transition-colors">
             {story.title}
           </h3>
         </Link>
 
-        {story.summary_en && (
-          <JargonText
-            text={story.summary_en}
-            className="mt-1 text-[14px] text-[var(--text-secondary)] line-clamp-2 leading-relaxed"
-          />
+        {dek && (
+          <p className="mt-1.5 text-[14px] text-[var(--text-secondary)] line-clamp-1 leading-relaxed">
+            {dek}
+          </p>
         )}
-
-        <div className="mt-2 flex items-center gap-2 flex-wrap">
-          <div className="w-20 shrink-0">
-            <HypeRealityBar score={hypeScore} size="sm" />
-          </div>
-          {tags.includes("hype") && <DnaTag type="hype" label="Hype" />}
-          {tags.includes("kh_relevant") && <DnaTag type="kh" label="KH" />}
-        </div>
       </div>
 
-      <div className="flex flex-col items-center gap-1 mt-1 flex-shrink-0">
-        <button
-          onClick={(e) => {
-            e.preventDefault()
-            const next = toggleSavedStory(story.id)
-            setSaved(next)
-          }}
-          className={`w-11 h-11 flex items-center justify-center transition-colors ${
-            saved
-              ? "text-[var(--accent)]"
-              : "text-[var(--text-secondary)] hover:text-[var(--accent)]"
-          }`}
-          aria-label={saved ? "Unsave story" : "Save story"}
-        >
-          {saved ? <BookmarkCheck className="h-5 w-5" /> : <Bookmark className="h-5 w-5" />}
-        </button>
-        <Link
-          href={`/story/${story.id}`}
-          className="w-11 h-11 flex items-center justify-center text-[var(--text-secondary)] transition-colors group-hover:text-[var(--accent)]"
-        >
-          <ArrowUpRight className="h-5 w-5" />
-        </Link>
-      </div>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault()
+          const next = toggleSavedStory(story.id)
+          setSaved(next)
+        }}
+        className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center shrink-0 rounded-[var(--radius-sm)] transition-colors ${
+          saved
+            ? "text-[var(--accent)]"
+            : "text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--surface-alt)]"
+        }`}
+        aria-label={saved ? "Unsave story" : "Save story"}
+      >
+        {saved ? <BookmarkCheck className="h-5 w-5" /> : <Bookmark className="h-5 w-5" />}
+      </button>
     </article>
   )
 }
