@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { Newspaper } from "lucide-react"
 import { proxiedImageUrl, isValidImageUrl } from "@/lib/story-images"
 
 type StoryImageProps = {
@@ -81,18 +82,15 @@ export function StoryImage({
   if (failed || !src) {
     return (
       <div
-        className={`${frame} ${className}`}
+        className={`${frame} ${className} flex items-center justify-center`}
         aria-hidden={variant === "thumb"}
         role={variant === "thumb" ? undefined : "img"}
         aria-label={variant === "thumb" ? undefined : alt}
       >
-        <div
-          className="absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage:
-              "linear-gradient(135deg, var(--text-primary) 1px, transparent 1px), linear-gradient(45deg, var(--text-primary) 1px, transparent 1px)",
-            backgroundSize: "18px 18px",
-          }}
+        <div className="absolute inset-0 bg-gradient-to-br from-[var(--surface-alt)] to-[var(--surface)]" />
+        <Newspaper
+          className="relative h-8 w-8 text-[var(--text-secondary)] opacity-50"
+          strokeWidth={1.5}
         />
       </div>
     )
