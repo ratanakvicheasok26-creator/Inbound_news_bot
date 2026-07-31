@@ -116,6 +116,7 @@ export default async function RootLayout({
     <html
       lang="en"
       data-theme={theme}
+      suppressHydrationWarning
       className={cn(
         display.variable,
         sans.variable,

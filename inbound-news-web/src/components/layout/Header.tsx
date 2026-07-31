@@ -311,7 +311,7 @@ export function Header() {
               <Search className="h-4 w-4" />
               <span className="hidden xl:inline">Search</span>
             </Link>
-            <ThemeToggle variant="header" />
+            <ThemeToggle />
             <Link href="/account" className="btn-ghost hidden sm:inline-flex">
               {user ? (user.email?.[0] || "A").toUpperCase() : "Sign in"}
             </Link>
