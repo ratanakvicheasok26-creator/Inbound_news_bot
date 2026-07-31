@@ -35,6 +35,9 @@ import sys
 import time
 from typing import Any
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from workers.ai_rewrite import rewrite_batch
 from workers.db import get_supabase
 

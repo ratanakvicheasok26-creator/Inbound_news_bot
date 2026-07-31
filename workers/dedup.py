@@ -22,6 +22,9 @@ import os
 import time
 from typing import Any
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from workers.db import get_supabase
 
 logging.basicConfig(
