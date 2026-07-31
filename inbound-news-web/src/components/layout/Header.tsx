@@ -29,9 +29,11 @@ export function Header() {
   const searchInputRef = useRef<HTMLInputElement>(null)
   const closeBtnRef = useRef<HTMLButtonElement>(null)
 
+  /* eslint-disable react-hooks/set-state-in-effect -- gate client-only rendering after first render */
   useEffect(() => {
     setMounted(true)
   }, [])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user: u } }) => setUser(u))

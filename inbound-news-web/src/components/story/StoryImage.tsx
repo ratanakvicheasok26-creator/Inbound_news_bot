@@ -32,6 +32,7 @@ export function StoryImage({
   )
   const [failed, setFailed] = useState(false)
 
+  /* eslint-disable react-hooks/set-state-in-effect -- sync src/failed when imageUrl props change */
   useEffect(() => {
     if (isValidImageUrl(imageUrl)) {
       setSrc(proxiedImageUrl(imageUrl, proxyWidth(variant)))
@@ -58,6 +59,7 @@ export function StoryImage({
       cancelled = true
     }
   }, [imageUrl, pageUrl, variant])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const frame =
     variant === "lead"
