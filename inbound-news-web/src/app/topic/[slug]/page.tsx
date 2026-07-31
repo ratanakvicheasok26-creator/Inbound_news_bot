@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 import { getStoriesByCategory } from "@/lib/posts"
+import { prioritizeStoriesWithImages } from "@/lib/story-priority"
 import { CATEGORIES, getCategoryLabel } from "@/lib/categories"
 import { StoryRow } from "@/components/story/StoryRow"
 
@@ -14,7 +15,7 @@ export default async function TopicPage({
     notFound()
   }
 
-  const stories = await getStoriesByCategory(slug)
+  const stories = await prioritizeStoriesWithImages(await getStoriesByCategory(slug))
   const label = getCategoryLabel(slug)
 
   return (

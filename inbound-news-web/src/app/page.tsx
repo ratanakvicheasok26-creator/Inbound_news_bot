@@ -1,13 +1,15 @@
 import { getAllStoriesSafe } from "@/lib/posts"
+import { prioritizeStoriesWithImages } from "@/lib/story-priority"
 import { LeadStoryCard } from "@/components/story/LeadStoryCard"
 import { StoryCard } from "@/components/story/StoryCard"
 import Link from "next/link"
 
 export default async function HomePage() {
   const { stories, error } = await getAllStoriesSafe(24)
+  const storiesWithMedia = await prioritizeStoriesWithImages(stories)
 
-  const leadStory = stories[0] || null
-  const latestStories = stories.slice(1, 13)
+  const leadStory = storiesWithMedia[0] || null
+  const latestStories = storiesWithMedia.slice(1, 13)
 
   if (!leadStory) {
     return (

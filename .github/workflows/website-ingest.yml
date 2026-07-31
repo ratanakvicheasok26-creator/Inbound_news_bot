@@ -3,8 +3,8 @@ name: Website ingest
 # Fills Supabase articles/stories for the Next.js site.
 # Separate from the Telegram bot — does not run news_bot.py.
 #
-# Soft-fail: the ingest job is skipped when SUPABASE_URL is unset
-# (forks / PRs without secrets). Set repo secrets before relying on cron.
+# Requires repo secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
+# AI keys (GROQ/COHERE/GEMINI/OPENROUTER/NEWSDATA) are optional.
 
 on:
   schedule:
@@ -16,8 +16,6 @@ jobs:
   ingest:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # Skip entirely when core Supabase secret is missing
-    if: ${{ secrets.SUPABASE_URL != '' }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { getStoriesBySourceDomain } from "@/lib/posts"
+import { prioritizeStoriesWithImages } from "@/lib/story-priority"
 import { StoryRow } from "@/components/story/StoryRow"
 import { TrustRadar } from "@/components/story/TrustRadar"
 import { ArrowLeft, ExternalLink, Shield } from "lucide-react"
@@ -48,7 +49,9 @@ export default async function SourcePage({ params }: { params: Promise<{ slug: s
 
   if (!source) notFound()
 
-  const recentStories = (await getStoriesBySourceDomain(source.domain)).slice(0, 20)
+  const recentStories = (
+    await prioritizeStoriesWithImages(await getStoriesBySourceDomain(source.domain))
+  ).slice(0, 20)
 
   const scores = source.trust_scores
   const avgScore = Math.round(

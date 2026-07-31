@@ -52,21 +52,27 @@ async function enrichStoriesWithMedia(stories: Story[]): Promise<Story[]> {
     if (article) firstArticleByStory.set(link.story_id, article)
   }
 
-  return stories.map((story) => {
-    const primary = firstArticleByStory.get(story.id)
-    const fromArticle = primary ? pickArticleImage(primary) : null
-    const image =
-      (isValidImageUrl(story.image_url) ? story.image_url : null) || fromArticle
+  return stories
+    .map((story) => {
+      const primary = firstArticleByStory.get(story.id)
+      const fromArticle = primary ? pickArticleImage(primary) : null
+      const image =
+        (isValidImageUrl(story.image_url) ? story.image_url : null) || fromArticle
 
-    return {
-      ...story,
-      image_url: image,
-      primary_url: story.primary_url || primary?.url || null,
-      primary_source: story.primary_source || primary?.source_name || null,
-      primary_source_domain:
-        story.primary_source_domain || primary?.source_domain || null,
-    }
-  })
+      return {
+        ...story,
+        image_url: image,
+        primary_url: story.primary_url || primary?.url || null,
+        primary_source: story.primary_source || primary?.source_name || null,
+        primary_source_domain:
+          story.primary_source_domain || primary?.source_domain || null,
+      }
+    })
+    .sort((a, b) => {
+      const aHasImage = isValidImageUrl(a.image_url) ? 1 : 0
+      const bHasImage = isValidImageUrl(b.image_url) ? 1 : 0
+      return bHasImage - aHasImage
+    })
 }
 
 export async function getAllStories(limit = 60): Promise<Story[]> {
