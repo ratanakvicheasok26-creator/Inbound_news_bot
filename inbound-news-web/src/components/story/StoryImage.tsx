@@ -13,10 +13,17 @@ type StoryImageProps = {
   variant?: "lead" | "card" | "thumb" | "story"
 }
 
-function proxyWidth(variant: StoryImageProps["variant"]): number {
-  if (variant === "lead" || variant === "story") return 1200
-  if (variant === "card") return 720
-  return 320
+function proxySize(variant: StoryImageProps["variant"]): { w: number; h: number } {
+  switch (variant) {
+    case "lead":
+      return { w: 1200, h: 750 } // 16:10 hero
+    case "card":
+      return { w: 720, h: 450 } // 16:10 grid tile
+    case "story":
+      return { w: 1200, h: 600 } // 2:1 story page
+    default:
+      return { w: 320, h: 240 } // 4:3 list thumb
+  }
 }
 
 export function StoryImage({
@@ -27,15 +34,16 @@ export function StoryImage({
   priority = false,
   variant = "thumb",
 }: StoryImageProps) {
+  const { w, h } = proxySize(variant)
   const [src, setSrc] = useState<string | null>(
-    isValidImageUrl(imageUrl) ? proxiedImageUrl(imageUrl, proxyWidth(variant)) : null
+    isValidImageUrl(imageUrl) ? proxiedImageUrl(imageUrl, w, h) : null
   )
   const [failed, setFailed] = useState(false)
 
   /* eslint-disable react-hooks/set-state-in-effect -- sync src/failed when imageUrl props change */
   useEffect(() => {
     if (isValidImageUrl(imageUrl)) {
-      setSrc(proxiedImageUrl(imageUrl, proxyWidth(variant)))
+      setSrc(proxiedImageUrl(imageUrl, w, h))
       setFailed(false)
       return
     }
@@ -47,7 +55,7 @@ export function StoryImage({
       .then((data: { imageUrl?: string | null }) => {
         if (cancelled) return
         if (isValidImageUrl(data.imageUrl)) {
-          setSrc(proxiedImageUrl(data.imageUrl, proxyWidth(variant)))
+          setSrc(proxiedImageUrl(data.imageUrl, w, h))
           setFailed(false)
         }
       })
@@ -58,7 +66,7 @@ export function StoryImage({
     return () => {
       cancelled = true
     }
-  }, [imageUrl, pageUrl, variant])
+  }, [imageUrl, pageUrl, w, h])
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const frame =
