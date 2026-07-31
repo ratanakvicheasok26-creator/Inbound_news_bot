@@ -26,7 +26,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from workers.db import get_supabase
-from workers.images import extract_image_url, fetch_og_image, is_valid_image_url
 
 logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -97,7 +96,7 @@ def _jaccard_similarity(a: str, b: str) -> float:
     return len(intersection) / len(union)
 
 
-def _fetch_unprocessed(supabase, limit: int = 1000) -> list[dict[str, Any]]:
+def _fetch_unprocessed(supabase, limit: int = 500) -> list[dict[str, Any]]:
     """Fetch articles that haven't been linked to a story yet.
 
     Two-step query: load recent story_sources article_ids, then filter articles
@@ -177,19 +176,8 @@ def _search_similar_stories_jaccard(supabase, title: str, threshold: float = 0.6
     return None
 
 
-def _article_image(article: dict[str, Any], fetch_missing: bool = False) -> str | None:
-    """Best image for an article; optionally fetch og:image when missing."""
-    image = extract_image_url(article)
-    if image:
-        return image
-    if fetch_missing and article.get("url"):
-        return fetch_og_image(article["url"])
-    return None
-
-
 def _create_story(supabase, article: dict, embedding: list[float] | None = None) -> str:
     """Create a new story from an article. Returns the story ID."""
-    image_url = _article_image(article, fetch_missing=True)
     row = {
         "title": article["title"],
         "summary_en": article.get("summary", ""),
@@ -199,15 +187,8 @@ def _create_story(supabase, article: dict, embedding: list[float] | None = None)
     }
     if embedding is not None:
         row["embedding"] = embedding
-    if image_url:
-        row["image_url"] = image_url
 
-    try:
-        result = supabase.table("stories").insert(row).execute()
-    except Exception:
-        # Migration 005 not applied yet — retry without image_url
-        row.pop("image_url", None)
-        result = supabase.table("stories").insert(row).execute()
+    result = supabase.table("stories").insert(row).execute()
     story_id = result.data[0]["id"]
 
     supabase.table("story_sources").insert({
@@ -229,24 +210,11 @@ def _add_to_story(supabase, story_id: str, article: dict) -> None:
         "source_url": article.get("url", ""),
     }).execute()
 
-    current = (
-        supabase.table("stories")
-        .select("source_count")
-        .eq("id", story_id)
-        .execute()
-    )
+    # Increment source_count directly
+    current = supabase.table("stories").select("source_count").eq("id", story_id).execute()
     if current.data:
-        row = current.data[0]
-        new_count = (row.get("source_count") or 0) + 1
-        update: dict[str, Any] = {"source_count": new_count}
-        image = _article_image(article, fetch_missing=False)
-        if image:
-            update["image_url"] = image
-        try:
-            supabase.table("stories").update(update).eq("id", story_id).execute()
-        except Exception:
-            update.pop("image_url", None)
-            supabase.table("stories").update(update).eq("id", story_id).execute()
+        new_count = (current.data[0].get("source_count") or 0) + 1
+        supabase.table("stories").update({"source_count": new_count}).eq("id", story_id).execute()
 
 
 def run() -> None:
@@ -263,7 +231,7 @@ def _run_inner() -> None:
     use_embeddings = cohere_client is not None
 
     logger.info("Fetching unprocessed articles...")
-    articles = _fetch_unprocessed(supabase, limit=1000)
+    articles = _fetch_unprocessed(supabase, limit=500)
     logger.info("Found %d unprocessed articles", len(articles))
 
     if not articles:
