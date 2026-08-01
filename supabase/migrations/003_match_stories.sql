@@ -1,6 +1,6 @@
 -- Inbound Reports — match_stories RPC for website dedup (workers/dedup.py).
 -- Prerequisite: pgvector extension must be enabled (see 001_ingestion_schema.sql).
--- CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS vector;
 
 -- Cosine similarity search over stories.embedding (VECTOR(1024) — Cohere embed-multilingual-v3.0).
 CREATE OR REPLACE FUNCTION match_stories(

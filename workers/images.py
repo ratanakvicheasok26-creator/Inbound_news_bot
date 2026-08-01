@@ -24,6 +24,26 @@ _TWITTER_IMAGE_RE = re.compile(
 )
 
 
+def _is_private_host(host: str) -> bool:
+    """True for loopback, link-local, private, and IPv6 mapped ranges."""
+    lower = host.lower()
+    if lower == "localhost" or lower.endswith(".localhost"):
+        return True
+    if lower.startswith("::ffff:"):
+        lower = lower[len("::ffff:") :]
+    if ":" in lower:
+        return (
+            lower.startswith(("::1", "fe80:", "fc", "fd"))
+            or _is_private_host(lower.split(":").pop())
+        )
+    return bool(
+        re.match(
+            r"^(?:0\.|10\.|127\.|169\.254\.|172\.(?:1[6-9]|2\d|3[01])\.|192\.168\.)",
+            lower,
+        )
+    )
+
+
 def is_valid_image_url(url: str | None) -> bool:
     if not url or not isinstance(url, str):
         return False
@@ -36,7 +56,7 @@ def is_valid_image_url(url: str | None) -> bool:
         host = urlparse(u).hostname or ""
     except Exception:
         return False
-    if not host or host in {"localhost", "127.0.0.1"}:
+    if not host or _is_private_host(host):
         return False
     return True
 

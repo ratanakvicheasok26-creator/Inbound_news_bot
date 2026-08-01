@@ -40,6 +40,7 @@ async function callGroq(prompt: string): Promise<string> {
           max_tokens: 200,
           temperature: 0.3,
         }),
+        signal: AbortSignal.timeout(30_000),
       })
 
       if (res.status === 429) {
@@ -70,8 +71,17 @@ export async function POST(req: NextRequest) {
   try {
     const { title, summary, category } = await req.json()
 
-    if (!title) {
+    if (typeof title !== "string" || !title.trim()) {
       return NextResponse.json({ error: "title is required" }, { status: 400 })
+    }
+    if (typeof summary !== "string") {
+      return NextResponse.json({ error: "summary must be a string" }, { status: 400 })
+    }
+    if (typeof category !== "string") {
+      return NextResponse.json({ error: "category must be a string" }, { status: 400 })
+    }
+    if (title.length > 500 || summary.length > 5000 || category.length > 100) {
+      return NextResponse.json({ error: "Input too long" }, { status: 400 })
     }
 
     const prompt = `Story title: "${title}"

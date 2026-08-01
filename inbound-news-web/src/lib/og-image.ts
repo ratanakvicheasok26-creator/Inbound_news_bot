@@ -1,4 +1,4 @@
-import { isValidImageUrl } from "@/lib/story-images"
+import { isValidImageUrl, isSafeHost } from "@/lib/story-images"
 
 const OG_RE =
   /<meta\s+[^>]*(?:property|name)=["']og:image(?::secure_url)?["'][^>]*content=["']([^"']+)["']/i
@@ -22,7 +22,7 @@ function absolutize(base: string, candidate: string): string {
  * Cached by Next fetch (revalidate 24h).
  */
 export async function resolveOgImage(pageUrl: string): Promise<string | null> {
-  if (!isValidImageUrl(pageUrl)) return null
+  if (!isValidImageUrl(pageUrl) || !isSafeHost(pageUrl)) return null
 
   try {
     const res = await fetch(pageUrl, {

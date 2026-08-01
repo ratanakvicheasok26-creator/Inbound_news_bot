@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 import {
   Source_Serif_4,
   Source_Sans_3,
@@ -108,9 +107,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = await cookies();
-  const themeCookie = cookieStore.get("theme")?.value;
-  const theme = themeCookie === "dark" || themeCookie === "light" ? themeCookie : "light";
+  // The theme is applied client-side by the inline themeInitScript before first
+  // paint (reads cookie/localStorage/OS preference). Rendering a static default
+  // here keeps every route statically cacheable — no cookies()/dynamic reads.
+  const theme = "light";
 
   return (
     <html

@@ -576,11 +576,26 @@ async def _run_batched_pipeline(context: ContextTypes.DEFAULT_TYPE) -> int:
 
         # 2-4 stories → batch path
         clusters = all_clusters[:BATCH_MAX_STORIES]
-        batched: list[BatchedStory] = []
-        for cluster in clusters:
-            entry = _cluster_to_batched(cluster)
-            if entry:
-                batched.append(entry)
+
+        def _prepare_batched() -> list[BatchedStory]:
+            result: list[BatchedStory] = []
+            for cluster in clusters:
+                entry = _cluster_to_batched(cluster)
+                if entry:
+                    result.append(entry)
+            return result
+
+        try:
+            batched = await asyncio.wait_for(
+                asyncio.to_thread(_prepare_batched),
+                timeout=PREPARE_ENTRIES_TIMEOUT_SECONDS,
+            )
+        except asyncio.TimeoutError:
+            logger.error(
+                "Batched compact rewrite timed out after %.0fs",
+                PREPARE_ENTRIES_TIMEOUT_SECONDS,
+            )
+            return 0
 
         if not batched:
             logger.warning("All clusters failed compact rewrite — nothing to send.")

@@ -84,7 +84,9 @@ class TestPrepareEntries:
         def fake_rewrite(cluster, urgent=False, header=None):
             return f"<b>{cluster[0].title}</b>\n\nWhat happened: x"
 
-        with patch("newsbot.bot.rewrite_with_ai", side_effect=fake_rewrite) as mock_ai:
+        with patch("newsbot.bot.rewrite_with_ai", side_effect=fake_rewrite) as mock_ai, patch(
+            "newsbot.bot.pick_image_url", return_value=None
+        ), patch("newsbot.bot.time.sleep"):
             stories = _prepare_entries(urgent=False)
         assert len(stories) == DIGEST_MAX_STORIES
         assert all(isinstance(s, StoryPost) for s in stories)
@@ -93,13 +95,14 @@ class TestPrepareEntries:
 
 
 class TestPrepareUrgent:
+    @patch("newsbot.bot.pick_image_url", return_value=None)
     @patch("newsbot.bot.rewrite_with_ai", return_value="<b>[URGENT: X]</b>")
     @patch("newsbot.bot.looks_urgent")
     @patch("newsbot.bot.cluster_entries")
     @patch("newsbot.bot.collect_new_entries")
     @patch("newsbot.bot.get_state")
     def test_only_urgent_and_skips_posted(
-        self, mock_state, mock_collect, mock_cluster, mock_urgent, mock_ai
+        self, mock_state, mock_collect, mock_cluster, mock_urgent, mock_ai, mock_image
     ):
         mock_state.return_value.load_posted_ids.return_value = {"already"}
         mock_state.return_value.load_posted_titles.return_value = set()

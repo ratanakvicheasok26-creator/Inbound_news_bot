@@ -43,6 +43,8 @@ const SOURCES: Record<string, {
   },
 }
 
+export const revalidate = 300
+
 export default async function SourcePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const source = SOURCES[slug]

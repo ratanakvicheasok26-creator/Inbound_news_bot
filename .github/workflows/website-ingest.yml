@@ -35,6 +35,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Ingest APIs
+        continue-on-error: true
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -48,6 +49,7 @@ jobs:
         run: python -m workers.ingest_apis
 
       - name: Dedup into stories
+        if: always()
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

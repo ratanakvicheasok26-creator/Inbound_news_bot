@@ -49,7 +49,7 @@ from newsbot.config import (
     validate_config,
 )
 from newsbot.health import start_health_server
-from newsbot.state import get_state
+from newsbot.state import acquire_instance_lock, get_state, release_instance_lock
 
 logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -172,6 +172,11 @@ async def fetch_command(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
 
     with _fetch_cooldown_lock:
         now = time_mod.time()
+        # Prune entries older than the cooldown window so the dict can't grow unbounded.
+        cutoff = now - FETCH_COOLDOWN_SECONDS
+        stale = [cid for cid, ts in _fetch_last_run.items() if ts < cutoff]
+        for cid in stale:
+            del _fetch_last_run[cid]
         last_run = _fetch_last_run.get(chat_id, 0)
         remaining = FETCH_COOLDOWN_SECONDS - (now - last_run)
         if remaining > 0:
@@ -208,6 +213,9 @@ def _add_command(app: Application, name: str, handler: object) -> None:
 def main() -> None:
     """Entry point — initialize all subsystems and start the bot."""
     validate_config()
+
+    if not acquire_instance_lock():
+        raise SystemExit("Another bot instance holds the lock — refusing to start.")
 
     threading.Thread(target=start_health_server, daemon=True).start()
 
@@ -265,7 +273,10 @@ def main() -> None:
         URGENT_CHECK_INTERVAL_SECONDS,
     )
 
-    app.run_polling(drop_pending_updates=True)
+    try:
+        app.run_polling(drop_pending_updates=True)
+    finally:
+        release_instance_lock()
 
 
 if __name__ == "__main__":

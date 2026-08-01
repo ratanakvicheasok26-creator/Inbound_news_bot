@@ -9,6 +9,40 @@ function isHttpUrl(url: string): boolean {
   }
 }
 
+/** True when the host is an IP literal in a private/loopback/link-local range. */
+function isPrivateHost(hostname: string): boolean {
+  const ipv4 = hostname.match(
+    /^(?:10\.|127\.|169\.254\.|172\.(?:1[6-9]|2\d|3[01])\.|192\.168\.|0\.)/
+  )
+  if (ipv4) return true
+  if (hostname === "localhost" || hostname.endsWith(".localhost")) return true
+  if (hostname.includes(":")) {
+    // IPv6: block loopback, link-local, ULA, and mapped-v4 private ranges.
+    const lower = hostname.toLowerCase()
+    if (
+      lower.startsWith("::1") ||
+      lower.startsWith("fe80:") ||
+      lower.startsWith("fc") ||
+      lower.startsWith("fd") ||
+      lower.startsWith("::ffff:")
+    ) {
+      return true
+    }
+    const tail = lower.split(":").pop()
+    if (tail && isPrivateHost(tail)) return true
+  }
+  return false
+}
+
+export function isSafeHost(url: string): boolean {
+  if (!isHttpUrl(url)) return false
+  try {
+    return !isPrivateHost(new URL(url).hostname)
+  } catch {
+    return false
+  }
+}
+
 export function isValidImageUrl(url: string | null | undefined): url is string {
   if (!url || typeof url !== "string") return false
   const t = url.trim()

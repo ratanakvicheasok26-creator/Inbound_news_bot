@@ -7,6 +7,12 @@ export type StoriesResult = {
   error: string | null
 }
 
+/** Explicit column lists — never select `embedding`/`raw_json` for public payloads. */
+const STORY_COLUMNS =
+  "id, title, summary_en, source_count, category, tags, created_at, image_url"
+const ARTICLE_COLUMNS =
+  "id, title, summary, url, source_name, source_domain, category, language, published_at, ingested_at, image_url"
+
 /**
  * Escape a value for safe use inside a PostgREST `.or()` filter string.
  */
@@ -36,6 +42,7 @@ async function enrichStoriesWithMedia(stories: Story[]): Promise<Story[]> {
     .from("articles")
     .select("id, url, source_name, source_domain, raw_json, image_url")
     .in("id", articleIds)
+    .order("published_at", { ascending: false })
 
   if (articlesError || !articles?.length) {
     if (articlesError) console.error("enrich media articles:", articlesError)
@@ -88,7 +95,7 @@ export async function getAllStoriesSafe(limit = 60): Promise<StoriesResult> {
   try {
     const { data, error } = await supabase
       .from("stories")
-      .select("*")
+      .select(STORY_COLUMNS)
       .order("created_at", { ascending: false })
       .limit(limit)
 
@@ -110,7 +117,7 @@ export async function getStoriesByCategory(category: string): Promise<Story[]> {
   try {
     const { data, error } = await supabase
       .from("stories")
-      .select("*")
+      .select(STORY_COLUMNS)
       .eq("category", category)
       .order("created_at", { ascending: false })
       .limit(60)
@@ -137,7 +144,7 @@ export async function getStoryById(id: string): Promise<StoryWithArticles | null
   try {
     const { data: story, error: storyError } = await supabase
       .from("stories")
-      .select("*")
+      .select(STORY_COLUMNS)
       .eq("id", id)
       .single()
 
@@ -161,7 +168,7 @@ export async function getStoryById(id: string): Promise<StoryWithArticles | null
     if (articleIds.length > 0) {
       const { data: articleData, error: articlesError } = await supabase
         .from("articles")
-        .select("*")
+        .select(`${ARTICLE_COLUMNS}, raw_json`)
         .in("id", articleIds)
         .order("published_at", { ascending: false })
 
@@ -200,8 +207,9 @@ export async function getStoriesByIds(ids: string[]): Promise<Story[]> {
   try {
     const { data, error } = await supabase
       .from("stories")
-      .select("*")
+      .select(STORY_COLUMNS)
       .in("id", ids)
+      .order("created_at", { ascending: false })
 
     if (error) {
       console.error("Failed to fetch stories by ids:", error)
@@ -259,7 +267,7 @@ export async function getStoriesBySourceDomain(domain: string): Promise<Story[]>
 
     const { data: stories, error: storiesError } = await supabase
       .from("stories")
-      .select("*")
+      .select(STORY_COLUMNS)
       .in("id", storyIds)
       .order("created_at", { ascending: false })
       .limit(60)

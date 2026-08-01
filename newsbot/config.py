@@ -200,7 +200,12 @@ def validate_config() -> None:
         raise SystemExit(f"Missing required env vars: {', '.join(missing)}. Set them in Railway → Variables tab.")
 
     TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
-    PORT = int(os.environ.get("PORT", "10000"))
+    try:
+        PORT = int(os.environ.get("PORT", "10000"))
+    except (ValueError, TypeError):
+        raise SystemExit(
+            f"Invalid PORT: {os.environ.get('PORT', '')!r} — must be an integer."
+        )
 
     channel_raw = os.environ.get("TELEGRAM_CHANNEL_ID", "").strip()
     if channel_raw:

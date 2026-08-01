@@ -4,6 +4,8 @@ import { prioritizeStoriesWithImages } from "@/lib/story-priority"
 import { CATEGORIES, getCategoryLabel } from "@/lib/categories"
 import { StoryRow } from "@/components/story/StoryRow"
 
+export const revalidate = 60
+
 export default async function TopicPage({
   params,
 }: {

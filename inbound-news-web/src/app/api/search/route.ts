@@ -15,19 +15,25 @@ export async function GET(req: NextRequest) {
     if (!q || q.length < 2) {
       return NextResponse.json({ stories: [], articles: [] })
     }
+    if (q.length > 100) {
+      return NextResponse.json(
+        { stories: [], articles: [], error: "Search query too long" },
+        { status: 400 },
+      )
+    }
 
     const escaped = escapeOrValue(`%${q}%`)
 
     const [storiesRes, articlesRes] = await Promise.all([
       supabase
         .from("stories")
-        .select("*")
+        .select("id, title, summary_en, category, tags, created_at, image_url")
         .or(`title.ilike.${escaped},summary_en.ilike.${escaped}`)
         .order("created_at", { ascending: false })
         .limit(20),
       supabase
         .from("articles")
-        .select("*")
+        .select("id, title, summary, url, source_name, source_domain, published_at, image_url")
         .or(`title.ilike.${escaped},source_name.ilike.${escaped},source_domain.ilike.${escaped}`)
         .order("published_at", { ascending: false })
         .limit(20),

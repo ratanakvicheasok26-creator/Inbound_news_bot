@@ -2,6 +2,8 @@ import { notFound } from "next/navigation"
 import { getStoryById } from "@/lib/posts"
 import { StoryContent } from "@/components/story/StoryContent"
 
+export const revalidate = 300
+
 export default async function StoryPage({
   params,
 }: {

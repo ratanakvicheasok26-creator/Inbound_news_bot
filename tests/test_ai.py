@@ -377,7 +377,8 @@ class TestPickImageUrl:
 
     def test_no_image(self):
         entries = [Entry(id="1", title="A", summary="", link="http://a.com", source_name="A")]
-        assert pick_image_url(entries) is None
+        with patch("newsbot.ai._fetch_og_image", return_value=None):
+            assert pick_image_url(entries) is None
 
 
 # --- AI Router Integration ---

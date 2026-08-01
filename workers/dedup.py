@@ -38,8 +38,11 @@ _SIMILARITY_THRESHOLD = 0.85
 _EMBED_MODEL = "embed-multilingual-v3.0"
 _EMBED_DIM = 1024
 _BATCH_SIZE = 100
+# Cohere caps each embed request at 96 texts for this model.
+_EMBED_CHUNK_SIZE = 96
 _MAX_RETRIES = 3
 _RETRY_BASE_DELAY = 2.0
+_FETCH_PAGE_SIZE = 1000
 
 
 def _get_cohere_client():
@@ -60,30 +63,41 @@ def _get_cohere_client():
 
 
 def _embed_texts_with_retry(client, texts: list[str]) -> list[list[float]] | None:
-    """Generate embeddings with retry. Returns None on failure."""
+    """Generate embeddings with retry. Returns None on failure.
+
+    Cohere caps each request at 96 texts, so we chunk before calling.
+    """
     if not texts:
         return []
 
-    for attempt in range(1, _MAX_RETRIES + 1):
-        try:
-            result = client.embed(
-                texts=texts,
-                model=_EMBED_MODEL,
-                input_type="search_document",
-                embedding_types=["float"],
-            )
-            return [e for e in result.embeddings.float]
-        except Exception as exc:
-            if attempt < _MAX_RETRIES:
-                delay = _RETRY_BASE_DELAY * (2 ** (attempt - 1))
-                logger.warning(
-                    "Cohere embed attempt %d/%d failed (%s), retrying in %.1fs",
-                    attempt, _MAX_RETRIES, exc, delay,
+    embeddings: list[list[float]] = []
+    for start in range(0, len(texts), _EMBED_CHUNK_SIZE):
+        chunk = texts[start : start + _EMBED_CHUNK_SIZE]
+        chunk_result = None
+        for attempt in range(1, _MAX_RETRIES + 1):
+            try:
+                result = client.embed(
+                    texts=chunk,
+                    model=_EMBED_MODEL,
+                    input_type="search_document",
+                    embedding_types=["float"],
                 )
-                time.sleep(delay)
-            else:
-                logger.error("Cohere embed failed after %d attempts: %s", _MAX_RETRIES, exc)
-    return None
+                chunk_result = [e for e in result.embeddings.float]
+                break
+            except Exception as exc:
+                if attempt < _MAX_RETRIES:
+                    delay = _RETRY_BASE_DELAY * (2 ** (attempt - 1))
+                    logger.warning(
+                        "Cohere embed attempt %d/%d for chunk %d failed (%s), retrying in %.1fs",
+                        attempt, _MAX_RETRIES, start // _EMBED_CHUNK_SIZE, exc, delay,
+                    )
+                    time.sleep(delay)
+                else:
+                    logger.error("Cohere embed failed after %d attempts: %s", _MAX_RETRIES, exc)
+        if chunk_result is None:
+            return None
+        embeddings.extend(chunk_result)
+    return embeddings
 
 
 def _jaccard_similarity(a: str, b: str) -> float:
@@ -100,20 +114,25 @@ def _jaccard_similarity(a: str, b: str) -> float:
 def _fetch_unprocessed(supabase, limit: int = 1000) -> list[dict[str, Any]]:
     """Fetch articles that haven't been linked to a story yet.
 
-    Two-step query: load recent story_sources article_ids, then filter articles
-    in Python. Nested ``not_.in_(subquery)`` is fragile with PostgREST.
+    Paginates all story_sources article_ids (older than 5000 rows would be
+    missed by a single .limit), then filters articles in Python.
     """
-    linked_result = (
-        supabase.table("story_sources")
-        .select("article_id")
-        .limit(max(limit * 20, 5000))
-        .execute()
-    )
-    linked_ids = {
-        row["article_id"]
-        for row in (linked_result.data or [])
-        if row.get("article_id")
-    }
+    linked_ids: set[str] = set()
+    offset = 0
+    while True:
+        page = (
+            supabase.table("story_sources")
+            .select("article_id")
+            .range(offset, offset + _FETCH_PAGE_SIZE - 1)
+            .execute()
+        )
+        rows = page.data or []
+        if not rows:
+            break
+        linked_ids.update(row["article_id"] for row in rows if row.get("article_id"))
+        if len(rows) < _FETCH_PAGE_SIZE:
+            break
+        offset += _FETCH_PAGE_SIZE
 
     # Over-fetch recent articles, then drop ones already linked.
     fetch_n = limit * 3 if linked_ids else limit
@@ -156,17 +175,36 @@ def _search_similar_stories(supabase, embedding: list[float], threshold: float =
     return None
 
 
-def _search_similar_stories_jaccard(supabase, title: str, threshold: float = 0.6) -> str | None:
-    """Fallback: search for similar stories using title word overlap."""
-    result = supabase.table("stories").select("id, title").order(
-        "created_at", desc=True
-    ).limit(200).execute()
+def _load_story_titles(supabase, cap: int = 5000) -> list[dict[str, str]]:
+    """Load (id, title) for all stories, newest first, paginated (bounded)."""
+    titles: list[dict[str, str]] = []
+    offset = 0
+    while offset < cap:
+        result = (
+            supabase.table("stories")
+            .select("id, title")
+            .order("created_at", desc=True)
+            .range(offset, offset + _FETCH_PAGE_SIZE - 1)
+            .execute()
+        )
+        rows = result.data or []
+        if not rows:
+            break
+        titles.extend(rows)
+        if len(rows) < _FETCH_PAGE_SIZE:
+            break
+        offset += _FETCH_PAGE_SIZE
+    return titles[:cap]
 
-    stories = result.data or []
+
+def _search_similar_stories_jaccard(
+    story_titles: list[dict[str, str]], title: str, threshold: float = 0.6
+) -> str | None:
+    """Fallback: search for similar stories using title word overlap."""
     best_score = 0.0
     best_id = None
 
-    for story in stories:
+    for story in story_titles:
         score = _jaccard_similarity(title, story.get("title", ""))
         if score > best_score:
             best_score = score
@@ -221,7 +259,7 @@ def _create_story(supabase, article: dict, embedding: list[float] | None = None)
 
 
 def _add_to_story(supabase, story_id: str, article: dict) -> None:
-    """Add an article to an existing story and increment source_count."""
+    """Add an article to an existing story and increment source_count atomically."""
     supabase.table("story_sources").insert({
         "story_id": story_id,
         "article_id": article["id"],
@@ -229,24 +267,31 @@ def _add_to_story(supabase, story_id: str, article: dict) -> None:
         "source_url": article.get("url", ""),
     }).execute()
 
-    current = (
-        supabase.table("stories")
-        .select("source_count")
-        .eq("id", story_id)
-        .execute()
-    )
-    if current.data:
-        row = current.data[0]
-        new_count = (row.get("source_count") or 0) + 1
-        update: dict[str, Any] = {"source_count": new_count}
-        image = _article_image(article, fetch_missing=False)
-        if image:
-            update["image_url"] = image
-        try:
-            supabase.table("stories").update(update).eq("id", story_id).execute()
-        except Exception:
-            update.pop("image_url", None)
-            supabase.table("stories").update(update).eq("id", story_id).execute()
+    image = _article_image(article, fetch_missing=False)
+    try:
+        supabase.rpc(
+            "increment_story_source_count",
+            {"story_id": story_id, "article_image": image or ""},
+        ).execute()
+    except Exception:
+        # Migration 006 not applied yet — fall back to read-modify-write.
+        current = (
+            supabase.table("stories")
+            .select("source_count")
+            .eq("id", story_id)
+            .execute()
+        )
+        if current.data:
+            row = current.data[0]
+            new_count = (row.get("source_count") or 0) + 1
+            update: dict[str, Any] = {"source_count": new_count}
+            if image:
+                update["image_url"] = image
+            try:
+                supabase.table("stories").update(update).eq("id", story_id).execute()
+            except Exception:
+                update.pop("image_url", None)
+                supabase.table("stories").update(update).eq("id", story_id).execute()
 
 
 def run() -> None:
@@ -283,6 +328,10 @@ def _run_inner() -> None:
             logger.warning("Cohere embedding failed — falling back to Jaccard similarity")
             use_embeddings = False
 
+    # Jaccard needs a snapshot of existing stories regardless of embed path.
+    story_titles = _load_story_titles(supabase)
+    logger.info("Loaded %d existing stories for Jaccard fallback", len(story_titles))
+
     if not use_embeddings:
         logger.info("Using Jaccard title similarity (Cohere unavailable)")
 
@@ -299,18 +348,19 @@ def _run_inner() -> None:
                 story_id = _search_similar_stories(supabase, embedding, _SIMILARITY_THRESHOLD)
                 if story_id is None:
                     story_id = _search_similar_stories_jaccard(
-                        supabase, article.get("title", ""), threshold=0.6
+                        story_titles, article.get("title", ""), threshold=0.6
                     )
             else:
                 story_id = _search_similar_stories_jaccard(
-                    supabase, article.get("title", ""), threshold=0.6
-               )
+                    story_titles, article.get("title", ""), threshold=0.6
+                )
 
             if story_id:
                 _add_to_story(supabase, story_id, article)
                 merged += 1
             else:
-                _create_story(supabase, article, embedding)
+                story_id = _create_story(supabase, article, embedding)
+                story_titles.append({"id": story_id, "title": article.get("title", "")})
                 new_stories += 1
 
         except Exception as exc:

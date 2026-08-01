@@ -13,7 +13,13 @@ import tempfile
 import threading
 from abc import ABC, abstractmethod
 
-__all__ = ["StateBackend", "get_state", "reset_state"]
+__all__ = [
+    "StateBackend",
+    "get_state",
+    "reset_state",
+    "acquire_instance_lock",
+    "release_instance_lock",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -141,6 +147,10 @@ class FileState(StateBackend):
         self._subscribers_path = subscribers_path
         self._posted_path = posted_path
         self._lock = threading.Lock()
+        # File backend stores no timestamps, so cap by count to bound growth
+        # (~years of digests) instead of growing forever.
+        self._posted_id_cap = 50_000
+        self._posted_title_cap = 50_000
 
     def _atomic_write(self, path: str, data: object) -> None:
         """Write JSON atomically: write to temp file, then os.replace."""
@@ -190,6 +200,8 @@ class FileState(StateBackend):
         with self._lock:
             existing = self.load_posted_ids()
             existing.update(ids)
+            if len(existing) > self._posted_id_cap:
+                existing = set(list(existing)[-self._posted_id_cap :])
             self.save_posted_ids(existing)
 
     def _posted_titles_path(self) -> str:
@@ -205,6 +217,8 @@ class FileState(StateBackend):
         with self._lock:
             existing = self.load_posted_titles()
             existing.update(titles)
+            if len(existing) > self._posted_title_cap:
+                existing = set(list(existing)[-self._posted_title_cap :])
             self.save_posted_titles(existing)
 
 
@@ -241,3 +255,53 @@ def reset_state() -> None:
     """Reset the cached state backend (for testing)."""
     global _state
     _state = None
+
+
+_INSTANCE_LOCK_KEY = "newsbot:instance_lock"
+_INSTANCE_LOCK_TTL_SECONDS = 900
+
+
+def acquire_instance_lock() -> bool:
+    """Try to acquire a distributed single-instance lock via Redis.
+
+    Prevents two long-poll replicas (e.g. overlapping Railway/Render
+    deploys) from both polling Telegram and both firing the scheduled
+    jobs. Returns False when no Redis is available or the lock is held
+    by another instance.
+    """
+    redis_url = os.environ.get("REDIS_URL", "").strip()
+    if not redis_url:
+        logger.warning("REDIS_URL not set — skipping single-instance guard.")
+        return True
+    try:
+        import redis
+
+        r = redis.Redis.from_url(redis_url, decode_responses=True)
+        r.ping()
+        acquired = r.set(_INSTANCE_LOCK_KEY, "1", nx=True, ex=_INSTANCE_LOCK_TTL_SECONDS)
+        if not acquired:
+            logger.error(
+                "Another bot instance holds the lock (%s) — refusing to start to "
+                "prevent duplicate posts. Release it with the TTL or by removing the key.",
+                _INSTANCE_LOCK_KEY,
+            )
+            return False
+        logger.info("Acquired single-instance lock (%s).", _INSTANCE_LOCK_KEY)
+        return True
+    except Exception:
+        logger.exception("Failed to acquire Redis instance lock — starting anyway.")
+        return True
+
+
+def release_instance_lock() -> None:
+    """Best-effort release of the single-instance lock."""
+    redis_url = os.environ.get("REDIS_URL", "").strip()
+    if not redis_url:
+        return
+    try:
+        import redis
+
+        r = redis.Redis.from_url(redis_url, decode_responses=True)
+        r.delete(_INSTANCE_LOCK_KEY)
+    except Exception:
+        logger.debug("Failed to release Redis instance lock.", exc_info=True)

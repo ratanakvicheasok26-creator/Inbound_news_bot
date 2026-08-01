@@ -4,6 +4,8 @@ import { LeadStoryCard } from "@/components/story/LeadStoryCard"
 import { StoryCard } from "@/components/story/StoryCard"
 import Link from "next/link"
 
+export const revalidate = 60
+
 export default async function HomePage() {
   const { stories, error } = await getAllStoriesSafe(24)
   const storiesWithMedia = await prioritizeStoriesWithImages(stories)

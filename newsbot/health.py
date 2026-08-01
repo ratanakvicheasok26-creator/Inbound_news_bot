@@ -32,15 +32,26 @@ def _check_database() -> dict:
     if not os.environ.get("SUPABASE_URL") or not os.environ.get("SUPABASE_SERVICE_ROLE_KEY"):
         return {"status": "skipped", "reason": "SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set"}
 
+    def _probe() -> dict:
+        try:
+            from workers.db import get_supabase
+            supabase = get_supabase()
+            start = time.time()
+            result = supabase.table("articles").select("id", count="exact").limit(1).execute()
+            latency_ms = round((time.time() - start) * 1000)
+            return {"status": "ok", "latency_ms": latency_ms, "article_count": result.count or 0}
+        except Exception as exc:
+            return {"status": "degraded", "error": str(exc)[:200]}
+
     try:
-        from workers.db import get_supabase
-        supabase = get_supabase()
-        start = time.time()
-        result = supabase.table("articles").select("id", count="exact").limit(1).execute()
-        latency_ms = round((time.time() - start) * 1000)
-        return {"status": "ok", "latency_ms": latency_ms, "article_count": result.count or 0}
+        from concurrent.futures import ThreadPoolExecutor
+        pool = ThreadPoolExecutor(max_workers=1)
+        try:
+            return pool.submit(_probe).result(timeout=5)
+        finally:
+            pool.shutdown(wait=False)
     except Exception as exc:
-        return {"status": "degraded", "error": str(exc)[:200]}
+        return {"status": "degraded", "error": f"timeout: {str(exc)[:120]}"}
 
 
 def _check_ai_providers() -> dict:
