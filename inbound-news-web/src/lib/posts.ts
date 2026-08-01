@@ -34,7 +34,7 @@ async function enrichStoriesWithMedia(stories: Story[]): Promise<Story[]> {
 
   const { data: articles, error: articlesError } = await supabase
     .from("articles")
-    .select("id, url, source_name, source_domain, raw_json")
+    .select("id, url, source_name, source_domain, raw_json, image_url")
     .in("id", articleIds)
 
   if (articlesError || !articles?.length) {

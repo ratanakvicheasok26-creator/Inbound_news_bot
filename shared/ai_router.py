@@ -237,6 +237,10 @@ class AIRouter:
                     key_state.mark_rate_limited(retry_after)
                     logger.info("%s key ...%s rate-limited (attempt %d/%d)",
                                 provider.name, key_state.key[-6:], attempt, _MAX_RETRIES)
+                elif self._is_permanent_error(exc):
+                    logger.warning("%s permanent error on key ...%s, skipping retries: %s",
+                                    provider.name, key_state.key[-6:], exc)
+                    break
                 else:
                     logger.warning("%s error on key ...%s: %s", provider.name, key_state.key[-6:], exc)
 
@@ -284,6 +288,10 @@ class AIRouter:
                     key_state.mark_rate_limited(retry_after)
                     logger.info("%s key ...%s rate-limited (attempt %d/%d)",
                                 provider.name, key_state.key[-6:], attempt, _MAX_RETRIES)
+                elif self._is_permanent_error(exc):
+                    logger.warning("%s permanent error on key ...%s, skipping retries: %s",
+                                    provider.name, key_state.key[-6:], exc)
+                    break
                 else:
                     logger.warning("%s error on key ...%s: %s", provider.name, key_state.key[-6:], exc)
 
@@ -301,6 +309,18 @@ class AIRouter:
         """Check if an exception is a 429 rate limit."""
         msg = str(exc).lower()
         return "429" in msg or "rate" in msg or "too many" in msg or "quota" in msg
+
+    @staticmethod
+    def _is_permanent_error(exc: Exception) -> bool:
+        """Check if an exception is a permanent, non-retryable error.
+
+        404 (model/route doesn't exist) and 400 (bad request) won't resolve
+        by retrying the same key/model — e.g. OpenRouter returning 404 when
+        a ``:free`` model's shared pool is saturated and suggesting the
+        paid slug instead. Retrying these 3x just burns time and quota.
+        """
+        msg = str(exc).lower()
+        return "404" in msg or "not found" in msg or "400" in msg or "bad request" in msg
 
     @staticmethod
     def _extract_retry_after(exc: Exception) -> float | None:
