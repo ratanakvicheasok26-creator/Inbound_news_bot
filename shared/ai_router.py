@@ -92,6 +92,11 @@ class AIRouter:
     def __init__(self) -> None:
         self._providers = self._init_providers()
         self._stats = {p.name: {"calls": 0, "successes": 0, "failures": 0} for p in self._providers}
+        # Cache clients per (provider, key) so we don't spin up a fresh
+        # httpx/genai connection pool on every single call — that leak is
+        # what was slowly growing memory to Railway's cap over ~61min cycles.
+        self._openai_clients: dict[tuple[str, str], object] = {}
+        self._genai_clients: dict[str, object] = {}
 
     def _init_providers(self) -> list[_ProviderConfig]:
         """Parse env vars and create provider configs with key rotation."""
@@ -204,12 +209,16 @@ class AIRouter:
                 break
 
             try:
-                from openai import OpenAI
-                client = OpenAI(
-                    api_key=key_state.key,
-                    base_url=provider.base_url,
-                    timeout=_http_timeout_seconds(),
-                )
+                cache_key = (provider.name, key_state.key)
+                client = self._openai_clients.get(cache_key)
+                if client is None:
+                    from openai import OpenAI
+                    client = OpenAI(
+                        api_key=key_state.key,
+                        base_url=provider.base_url,
+                        timeout=_http_timeout_seconds(),
+                    )
+                    self._openai_clients[cache_key] = client
 
                 response = client.chat.completions.create(
                     model=provider.model,
@@ -249,12 +258,15 @@ class AIRouter:
                 from google import genai
                 from google.genai import types
 
-                # google-genai timeout is milliseconds
-                timeout_ms = int(_http_timeout_seconds() * 1000)
-                client = genai.Client(
-                    api_key=key_state.key,
-                    http_options=types.HttpOptions(timeout=timeout_ms),
-                )
+                client = self._genai_clients.get(key_state.key)
+                if client is None:
+                    # google-genai timeout is milliseconds
+                    timeout_ms = int(_http_timeout_seconds() * 1000)
+                    client = genai.Client(
+                        api_key=key_state.key,
+                        http_options=types.HttpOptions(timeout=timeout_ms),
+                    )
+                    self._genai_clients[key_state.key] = client
 
                 response = client.models.generate_content(
                     model=provider.model,
