@@ -37,7 +37,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // Allow phone/LAN access to the dev server (e.g. http://10.0.32.214:3000).
   // Update this to your machine's current LAN IP when it changes.
-  allowedDevOrigins: ["10.0.32.214"],
+  allowedDevOrigins: ["10.0.32.214", "192.168.1.8"],
   images: {
     remotePatterns: [{ protocol: "https", hostname: "images.weserv.nl" }],
   },
