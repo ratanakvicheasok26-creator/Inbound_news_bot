@@ -1,7 +1,7 @@
 import type { Article } from "@/lib/types"
 import { resolveStoryDek } from "@/lib/story-body"
 import { formatDistanceToNow } from "@/lib/utils"
-import { ExternalLink } from "lucide-react"
+import { ExternalLink, GitCompareArrows } from "lucide-react"
 import Link from "next/link"
 
 interface SourceComparisonRowProps {
@@ -77,6 +77,14 @@ export function SourceComparisonRow({ article, framing }: SourceComparisonRowPro
           <ExternalLink className="h-4 w-4" />
         </a>
       </div>
+
+      <Link
+        href={`/compare?a=${article.id}`}
+        className="mt-2 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+      >
+        <GitCompareArrows className="h-3.5 w-3.5" />
+        Compare
+      </Link>
     </div>
   )
 }
