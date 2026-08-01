@@ -36,14 +36,18 @@ export function StoryImage({
   variant = "thumb",
 }: StoryImageProps) {
   const { w, h } = proxySize(variant)
+  const [raw, setRaw] = useState<string | null>(isValidImageUrl(imageUrl) ? imageUrl : null)
+  const [useDirect, setUseDirect] = useState(false)
   const [src, setSrc] = useState<string | null>(
-    isValidImageUrl(imageUrl) ? proxiedImageUrl(imageUrl, w, h) : null
+    raw ? (useDirect ? raw : proxiedImageUrl(raw, w, h)) : null
   )
   const [failed, setFailed] = useState(false)
 
-  /* eslint-disable react-hooks/set-state-in-effect -- sync src/failed when imageUrl props change */
+  /* eslint-disable react-hooks/set-state-in-effect -- sync raw/src/failed when imageUrl props change */
   useEffect(() => {
     if (isValidImageUrl(imageUrl)) {
+      setRaw(imageUrl)
+      setUseDirect(false)
       setSrc(proxiedImageUrl(imageUrl, w, h))
       setFailed(false)
       return
@@ -56,6 +60,8 @@ export function StoryImage({
       .then((data: { imageUrl?: string | null }) => {
         if (cancelled) return
         if (isValidImageUrl(data.imageUrl)) {
+          setRaw(data.imageUrl)
+          setUseDirect(false)
           setSrc(proxiedImageUrl(data.imageUrl, w, h))
           setFailed(false)
         }
@@ -69,6 +75,15 @@ export function StoryImage({
     }
   }, [imageUrl, pageUrl, w, h])
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  function handleError() {
+    if (!useDirect && raw) {
+      setUseDirect(true)
+      setSrc(raw)
+      return
+    }
+    setFailed(true)
+  }
 
   const frame =
     variant === "lead"
@@ -105,7 +120,7 @@ export function StoryImage({
         loading={priority ? "eager" : "lazy"}
         decoding="async"
         className="absolute inset-0 h-full w-full object-cover"
-        onError={() => setFailed(true)}
+        onError={handleError}
       />
     </div>
   )
