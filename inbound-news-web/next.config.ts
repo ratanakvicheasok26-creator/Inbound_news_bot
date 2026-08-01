@@ -1,4 +1,16 @@
+import os from "node:os";
 import type { NextConfig } from "next";
+
+/** All non-internal IPv4 addresses on this machine (current LAN IPs). */
+function getLanAddresses(): string[] {
+  const addresses: string[] = [];
+  for (const nets of Object.values(os.networkInterfaces())) {
+    for (const net of nets ?? []) {
+      if (net.family === "IPv4" && !net.internal) addresses.push(net.address);
+    }
+  }
+  return addresses;
+}
 
 const supabaseHost = (() => {
   try {
@@ -35,9 +47,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  // Allow phone/LAN access to the dev server (e.g. http://10.0.32.214:3000).
-  // Update this to your machine's current LAN IP when it changes.
-  allowedDevOrigins: ["10.0.32.214", "192.168.1.8"],
+  // Allow phone/LAN access to the dev server. Auto-detects the current LAN IPs
+  // so this keeps working when the machine's IP changes (DHCP).
+  allowedDevOrigins: getLanAddresses(),
   images: {
     remotePatterns: [{ protocol: "https", hostname: "images.weserv.nl" }],
   },
