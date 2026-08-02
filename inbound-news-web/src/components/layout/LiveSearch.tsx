@@ -139,7 +139,7 @@ export function LiveSearch() {
       <button
         type="button"
         onClick={openSearch}
-        className="hidden sm:inline-flex btn-ghost"
+        className="inline-flex btn-ghost"
         aria-label="Search"
         aria-expanded={open}
       >

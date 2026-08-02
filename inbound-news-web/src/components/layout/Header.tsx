@@ -61,6 +61,15 @@ export function Header() {
   }, [pathname])
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  useEffect(() => {
+    function onOpenFromBottomNav() {
+      setTopicsOpen(false)
+      setMobileOpen(true)
+    }
+    window.addEventListener("inbound:open-mobile-menu", onOpenFromBottomNav)
+    return () => window.removeEventListener("inbound:open-mobile-menu", onOpenFromBottomNav)
+  }, [])
+
   const closeMobileMenu = useCallback(() => {
     setMobileOpen(false)
     setSearchQuery("")
@@ -161,17 +170,6 @@ export function Header() {
             </form>
 
             <nav className="px-3 pb-4" aria-label="Mobile">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={closeMobileMenu}
-                  aria-current={pathname === link.href ? "page" : undefined}
-                  className="block px-3 py-3.5 text-[15px] font-medium border-b border-[var(--border)] text-[var(--text-primary)]"
-                >
-                  {link.label}
-                </Link>
-              ))}
               <Link
                 href="/search"
                 onClick={closeMobileMenu}
