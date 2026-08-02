@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, Suspense, FormEvent } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { StoryRow } from "@/components/story/StoryRow"
+import { CATEGORIES } from "@/lib/categories"
 import type { Story, Article } from "@/lib/types"
 import { Search } from "lucide-react"
 import { formatDistanceToNow } from "@/lib/utils"
@@ -110,7 +111,20 @@ function SearchResults() {
       {q && searched && !loading && totalResults === 0 && !error && (
         <div className="py-12">
           <p className="text-[16px] text-[var(--text-primary)] mb-1">No results for “{q}”</p>
-          <p className="text-[14px] text-[var(--text-secondary)]">Try another keyword.</p>
+          <p className="text-[14px] text-[var(--text-secondary)] mb-6">
+            All words are matched separately — try a shorter keyword or a topic below.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {CATEGORIES.map((cat) => (
+              <Link
+                key={cat.slug}
+                href={`/topic/${cat.slug}`}
+                className="px-3 py-1.5 text-[13px] rounded-full border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-primary)] transition-colors"
+              >
+                {cat.label}
+              </Link>
+            ))}
+          </div>
         </div>
       )}
 
