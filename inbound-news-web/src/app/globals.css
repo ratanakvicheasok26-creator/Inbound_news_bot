@@ -182,7 +182,7 @@ a:hover {
   width: 100%;
   max-width: var(--container-max);
   margin: 0 auto;
-  padding: 0 24px;
+  padding-inline: 24px;
   position: relative;
   z-index: 1;
 }
@@ -815,7 +815,7 @@ footer {
   }
 
   .container {
-    padding: 0 16px;
+    padding-inline: 16px;
   }
 
   .site-header-inner {
