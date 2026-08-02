@@ -52,7 +52,7 @@ export default async function HomePage() {
       </section>
 
       {/* Latest stories — equal 3-column grid */}
-      <section className="container pt-10 pb-12 md:pt-14 md:pb-16">
+      <section className="container pt-14 pb-12 md:pt-20 md:pb-16">
         <div className="section-header">
           <h2 className="section-title flex items-center gap-2.5">
             <span className="inline-block h-4 w-1 rounded-full bg-[var(--accent)]" aria-hidden="true" />
