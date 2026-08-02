@@ -10,3 +10,5 @@ posted_ids_titles.json
 bot.log
 .opencode/
 rsshub/
+.vercel
+.env*

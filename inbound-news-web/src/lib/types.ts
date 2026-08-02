@@ -49,6 +49,15 @@ export type Concept = {
   related_stories: Story[]
 }
 
+export type WebResult = {
+  title: string
+  url: string
+  source_name: string
+  source_domain: string
+  summary: string
+  published_at: string | null
+}
+
 export type Source = {
   slug: string
   name: string

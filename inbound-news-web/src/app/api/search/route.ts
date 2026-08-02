@@ -17,7 +17,7 @@ function tokenize(q: string): string[] {
     .replace(/[{},"\\%_]/g, " ")
     .split(/\s+/)
     .map((t) => t.trim())
-    .filter((t) => t.length >= 2)
+    .filter((t) => t.length >= 1)
     .slice(0, 6)
 }
 
@@ -88,7 +88,7 @@ export async function GET(req: NextRequest) {
     }
 
     const q = req.nextUrl.searchParams.get("q")?.trim()
-    if (!q || q.length < 2) {
+    if (!q || q.length < 1) {
       return NextResponse.json({ stories: [], articles: [] })
     }
     if (q.length > 100) {

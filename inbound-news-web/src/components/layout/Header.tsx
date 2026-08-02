@@ -7,6 +7,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { createPortal } from "react-dom"
 import { CATEGORIES } from "@/lib/categories"
 import { ThemeToggle } from "@/components/ThemeToggle"
+import { LiveSearch } from "@/components/layout/LiveSearch"
 import { Menu, X, ChevronDown, Search } from "lucide-react"
 import { supabase, signOut } from "@/lib/auth"
 import type { User } from "@supabase/supabase-js"
@@ -303,14 +304,7 @@ export function Header() {
           </nav>
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <Link
-              href="/search"
-              className="hidden sm:inline-flex btn-ghost"
-              aria-label="Search"
-            >
-              <Search className="h-4 w-4" />
-              <span className="hidden xl:inline">Search</span>
-            </Link>
+            <LiveSearch />
             <ThemeToggle />
             <Link href="/account" className="btn-ghost hidden sm:inline-flex">
               {user ? (user.email?.[0] || "A").toUpperCase() : "Sign in"}
