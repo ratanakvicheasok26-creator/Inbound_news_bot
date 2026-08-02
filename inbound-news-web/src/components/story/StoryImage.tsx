@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Newspaper } from "lucide-react"
 import { proxiedImageUrl, isValidImageUrl } from "@/lib/story-images"
 
 type StoryImageProps = {
@@ -103,9 +102,13 @@ export function StoryImage({
         aria-label={variant === "thumb" ? undefined : alt}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-[var(--surface-alt)] to-[var(--surface)]" />
-        <Newspaper
-          className="relative h-8 w-8 text-[var(--text-secondary)] opacity-50"
-          strokeWidth={1.5}
+        {/* eslint-disable-next-line @next/next/no-img-element -- local logo placeholder */}
+        <img
+          src="/icon.svg"
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="relative h-8 w-8 object-contain opacity-70"
         />
       </div>
     )
