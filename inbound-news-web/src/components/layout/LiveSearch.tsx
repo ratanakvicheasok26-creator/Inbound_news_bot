@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Search, X, CornerDownLeft } from "lucide-react"
 import { getCategoryLabel } from "@/lib/categories"
-import { formatDistanceToNow } from "@/lib/utils"
 import type { Story, Article } from "@/lib/types"
 
 type Suggestion = { kind: "story"; item: Story } | { kind: "article"; item: Article }
@@ -57,10 +56,12 @@ export function LiveSearch() {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     const term = query.trim()
     if (term.length < MIN_QUERY) {
-      setStories([])
-      setArticles([])
-      setActive(-1)
-      setLoading(false)
+      debounceRef.current = setTimeout(() => {
+        setStories([])
+        setArticles([])
+        setActive(-1)
+        setLoading(false)
+      }, 0)
       return
     }
     debounceRef.current = setTimeout(() => {
