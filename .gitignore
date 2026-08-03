@@ -12,3 +12,4 @@ bot.log
 rsshub/
 .vercel
 .env*
+.gstack/
