@@ -40,11 +40,12 @@ const HELP_LINKS = [
 ]
 
 const SOCIAL_LINKS = [
-  { href: "https://t.me/+n3p4DMJ5mspmMGE1", label: "Telegram (EN)", icon: TelegramIcon },
-  { href: "https://t.me/+XGZesNq7wqsxYWE1", label: "Telegram (KH)", icon: TelegramIcon },
+  { href: "https://t.me/+n3p4DMJ5mspmMGE1", label: "Telegram (EN)", icon: TelegramIcon, badge: "EN" },
+  { href: "https://t.me/+XGZesNq7wqsxYWE1", label: "Telegram (KH)", icon: TelegramIcon, badge: "KH" },
   { href: "https://x.com/inboundcrewm?s=11", label: "X (Twitter)", icon: XIcon },
   { href: "https://www.facebook.com/inboundcrew420", label: "Facebook", icon: FacebookIcon },
   { href: "mailto:inboundcrew82@gmail.com", label: "Email", icon: Mail },
+  
 ]
 
 const LEGAL_LINKS = [
@@ -85,7 +86,7 @@ export function Footer() {
           </div>
 
           <div className="footer-social">
-            {SOCIAL_LINKS.map(({ href, label, icon: Icon }) => (
+            {SOCIAL_LINKS.map(({ href, label, icon: Icon, badge }) => (
               <a
                 key={label}
                 href={href}
@@ -94,6 +95,7 @@ export function Footer() {
                 aria-label={label}
               >
                 <Icon className="h-4 w-4" />
+                {badge ? <span className="footer-social-badge">{badge}</span> : null}
               </a>
             ))}
           </div>
