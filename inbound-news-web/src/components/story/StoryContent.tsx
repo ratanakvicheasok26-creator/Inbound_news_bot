@@ -1,8 +1,7 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef } from "react"
 import { LocalLensBox } from "@/components/story/LocalLensBox"
-import { ReadingTierToggle } from "@/components/story/ReadingTierToggle"
 import { StoryTimeline, deriveTimelineNodes } from "@/components/story/StoryTimeline"
 import { SourceComparisonRow } from "@/components/story/SourceComparisonRow"
 import { RelatedConcepts } from "@/components/story/RelatedConcepts"
@@ -12,7 +11,6 @@ import { formatDistanceToNow } from "@/lib/utils"
 import {
   getProfile,
   trackStoryRead,
-  recordTierSwitch,
   recordSourceComparison,
 } from "@/lib/profile"
 import type { StoryWithArticles, Article } from "@/lib/types"
@@ -126,19 +124,12 @@ function initialTier(): "eli5" | "standard" | "deep" {
 }
 
 export function StoryContent({ story }: StoryContentProps) {
-  const [activeTier, setActiveTier] = useState<"eli5" | "standard" | "deep">(initialTier)
+  const [activeTier] = useState<"eli5" | "standard" | "deep">(initialTier)
   const sourceViewed = useRef(false)
 
   useEffect(() => {
     trackStoryRead({ id: story.id, title: story.title, category: story.category || "" })
   }, [story.id, story.title, story.category])
-
-  const handleTierChange = useCallback((tier: "eli5" | "standard" | "deep") => {
-    setActiveTier((prev) => {
-      if (prev !== tier) recordTierSwitch()
-      return tier
-    })
-  }, [])
 
   const categoryLabel = getCategoryLabel(story.category || "") || "News"
   const articles = story.articles || []
@@ -187,7 +178,6 @@ export function StoryContent({ story }: StoryContentProps) {
             </span>
             <span className="meta-text">{formatDistanceToNow(story.created_at)}</span>
           </div>
-          <ReadingTierToggle active={activeTier} onChange={handleTierChange} />
         </div>
 
         <h1 className="font-display text-[clamp(28px,4.5vw,44px)] font-semibold leading-[1.12] tracking-[-0.025em]">
@@ -195,8 +185,8 @@ export function StoryContent({ story }: StoryContentProps) {
         </h1>
 
         <p className="mt-3 text-[14px] text-[var(--text-secondary)] max-w-[58ch]">
-          Aggregated coverage — switch ELI5 / Standard / Deep for your reading
-          level. Local Lens adds Cambodia context beside the summary.
+          Aggregated coverage from multiple sources. Local Lens adds Cambodia
+          context beside the summary.
         </p>
 
         {primaryUrl && (
