@@ -53,6 +53,8 @@ from workers.semantic_scholar import fetch_all_semantic_scholar
 from workers.openalex import fetch_all_openalex
 from workers.github_trending import fetch_all_github_trending
 from workers.huggingface import fetch_all_huggingface
+from workers.nvd import fetch_all_nvd
+from workers.terminalfeed import fetch_all_terminalfeed
 
 # --- Optional sources (graceful skip if no API key) ---
 try:
@@ -209,6 +211,22 @@ def run() -> None:
         logger.info("Hugging Face: %d items", len(hf))
     except Exception:
         logger.exception("Hugging Face failed")
+
+    # 11. NVD (NIST CVEs) — free, no key. Real cybersecurity content.
+    try:
+        nvd = fetch_all_nvd()
+        all_sources.extend(nvd)
+        logger.info("NVD: %d CVEs", len(nvd))
+    except Exception:
+        logger.exception("NVD failed")
+
+    # 12. TerminalFeed — free, no key. Cybersecurity / cloud / science / crypto.
+    try:
+        terminal = fetch_all_terminalfeed()
+        all_sources.extend(terminal)
+        logger.info("TerminalFeed: %d items", len(terminal))
+    except Exception:
+        logger.exception("TerminalFeed failed")
 
     # --- Optional sources (graceful skip) ---
 

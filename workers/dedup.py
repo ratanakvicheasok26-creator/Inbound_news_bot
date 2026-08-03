@@ -25,6 +25,7 @@ from typing import Any
 from dotenv import load_dotenv
 load_dotenv()
 
+from workers.categories import is_site_slug, normalize_category
 from workers.db import get_supabase
 from workers.images import extract_image_url, fetch_og_image, is_valid_image_url
 
@@ -221,6 +222,10 @@ def _article_image(article: dict[str, Any], fetch_missing: bool = False) -> str 
     if image:
         return image
     if fetch_missing and article.get("url"):
+        # SKIP_OG_FETCH=1 skips the network fetch (rss_bulk jobs with large
+        # backlogs would otherwise hang on thousands of og:image requests).
+        if os.environ.get("SKIP_OG_FETCH") == "1":
+            return None
         return fetch_og_image(article["url"])
     return None
 
@@ -232,7 +237,12 @@ def _create_story(supabase, article: dict, embedding: list[float] | None = None)
         "title": article["title"],
         "summary_en": article.get("summary", ""),
         "source_count": 1,
-        "category": article.get("category"),
+        "category": normalize_category(
+            article.get("category"),
+            article.get("title"),
+            article.get("summary"),
+            article.get("source_domain"),
+        ),
         "tags": [],
     }
     if embedding is not None:
@@ -266,6 +276,26 @@ def _add_to_story(supabase, story_id: str, article: dict) -> None:
         "source_name": article.get("source_name", ""),
         "source_url": article.get("url", ""),
     }).execute()
+
+    # Upgrade the story's category if it is still raw/None and the merged
+    # article normalizes to a site slug. Existing site slugs are kept.
+    slug = normalize_category(
+        article.get("category"),
+        article.get("title"),
+        article.get("summary"),
+        article.get("source_domain"),
+    )
+    if slug:
+        current = (
+            supabase.table("stories")
+            .select("category")
+            .eq("id", story_id)
+            .execute()
+        )
+        if current.data:
+            existing = current.data[0].get("category")
+            if not is_site_slug(existing):
+                supabase.table("stories").update({"category": slug}).eq("id", story_id).execute()
 
     image = _article_image(article, fetch_missing=False)
     try:
