@@ -29,7 +29,9 @@ from urllib.parse import urlparse
 
 import feedparser
 import httpx
+import yaml
 
+from workers.categories import normalize_category
 from workers.db import get_supabase
 from workers.images import extract_image_url
 
@@ -40,6 +42,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 _FEEDS_FILE = Path(__file__).resolve().parent.parent / "newsbot" / "feeds_bulk.txt"
+_SOURCES_YAML = Path(__file__).resolve().parent.parent / "sources.yaml"
 _FEED_TIMEOUT = 15
 _GLOBAL_TIMEOUT = 120
 _MAX_WORKERS = 50
@@ -48,6 +51,36 @@ _MAX_ENTRY_AGE_HOURS = 72  # wider window than Telegram bot (24h)
 _BATCH_SIZE = 100
 
 _TAG_RE = re.compile(r"<[^>]+>")
+
+# Feed domain -> sources.yaml category hint (loaded once from sources.yaml).
+# Keeps the website pipeline decoupled from newsbot.source_registry.
+_DOMAIN_CATEGORY: dict[str, str] | None = None
+
+
+def _load_domain_categories() -> dict[str, str]:
+    """Build feed-domain -> category map from sources.yaml (RSS entries only)."""
+    global _DOMAIN_CATEGORY
+    if _DOMAIN_CATEGORY is not None:
+        return _DOMAIN_CATEGORY
+
+    mapping: dict[str, str] = {}
+    try:
+        with _SOURCES_YAML.open() as f:
+            data = yaml.safe_load(f) or {}
+        for src in data.get("sources", []):
+            if not isinstance(src, dict) or src.get("type") != "rss":
+                continue
+            if src.get("enabled", True) is False:
+                continue
+            feed_domain = _extract_domain(src.get("url", ""))
+            category = src.get("category")
+            if feed_domain and category:
+                mapping[feed_domain] = category
+    except Exception:
+        logger.exception("Failed to load sources.yaml category hints")
+    _DOMAIN_CATEGORY = mapping
+    logger.info("Loaded %d domain category hints from sources.yaml", len(mapping))
+    return mapping
 
 
 def _strip_html(text: str) -> str:
@@ -113,6 +146,8 @@ def _fetch_one(url: str) -> list[dict[str, Any]]:
         return []
 
     source_name = feed.feed.get("title", _extract_domain(url))
+    # sources.yaml category hint for this feed's domain -> site slug.
+    hint_raw = _load_domain_categories().get(_extract_domain(url))
     count = 0
     for entry in feed.entries:
         if count >= _MAX_ITEMS_PER_FEED:
@@ -142,17 +177,18 @@ def _fetch_one(url: str) -> list[dict[str, Any]]:
 
         summary = _strip_html(entry.get("summary", "") or "")[:500]
         image_url = _extract_image(entry)
+        article_domain = _extract_domain(entry_url) or _extract_domain(url)
 
         articles.append({
             "title": title,
             "url": entry_url,
             "source_name": source_name,
-            "source_domain": _extract_domain(entry_url) or _extract_domain(url),
+            "source_domain": article_domain,
             "summary": summary,
             "image_url": image_url,
             "published_at": published_at,
             "language": "en",
-            "category": None,
+            "category": normalize_category(hint_raw, title, summary, article_domain),
             "raw_json": None,
         })
         count += 1
