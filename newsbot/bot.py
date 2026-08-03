@@ -32,6 +32,7 @@ from newsbot.config import (
 )
 from newsbot.feeds import Entry, cluster_entries, collect_new_entries, looks_urgent, normalize_title_key
 from newsbot.state import get_state
+from newsbot.website_links import publish_cluster_story, reader_url
 
 __all__ = [
     "StoryPost",
@@ -103,22 +104,41 @@ class BatchedStory:
     title: str
     summary: str
     source_line: str
+    website_url: str
     image_url: str | None = None
     entry_ids: set[str] = field(default_factory=set)
     entry_titles: set[str] = field(default_factory=set)
 
 
 def _source_keyboard(post: StoryPost) -> InlineKeyboardMarkup:
-    """Inline URL buttons: primary source + up to 2 more sources."""
-    rows: list[list[InlineKeyboardButton]] = [
-        [InlineKeyboardButton(post.primary_source, url=post.primary_url)]
-    ]
-    extras: list[InlineKeyboardButton] = []
-    for name, url in zip(post.extra_sources[:2], post.extra_urls[:2]):
-        extras.append(InlineKeyboardButton(name, url=url))
-    if extras:
-        rows.append(extras)
-    return InlineKeyboardMarkup(rows)
+    """Single CTA: open the story on our website (sources live on the site)."""
+    return InlineKeyboardMarkup(
+        [[InlineKeyboardButton("Read on Inbound Reports", url=post.primary_url)]]
+    )
+
+
+def _attribution_line(links: list[tuple[str, str]], website_url: str, limit: int = 3) -> str:
+    """Plain source names + website deep link (no outbound source hrefs)."""
+    names = [_html_escape(name) for _, name in links[:limit] if name]
+    attribution = " · ".join(names) if names else "Multiple sources"
+    safe_url = html.escape(website_url, quote=True)
+    return f'{attribution}\n<a href="{safe_url}">Read on Inbound Reports</a>'
+
+
+def _website_url_for_cluster(
+    cluster: list[Entry],
+    *,
+    title: str,
+    summary: str,
+    category: str | None = None,
+) -> str:
+    story_id = publish_cluster_story(
+        cluster,
+        title=title,
+        summary=summary,
+        category=category,
+    )
+    return reader_url(title=title, story_id=story_id)
 
 
 def _resolve_channel_target() -> tuple[int | None, int | None]:
@@ -274,17 +294,23 @@ def _cluster_to_story(
     if not links:
         return None
 
-    primary_url, primary_source = links[0]
-    extra = links[1:]
-    extra_urls = [u for u, _ in extra]
-    extra_sources = [s for _, s in extra]
+    primary_source = links[0][1]
+    # Title for the website page — prefer first entry title
+    page_title = cluster[0].title if cluster else "Untitled"
+    # Strip HTML from rewrite for story summary storage (best-effort)
+    plain_summary = re.sub(r"<[^>]+>", "", text)[:1500]
+    website = _website_url_for_cluster(
+        cluster,
+        title=page_title,
+        summary=plain_summary,
+    )
 
     return StoryPost(
         text=text,
-        primary_url=primary_url,
-        primary_source=primary_source,
-        extra_urls=extra_urls,
-        extra_sources=extra_sources,
+        primary_url=website,
+        primary_source=primary_source or "Inbound Reports",
+        extra_urls=[],
+        extra_sources=[],
         image_url=pick_image_url(cluster),
         entry_ids={e.id for e in cluster},
         entry_titles={e.title for e in cluster},
@@ -292,12 +318,9 @@ def _cluster_to_story(
 
 
 def _source_line(links: list[tuple[str, str]], limit: int = 3) -> str:
-    parts = []
-    for url, name in links[:limit]:
-        safe_url = html.escape(url, quote=True)
-        safe_name = _html_escape(name)
-        parts.append(f'<a href="{safe_url}">{safe_name}</a>')
-    return " · ".join(parts)
+    """Deprecated path — kept for tests; prefer _attribution_line."""
+    names = [_html_escape(name) for _, name in links[:limit] if name]
+    return " · ".join(names)
 
 
 def _cluster_to_batched(cluster: list[Entry]) -> BatchedStory | None:
@@ -313,11 +336,13 @@ def _cluster_to_batched(cluster: list[Entry]) -> BatchedStory | None:
         return None
 
     title = cluster[0].title or "Untitled"
+    website = _website_url_for_cluster(cluster, title=title, summary=summary)
 
     return BatchedStory(
         title=title,
         summary=summary,
-        source_line=_source_line(links),
+        source_line=_attribution_line(links, website),
+        website_url=website,
         image_url=pick_image_url(cluster),
         entry_ids={e.id for e in cluster},
         entry_titles={e.title for e in cluster},
@@ -341,7 +366,8 @@ def _compile_batch_message(batched: list[BatchedStory]) -> str:
 
     for s in batched:
         parts.append("")
-        parts.append(f"▸ <b>{_html_escape(s.title)}</b>")
+        safe_url = html.escape(s.website_url, quote=True)
+        parts.append(f'▸ <b><a href="{safe_url}">{_html_escape(s.title)}</a></b>')
         parts.append(_html_escape(s.summary) if s.summary else "")
         if s.source_line:
             parts.append(s.source_line)

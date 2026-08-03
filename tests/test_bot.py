@@ -49,23 +49,27 @@ class TestRankClusters:
 
 class TestSourceKeyboard:
     def test_primary_read_more_button(self):
-        post = StoryPost(text="x", primary_url="https://example.com/a", primary_source="Example")
-        markup = _source_keyboard(post)
-        assert markup.inline_keyboard[0][0].text == "Example"
-        assert markup.inline_keyboard[0][0].url == "https://example.com/a"
-
-    def test_extra_source_buttons(self):
         post = StoryPost(
             text="x",
-            primary_url="https://a.com",
-            primary_source="Source A",
-            extra_urls=["https://b.com", "https://c.com", "https://d.com"],
-            extra_sources=["Source B", "Source C", "Source D"],
+            primary_url="https://inbound-news-web.vercel.app/story/abc",
+            primary_source="Example",
         )
         markup = _source_keyboard(post)
-        assert len(markup.inline_keyboard) == 2
-        assert len(markup.inline_keyboard[1]) == 2
-        assert markup.inline_keyboard[1][0].text == "Source B"
+        assert markup.inline_keyboard[0][0].text == "Read on Inbound Reports"
+        assert markup.inline_keyboard[0][0].url == "https://inbound-news-web.vercel.app/story/abc"
+
+    def test_no_extra_source_buttons(self):
+        post = StoryPost(
+            text="x",
+            primary_url="https://inbound-news-web.vercel.app/search?q=x",
+            primary_source="Source A",
+            extra_urls=["https://b.com", "https://c.com"],
+            extra_sources=["Source B", "Source C"],
+        )
+        markup = _source_keyboard(post)
+        assert len(markup.inline_keyboard) == 1
+        assert len(markup.inline_keyboard[0]) == 1
+        assert "b.com" not in markup.inline_keyboard[0][0].url
 
 
 class TestPrepareEntries:
@@ -86,12 +90,16 @@ class TestPrepareEntries:
 
         with patch("newsbot.bot.rewrite_with_ai", side_effect=fake_rewrite) as mock_ai, patch(
             "newsbot.bot.pick_image_url", return_value=None
-        ), patch("newsbot.bot.time.sleep"):
+        ), patch("newsbot.bot.publish_cluster_story", return_value=None), patch(
+            "newsbot.bot.time.sleep"
+        ):
             stories = _prepare_entries(urgent=False)
         assert len(stories) == DIGEST_MAX_STORIES
         assert all(isinstance(s, StoryPost) for s in stories)
         assert "<b>T0</b>" in stories[0].text
         assert mock_ai.call_count == DIGEST_MAX_STORIES
+        assert "/search?q=" in stories[0].primary_url
+        assert "x.com" not in stories[0].primary_url
 
 
 class TestPrepareUrgent:
@@ -110,17 +118,25 @@ class TestPrepareUrgent:
         mock_cluster.return_value = [[_entry("new1")], [_entry("new2")]]
         mock_urgent.side_effect = [True, False]
 
-        stories = _prepare_entries(urgent=True)
+        with patch("newsbot.bot.publish_cluster_story", return_value="story-uuid"):
+            stories = _prepare_entries(urgent=True)
         assert len(stories) == 1
         assert stories[0].entry_ids == {"new1"}
+        assert stories[0].primary_url.endswith("/story/story-uuid")
         mock_collect.assert_called_once_with({"already"}, set())
 
 
 def test_broadcast_stories_sends_separately_with_button():
-    post1 = StoryPost(text="<b>One</b>", primary_url="https://a.com", primary_source="Source A", entry_ids={"1"})
+    site = "https://inbound-news-web.vercel.app"
+    post1 = StoryPost(
+        text="<b>One</b>",
+        primary_url=f"{site}/story/1",
+        primary_source="Source A",
+        entry_ids={"1"},
+    )
     post2 = StoryPost(
         text="<b>Two</b>",
-        primary_url="https://b.com",
+        primary_url=f"{site}/story/2",
         primary_source="Source B",
         image_url="https://img.com/x.jpg",
         entry_ids={"2"},
@@ -145,7 +161,9 @@ def test_broadcast_stories_sends_separately_with_button():
     assert mock_bot.send_message.await_count == 1
     assert mock_bot.send_photo.await_count == 1
     msg_kwargs = mock_bot.send_message.await_args.kwargs
-    assert msg_kwargs["reply_markup"].inline_keyboard[0][0].text == "Source A"
+    btn = msg_kwargs["reply_markup"].inline_keyboard[0][0]
+    assert btn.text == "Read on Inbound Reports"
+    assert btn.url == f"{site}/story/1"
     photo_kwargs = mock_bot.send_photo.await_args.kwargs
     assert photo_kwargs["photo"] == "https://img.com/x.jpg"
-    assert photo_kwargs["reply_markup"].inline_keyboard[0][0].url == "https://b.com"
+    assert photo_kwargs["reply_markup"].inline_keyboard[0][0].url == f"{site}/story/2"

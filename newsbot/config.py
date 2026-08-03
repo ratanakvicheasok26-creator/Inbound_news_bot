@@ -68,6 +68,7 @@ __all__ = [
     "TELEGRAM_CHANNEL_ID",
     "TELEGRAM_THREAD_ID",
     "TELEGRAM_GROUP_CHAT_ID",
+    "WEBSITE_BASE_URL",
 ]
 
 # ---- Redis (optional — enables persistent state on Railway/Render) ----
@@ -129,6 +130,12 @@ DONATION_TEXT: str = os.environ.get("DONATION_TEXT", "").strip() or _DEFAULT_DON
 DIGEST_HEADER_TEXT: str = os.environ.get(
     "DIGEST_HEADER_TEXT", "📰 <b>Inbound Reports</b>"
 ).strip() or "📰 <b>Inbound Reports</b>"
+
+# Public website base URL — Telegram CTAs link here instead of raw sources.
+WEBSITE_BASE_URL: str = (
+    os.environ.get("WEBSITE_BASE_URL", "https://inbound-news-web.vercel.app").strip().rstrip("/")
+    or "https://inbound-news-web.vercel.app"
+)
 URGENT_CHECK_INTERVAL_SECONDS: int = 60 * 30  # every 30 minutes
 URGENT_FIRST_DELAY_SECONDS: int = 60
 POLL_INTERVAL_SECONDS: int = int(os.environ.get("POLL_INTERVAL_SECONDS", "7200"))
