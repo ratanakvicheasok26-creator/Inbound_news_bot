@@ -17,7 +17,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.error import BadRequest, Forbidden
 from telegram.ext import ContextTypes
 
-from newsbot.ai import collect_links, pick_image_url, rewrite_compact, rewrite_with_ai, trim_for_caption
+from newsbot.ai import collect_links, pick_image_url, rewrite_compact, rewrite_compact_khmer, rewrite_with_ai, trim_for_caption
 from newsbot import config
 from newsbot.config import (
     BATCH_MAX_STORIES,
@@ -345,7 +345,11 @@ def _source_line(links: list[tuple[str, str]], limit: int = 3) -> str:
 
 def _cluster_to_batched(cluster: list[Entry]) -> BatchedStory | None:
     try:
-        summary = rewrite_compact(cluster)
+        if NEWS_LANGUAGE == "km":
+            title, summary = rewrite_compact_khmer(cluster)
+        else:
+            title = cluster[0].title or "Untitled"
+            summary = rewrite_compact(cluster)
     except Exception:
         title = cluster[0].title if cluster else "?"
         logger.exception("Failed to generate compact summary for '%s'", title)
@@ -355,7 +359,6 @@ def _cluster_to_batched(cluster: list[Entry]) -> BatchedStory | None:
     if not links:
         return None
 
-    title = cluster[0].title or "Untitled"
     website = _website_url_for_cluster(cluster, title=title, summary=summary)
 
     return BatchedStory(

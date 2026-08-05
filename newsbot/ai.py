@@ -262,6 +262,59 @@ def rewrite_compact(cluster: list[Entry]) -> str:
     return output
 
 
+def _build_compact_prompt_khmer(cluster: list[Entry]) -> str:
+    headlines = "\n".join(
+        f"- [{e.source_name}] {e.title}: {_strip_html(e.summary)[:200]}"
+        for e in cluster[:5]
+    )
+    return f"""You are a tech news bot writing a compact Khmer summary for a Telegram channel.
+
+Write this tech news in natural, fluent Khmer (ភាសាខ្មែរ):
+- "title": concise Khmer translation of the headline (max ~120 characters)
+- "summary": 2-3 sentence Khmer summary of what happened and why it matters
+
+Rules:
+- Keep brand names, company names, product names, people's names, and acronyms in English
+- Write numbers as digits (e.g. 500, 7%)
+- If a technical term has no Khmer equivalent, keep it in English inside the Khmer sentence
+- Never output a whole sentence in English
+- Plain text only — no HTML, no markdown, no bold
+
+Reply with ONLY valid JSON, no preamble, no code fences:
+{{"title": "...", "summary": "..."}}
+
+Stories covering the same event:
+{headlines}"""
+
+
+def rewrite_compact_khmer(cluster: list[Entry]) -> tuple[str, str]:
+    """Return (khmer_title, khmer_summary) for batched digests in km mode.
+
+    Falls back to the original English title plus a best-effort Khmer
+    translation of the source summary if the AI call fails.
+    """
+    prompt = _build_compact_prompt_khmer(cluster)
+    router = get_router()
+    raw_output, provider = router.call(prompt, max_tokens=GROQ_MAX_TOKENS)
+
+    if raw_output:
+        try:
+            data = _parse_ai_json(raw_output)
+            title = _strip_html(str(data.get("title", "") or "")).strip()
+            summary = _strip_html(str(data.get("summary", "") or "")).strip()
+            if title and summary:
+                logger.info("Compact Khmer rewrite via %s", provider)
+                return title, summary
+        except Exception:
+            logger.debug("Compact Khmer rewrite parse failed", exc_info=True)
+
+    primary = cluster[0]
+    fallback_summary = _translate_to_khmer(
+        _strip_html((primary.summary or "No summary available.")[:200]), router
+    )
+    return (primary.title or "Untitled"), fallback_summary
+
+
 def trim_for_caption(text: str, limit: int = _CAPTION_MAX) -> str:
     if len(text) <= limit:
         return text

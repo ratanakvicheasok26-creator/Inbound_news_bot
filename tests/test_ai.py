@@ -13,6 +13,7 @@ from newsbot.ai import (
     pick_image_url,
     rewrite_with_ai,
     rewrite_compact,
+    rewrite_compact_khmer,
 )
 from newsbot.feeds import Entry
 
@@ -509,3 +510,40 @@ class TestRewriteCompact:
              patch("newsbot.ai.logger") as mock_logger:
             rewrite_compact(cluster)
             mock_logger.info.assert_any_call("Compact rewrite via %s", "gemini")
+
+
+class TestRewriteCompactKhmer:
+    def _make_mock_router(self, output, provider="gemini"):
+        mock_router = MagicMock()
+        mock_router.call.return_value = (output, provider)
+        return mock_router
+
+    def test_khmer_compact_parses_json(self):
+        cluster = [Entry(id="1", title="Test", summary="Summary", link="http://a.com", source_name="A")]
+        payload = '{"title": "ចំណងជើងខ្មែរ", "summary": "សង្ខេបខ្មែរ។"}'
+        mock_router = self._make_mock_router(payload)
+        with patch.dict("newsbot.ai.__dict__", {"NEWS_LANGUAGE": "km"}), \
+             patch("newsbot.ai.get_router", return_value=mock_router):
+            title, summary = rewrite_compact_khmer(cluster)
+        assert title == "ចំណងជើងខ្មែរ"
+        assert summary == "សង្ខេបខ្មែរ។"
+
+    def test_khmer_compact_fallback_keeps_english_title(self):
+        cluster = [Entry(id="1", title="Test", summary="Original summary text", link="http://a.com", source_name="A")]
+        mock_router = self._make_mock_router(None, "none")
+        mock_router.call.side_effect = [(None, "none"), ("សង្ខេបខ្មែរ។", "groq")]
+        with patch.dict("newsbot.ai.__dict__", {"NEWS_LANGUAGE": "km"}), \
+             patch("newsbot.ai.get_router", return_value=mock_router):
+            title, summary = rewrite_compact_khmer(cluster)
+        assert title == "Test"
+        assert summary == "សង្ខេបខ្មែរ។"
+
+    def test_khmer_compact_bad_json_falls_back(self):
+        cluster = [Entry(id="1", title="Test", summary="Original summary text", link="http://a.com", source_name="A")]
+        mock_router = self._make_mock_router("not json at all", "gemini")
+        mock_router.call.side_effect = [("not json at all", "gemini"), ("translated", "groq")]
+        with patch.dict("newsbot.ai.__dict__", {"NEWS_LANGUAGE": "km"}), \
+             patch("newsbot.ai.get_router", return_value=mock_router):
+            title, summary = rewrite_compact_khmer(cluster)
+        assert title == "Test"
+        assert summary == "translated"
