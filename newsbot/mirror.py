@@ -83,11 +83,13 @@ def build_batch_payload(batched: list) -> dict:
 def publish(payload: dict) -> None:
     """Enqueue one post for the mirror bot. No-op without Redis."""
     if not mirror_available():
+        logger.info("Mirror: REDIS_URL not set — nothing enqueued.")
         return
     try:
         client = _client()
         client.rpush(_QUEUE_KEY, json.dumps(payload, ensure_ascii=False))
         client.close()
+        logger.info("Mirror: enqueued %s payload for the Khmer bot.", payload.get("kind"))
     except Exception:
         logger.exception("Mirror: failed to enqueue payload")
 
@@ -95,6 +97,7 @@ def publish(payload: dict) -> None:
 def drain(max_items: int = 25) -> list[dict]:
     """Pop up to max_items payloads from the queue (FIFO). No-op without Redis."""
     if not mirror_available():
+        logger.info("Mirror: REDIS_URL not set — nothing to drain.")
         return []
     payloads: list[dict] = []
     try:
@@ -110,4 +113,6 @@ def drain(max_items: int = 25) -> list[dict]:
         client.close()
     except Exception:
         logger.exception("Mirror: failed to drain queue")
+    if payloads:
+        logger.info("Mirror: drained %d payload(s) to post in Khmer.", len(payloads))
     return payloads

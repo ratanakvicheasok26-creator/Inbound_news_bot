@@ -35,6 +35,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes, filters
 
 from newsbot.bot import fetch_and_post, fetch_urgent_and_post, mirror_drain_job
 from newsbot import config
+from newsbot.mirror import mirror_available
 from newsbot.config import (
     BATCH_STORIES,
     DIGEST_SCHEDULE_HOUR_AM,
@@ -251,6 +252,11 @@ def main() -> None:
     # the English bot publishes, so both channels stay in sync.
     is_km = config.NEWS_LANGUAGE == "km"
     if is_km:
+        if not mirror_available():
+            logger.warning(
+                "Khmer mirror mode requires REDIS_URL shared with the English bot — "
+                "no mirroring will happen until it is set."
+            )
         app.job_queue.run_repeating(
             mirror_drain_job,
             interval=10,
