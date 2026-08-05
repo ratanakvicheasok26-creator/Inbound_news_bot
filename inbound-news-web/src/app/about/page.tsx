@@ -21,11 +21,10 @@ export default function AboutPage() {
       <h2>What this is</h2>
       <p>
         Inbound Reports is a tech news aggregator based in Phnom Penh. We collect stories from a
-        shared source network, cluster related coverage, and present concise summaries with literacy
-        tools — jargon highlighting, an ELI5 reading tier, and a coverage-intensity signal — so
-        readers can decode tech news instead of only scrolling it. The interface includes a Khmer
-        language toggle and glossary terms with Khmer definitions; full story Khmer translations
-        are planned (see our methodology page).
+        shared source network, cluster related coverage, and present concise English summaries with
+        literacy tools — jargon highlighting, ELI5 / Standard / Deep reading tiers, and a
+        coverage-intensity signal — so readers can decode tech news instead of only scrolling it.
+        See our <Link href="/legal/methodology">methodology</Link> page for how each layer works.
       </p>
 
       <h2>Source network</h2>
@@ -46,8 +45,8 @@ export default function AboutPage() {
       <h2>The Inbound Crew</h2>
       <p>
         We are a small tech crew in Phnom Penh. The product exists to increase digital literacy —
-        exposing how stories are framed (Hype-Reality Bar) and explaining jargon in context
-        (Glossary) — not to maximize engagement.
+        showing source density and framing signals, and explaining jargon in context (Glossary) —
+        not to maximize engagement.
       </p>
 
       <h2>Donation</h2>

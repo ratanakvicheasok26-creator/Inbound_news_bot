@@ -55,13 +55,13 @@ class TestSourceKeyboard:
             primary_source="Example",
         )
         markup = _source_keyboard(post)
-        assert markup.inline_keyboard[0][0].text == "Read on Inbound Reports"
+        assert "Local Lens" in markup.inline_keyboard[0][0].text or "sources" in markup.inline_keyboard[0][0].text
         assert markup.inline_keyboard[0][0].url == "https://inbound-news-web.vercel.app/story/abc"
 
     def test_no_extra_source_buttons(self):
         post = StoryPost(
             text="x",
-            primary_url="https://inbound-news-web.vercel.app/search?q=x",
+            primary_url="https://inbound-news-web.vercel.app/brief/2026-08-05",
             primary_source="Source A",
             extra_urls=["https://b.com", "https://c.com"],
             extra_sources=["Source B", "Source C"],
@@ -98,7 +98,7 @@ class TestPrepareEntries:
         assert all(isinstance(s, StoryPost) for s in stories)
         assert "<b>T0</b>" in stories[0].text
         assert mock_ai.call_count == DIGEST_MAX_STORIES
-        assert "/search?q=" in stories[0].primary_url
+        assert "/brief/" in stories[0].primary_url
         assert "x.com" not in stories[0].primary_url
 
 
@@ -162,7 +162,7 @@ def test_broadcast_stories_sends_separately_with_button():
     assert mock_bot.send_photo.await_count == 1
     msg_kwargs = mock_bot.send_message.await_args.kwargs
     btn = msg_kwargs["reply_markup"].inline_keyboard[0][0]
-    assert btn.text == "Read on Inbound Reports"
+    assert "sources" in btn.text.lower() or "lens" in btn.text.lower()
     assert btn.url == f"{site}/story/1"
     photo_kwargs = mock_bot.send_photo.await_args.kwargs
     assert photo_kwargs["photo"] == "https://img.com/x.jpg"

@@ -60,7 +60,7 @@ export default function AccountPage() {
       <div className="container container-xs py-16 text-center">
         <h1 className="page-title mb-3">Account</h1>
         <p className="text-[15px] text-[var(--text-secondary)] mb-8">
-          Sign in to track literacy progress across sessions and devices.
+          Sign in so reading preferences can sync. Library, score, and saves stay on this device.
         </p>
         <Link href="/auth" className="btn-primary">
           Sign in / Sign up

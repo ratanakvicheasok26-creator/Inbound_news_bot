@@ -26,7 +26,7 @@ export function GlossaryContent() {
         </div>
 
         <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed mb-8">
-          Tech jargon explained in English and Khmer — so you can decode coverage instead of
+          Tech jargon explained in plain English — so you can decode coverage instead of
           scrolling past it.
         </p>
 

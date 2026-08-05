@@ -2,10 +2,11 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, BookOpen, Info, LayoutGrid } from "lucide-react"
+import { Home, BookOpen, Info, LayoutGrid, Newspaper } from "lucide-react"
 
 const navItems = [
   { href: "/", icon: Home, label: "Home" },
+  { href: "/brief", icon: Newspaper, label: "Brief" },
   { href: "/glossary", icon: BookOpen, label: "Glossary" },
   { href: "/about", icon: Info, label: "About" },
 ]
@@ -31,7 +32,10 @@ export function MobileBottomNav() {
         style={{ height: "var(--mobile-nav-h)" }}
       >
         {navItems.map((item) => {
-          const isActive = pathname === item.href
+          const isActive =
+            item.href === "/"
+              ? pathname === "/"
+              : pathname === item.href || pathname.startsWith(`${item.href}/`)
           return (
             <Link
               key={item.href}

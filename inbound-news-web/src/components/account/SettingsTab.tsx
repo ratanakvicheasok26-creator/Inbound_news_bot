@@ -93,18 +93,6 @@ export function SettingsTab({ user, onSignOut }: SettingsTabProps) {
   return (
     <div className="max-w-[560px] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] px-5 divide-y divide-[var(--border)]">
       <div className="flex items-center justify-between py-4 gap-4">
-        <label className="meta-text">Default language</label>
-        <Segmented
-          value={prefs.defaultLang}
-          options={[
-            { id: "en", label: "EN" },
-            { id: "km", label: "ខ្មែរ" },
-          ]}
-          onChange={(v) => update("defaultLang", v)}
-        />
-      </div>
-
-      <div className="flex items-center justify-between py-4 gap-4">
         <label className="meta-text">Default tier</label>
         <Segmented
           value={prefs.defaultTier}
@@ -114,17 +102,6 @@ export function SettingsTab({ user, onSignOut }: SettingsTabProps) {
             { id: "deep", label: "Deep" },
           ]}
           onChange={(v) => update("defaultTier", v)}
-        />
-      </div>
-
-      <div className="flex items-center justify-between py-4 gap-4">
-        <div>
-          <span className="text-[14px] font-semibold block">Telegram digest</span>
-          <span className="text-[13px] text-[var(--text-secondary)]">Daily digest via Telegram bot</span>
-        </div>
-        <Switch
-          checked={prefs.telegramDigest}
-          onChange={() => update("telegramDigest", !prefs.telegramDigest)}
         />
       </div>
 

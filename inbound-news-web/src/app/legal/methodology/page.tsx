@@ -99,10 +99,9 @@ export default function MethodologyPage() {
         text simplification, not an AI rewrite.
       </p>
       <p>
-        <strong>Khmer Language:</strong> The platform interface includes a Khmer language toggle
-        in the header, and the glossary contains Khmer definitions for many terms. Full Khmer
-        translations of stories are a planned feature and not yet implemented. The toggle currently
-        preserves your language preference for when full support launches.
+        <strong>Language:</strong> The web product is English-first today. Khmer UI and full story
+        translations are planned; glossary entries may include Khmer fields in data, but the
+        interface does not currently switch languages.
       </p>
 
       <h2>6. The &quot;Local Lens — Cambodia&quot; Feature</h2>

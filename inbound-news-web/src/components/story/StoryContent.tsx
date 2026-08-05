@@ -1,22 +1,28 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { LocalLensBox } from "@/components/story/LocalLensBox"
+import { ReadingTierToggle } from "@/components/story/ReadingTierToggle"
 import { StoryTimeline, deriveTimelineNodes } from "@/components/story/StoryTimeline"
 import { SourceComparisonRow } from "@/components/story/SourceComparisonRow"
 import { RelatedConcepts } from "@/components/story/RelatedConcepts"
+import { JargonText } from "@/components/story/JargonText"
 import { GLOSSARY_TERMS } from "@/lib/glossary"
 import { getCategoryLabel } from "@/lib/categories"
 import { formatDistanceToNow } from "@/lib/utils"
 import {
   getProfile,
   trackStoryRead,
+  recordTierSwitch,
   recordSourceComparison,
+  recordJargonTap,
+  toggleSavedStory,
+  isStorySaved,
 } from "@/lib/profile"
 import type { StoryWithArticles, Article } from "@/lib/types"
 import { isUsefulSummary, resolveStoryBody } from "@/lib/story-body"
 import { StoryImage } from "@/components/story/StoryImage"
-import { ArrowLeft, ExternalLink, Newspaper } from "lucide-react"
+import { ArrowLeft, Bookmark, BookmarkCheck, ExternalLink, Newspaper } from "lucide-react"
 import Link from "next/link"
 
 interface StoryContentProps {
@@ -124,12 +130,24 @@ function initialTier(): "eli5" | "standard" | "deep" {
 }
 
 export function StoryContent({ story }: StoryContentProps) {
-  const [activeTier] = useState<"eli5" | "standard" | "deep">(initialTier)
+  const [activeTier, setActiveTier] = useState<"eli5" | "standard" | "deep">(initialTier)
+  const [saved, setSaved] = useState(() => isStorySaved(story.id))
   const sourceViewed = useRef(false)
 
   useEffect(() => {
     trackStoryRead({ id: story.id, title: story.title, category: story.category || "" })
   }, [story.id, story.title, story.category])
+
+  useEffect(() => {
+    setSaved(isStorySaved(story.id))
+  }, [story.id])
+
+  const handleTierChange = useCallback((tier: "eli5" | "standard" | "deep") => {
+    setActiveTier((prev) => {
+      if (prev !== tier) recordTierSwitch()
+      return tier
+    })
+  }, [])
 
   const categoryLabel = getCategoryLabel(story.category || "") || "News"
   const articles = story.articles || []
@@ -178,6 +196,22 @@ export function StoryContent({ story }: StoryContentProps) {
             </span>
             <span className="meta-text">{formatDistanceToNow(story.created_at)}</span>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSaved(toggleSavedStory(story.id))}
+              className={`inline-flex items-center gap-1.5 h-9 px-3 text-[13px] font-semibold rounded-[var(--radius-sm)] border border-[var(--border)] transition-colors ${
+                saved
+                  ? "text-[var(--accent)] bg-[var(--red-subtle-bg)] border-[var(--accent)]"
+                  : "text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--surface-alt)]"
+              }`}
+              aria-label={saved ? "Unsave story" : "Save story"}
+            >
+              {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+              {saved ? "Saved" : "Save"}
+            </button>
+            <ReadingTierToggle active={activeTier} onChange={handleTierChange} />
+          </div>
         </div>
 
         <h1 className="font-display text-[clamp(28px,4.5vw,44px)] font-semibold leading-[1.12] tracking-[-0.025em]">
@@ -185,8 +219,8 @@ export function StoryContent({ story }: StoryContentProps) {
         </h1>
 
         <p className="mt-3 text-[14px] text-[var(--text-secondary)] max-w-[58ch]">
-          Aggregated coverage from multiple sources. Local Lens adds Cambodia
-          context beside the summary.
+          Aggregated coverage — switch ELI5 / Standard / Deep for your reading
+          level. Local Lens adds Cambodia context beside the summary.
         </p>
 
         {primaryUrl && (
@@ -212,9 +246,11 @@ export function StoryContent({ story }: StoryContentProps) {
                 {activeTier === "eli5" ? "Simplified" : "Deep coverage"}
               </p>
             )}
-            <p className="text-[17px] sm:text-[18px] leading-[1.65] text-[var(--text-primary)] max-w-[65ch]">
-              {displaySummary}
-            </p>
+            <JargonText
+              text={displaySummary}
+              className="text-[17px] sm:text-[18px] leading-[1.65] text-[var(--text-primary)] max-w-[65ch]"
+              onJargonTap={recordJargonTap}
+            />
           </div>
           <div className="min-w-0">
             <LocalLensBox

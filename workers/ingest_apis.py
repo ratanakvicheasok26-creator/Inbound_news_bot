@@ -127,6 +127,10 @@ def _upsert_articles(articles: list[dict[str, Any]]) -> int:
 
 
 def run() -> None:
+    # Fail loud before soft-failing individual sources: missing secrets must
+    # turn the Actions step red (get_supabase raises RuntimeError).
+    get_supabase()
+
     logger.info("Starting API ingestion run...")
     all_sources: list[dict[str, Any]] = []
 
@@ -279,4 +283,8 @@ def run() -> None:
 
 
 if __name__ == "__main__":
-    run()
+    try:
+        run()
+    except Exception:
+        logger.exception("API ingestion crashed")
+        sys.exit(1)

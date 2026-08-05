@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 import time
 from typing import Any
 
@@ -44,6 +45,17 @@ _EMBED_CHUNK_SIZE = 96
 _MAX_RETRIES = 3
 _RETRY_BASE_DELAY = 2.0
 _FETCH_PAGE_SIZE = 1000
+
+
+def _is_unique_violation(exc: BaseException) -> bool:
+    """True when PostgREST/Postgres rejected a UNIQUE constraint."""
+    msg = str(exc).lower()
+    return (
+        "duplicate" in msg
+        or "unique" in msg
+        or "23505" in msg
+        or "already exists" in msg
+    )
 
 
 def _get_cohere_client():
@@ -115,8 +127,10 @@ def _jaccard_similarity(a: str, b: str) -> float:
 def _fetch_unprocessed(supabase, limit: int = 1000) -> list[dict[str, Any]]:
     """Fetch articles that haven't been linked to a story yet.
 
-    Paginates all story_sources article_ids (older than 5000 rows would be
-    missed by a single .limit), then filters articles in Python.
+    Paginates *all* story_sources article_ids so the linked set is complete,
+    then paginates articles newest-first until ``limit`` unprocessed rows
+    are collected (or the table is exhausted). Filtering against an
+    incomplete linked set is what caused duplicate stories at scale.
     """
     linked_ids: set[str] = set()
     offset = 0
@@ -124,6 +138,7 @@ def _fetch_unprocessed(supabase, limit: int = 1000) -> list[dict[str, Any]]:
         page = (
             supabase.table("story_sources")
             .select("article_id")
+            .order("id")
             .range(offset, offset + _FETCH_PAGE_SIZE - 1)
             .execute()
         )
@@ -135,17 +150,30 @@ def _fetch_unprocessed(supabase, limit: int = 1000) -> list[dict[str, Any]]:
             break
         offset += _FETCH_PAGE_SIZE
 
-    # Over-fetch recent articles, then drop ones already linked.
-    fetch_n = limit * 3 if linked_ids else limit
-    articles_result = (
-        supabase.table("articles")
-        .select("*")
-        .order("ingested_at", desc=True)
-        .limit(fetch_n)
-        .execute()
-    )
-    articles = articles_result.data or []
-    unprocessed = [a for a in articles if a.get("id") not in linked_ids]
+    logger.info("Loaded %d already-linked article ids", len(linked_ids))
+
+    unprocessed: list[dict[str, Any]] = []
+    offset = 0
+    while len(unprocessed) < limit:
+        page = (
+            supabase.table("articles")
+            .select("*")
+            .order("ingested_at", desc=True)
+            .range(offset, offset + _FETCH_PAGE_SIZE - 1)
+            .execute()
+        )
+        rows = page.data or []
+        if not rows:
+            break
+        for article in rows:
+            if article.get("id") not in linked_ids:
+                unprocessed.append(article)
+                if len(unprocessed) >= limit:
+                    break
+        if len(rows) < _FETCH_PAGE_SIZE:
+            break
+        offset += _FETCH_PAGE_SIZE
+
     return unprocessed[:limit]
 
 
@@ -230,8 +258,28 @@ def _article_image(article: dict[str, Any], fetch_missing: bool = False) -> str 
     return None
 
 
-def _create_story(supabase, article: dict, embedding: list[float] | None = None) -> str:
-    """Create a new story from an article. Returns the story ID."""
+def _insert_story_source(supabase, story_id: str, article: dict) -> bool:
+    """Link article → story. Returns False if already linked (UNIQUE conflict)."""
+    try:
+        supabase.table("story_sources").insert({
+            "story_id": story_id,
+            "article_id": article["id"],
+            "source_name": article.get("source_name", ""),
+            "source_url": article.get("url", ""),
+        }).execute()
+        return True
+    except Exception as exc:
+        if _is_unique_violation(exc):
+            logger.info(
+                "Article %s already linked to a story — skipping attach",
+                article.get("id"),
+            )
+            return False
+        raise
+
+
+def _create_story(supabase, article: dict, embedding: list[float] | None = None) -> str | None:
+    """Create a new story from an article. Returns story ID, or None if already linked."""
     image_url = _article_image(article, fetch_missing=True)
     row = {
         "title": article["title"],
@@ -258,24 +306,26 @@ def _create_story(supabase, article: dict, embedding: list[float] | None = None)
         result = supabase.table("stories").insert(row).execute()
     story_id = result.data[0]["id"]
 
-    supabase.table("story_sources").insert({
-        "story_id": story_id,
-        "article_id": article["id"],
-        "source_name": article.get("source_name", ""),
-        "source_url": article.get("url", ""),
-    }).execute()
+    if not _insert_story_source(supabase, story_id, article):
+        # Race: article linked elsewhere — drop the orphan story we just created.
+        logger.warning(
+            "Article %s already linked; removing orphan story %s",
+            article.get("id"),
+            story_id,
+        )
+        try:
+            supabase.table("stories").delete().eq("id", story_id).execute()
+        except Exception:
+            logger.exception("Failed to delete orphan story %s", story_id)
+        return None
 
     return story_id
 
 
-def _add_to_story(supabase, story_id: str, article: dict) -> None:
-    """Add an article to an existing story and increment source_count atomically."""
-    supabase.table("story_sources").insert({
-        "story_id": story_id,
-        "article_id": article["id"],
-        "source_name": article.get("source_name", ""),
-        "source_url": article.get("url", ""),
-    }).execute()
+def _add_to_story(supabase, story_id: str, article: dict) -> bool:
+    """Add an article to an existing story. Returns False if already linked."""
+    if not _insert_story_source(supabase, story_id, article):
+        return False
 
     # Upgrade the story's category if it is still raw/None and the merged
     # article normalizes to a site slug. Existing site slugs are kept.
@@ -322,6 +372,7 @@ def _add_to_story(supabase, story_id: str, article: dict) -> None:
             except Exception:
                 update.pop("image_url", None)
                 supabase.table("stories").update(update).eq("id", story_id).execute()
+    return True
 
 
 def run() -> None:
@@ -329,7 +380,7 @@ def run() -> None:
         _run_inner()
     except Exception:
         logger.exception("Dedup worker crashed — this should never happen. All articles preserved.")
-        return
+        raise
 
 
 def _run_inner() -> None:
@@ -386,12 +437,13 @@ def _run_inner() -> None:
                 )
 
             if story_id:
-                _add_to_story(supabase, story_id, article)
-                merged += 1
+                if _add_to_story(supabase, story_id, article):
+                    merged += 1
             else:
-                story_id = _create_story(supabase, article, embedding)
-                story_titles.append({"id": story_id, "title": article.get("title", "")})
-                new_stories += 1
+                created_id = _create_story(supabase, article, embedding)
+                if created_id:
+                    story_titles.append({"id": created_id, "title": article.get("title", "")})
+                    new_stories += 1
 
         except Exception as exc:
             errors += 1
@@ -416,4 +468,7 @@ def _run_inner() -> None:
 
 
 if __name__ == "__main__":
-    run()
+    try:
+        run()
+    except Exception:
+        sys.exit(1)

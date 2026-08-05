@@ -114,24 +114,12 @@ export function LibraryTab() {
         )}
       </div>
 
-      <div>
-        <div className="section-header">
-          <h2 className="section-title">Followed concepts</h2>
-          <span className="meta-text">{concepts.length}</span>
-        </div>
-
-        {concepts.length === 0 ? (
-          <div className="empty-state py-12">
-            <p className="story-title mb-2">No followed concepts yet</p>
-            <p>
-              Browse the{" "}
-              <Link href="/glossary" className="text-[var(--accent)] hover:underline">
-                glossary
-              </Link>{" "}
-              to follow concepts.
-            </p>
+      {concepts.length > 0 && (
+        <div>
+          <div className="section-header">
+            <h2 className="section-title">Followed concepts</h2>
+            <span className="meta-text">{concepts.length}</span>
           </div>
-        ) : (
           <div className="flex flex-wrap gap-2">
             {concepts.map((slug) => (
               <div
@@ -151,8 +139,8 @@ export function LibraryTab() {
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
