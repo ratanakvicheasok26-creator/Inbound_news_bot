@@ -247,7 +247,7 @@ def rewrite_compact(cluster: list[Entry]) -> str:
     if raw_output is None:
         primary = cluster[0]
         summary = _strip_html((primary.summary or "No summary available.")[:200])
-        return summary
+        return _translate_to_khmer(summary, router)
 
     output = raw_output.strip()
     sentences = output.split(". ")
@@ -435,6 +435,62 @@ def _fallback_data(cluster: list[Entry], urgent: bool) -> dict:
     }
 
 
+def _translate_to_khmer(text: str, router) -> str:
+    """Best-effort single-text Khmer translation (used on fallback paths)."""
+    if NEWS_LANGUAGE != "km" or not text:
+        return text
+    prompt = (
+        "Translate this tech news text into Khmer (ភាសាខ្មែរ). "
+        "Keep brand names, company names, product names, and numbers as-is. "
+        "Reply with only the translation, no quotes, no commentary.\n\n"
+        f"{text[:800]}"
+    )
+    try:
+        result, provider = router.call(prompt, max_tokens=400)
+        if result and result.strip():
+            logger.info("Fallback text translated to Khmer via %s", provider)
+            return _strip_html(result.strip())
+    except Exception:
+        logger.debug("Fallback Khmer translation failed", exc_info=True)
+    return text
+
+
+def _khmerize_fallback(data: dict, router) -> dict:
+    """Translate headline + summary to Khmer when the main AI rewrite failed.
+
+    Source names, the 'Reported by' key point, and metadata stay as-is.
+    Falls back to the original English text if translation also fails.
+    """
+    if NEWS_LANGUAGE != "km":
+        return data
+    headline = str(data.get("headline") or "").strip()
+    summary = str(data.get("summary") or "").strip()
+    if not headline and not summary:
+        return data
+    prompt = (
+        "Translate the following tech news into Khmer (ភាសាខ្មែរ). "
+        "Keep brand names, company names, product names, and numbers as-is. "
+        'Reply with ONLY valid JSON like {"headline": "...", "summary": "..."}, '
+        "no preamble, no markdown fences.\n\n"
+        f"Headline: {headline}\nSummary: {summary[:500]}"
+    )
+    try:
+        result, provider = router.call(prompt, max_tokens=400)
+        if result:
+            parsed = _parse_ai_json(result)
+            if isinstance(parsed, dict):
+                out = dict(data)
+                if isinstance(parsed.get("headline"), str) and parsed["headline"].strip():
+                    out["headline"] = _strip_html(parsed["headline"].strip())
+                if isinstance(parsed.get("summary"), str) and parsed["summary"].strip():
+                    out["summary"] = _strip_html(parsed["summary"].strip())
+                logger.info("Fallback headline/summary translated to Khmer via %s", provider)
+                return out
+    except Exception:
+        logger.debug("Fallback Khmer translation failed", exc_info=True)
+    return data
+
+
 def rewrite_with_ai(cluster: list[Entry], urgent: bool = False, header: str | None = None) -> str:
     links = collect_links(cluster, urgent=urgent)
 
@@ -452,9 +508,11 @@ def rewrite_with_ai(cluster: list[Entry], urgent: bool = False, header: str | No
     router = get_router()
     raw_output, provider = router.call(prompt, max_tokens=GROQ_MAX_TOKENS)
 
+    used_fallback = False
     if raw_output is None:
         logger.warning("All AI providers exhausted \u2014 using hardcoded fallback")
         data = _fallback_data(cluster, urgent)
+        used_fallback = True
     else:
         try:
             data = _parse_ai_json(raw_output)
@@ -466,6 +524,7 @@ def rewrite_with_ai(cluster: list[Entry], urgent: bool = False, header: str | No
                 provider, raw_output,
             )
             data = _fallback_data(cluster, urgent)
+            used_fallback = True
 
     if isinstance(data, dict) and data.get("reject"):
         title = cluster[0].title if cluster else "?"
@@ -479,6 +538,7 @@ def rewrite_with_ai(cluster: list[Entry], urgent: bool = False, header: str | No
     if not is_valid:
         logger.warning("AI output validation failed (%s), using fallback", reason)
         data = _fallback_data(cluster, urgent)
+        used_fallback = True
         is_valid, _ = _validate_ai_data(data)
         if not is_valid:
             logger.error("Fallback data also failed validation \u2014 using hardcoded minimal data")
@@ -490,6 +550,9 @@ def rewrite_with_ai(cluster: list[Entry], urgent: bool = False, header: str | No
                 "key_points": [],
                 "tags": [],
             }
+
+    if used_fallback:
+        data = _khmerize_fallback(data, router)
 
     data["source_name"] = source_name_str
 
