@@ -146,7 +146,7 @@ _CATEGORY_LABELS: dict[str, str] = {
 }
 
 
-_URGENCY_BADGES_EN: dict[str, str] = {
+_URGENCY_BADGES: dict[str, str] = {
     "breaking": "\U0001f534 CRITICAL",
     "alert": "\U0001f7e1 ALERT",
     "analysis": "\U0001f535 Analysis",
@@ -154,20 +154,7 @@ _URGENCY_BADGES_EN: dict[str, str] = {
     "explainer": "\U0001f4d6 Explainer",
 }
 
-_URGENCY_BADGES_KM: dict[str, str] = {
-    "breaking": "\U0001f534 បន្ទាន់",
-    "alert": "\U0001f7e1 ការជូនដំណឹង",
-    "analysis": "\U0001f535 ការវិភាគ",
-    "market": "\U0001f4b0 ទីផ្សារ",
-    "explainer": "\U0001f4d6 ការពន្យល់",
-}
-
-_URGENCY_BADGES: dict[str, str] = _URGENCY_BADGES_KM if NEWS_LANGUAGE == "km" else _URGENCY_BADGES_EN
-
-_TLDR_LABELS: dict[str, str] = {
-    "en": "TL;DR:",
-    "km": "សង្ខេបខ្លី៖",
-}
+_TLDR_LABEL = "TL;DR:"
 
 _LANGUAGE_INSTRUCTIONS: dict[str, str] = {
     "en": "Write all output text in English.",
@@ -208,7 +195,7 @@ def _render_template(data: dict) -> str:
 
     if tldr and urgency == "explainer":
         sections.append("")
-        sections.append(f"<b>{_TLDR_LABELS.get(NEWS_LANGUAGE, _TLDR_LABELS['en'])}</b> {tldr}")
+        sections.append(f"<b>{_TLDR_LABEL}</b> {tldr}")
 
     text = "\n".join(sections)
     if len(text) > _MAX_TELEGRAM_LENGTH:

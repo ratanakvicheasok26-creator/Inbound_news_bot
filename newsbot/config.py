@@ -112,7 +112,9 @@ SPAM_BLOCK_NON_LATIN_SCRIPTS: bool = os.environ.get(
 ).lower() in ("1", "true", "yes", "on")
 
 # ---- Language ----
-# Output language for Telegram posts: "en" or "km" (Khmer).
+# News content language for Telegram posts: "en" or "km" (Khmer).
+# All UI copy (badges, buttons, headers, replies) matches the English bot;
+# only the translated news content differs.
 # Two bot deployments can share this codebase — each sets NEWS_LANGUAGE.
 NEWS_LANGUAGE: str = (os.environ.get("NEWS_LANGUAGE", "en").strip().lower() or "en")
 if NEWS_LANGUAGE not in ("en", "km"):
@@ -135,11 +137,7 @@ _DEFAULT_DONATION_TEXT = (
     '<a href="https://pay.ababank.com/oRF8/puropy03">ABA Payment Link</a>'
 )
 DONATION_TEXT: str = os.environ.get("DONATION_TEXT", "").strip() or _DEFAULT_DONATION_TEXT
-_DEFAULT_DIGEST_HEADER = (
-    "📰 <b>ព័ត៌មានបច្ចេកវិទ្យា Inbound Reports</b>"
-    if NEWS_LANGUAGE == "km"
-    else "📰 <b>Inbound Reports</b>"
-)
+_DEFAULT_DIGEST_HEADER = "📰 <b>Inbound Reports</b>"
 DIGEST_HEADER_TEXT: str = os.environ.get(
     "DIGEST_HEADER_TEXT", _DEFAULT_DIGEST_HEADER
 ).strip() or _DEFAULT_DIGEST_HEADER

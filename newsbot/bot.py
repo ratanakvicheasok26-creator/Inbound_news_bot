@@ -113,11 +113,7 @@ class BatchedStory:
 
 def _source_keyboard(post: StoryPost) -> InlineKeyboardMarkup:
     """CTA: open the story (or brief) — exclusive Local Lens + sources live on site."""
-    label = (
-        "អាននៅលើ Inbound Reports"
-        if NEWS_LANGUAGE == "km"
-        else "Cambodia Lens + sources →"
-    )
+    label = "Cambodia Lens + sources →"
     return InlineKeyboardMarkup(
         [[InlineKeyboardButton(label, url=post.primary_url)]]
     )
@@ -125,7 +121,7 @@ def _source_keyboard(post: StoryPost) -> InlineKeyboardMarkup:
 
 def _brief_keyboard() -> InlineKeyboardMarkup:
     """Primary habit CTA for batched digests."""
-    label = "បើកព្រឹត្តិបត្រប្រចាំថ្ងៃ →" if NEWS_LANGUAGE == "km" else "Open today's Brief →"
+    label = "Open today's Brief →"
     return InlineKeyboardMarkup(
         [[InlineKeyboardButton(label, url=brief_url())]]
     )
@@ -136,11 +132,7 @@ def _attribution_line(links: list[tuple[str, str]], website_url: str, limit: int
     names = [_html_escape(name) for _, name in links[:limit] if name]
     attribution = " · ".join(names) if names else "Multiple sources"
     safe_url = html.escape(website_url, quote=True)
-    read_label = (
-        "អាននៅលើ Inbound Reports"
-        if NEWS_LANGUAGE == "km"
-        else "sources + Local Lens"
-    )
+    read_label = "sources + Local Lens"
     return f'{attribution} · <a href="{safe_url}">{read_label}</a>'
 
 
@@ -156,7 +148,7 @@ def _website_url_for_cluster(
         title=title,
         summary=summary,
         category=category,
-        language=NEWS_LANGUAGE,
+        language="en",
     )
     return reader_url(title=title, story_id=story_id)
 
@@ -383,18 +375,11 @@ def _compile_batch_message(batched: list[BatchedStory]) -> str:
     now = datetime.now(TIMEZONE).strftime("%b %d, %Y · %I:%M %p")
     separator = "━" * 20
     brief = html.escape(brief_url(), quote=True)
-    if NEWS_LANGUAGE == "km":
-        tease_line = (
-            "ខ្លឹមសារខាងក្រោមជាបំណែកខ្លី — ប្រភពពេញលេញ និង "
-            f'<b>Local Lens (កម្ពុជា)</b> នៅលើ <a href="{brief}">ព្រឹត្តិបត្រប្រចាំថ្ងៃ</a>។'
-        )
-        brief_footer = f'<a href="{brief}">→ បើកព្រឹត្តិបត្រប្រចាំថ្ងៃនៅលើ Inbound Reports</a>'
-    else:
-        tease_line = (
-            'Tease only — full sources + <b>Local Lens (Cambodia)</b> on the '
-            f'<a href="{brief}">daily Brief</a>.'
-        )
-        brief_footer = f'<a href="{brief}">→ Open today\'s Brief on Inbound Reports</a>'
+    tease_line = (
+        'Tease only — full sources + <b>Local Lens (Cambodia)</b> on the '
+        f'<a href="{brief}">daily Brief</a>.'
+    )
+    brief_footer = f'<a href="{brief}">→ Open today\'s Brief on Inbound Reports</a>'
     parts: list[str] = [
         f"{DIGEST_HEADER_TEXT} — {now}",
         separator,
@@ -479,14 +464,10 @@ async def broadcast_batched(
     brief_markup = _brief_keyboard()
     try:
         if batch_image:
-            caption_title = (
-                "ព័ត៌មានបច្ចេកវិទ្យា"
-                if NEWS_LANGUAGE == "km"
-                else "Tech News"
-            )
+            caption_title = "Tech News"
             caption = (
                 f"<b>📰 {caption_title} — {datetime.now(TIMEZONE).strftime('%b %d, %Y · %I:%M %p')}</b>"
-                + ("" if NEWS_LANGUAGE == "km" else "\nFull Brief + Local Lens on Inbound Reports")
+                + "\nFull Brief + Local Lens on Inbound Reports"
             )
             try:
                 photo_msg = await context.bot.send_photo(

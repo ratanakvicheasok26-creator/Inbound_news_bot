@@ -43,7 +43,6 @@ from newsbot.config import (
     DONATION_SCHEDULE_HOUR,
     DONATION_TEXT,
     FETCH_COOLDOWN_SECONDS,
-    NEWS_LANGUAGE,
     TIMEZONE,
     URGENT_CHECK_INTERVAL_SECONDS,
     URGENT_FIRST_DELAY_SECONDS,
@@ -65,13 +64,6 @@ logger = logging.getLogger(__name__)
 
 _fetch_last_run: dict[int, float] = {}
 _fetch_cooldown_lock = threading.Lock()
-
-_IS_KM = NEWS_LANGUAGE == "km"
-
-
-def _t(en: str, km: str) -> str:
-    """Pick a string by bot language."""
-    return km if _IS_KM else en
 
 
 async def poll_job(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -151,15 +143,11 @@ async def start_command(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
         state.save_subscribers(subscribers)
         await _reply(
             update,
-            _t(
-                f"Subscribed! Regular stories post at {_hour_label(am)} and {_hour_label(pm)}. "
-                "Urgent alerts send anytime.",
-                f"បានចុះឈ្មោះជាវ! ព័ត៌មានធម្មតានឹងប្រកាសនៅម៉ោង {_hour_label(am)} និង {_hour_label(pm)}។ "
-                "ការជូនដំណឹងបន្ទាន់ផ្ញើគ្រប់ពេល។",
-            ),
+            f"Subscribed! Regular stories post at {_hour_label(am)} and {_hour_label(pm)}. "
+            "Urgent alerts send anytime.",
         )
     else:
-        await _reply(update, _t("You're already subscribed.", "អ្នកបានចុះឈ្មោះជាវរួចហើយ។"))
+        await _reply(update, "You're already subscribed.")
 
 
 async def stop_command(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -172,9 +160,9 @@ async def stop_command(update: object, context: ContextTypes.DEFAULT_TYPE) -> No
     if chat_id in subscribers:
         subscribers.discard(chat_id)
         state.save_subscribers(subscribers)
-        await _reply(update, _t("Unsubscribed. Send /start anytime to rejoin.", "បានឈប់ចុះឈ្មោះ។ ផ្ញើ /start ដើម្បីចូលវិញបានគ្រប់ពេល។"))
+        await _reply(update, "Unsubscribed. Send /start anytime to rejoin.")
     else:
-        await _reply(update, _t("You weren't subscribed.", "អ្នកមិនបានចុះឈ្មោះជាវទេ។"))
+        await _reply(update, "You weren't subscribed.")
 
 
 async def fetch_command(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -195,28 +183,25 @@ async def fetch_command(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
             minutes = int(remaining // 60) + 1
             await _reply(
                 update,
-                _t(
-                    f"Please wait {minutes} minute{'s' if minutes > 1 else ''} before requesting another fetch.",
-                    f"សូមរង់ចាំ {minutes} នាទីមុនពេលស្នើសុំទាញព័ត៌មានម្តងទៀត។",
-                ),
+                f"Please wait {minutes} minute{'s' if minutes > 1 else ''} before requesting another fetch.",
             )
             return
         _fetch_last_run[chat_id] = now
 
     logger.info("[/fetch] from chat_id=%s", chat_id)
-    await _reply(update, _t("Fetching latest tech news...", "កំពុងទាញព័ត៌មានបច្ចេកវិទ្យាថ្មីៗ..."))
+    await _reply(update, "Fetching latest tech news...")
 
     try:
         posted_count = await fetch_and_post(context)
     except Exception:
         logger.exception("[/fetch] fetch_and_post raised for chat_id=%s", chat_id)
-        await _reply(update, _t("Couldn't fetch news right now — something went wrong. Check the logs.", "មិនអាចទាញព័ត៌មានបានទេឥឡូវនេះ — មានបញ្ហាអ្វីមួយ។ សូមពិនិត្យ logs។"))
+        await _reply(update, "Couldn't fetch news right now — something went wrong. Check the logs.")
         return
 
     if posted_count == 0:
-        await _reply(update, _t("No new updates right now — checked all feeds, nothing new to post.", "មិនមានព័ត៌មានថ្មីទេឥឡូវនេះ — បានពិនិត្យគ្រប់ប្រភពរួចហើយ។"))
+        await _reply(update, "No new updates right now — checked all feeds, nothing new to post.")
     else:
-        await _reply(update, _t(f"Posted {posted_count} new stor{'y' if posted_count == 1 else 'ies'}.", f"បានប្រកាសព័ត៌មានថ្មី {posted_count} ចំណងជើង។"))
+        await _reply(update, f"Posted {posted_count} new stor{'y' if posted_count == 1 else 'ies'}.")
 
 
 def _add_command(app: Application, name: str, handler: object) -> None:
