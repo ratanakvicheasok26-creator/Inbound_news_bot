@@ -32,7 +32,7 @@ from newsbot.config import (
 )
 from newsbot.feeds import Entry, cluster_entries, collect_new_entries, looks_urgent, normalize_title_key
 from newsbot.state import get_state
-from newsbot.website_links import publish_cluster_story, reader_url
+from newsbot.website_links import brief_url, publish_cluster_story, reader_url
 
 __all__ = [
     "StoryPost",
@@ -111,9 +111,16 @@ class BatchedStory:
 
 
 def _source_keyboard(post: StoryPost) -> InlineKeyboardMarkup:
-    """Single CTA: open the story on our website (sources live on the site)."""
+    """CTA: open the story (or brief) — exclusive Local Lens + sources live on site."""
     return InlineKeyboardMarkup(
-        [[InlineKeyboardButton("Read on Inbound Reports", url=post.primary_url)]]
+        [[InlineKeyboardButton("Cambodia Lens + sources →", url=post.primary_url)]]
+    )
+
+
+def _brief_keyboard() -> InlineKeyboardMarkup:
+    """Primary habit CTA for batched digests."""
+    return InlineKeyboardMarkup(
+        [[InlineKeyboardButton("Open today's Brief →", url=brief_url())]]
     )
 
 
@@ -122,7 +129,7 @@ def _attribution_line(links: list[tuple[str, str]], website_url: str, limit: int
     names = [_html_escape(name) for _, name in links[:limit] if name]
     attribution = " · ".join(names) if names else "Multiple sources"
     safe_url = html.escape(website_url, quote=True)
-    return f'{attribution}\n<a href="{safe_url}">Read on Inbound Reports</a>'
+    return f'{attribution} · <a href="{safe_url}">sources + Local Lens</a>'
 
 
 def _website_url_for_cluster(
@@ -359,21 +366,30 @@ def _pick_batch_image(batched: list[BatchedStory]) -> str | None:
 def _compile_batch_message(batched: list[BatchedStory]) -> str:
     now = datetime.now(TIMEZONE).strftime("%b %d, %Y · %I:%M %p")
     separator = "━" * 20
+    brief = html.escape(brief_url(), quote=True)
     parts: list[str] = [
         f"{DIGEST_HEADER_TEXT} — {now}",
         separator,
+        f'Tease only — full sources + <b>Local Lens (Cambodia)</b> on the '
+        f'<a href="{brief}">daily Brief</a>.',
     ]
 
     for s in batched:
         parts.append("")
         safe_url = html.escape(s.website_url, quote=True)
         parts.append(f'▸ <b><a href="{safe_url}">{_html_escape(s.title)}</a></b>')
-        parts.append(_html_escape(s.summary) if s.summary else "")
+        # Keep Telegram short so the site visit still pays off
+        teaser = (s.summary or "").strip()
+        if len(teaser) > 280:
+            cut = teaser[:277].rsplit(" ", 1)[0]
+            teaser = f"{cut}…"
+        parts.append(_html_escape(teaser) if teaser else "")
         if s.source_line:
             parts.append(s.source_line)
 
     parts.append("")
     parts.append(separator)
+    parts.append(f'<a href="{brief}">→ Open today\'s Brief on Inbound Reports</a>')
     return "\n".join(parts)
 
 
@@ -433,15 +449,20 @@ async def broadcast_batched(
     batch_image = _pick_batch_image(batched)
     succeeded_ids: set[str] = set()
 
+    brief_markup = _brief_keyboard()
     try:
         if batch_image:
-            caption = f"<b>📰 Tech News — {datetime.now(TIMEZONE).strftime('%b %d, %Y · %I:%M %p')}</b>"
+            caption = (
+                f"<b>📰 Tech News — {datetime.now(TIMEZONE).strftime('%b %d, %Y · %I:%M %p')}</b>\n"
+                f"Full Brief + Local Lens on Inbound Reports"
+            )
             try:
                 photo_msg = await context.bot.send_photo(
                     chat_id=channel_id,
                     photo=batch_image,
                     caption=caption,
                     parse_mode="HTML",
+                    reply_markup=brief_markup,
                     message_thread_id=thread_id,
                 )
             except Exception:
@@ -460,10 +481,15 @@ async def broadcast_batched(
                     kwargs["message_thread_id"] = thread_id
                 if i == 0 and photo_msg is not None:
                     kwargs["reply_to_message_id"] = photo_msg.message_id
+                # Put the habit CTA on the first text segment when there is no photo button
+                if i == 0 and photo_msg is None:
+                    kwargs["reply_markup"] = brief_markup
+                elif i == len(segments) - 1 and photo_msg is not None:
+                    kwargs["reply_markup"] = brief_markup
                 await context.bot.send_message(**kwargs)
         else:
             segments = _truncate_batch(message)
-            for seg in segments:
+            for i, seg in enumerate(segments):
                 kwargs = {
                     "chat_id": channel_id,
                     "text": seg,
@@ -472,6 +498,8 @@ async def broadcast_batched(
                 }
                 if thread_id is not None:
                     kwargs["message_thread_id"] = thread_id
+                if i == 0:
+                    kwargs["reply_markup"] = brief_markup
                 await context.bot.send_message(**kwargs)
 
         for s in batched:

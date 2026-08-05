@@ -133,6 +133,70 @@ export async function getStoriesByCategory(category: string): Promise<Story[]> {
   }
 }
 
+/** Asia/Phnom_Penh calendar day bounds as ISO timestamps for PostgREST filters. */
+export function phnomPenhDayBounds(dateYmd: string): { start: string; end: string } | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateYmd)) return null
+  const start = new Date(`${dateYmd}T00:00:00+07:00`)
+  if (Number.isNaN(start.getTime())) return null
+  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000)
+  return { start: start.toISOString(), end: end.toISOString() }
+}
+
+/** Today's date string in Asia/Phnom_Penh (YYYY-MM-DD). */
+export function todayPhnomPenhYmd(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Phnom_Penh",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date())
+}
+
+/**
+ * Stories created on a Phnom Penh calendar day — used by the daily Brief page
+ * that Telegram digests link to as a recurring habit destination.
+ */
+export async function getStoriesForBrief(
+  dateYmd: string,
+  limit = 24
+): Promise<StoriesResult> {
+  if (!isSupabaseConfigured) {
+    return { stories: [], error: "Supabase is not configured" }
+  }
+
+  const bounds = phnomPenhDayBounds(dateYmd)
+  if (!bounds) {
+    return { stories: [], error: "Invalid brief date" }
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("stories")
+      .select(STORY_COLUMNS)
+      .gte("created_at", bounds.start)
+      .lt("created_at", bounds.end)
+      .order("created_at", { ascending: false })
+      .limit(limit)
+
+    if (error) {
+      console.error("Failed to fetch brief stories:", error)
+      return { stories: [], error: error.message }
+    }
+
+    // Soft fallback: if the calendar day is empty, show the latest stories so
+    // Telegram CTAs never land on a dead page.
+    if (!data?.length) {
+      return getAllStoriesSafe(limit)
+    }
+
+    const enriched = await enrichStoriesWithMedia(data)
+    return { stories: enriched, error: null }
+  } catch (err) {
+    console.error(err)
+    return { stories: [], error: "Failed to load brief" }
+  }
+}
+
 /**
  * Fetch a story by UUID id.
  * Route param is named `slug` (`/story/[slug]`) but stories have no slug column —

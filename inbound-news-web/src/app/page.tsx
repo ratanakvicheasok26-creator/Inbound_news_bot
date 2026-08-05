@@ -76,6 +76,9 @@ export default async function HomePage() {
       {/* Literacy tools */}
       <section className="border-t border-[var(--border)]">
         <div className="container py-8 md:py-10 flex flex-wrap gap-x-6 gap-y-2 text-[14px] text-[var(--text-secondary)]">
+          <Link href="/brief" className="hover:text-[var(--accent)] transition-colors">
+            Daily Brief
+          </Link>
           <Link href="/glossary" className="hover:text-[var(--accent)] transition-colors">
             Glossary
           </Link>
