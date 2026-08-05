@@ -1,5 +1,5 @@
 import { getAllStoriesSafe } from "@/lib/posts"
-import { prioritizeStoriesWithImages } from "@/lib/story-priority"
+import { prioritizeStoriesWithImages, selectFeedStories } from "@/lib/story-priority"
 import { LeadStoryCard } from "@/components/story/LeadStoryCard"
 import { StoryCard } from "@/components/story/StoryCard"
 import Link from "next/link"
@@ -7,11 +7,16 @@ import Link from "next/link"
 export const revalidate = 60
 
 export default async function HomePage() {
-  const { stories, error } = await getAllStoriesSafe(24)
-  const storiesWithMedia = await prioritizeStoriesWithImages(stories)
+  // Over-fetch then rank so multi-source / imaged stories win the lead slot
+  // even when noisier forum items are newer in the raw ingest order.
+  const { stories, error } = await getAllStoriesSafe(48)
+  const prioritized = await prioritizeStoriesWithImages(stories, {
+    resolveLimit: 32,
+  })
+  const feed = selectFeedStories(prioritized, 13)
 
-  const leadStory = storiesWithMedia[0] || null
-  const latestStories = storiesWithMedia.slice(1, 13)
+  const leadStory = feed[0] || null
+  const latestStories = feed.slice(1)
 
   if (!leadStory) {
     return (

@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { getStoriesForBrief, phnomPenhDayBounds, todayPhnomPenhYmd } from "@/lib/posts"
-import { prioritizeStoriesWithImages } from "@/lib/story-priority"
+import { prioritizeStoriesWithImages, selectFeedStories } from "@/lib/story-priority"
 import { StoryRow } from "@/components/story/StoryRow"
 
 export const revalidate = 60
@@ -40,7 +40,8 @@ export default async function BriefDatePage({
 
   const today = todayPhnomPenhYmd()
   const { stories, error } = await getStoriesForBrief(date)
-  const ranked = await prioritizeStoriesWithImages(stories)
+  const prioritized = await prioritizeStoriesWithImages(stories)
+  const ranked = selectFeedStories(prioritized, 24)
   const isToday = date === today
   const prev = shiftYmd(date, -1)
   const next = shiftYmd(date, 1)
