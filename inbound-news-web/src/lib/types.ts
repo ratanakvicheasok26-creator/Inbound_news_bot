@@ -31,6 +31,13 @@ export type StoryWithArticles = Story & {
   articles: Article[]
 }
 
+export type GlossaryCategory =
+  | "ai"
+  | "security"
+  | "infra"
+  | "business"
+  | "policy"
+
 export type GlossaryTerm = {
   slug: string
   term_en: string
@@ -39,6 +46,10 @@ export type GlossaryTerm = {
   definition_km: string
   analogy: string
   story_count: number
+  /** Topic bucket for glossary browsing (English-first). */
+  category: GlossaryCategory
+  /** Extra spellings matched in story text (e.g. LLMs for LLM). */
+  aliases?: string[]
 }
 
 export type Concept = {
