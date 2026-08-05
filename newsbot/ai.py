@@ -172,7 +172,13 @@ _TLDR_LABELS: dict[str, str] = {
 _LANGUAGE_INSTRUCTIONS: dict[str, str] = {
     "en": "Write all output text in English.",
     "km": (
-        "Write the headline, summary, key_points, and tldr in Khmer (ភាសាខ្មែរ). "
+        "Write the headline, summary, key_points, and tldr in natural, fluent Khmer (ភាសាខ្មែរ). "
+        "Keep brand names, company names, product names, people's names, and technical acronyms in "
+        "their original English form (e.g. SpaceX, ChatGPT, AI, GPU). "
+        "Write numbers as digits (e.g. 500, 7%). "
+        "If a technical term has no common Khmer equivalent, keep it in English inside the Khmer "
+        "sentence instead of switching the whole sentence to English. "
+        "Never output an entire sentence in English. "
         "Keep urgency, category, and tags values in English."
     ),
 }
