@@ -58,8 +58,8 @@ export default function AuthPage() {
         </h1>
         <p className="text-[14px] text-[var(--text-secondary)] mb-6">
           {mode === "sign-in"
-            ? "Welcome back. Track literacy progress across devices."
-            : "Save stories and sync preferences."}
+            ? "Welcome back. Preferences may sync when signed in; library and score stay on this device."
+            : "Create an account so reading preferences can sync. Library and score stay on this device."}
         </p>
 
         <div className="tier-toggle w-full mb-6">

@@ -12,7 +12,7 @@ Rotate any keys that were ever in a shared `.env`, then set them on hosts — ne
 
 | Where | Vars |
 |---|---|
-| **Railway/Render (Telegram bot)** | `TELEGRAM_BOT_TOKEN`, `GROQ_API_KEY`, `TELEGRAM_CHANNEL_ID`, `REDIS_URL`, optional Gemini/OpenRouter |
+| **Railway/Render (Telegram bot)** | `TELEGRAM_BOT_TOKEN`, `GROQ_API_KEY`, `TELEGRAM_CHANNEL_ID`, `REDIS_URL`, `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (for `/story` deep links), optional Gemini/OpenRouter / `WEBSITE_BASE_URL` |
 | **GitHub Actions secrets (website ingest)** | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GROQ_API_KEY`, optional Cohere/NewsData/Gemini/OpenRouter |
 | **Vercel (Next.js site)** | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, optional `GROQ_API_KEY` or `GROQ_API_KEYS` (Local Lens) |
 
@@ -26,6 +26,9 @@ Rotate any keys that were ever in a shared `.env`, then set them on hosts — ne
    - `002_profiles_and_auth.sql` (if using auth)
    - `003_match_stories.sql`
    - `004_profiles_insert_policy.sql`
+   - `005_image_urls.sql`
+   - `006_dedup_hardening.sql`
+   - `007_story_sources_article_unique.sql` (one article → one story)
 3. Auth: enable email provider; set Site URL + redirect allowlist to your Vercel domain.
 4. Confirm tables `articles`, `stories`, `story_sources` exist (anon SELECT policies from 001).
 

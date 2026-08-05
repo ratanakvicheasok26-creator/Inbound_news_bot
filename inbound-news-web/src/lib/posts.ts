@@ -183,10 +183,9 @@ export async function getStoriesForBrief(
       return { stories: [], error: error.message }
     }
 
-    // Soft fallback: if the calendar day is empty, show the latest stories so
-    // Telegram CTAs never land on a dead page.
+    // Honest Brief: empty calendar days stay empty (page shows empty state).
     if (!data?.length) {
-      return getAllStoriesSafe(limit)
+      return { stories: [], error: null }
     }
 
     const enriched = await enrichStoriesWithMedia(data)

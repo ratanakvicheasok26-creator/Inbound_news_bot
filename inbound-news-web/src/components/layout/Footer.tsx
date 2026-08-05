@@ -35,6 +35,8 @@ const COMPANY_LINKS = [
 
 const HELP_LINKS = [
   { href: "/brief", label: "Daily Brief" },
+  { href: "/blindspot", label: "Blindspot" },
+  { href: "/compare", label: "Compare" },
   { href: "/glossary", label: "Glossary" },
   { href: "/search", label: "Search" },
   { href: "mailto:inboundcrew82@gmail.com", label: "Contact" },

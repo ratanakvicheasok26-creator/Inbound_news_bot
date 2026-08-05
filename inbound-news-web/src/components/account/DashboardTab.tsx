@@ -11,12 +11,11 @@ export function DashboardTab() {
 
   return (
     <div className="space-y-8">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[
           { label: "Literacy score", value: profile.literacyScore.toLocaleString() },
           { label: "Day streak", value: String(profile.readingStreak.current) },
           { label: "Saved", value: String(profile.savedStoryIds.length) },
-          { label: "Followed", value: String(profile.followedConcepts.length) },
         ].map((item) => (
           <div
             key={item.label}
