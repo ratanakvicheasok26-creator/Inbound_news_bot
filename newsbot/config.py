@@ -111,6 +111,13 @@ SPAM_BLOCK_NON_LATIN_SCRIPTS: bool = os.environ.get(
     "SPAM_BLOCK_NON_LATIN_SCRIPTS", "true"
 ).lower() in ("1", "true", "yes", "on")
 
+# ---- Language ----
+# Output language for Telegram posts: "en" or "km" (Khmer).
+# Two bot deployments can share this codebase — each sets NEWS_LANGUAGE.
+NEWS_LANGUAGE: str = (os.environ.get("NEWS_LANGUAGE", "en").strip().lower() or "en")
+if NEWS_LANGUAGE not in ("en", "km"):
+    NEWS_LANGUAGE = "en"
+
 # ---- Scheduling ----
 TIMEZONE = ZoneInfo("Asia/Phnom_Penh")
 DIGEST_MIN_SOURCES: int = 2
@@ -128,9 +135,14 @@ _DEFAULT_DONATION_TEXT = (
     '<a href="https://pay.ababank.com/oRF8/puropy03">ABA Payment Link</a>'
 )
 DONATION_TEXT: str = os.environ.get("DONATION_TEXT", "").strip() or _DEFAULT_DONATION_TEXT
+_DEFAULT_DIGEST_HEADER = (
+    "📰 <b>ព័ត៌មានបច្ចេកវិទ្យា Inbound Reports</b>"
+    if NEWS_LANGUAGE == "km"
+    else "📰 <b>Inbound Reports</b>"
+)
 DIGEST_HEADER_TEXT: str = os.environ.get(
-    "DIGEST_HEADER_TEXT", "📰 <b>Inbound Reports</b>"
-).strip() or "📰 <b>Inbound Reports</b>"
+    "DIGEST_HEADER_TEXT", _DEFAULT_DIGEST_HEADER
+).strip() or _DEFAULT_DIGEST_HEADER
 
 # Public website base URL — Telegram CTAs link here instead of raw sources.
 WEBSITE_BASE_URL: str = (
@@ -178,13 +190,6 @@ NEWS_CATEGORIES: tuple[str, ...] = (
     "telecom", "mobile", "regional",
 )
 NEWS_CATEGORIES_SET: frozenset[str] = frozenset(NEWS_CATEGORIES)
-
-# ---- Language ----
-# Output language for Telegram posts: "en" or "km" (Khmer).
-# Two bot deployments can share this codebase — each sets NEWS_LANGUAGE.
-NEWS_LANGUAGE: str = (os.environ.get("NEWS_LANGUAGE", "en").strip().lower() or "en")
-if NEWS_LANGUAGE not in ("en", "km"):
-    NEWS_LANGUAGE = "en"
 
 # ---- File paths ----
 # Non-English bots use suffixed files so a Khmer and English bot sharing a

@@ -380,11 +380,22 @@ def _compile_batch_message(batched: list[BatchedStory]) -> str:
     now = datetime.now(TIMEZONE).strftime("%b %d, %Y · %I:%M %p")
     separator = "━" * 20
     brief = html.escape(brief_url(), quote=True)
+    if NEWS_LANGUAGE == "km":
+        tease_line = (
+            "ខ្លឹមសារខាងក្រោមជាបំណែកខ្លី — ប្រភពពេញលេញ និង "
+            f'<b>Local Lens (កម្ពុជា)</b> នៅលើ <a href="{brief}">ព្រឹត្តិបត្រប្រចាំថ្ងៃ</a>។'
+        )
+        brief_footer = f'<a href="{brief}">→ បើកព្រឹត្តិបត្រប្រចាំថ្ងៃនៅលើ Inbound Reports</a>'
+    else:
+        tease_line = (
+            'Tease only — full sources + <b>Local Lens (Cambodia)</b> on the '
+            f'<a href="{brief}">daily Brief</a>.'
+        )
+        brief_footer = f'<a href="{brief}">→ Open today\'s Brief on Inbound Reports</a>'
     parts: list[str] = [
         f"{DIGEST_HEADER_TEXT} — {now}",
         separator,
-        f'Tease only — full sources + <b>Local Lens (Cambodia)</b> on the '
-        f'<a href="{brief}">daily Brief</a>.',
+        tease_line,
     ]
 
     for s in batched:
@@ -402,7 +413,7 @@ def _compile_batch_message(batched: list[BatchedStory]) -> str:
 
     parts.append("")
     parts.append(separator)
-    parts.append(f'<a href="{brief}">→ Open today\'s Brief on Inbound Reports</a>')
+    parts.append(brief_footer)
     return "\n".join(parts)
 
 
