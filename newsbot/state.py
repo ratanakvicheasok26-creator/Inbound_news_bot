@@ -25,9 +25,16 @@ logger = logging.getLogger(__name__)
 
 POSTED_ID_TTL_SECONDS: int = 30 * 24 * 60 * 60
 
-_SUBSCRIBERS_KEY = "newsbot:subscribers"
-_POSTED_ID_PREFIX = "newsbot:posted:"
-_POSTED_TITLE_PREFIX = "newsbot:posted_title:"
+# Namespace by language so an English and Khmer bot sharing the same Redis
+# never collide on subscribers/posted-IDs/instance-lock. "en" keeps the
+# legacy un-suffixed keys so the existing deployment's state is preserved.
+from newsbot.config import NEWS_LANGUAGE
+
+_LANG_PREFIX: str = "" if NEWS_LANGUAGE == "en" else f"{NEWS_LANGUAGE}:"
+
+_SUBSCRIBERS_KEY = f"newsbot:{_LANG_PREFIX}subscribers"
+_POSTED_ID_PREFIX = f"newsbot:{_LANG_PREFIX}posted:"
+_POSTED_TITLE_PREFIX = f"newsbot:{_LANG_PREFIX}posted_title:"
 
 
 class StateBackend(ABC):
@@ -257,7 +264,7 @@ def reset_state() -> None:
     _state = None
 
 
-_INSTANCE_LOCK_KEY = "newsbot:instance_lock"
+_INSTANCE_LOCK_KEY = f"newsbot:instance_lock:{_LANG_PREFIX}".rstrip(":")
 _INSTANCE_LOCK_TTL_SECONDS = 900
 
 

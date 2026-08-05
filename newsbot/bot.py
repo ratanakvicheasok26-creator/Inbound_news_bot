@@ -25,6 +25,7 @@ from newsbot.config import (
     DIGEST_HEADER_TEXT,
     DIGEST_MAX_STORIES,
     MAX_URGENT_POSTS_PER_RUN,
+    NEWS_LANGUAGE,
     PREPARE_ENTRIES_TIMEOUT_SECONDS,
     TELEGRAM_CHANNEL_ID,
     TELEGRAM_THREAD_ID,
@@ -112,8 +113,13 @@ class BatchedStory:
 
 def _source_keyboard(post: StoryPost) -> InlineKeyboardMarkup:
     """Single CTA: open the story on our website (sources live on the site)."""
+    label = (
+        "អាននៅលើ Inbound Reports"
+        if NEWS_LANGUAGE == "km"
+        else "Read on Inbound Reports"
+    )
     return InlineKeyboardMarkup(
-        [[InlineKeyboardButton("Read on Inbound Reports", url=post.primary_url)]]
+        [[InlineKeyboardButton(label, url=post.primary_url)]]
     )
 
 
@@ -122,7 +128,12 @@ def _attribution_line(links: list[tuple[str, str]], website_url: str, limit: int
     names = [_html_escape(name) for _, name in links[:limit] if name]
     attribution = " · ".join(names) if names else "Multiple sources"
     safe_url = html.escape(website_url, quote=True)
-    return f'{attribution}\n<a href="{safe_url}">Read on Inbound Reports</a>'
+    read_label = (
+        "អាននៅលើ Inbound Reports"
+        if NEWS_LANGUAGE == "km"
+        else "Read on Inbound Reports"
+    )
+    return f'{attribution}\n<a href="{safe_url}">{read_label}</a>'
 
 
 def _website_url_for_cluster(
@@ -137,6 +148,7 @@ def _website_url_for_cluster(
         title=title,
         summary=summary,
         category=category,
+        language=NEWS_LANGUAGE,
     )
     return reader_url(title=title, story_id=story_id)
 
@@ -435,7 +447,12 @@ async def broadcast_batched(
 
     try:
         if batch_image:
-            caption = f"<b>📰 Tech News — {datetime.now(TIMEZONE).strftime('%b %d, %Y · %I:%M %p')}</b>"
+            caption_title = (
+                "ព័ត៌មានបច្ចេកវិទ្យា"
+                if NEWS_LANGUAGE == "km"
+                else "Tech News"
+            )
+            caption = f"<b>📰 {caption_title} — {datetime.now(TIMEZONE).strftime('%b %d, %Y · %I:%M %p')}</b>"
             try:
                 photo_msg = await context.bot.send_photo(
                     chat_id=channel_id,

@@ -139,6 +139,14 @@ class AIRouter:
         if not providers:
             logger.warning("No AI provider keys configured — all AI calls will return None")
 
+        # Khmer mode: Gemini handles Khmer far better than the Llama models,
+        # so prefer it first while keeping Groq/OpenRouter as fallback.
+        # Uses only the providers already configured — no new AI is added.
+        language = os.environ.get("NEWS_LANGUAGE", "en").strip().lower() or "en"
+        if language == "km":
+            _KM_PRIORITY = {"gemini": 0, "groq": 1, "openrouter": 2}
+            providers.sort(key=lambda p: _KM_PRIORITY.get(p.name, 9))
+
         return providers
 
     @staticmethod

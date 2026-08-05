@@ -65,6 +65,7 @@ def publish_cluster_story(
     title: str,
     summary: str,
     category: str | None = None,
+    language: str = "en",
 ) -> str | None:
     """Insert articles + story into Supabase. Returns story id or None."""
     if not cluster or not _supabase_ready():
@@ -88,7 +89,7 @@ def publish_cluster_story(
                 "source_name": entry.source_name or "",
                 "source_domain": _domain(entry.link),
                 "category": category,
-                "language": "en",
+                "language": language,
                 "image_url": getattr(entry, "image_url", None),
             }
             result = (

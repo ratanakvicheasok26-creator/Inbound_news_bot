@@ -69,6 +69,7 @@ __all__ = [
     "TELEGRAM_THREAD_ID",
     "TELEGRAM_GROUP_CHAT_ID",
     "WEBSITE_BASE_URL",
+    "NEWS_LANGUAGE",
 ]
 
 # ---- Redis (optional — enables persistent state on Railway/Render) ----
@@ -178,9 +179,19 @@ NEWS_CATEGORIES: tuple[str, ...] = (
 )
 NEWS_CATEGORIES_SET: frozenset[str] = frozenset(NEWS_CATEGORIES)
 
+# ---- Language ----
+# Output language for Telegram posts: "en" or "km" (Khmer).
+# Two bot deployments can share this codebase — each sets NEWS_LANGUAGE.
+NEWS_LANGUAGE: str = (os.environ.get("NEWS_LANGUAGE", "en").strip().lower() or "en")
+if NEWS_LANGUAGE not in ("en", "km"):
+    NEWS_LANGUAGE = "en"
+
 # ---- File paths ----
-POSTED_LOG: str = "posted_ids.json"
-SUBSCRIBERS_LOG: str = "subscribers.json"
+# Non-English bots use suffixed files so a Khmer and English bot sharing a
+# filesystem never collide on state. "en" keeps the legacy names.
+_LANG_SUFFIX: str = "" if NEWS_LANGUAGE == "en" else f"_{NEWS_LANGUAGE}"
+POSTED_LOG: str = f"posted_ids{_LANG_SUFFIX}.json"
+SUBSCRIBERS_LOG: str = f"subscribers{_LANG_SUFFIX}.json"
 
 # ---- Telegram (populated by validate_config) ----
 TELEGRAM_BOT_TOKEN: str = ""

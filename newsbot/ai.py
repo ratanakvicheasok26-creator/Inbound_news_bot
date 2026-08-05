@@ -21,6 +21,7 @@ from newsbot.config import (
     LINK_CAP_NORMAL,
     LINK_CAP_URGENT,
     NEWS_CATEGORIES_SET,
+    NEWS_LANGUAGE,
     URGENCY_LEVELS_SET,
 )
 from newsbot.feeds import Entry
@@ -145,12 +146,35 @@ _CATEGORY_LABELS: dict[str, str] = {
 }
 
 
-_URGENCY_BADGES: dict[str, str] = {
+_URGENCY_BADGES_EN: dict[str, str] = {
     "breaking": "\U0001f534 CRITICAL",
     "alert": "\U0001f7e1 ALERT",
     "analysis": "\U0001f535 Analysis",
     "market": "\U0001f4b0 Market",
     "explainer": "\U0001f4d6 Explainer",
+}
+
+_URGENCY_BADGES_KM: dict[str, str] = {
+    "breaking": "\U0001f534 បន្ទាន់",
+    "alert": "\U0001f7e1 ការជូនដំណឹង",
+    "analysis": "\U0001f535 ការវិភាគ",
+    "market": "\U0001f4b0 ទីផ្សារ",
+    "explainer": "\U0001f4d6 ការពន្យល់",
+}
+
+_URGENCY_BADGES: dict[str, str] = _URGENCY_BADGES_KM if NEWS_LANGUAGE == "km" else _URGENCY_BADGES_EN
+
+_TLDR_LABELS: dict[str, str] = {
+    "en": "TL;DR:",
+    "km": "សង្ខេបខ្លី៖",
+}
+
+_LANGUAGE_INSTRUCTIONS: dict[str, str] = {
+    "en": "Write all output text in English.",
+    "km": (
+        "Write the headline, summary, key_points, and tldr in Khmer (ភាសាខ្មែរ). "
+        "Keep urgency, category, and tags values in English."
+    ),
 }
 
 
@@ -178,7 +202,7 @@ def _render_template(data: dict) -> str:
 
     if tldr and urgency == "explainer":
         sections.append("")
-        sections.append(f"<b>TL;DR:</b> {tldr}")
+        sections.append(f"<b>{_TLDR_LABELS.get(NEWS_LANGUAGE, _TLDR_LABELS['en'])}</b> {tldr}")
 
     text = "\n".join(sections)
     if len(text) > _MAX_TELEGRAM_LENGTH:
@@ -198,6 +222,7 @@ def _build_compact_prompt(cluster: list[Entry]) -> str:
         f"- [{e.source_name}] {e.title}: {_strip_html(e.summary)[:200]}"
         for e in cluster[:5]
     )
+    language_note = _LANGUAGE_INSTRUCTIONS.get(NEWS_LANGUAGE, _LANGUAGE_INSTRUCTIONS["en"])
     return f"""You are a tech news bot writing a compact 2-3 sentence summary.
 
 Summarise the following tech news story in at most {_COMPACT_MAX_SENTENCES} sentences.
@@ -205,6 +230,7 @@ Focus on: what happened, at a high level \u2014 who, what, why it matters.
 - Plain text only, no markdown, no HTML, no bold, no headlines, no bullet points.
 - Do not simply repeat article titles.
 - Report facts only \u2014 no opinions, no speculation.
+- {language_note}
 
 Stories covering the same event:
 {headlines}"""
@@ -280,6 +306,7 @@ def _build_prompt(cluster: list[Entry], source_note: str) -> str:
         f"- [{e.source_name}] {e.title}: {_strip_html(e.summary)[:200]}"
         for e in cluster[:5]
     )
+    language_note = _LANGUAGE_INSTRUCTIONS.get(NEWS_LANGUAGE, _LANGUAGE_INSTRUCTIONS["en"])
     return f"""You are a tech news bot writing concise posts for a Telegram channel.
 
 FIRST, check: is this legitimate tech/business/security/science news, or is it spam,
@@ -313,6 +340,7 @@ Rules:
 - If sources disagree, note it in context
 - No HTML tags in any field \u2014 plain text only
 - Return ONLY valid JSON, no preamble, no markdown code fences
+- {language_note}
 {source_note}
 
 Stories covering the same event:
