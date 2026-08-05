@@ -33,7 +33,7 @@ import time as time_mod
 
 from telegram.ext import Application, CommandHandler, ContextTypes, filters
 
-from newsbot.bot import fetch_and_post, fetch_urgent_and_post
+from newsbot.bot import fetch_and_post, fetch_urgent_and_post, mirror_drain_job
 from newsbot import config
 from newsbot.config import (
     BATCH_STORIES,
@@ -170,6 +170,14 @@ async def fetch_command(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     effective_chat = getattr(update, "effective_chat", None)
     chat_id = effective_chat.id if effective_chat else 0
 
+    if config.NEWS_LANGUAGE == "km":
+        await _reply(
+            update,
+            "This channel mirrors the English Inbound Reports channel automatically — "
+            "news posts appear here moments after they're posted there.",
+        )
+        return
+
     with _fetch_cooldown_lock:
         now = time_mod.time()
         # Prune entries older than the cooldown window so the dict can't grow unbounded.
@@ -239,39 +247,57 @@ def main() -> None:
 
     # Digest at fixed AM/PM times (not a repeating interval).
     # Urgent stories keep a separate repeating check.
-    app.job_queue.run_daily(
-        poll_job,
-        time=dt.time(hour=DIGEST_SCHEDULE_HOUR_AM, minute=0, tzinfo=TIMEZONE),
-        name="digest_am",
-    )
-    app.job_queue.run_daily(
-        poll_job,
-        time=dt.time(hour=DIGEST_SCHEDULE_HOUR_PM, minute=0, tzinfo=TIMEZONE),
-        name="digest_pm",
-    )
-    app.job_queue.run_repeating(
-        urgent_job,
-        interval=URGENT_CHECK_INTERVAL_SECONDS,
-        first=URGENT_FIRST_DELAY_SECONDS,
-        name="urgent_check",
-    )
+    # Khmer mirror mode skips its own feed pipeline — it re-posts everything
+    # the English bot publishes, so both channels stay in sync.
+    is_km = config.NEWS_LANGUAGE == "km"
+    if is_km:
+        app.job_queue.run_repeating(
+            mirror_drain_job,
+            interval=10,
+            name="mirror_drain",
+        )
+        logger.info("Khmer mirror mode active — posting from the English bot's queue.")
+    else:
+        app.job_queue.run_daily(
+            poll_job,
+            time=dt.time(hour=DIGEST_SCHEDULE_HOUR_AM, minute=0, tzinfo=TIMEZONE),
+            name="digest_am",
+        )
+        app.job_queue.run_daily(
+            poll_job,
+            time=dt.time(hour=DIGEST_SCHEDULE_HOUR_PM, minute=0, tzinfo=TIMEZONE),
+            name="digest_pm",
+        )
+        app.job_queue.run_repeating(
+            urgent_job,
+            interval=URGENT_CHECK_INTERVAL_SECONDS,
+            first=URGENT_FIRST_DELAY_SECONDS,
+            name="urgent_check",
+        )
     app.job_queue.run_daily(
         donation_job,
         time=dt.time(hour=DONATION_SCHEDULE_HOUR, minute=0, tzinfo=TIMEZONE),
         name="donation",
     )
 
-    mode = "batched" if BATCH_STORIES else "individual"
-    logger.info(
-        "Bot running. %s digest at %02d:00 and %02d:00 (%s). Donation at %02d:00. "
-        "Urgent checks every %ds. Use /fetch for on-demand.",
-        mode.capitalize(),
-        DIGEST_SCHEDULE_HOUR_AM,
-        DIGEST_SCHEDULE_HOUR_PM,
-        TIMEZONE,
-        DONATION_SCHEDULE_HOUR,
-        URGENT_CHECK_INTERVAL_SECONDS,
-    )
+    if is_km:
+        logger.info(
+            "Bot running in Khmer mirror mode. Donation at %02d:00. "
+            "News posts mirror the English channel automatically.",
+            DONATION_SCHEDULE_HOUR,
+        )
+    else:
+        mode = "batched" if BATCH_STORIES else "individual"
+        logger.info(
+            "Bot running. %s digest at %02d:00 and %02d:00 (%s). Donation at %02d:00. "
+            "Urgent checks every %ds. Use /fetch for on-demand.",
+            mode.capitalize(),
+            DIGEST_SCHEDULE_HOUR_AM,
+            DIGEST_SCHEDULE_HOUR_PM,
+            TIMEZONE,
+            DONATION_SCHEDULE_HOUR,
+            URGENT_CHECK_INTERVAL_SECONDS,
+        )
 
     try:
         app.run_polling(drop_pending_updates=True)

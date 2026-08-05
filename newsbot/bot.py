@@ -32,6 +32,7 @@ from newsbot.config import (
     TIMEZONE,
 )
 from newsbot.feeds import Entry, cluster_entries, collect_new_entries, looks_urgent, normalize_title_key
+from newsbot.mirror import build_batch_payload, build_story_payload, drain, mirror_available, payload_to_entry, publish
 from newsbot.state import get_state
 from newsbot.website_links import brief_url, publish_cluster_story, reader_url
 
@@ -42,6 +43,7 @@ __all__ = [
     "broadcast_batched",
     "fetch_and_post",
     "fetch_urgent_and_post",
+    "mirror_drain_job",
 ]
 
 logger = logging.getLogger(__name__)
@@ -96,6 +98,8 @@ class StoryPost:
     image_url: str | None = None
     entry_ids: set[str] = field(default_factory=set)
     entry_titles: set[str] = field(default_factory=set)
+    entries: list[Entry] = field(default_factory=list)
+    urgent: bool = False
 
 
 @dataclass
@@ -109,6 +113,7 @@ class BatchedStory:
     image_url: str | None = None
     entry_ids: set[str] = field(default_factory=set)
     entry_titles: set[str] = field(default_factory=set)
+    entries: list[Entry] = field(default_factory=list)
 
 
 def _source_keyboard(post: StoryPost) -> InlineKeyboardMarkup:
@@ -294,6 +299,7 @@ def _cluster_to_story(
     *,
     urgent: bool,
     header: str | None = None,
+    website_url: str | None = None,
 ) -> StoryPost | None:
     try:
         text = rewrite_with_ai(cluster, urgent=urgent, header=header)
@@ -307,15 +313,18 @@ def _cluster_to_story(
         return None
 
     primary_source = links[0][1]
-    # Title for the website page — prefer first entry title
-    page_title = cluster[0].title if cluster else "Untitled"
-    # Strip HTML from rewrite for story summary storage (best-effort)
-    plain_summary = re.sub(r"<[^>]+>", "", text)[:1500]
-    website = _website_url_for_cluster(
-        cluster,
-        title=page_title,
-        summary=plain_summary,
-    )
+    if website_url:
+        website = website_url
+    else:
+        # Title for the website page — prefer first entry title
+        page_title = cluster[0].title if cluster else "Untitled"
+        # Strip HTML from rewrite for story summary storage (best-effort)
+        plain_summary = re.sub(r"<[^>]+>", "", text)[:1500]
+        website = _website_url_for_cluster(
+            cluster,
+            title=page_title,
+            summary=plain_summary,
+        )
 
     return StoryPost(
         text=text,
@@ -326,6 +335,8 @@ def _cluster_to_story(
         image_url=pick_image_url(cluster),
         entry_ids={e.id for e in cluster},
         entry_titles={e.title for e in cluster},
+        entries=cluster,
+        urgent=urgent,
     )
 
 
@@ -335,7 +346,11 @@ def _source_line(links: list[tuple[str, str]], limit: int = 3) -> str:
     return " · ".join(names)
 
 
-def _cluster_to_batched(cluster: list[Entry]) -> BatchedStory | None:
+def _cluster_to_batched(
+    cluster: list[Entry],
+    *,
+    website_url: str | None = None,
+) -> BatchedStory | None:
     try:
         if NEWS_LANGUAGE == "km":
             title, summary = rewrite_compact_khmer(cluster)
@@ -351,7 +366,7 @@ def _cluster_to_batched(cluster: list[Entry]) -> BatchedStory | None:
     if not links:
         return None
 
-    website = _website_url_for_cluster(cluster, title=title, summary=summary)
+    website = website_url or _website_url_for_cluster(cluster, title=title, summary=summary)
 
     return BatchedStory(
         title=title,
@@ -361,6 +376,7 @@ def _cluster_to_batched(cluster: list[Entry]) -> BatchedStory | None:
         image_url=pick_image_url(cluster),
         entry_ids={e.id for e in cluster},
         entry_titles={e.title for e in cluster},
+        entries=cluster,
     )
 
 
@@ -597,6 +613,7 @@ async def _run_pipeline(
         succeeded = await broadcast_stories(context, stories)
         if succeeded:
             _mark_posted(stories, succeeded)
+            _publish_mirror_stories(stories, succeeded)
             count = sum(1 for s in stories if s.entry_ids & succeeded)
             label = "urgent" if urgent else "digest"
             logger.info("Sent %d %s stor(y/ies).", count, label)
@@ -638,6 +655,7 @@ async def _run_batched_pipeline(context: ContextTypes.DEFAULT_TYPE) -> int:
             succeeded = await broadcast_stories(context, stories)
             if succeeded:
                 _mark_posted(stories, succeeded)
+                _publish_mirror_stories(stories, succeeded)
                 return 1
             return 0
 
@@ -671,6 +689,7 @@ async def _run_batched_pipeline(context: ContextTypes.DEFAULT_TYPE) -> int:
         succeeded = await broadcast_batched(context, batched)
         if succeeded:
             _mark_posted_batched(batched, succeeded)
+            _publish_mirror_batched(batched)
             count = len(batched)
             logger.info("Sent batched digest with %d stor(y/ies).", count)
             return count
@@ -698,3 +717,69 @@ async def fetch_and_post(context: ContextTypes.DEFAULT_TYPE) -> int:
 async def fetch_urgent_and_post(context: ContextTypes.DEFAULT_TYPE) -> int:
     """Hourly urgent path: keyword matches only; skip already-posted IDs."""
     return await _run_pipeline(context, urgent=True)
+
+
+def _publish_mirror_stories(stories: list[StoryPost], succeeded: set[str]) -> None:
+    """English bot: enqueue sent stories for the Khmer mirror bot."""
+    if NEWS_LANGUAGE != "en" or not mirror_available():
+        return
+    for s in stories:
+        if s.entry_ids & succeeded and s.entries:
+            publish(build_story_payload(s))
+
+
+def _publish_mirror_batched(batched: list[BatchedStory]) -> None:
+    """English bot: enqueue a sent batch digest for the Khmer mirror bot."""
+    if NEWS_LANGUAGE != "en" or not mirror_available():
+        return
+    if batched and any(s.entries for s in batched):
+        publish(build_batch_payload(batched))
+
+
+async def mirror_drain_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """km mode: re-post whatever the English bot published, in Khmer."""
+    if NEWS_LANGUAGE != "km" or not mirror_available():
+        return
+    payloads = await asyncio.to_thread(drain)
+    for payload in payloads:
+        try:
+            if payload.get("kind") == "batch":
+                await _mirror_batch(context, payload)
+            else:
+                await _mirror_story(context, payload)
+        except Exception:
+            logger.exception("Mirror: failed to process %s", payload.get("kind"))
+
+
+async def _mirror_story(context: ContextTypes.DEFAULT_TYPE, payload: dict) -> None:
+    cluster = [payload_to_entry(d) for d in payload.get("cluster", [])]
+    if not cluster:
+        return
+    story = _cluster_to_story(
+        cluster,
+        urgent=bool(payload.get("urgent")),
+        website_url=payload.get("website_url"),
+    )
+    if not story:
+        return
+    succeeded = await broadcast_stories(context, [story])
+    if succeeded:
+        _mark_posted([story], succeeded)
+        logger.info("Mirror: posted Khmer story (%d entries).", len(cluster))
+
+
+async def _mirror_batch(context: ContextTypes.DEFAULT_TYPE, payload: dict) -> None:
+    batched: list[BatchedStory] = []
+    for item in payload.get("stories", []):
+        cluster = [payload_to_entry(d) for d in item.get("cluster", [])]
+        if not cluster:
+            continue
+        story = _cluster_to_batched(cluster, website_url=item.get("website_url"))
+        if story:
+            batched.append(story)
+    if not batched:
+        return
+    succeeded = await broadcast_batched(context, batched)
+    if succeeded:
+        _mark_posted_batched(batched, succeeded)
+        logger.info("Mirror: posted Khmer batch digest (%d stories).", len(batched))
