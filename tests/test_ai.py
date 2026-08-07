@@ -2,7 +2,10 @@
 
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from newsbot.ai import (
+    KhmerTranslationFailed,
     _parse_ai_json,
     _validate_ai_data,
     _fallback_data,
@@ -471,6 +474,39 @@ class TestRewriteWithAi:
             result = rewrite_with_ai(cluster, urgent=True)
         assert "🟡 ALERT" in result
 
+    def test_km_rejects_english_success_then_translates(self):
+        cluster = [Entry(id="1", title="OpenAI launch", summary="Company news", link="http://a.com", source_name="A")]
+        english = (
+            '{"urgency": "analysis", "category": "ai", '
+            '"headline": "OpenAI launches model", '
+            '"summary": "The company released a new model today.", '
+            '"key_points": ["It is faster"], "tags": ["AI"]}'
+        )
+        mock_router = MagicMock()
+        mock_router.call.side_effect = [
+            (english, "groq"),
+            (
+                '{"headline": "OpenAI បើកដំណើរការម៉ូដែល", '
+                '"summary": "ក្រុមហ៊ុនបានចេញផ្សាយម៉ូដែលថ្មីនៅថ្ងៃនេះ។"}',
+                "gemini",
+            ),
+            ("វាលឿនជាងមុន", "gemini"),  # key_points translate
+        ]
+        with patch.dict("newsbot.ai.__dict__", {"NEWS_LANGUAGE": "km"}), \
+             patch("newsbot.ai.get_router", return_value=mock_router):
+            result = rewrite_with_ai(cluster)
+        assert "បើកដំណើរការ" in result
+        assert "OpenAI launches model" not in result
+
+    def test_km_raises_when_translation_unavailable(self):
+        cluster = [Entry(id="1", title="Fallback Test", summary="Summary", link="http://a.com", source_name="A")]
+        mock_router = MagicMock()
+        mock_router.call.return_value = (None, "none")
+        with patch.dict("newsbot.ai.__dict__", {"NEWS_LANGUAGE": "km"}), \
+             patch("newsbot.ai.get_router", return_value=mock_router):
+            with pytest.raises(KhmerTranslationFailed):
+                rewrite_with_ai(cluster)
+
 
 # --- rewrite_compact ---
 
@@ -528,22 +564,54 @@ class TestRewriteCompactKhmer:
         assert title == "ចំណងជើងខ្មែរ"
         assert summary == "សង្ខេបខ្មែរ។"
 
-    def test_khmer_compact_fallback_keeps_english_title(self):
+    def test_khmer_compact_fallback_translates_title(self):
         cluster = [Entry(id="1", title="Test", summary="Original summary text", link="http://a.com", source_name="A")]
-        mock_router = self._make_mock_router(None, "none")
-        mock_router.call.side_effect = [(None, "none"), ("សង្ខេបខ្មែរ។", "groq")]
+        mock_router = MagicMock()
+        # 1) main compact call fails, 2) title translate, 3) summary translate
+        mock_router.call.side_effect = [
+            (None, "none"),
+            ("ចំណងជើង", "groq"),
+            ("សង្ខេបខ្មែរ។", "groq"),
+        ]
         with patch.dict("newsbot.ai.__dict__", {"NEWS_LANGUAGE": "km"}), \
              patch("newsbot.ai.get_router", return_value=mock_router):
             title, summary = rewrite_compact_khmer(cluster)
-        assert title == "Test"
+        assert title == "ចំណងជើង"
         assert summary == "សង្ខេបខ្មែរ។"
+
+    def test_khmer_compact_english_json_is_retranslated(self):
+        cluster = [Entry(id="1", title="Test", summary="Original summary text", link="http://a.com", source_name="A")]
+        mock_router = MagicMock()
+        mock_router.call.side_effect = [
+            ('{"title": "English Title", "summary": "English summary."}', "groq"),
+            ("ចំណងជើង", "gemini"),
+            ("សង្ខេបខ្មែរ។", "gemini"),
+        ]
+        with patch.dict("newsbot.ai.__dict__", {"NEWS_LANGUAGE": "km"}), \
+             patch("newsbot.ai.get_router", return_value=mock_router):
+            title, summary = rewrite_compact_khmer(cluster)
+        assert title == "ចំណងជើង"
+        assert summary == "សង្ខេបខ្មែរ។"
+
+    def test_khmer_compact_raises_when_translation_fails(self):
+        cluster = [Entry(id="1", title="Test", summary="Original summary text", link="http://a.com", source_name="A")]
+        mock_router = MagicMock()
+        mock_router.call.return_value = (None, "none")
+        with patch.dict("newsbot.ai.__dict__", {"NEWS_LANGUAGE": "km"}), \
+             patch("newsbot.ai.get_router", return_value=mock_router):
+            with pytest.raises(KhmerTranslationFailed):
+                rewrite_compact_khmer(cluster)
 
     def test_khmer_compact_bad_json_falls_back(self):
         cluster = [Entry(id="1", title="Test", summary="Original summary text", link="http://a.com", source_name="A")]
-        mock_router = self._make_mock_router("not json at all", "gemini")
-        mock_router.call.side_effect = [("not json at all", "gemini"), ("translated", "groq")]
+        mock_router = MagicMock()
+        mock_router.call.side_effect = [
+            ("not json at all", "gemini"),
+            ("ចំណងជើង", "groq"),
+            ("សង្ខេបខ្មែរ", "groq"),
+        ]
         with patch.dict("newsbot.ai.__dict__", {"NEWS_LANGUAGE": "km"}), \
              patch("newsbot.ai.get_router", return_value=mock_router):
             title, summary = rewrite_compact_khmer(cluster)
-        assert title == "Test"
-        assert summary == "translated"
+        assert title == "ចំណងជើង"
+        assert summary == "សង្ខេបខ្មែរ"

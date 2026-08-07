@@ -44,8 +44,10 @@ __all__ = [
     "DIGEST_SCHEDULE_HOUR_AM",
     "DIGEST_SCHEDULE_HOUR_PM",
     "DONATION_SCHEDULE_HOUR",
+    "DONATION_SCHEDULE_DAYS",
     "DONATION_QR_IMAGE",
     "DONATION_TEXT",
+    "donation_text",
     "DIGEST_HEADER_TEXT",
     "URGENT_CHECK_INTERVAL_SECONDS",
     "URGENT_FIRST_DELAY_SECONDS",
@@ -127,6 +129,8 @@ DIGEST_MAX_STORIES: int = 10
 DIGEST_SCHEDULE_HOUR_AM: int = int(os.environ.get("DIGEST_SCHEDULE_HOUR_AM", "5"))
 DIGEST_SCHEDULE_HOUR_PM: int = int(os.environ.get("DIGEST_SCHEDULE_HOUR_PM", "17"))
 DONATION_SCHEDULE_HOUR: int = int(os.environ.get("DONATION_SCHEDULE_HOUR", "22"))  # 10 PM
+# Friday only (datetime.weekday: Mon=0 … Sun=6). Both EN and KM bots schedule this.
+DONATION_SCHEDULE_DAYS: tuple[int, ...] = (4,)
 DONATION_QR_IMAGE: str = os.environ.get("DONATION_QR_IMAGE", "qr_aba_news.jpg")
 _DEFAULT_DONATION_TEXT = (
     "<b>Support Inbound Reports</b>\n\n"
@@ -136,6 +140,36 @@ _DEFAULT_DONATION_TEXT = (
     "If you find value in having a balanced tech feed, consider supporting our work:\n\n"
     '<a href="https://pay.ababank.com/oRF8/puropy03">ABA Payment Link</a>'
 )
+# Polished Khmer caption (restored from pre-simplify donation copy).
+_DEFAULT_DONATION_TEXT_KM = (
+    "<b>ចូលរួមជាមួយយើង ដើម្បីស្វែងយល់ពីរឿងរ៉ាវគ្រប់ជ្រុងជ្រោយ</b>\n\n"
+    "Inbound Reports មិនពឹងផ្អែកលើទស្សនៈតែមួយឡើយ។\n"
+    "វេទិការបស់យើងប្រមូលព័ត៌មានបច្ចេកវិទ្យា\n"
+    "ពីប្រភពចម្រុះ និង APIs ពីបណ្តាញអ៊ីនធឺណិត\n"
+    "ដើម្បីដាក់គ្រប់មុខមាត់ទាំងអស់នៅកន្លែងតែមួយ។\n\n"
+    "<b>អត្ថប្រយោជន៍៖</b>\n\n"
+    "ចៀសផុតពីភាពរញ៉េរញ៉ៃ\n"
+    "   និងមិនជាប់ក្នុងបន្ទប់ព័ត៌មានតែមួយ\n\n"
+    "ទទួលបានទស្សនៈតុល្យភាព\n"
+    "   ជុំវិញវិស័យបច្ចេកវិទ្យា\n\n"
+    "ស្វែងយល់សាច់រឿងពេញលេញ\n"
+    "   ដើម្បីអក្ខរកម្មឌីជីថល\n\n"
+    "<b>ការដំណើរការប្រព័ន្ធនេះត្រូវការធនធាន។</b>\n"
+    "ប្រសិនបើលោកអ្នកឱ្យតម្លៃវេទិកាព័ត៌មាន\n"
+    "ដែលផ្តល់តុល្យភាព និងប្រភពចម្រុះ\n"
+    "សូមចូលរួមគាំទ្រការងាររបស់យើង!\n\n"
+    "<b>វិភាគទានតាម ABA៖</b>\n\n"
+    '<a href="https://pay.ababank.com/oRF8/puropy03">ចុចទីនេះដើម្បីបរិច្ចាក</a>'
+)
+
+
+def donation_text() -> str:
+    """Friday donation caption for this deployment (EN or KM via NEWS_LANGUAGE)."""
+    if NEWS_LANGUAGE == "km":
+        return os.environ.get("DONATION_TEXT_KM", "").strip() or _DEFAULT_DONATION_TEXT_KM
+    return os.environ.get("DONATION_TEXT", "").strip() or _DEFAULT_DONATION_TEXT
+
+
 DONATION_TEXT: str = os.environ.get("DONATION_TEXT", "").strip() or _DEFAULT_DONATION_TEXT
 _DEFAULT_DIGEST_HEADER = "📰 <b>Inbound Reports</b>"
 DIGEST_HEADER_TEXT: str = os.environ.get(

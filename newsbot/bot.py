@@ -17,7 +17,15 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.error import BadRequest, Forbidden
 from telegram.ext import ContextTypes
 
-from newsbot.ai import collect_links, pick_image_url, rewrite_compact, rewrite_compact_khmer, rewrite_with_ai, trim_for_caption
+from newsbot.ai import (
+    KhmerTranslationFailed,
+    collect_links,
+    pick_image_url,
+    rewrite_compact,
+    rewrite_compact_khmer,
+    rewrite_with_ai,
+    trim_for_caption,
+)
 from newsbot import config
 from newsbot.config import (
     BATCH_MAX_STORIES,
@@ -32,7 +40,15 @@ from newsbot.config import (
     TIMEZONE,
 )
 from newsbot.feeds import Entry, cluster_entries, collect_new_entries, looks_urgent, normalize_title_key
-from newsbot.mirror import build_batch_payload, build_story_payload, drain, mirror_available, payload_to_entry, publish
+from newsbot.mirror import (
+    build_batch_payload,
+    build_story_payload,
+    drain,
+    mirror_available,
+    payload_to_entry,
+    publish,
+    requeue,
+)
 from newsbot.state import get_state
 from newsbot.website_links import brief_url, publish_cluster_story, reader_url
 
@@ -303,6 +319,9 @@ def _cluster_to_story(
 ) -> StoryPost | None:
     try:
         text = rewrite_with_ai(cluster, urgent=urgent, header=header)
+    except KhmerTranslationFailed:
+        # Propagate so the mirror job can requeue instead of posting English.
+        raise
     except Exception:
         title = cluster[0].title if cluster else "?"
         logger.exception("Failed to generate post for '%s'", title)
@@ -357,6 +376,8 @@ def _cluster_to_batched(
         else:
             title = cluster[0].title or "Untitled"
             summary = rewrite_compact(cluster)
+    except KhmerTranslationFailed:
+        raise
     except Exception:
         title = cluster[0].title if cluster else "?"
         logger.exception("Failed to generate compact summary for '%s'", title)
@@ -747,8 +768,12 @@ async def mirror_drain_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                 await _mirror_batch(context, payload)
             else:
                 await _mirror_story(context, payload)
+        except KhmerTranslationFailed as exc:
+            logger.warning("Mirror: Khmer translation failed — %s", exc)
+            await asyncio.to_thread(requeue, payload)
         except Exception:
             logger.exception("Mirror: failed to process %s", payload.get("kind"))
+            await asyncio.to_thread(requeue, payload)
 
 
 async def _mirror_story(context: ContextTypes.DEFAULT_TYPE, payload: dict) -> None:
@@ -766,6 +791,9 @@ async def _mirror_story(context: ContextTypes.DEFAULT_TYPE, payload: dict) -> No
     if succeeded:
         _mark_posted([story], succeeded)
         logger.info("Mirror: posted Khmer story (%d entries).", len(cluster))
+    else:
+        logger.warning("Mirror: Telegram send failed for story — requeueing")
+        await asyncio.to_thread(requeue, payload)
 
 
 async def _mirror_batch(context: ContextTypes.DEFAULT_TYPE, payload: dict) -> None:
@@ -783,3 +811,6 @@ async def _mirror_batch(context: ContextTypes.DEFAULT_TYPE, payload: dict) -> No
     if succeeded:
         _mark_posted_batched(batched, succeeded)
         logger.info("Mirror: posted Khmer batch digest (%d stories).", len(batched))
+    else:
+        logger.warning("Mirror: Telegram send failed for batch — requeueing")
+        await asyncio.to_thread(requeue, payload)

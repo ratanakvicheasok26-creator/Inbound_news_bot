@@ -15,6 +15,7 @@ import os
 logger = logging.getLogger(__name__)
 
 _QUEUE_KEY = "newsbot:mirror:queue"
+_MAX_REQUEUE_ATTEMPTS = 3
 
 
 def mirror_available() -> bool:
@@ -92,6 +93,36 @@ def publish(payload: dict) -> None:
         logger.info("Mirror: enqueued %s payload for the Khmer bot.", payload.get("kind"))
     except Exception:
         logger.exception("Mirror: failed to enqueue payload")
+
+
+def requeue(payload: dict) -> bool:
+    """Re-enqueue a failed mirror item (bounded attempts). Returns True if requeued."""
+    if not mirror_available():
+        return False
+    attempts = int(payload.get("_attempts") or 0) + 1
+    if attempts > _MAX_REQUEUE_ATTEMPTS:
+        logger.error(
+            "Mirror: dropping %s after %d failed attempts",
+            payload.get("kind"),
+            attempts - 1,
+        )
+        return False
+    payload = dict(payload)
+    payload["_attempts"] = attempts
+    try:
+        client = _client()
+        client.rpush(_QUEUE_KEY, json.dumps(payload, ensure_ascii=False))
+        client.close()
+        logger.warning(
+            "Mirror: requeued %s (attempt %d/%d)",
+            payload.get("kind"),
+            attempts,
+            _MAX_REQUEUE_ATTEMPTS,
+        )
+        return True
+    except Exception:
+        logger.exception("Mirror: failed to requeue payload")
+        return False
 
 
 def drain(max_items: int = 25) -> list[dict]:

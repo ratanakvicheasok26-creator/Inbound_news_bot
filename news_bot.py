@@ -41,12 +41,13 @@ from newsbot.config import (
     DIGEST_SCHEDULE_HOUR_AM,
     DIGEST_SCHEDULE_HOUR_PM,
     DONATION_QR_IMAGE,
+    DONATION_SCHEDULE_DAYS,
     DONATION_SCHEDULE_HOUR,
-    DONATION_TEXT,
     FETCH_COOLDOWN_SECONDS,
     TIMEZONE,
     URGENT_CHECK_INTERVAL_SECONDS,
     URGENT_FIRST_DELAY_SECONDS,
+    donation_text,
     validate_config,
 )
 from newsbot.health import start_health_server
@@ -78,28 +79,22 @@ async def urgent_job(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def donation_job(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send donation message to the group chat topic at DONATION_SCHEDULE_HOUR."""
-    chat_id = config.TELEGRAM_CHANNEL_ID
-    thread_id = config.TELEGRAM_THREAD_ID
-    if chat_id is None:
-        raw = os.environ.get("TELEGRAM_CHANNEL_ID", "").strip()
-        if raw:
-            try:
-                chat_id = int(raw)
-            except (ValueError, TypeError):
-                pass
-    if thread_id is None:
-        raw = os.environ.get("TELEGRAM_THREAD_ID", "").strip()
-        if raw:
-            try:
-                thread_id = int(raw)
-            except (ValueError, TypeError):
-                pass
+    """Send Friday donation post to this bot's TELEGRAM_CHANNEL_ID.
 
+    English and Khmer are separate Railway services — each posts to its own
+    channel, with caption language from NEWS_LANGUAGE.
+    """
+    from newsbot.bot import _resolve_channel_target
+
+    chat_id, thread_id = _resolve_channel_target()
     if chat_id is None:
-        logger.warning("TELEGRAM_CHANNEL_ID not set — skipping donation.")
+        logger.warning(
+            "TELEGRAM_CHANNEL_ID not set (NEWS_LANGUAGE=%s) — skipping donation.",
+            config.NEWS_LANGUAGE,
+        )
         return
 
+    text = donation_text()
     qr_path = DONATION_QR_IMAGE
     kwargs: dict = {"chat_id": chat_id, "parse_mode": "HTML"}
     if thread_id is not None:
@@ -108,12 +103,26 @@ async def donation_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         if os.path.isfile(qr_path):
             with open(qr_path, "rb") as f:
-                await context.bot.send_photo(photo=f, caption=DONATION_TEXT, **kwargs)
+                await context.bot.send_photo(photo=f, caption=text, **kwargs)
         else:
-            await context.bot.send_message(text=DONATION_TEXT, disable_web_page_preview=True, **kwargs)
-        logger.info("Donation message sent to chat %s topic %s", chat_id, thread_id)
+            logger.warning("Donation QR image not found at %s — sending text-only.", qr_path)
+            await context.bot.send_message(
+                text=text,
+                disable_web_page_preview=True,
+                **kwargs,
+            )
+        logger.info(
+            "Donation message sent to chat %s topic %s (lang=%s)",
+            chat_id,
+            thread_id,
+            config.NEWS_LANGUAGE,
+        )
     except Exception:
-        logger.exception("Failed to send donation message to %s", chat_id)
+        logger.exception(
+            "Failed to send donation message to %s (lang=%s)",
+            chat_id,
+            config.NEWS_LANGUAGE,
+        )
 
 
 async def _reply(update: object, text: str) -> None:
@@ -280,23 +289,26 @@ def main() -> None:
             first=URGENT_FIRST_DELAY_SECONDS,
             name="urgent_check",
         )
+    # Both EN and KM deployments schedule this — each posts to its own channel.
     app.job_queue.run_daily(
         donation_job,
         time=dt.time(hour=DONATION_SCHEDULE_HOUR, minute=0, tzinfo=TIMEZONE),
+        days=DONATION_SCHEDULE_DAYS,  # Friday
         name="donation",
     )
 
     if is_km:
         logger.info(
-            "Bot running in Khmer mirror mode. Donation at %02d:00. "
+            "Bot running in Khmer mirror mode. Donation Fri at %02d:00 (%s). "
             "News posts mirror the English channel automatically.",
             DONATION_SCHEDULE_HOUR,
+            TIMEZONE,
         )
     else:
         mode = "batched" if BATCH_STORIES else "individual"
         logger.info(
-            "Bot running. %s digest at %02d:00 and %02d:00 (%s). Donation at %02d:00. "
-            "Urgent checks every %ds. Use /fetch for on-demand.",
+            "Bot running. %s digest at %02d:00 and %02d:00 (%s). "
+            "Donation Fri at %02d:00. Urgent checks every %ds. Use /fetch for on-demand.",
             mode.capitalize(),
             DIGEST_SCHEDULE_HOUR_AM,
             DIGEST_SCHEDULE_HOUR_PM,

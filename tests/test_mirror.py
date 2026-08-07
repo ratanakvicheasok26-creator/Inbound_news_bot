@@ -23,6 +23,7 @@ from newsbot.mirror import (
     entry_to_payload,
     payload_to_entry,
     publish,
+    requeue,
 )
 
 
@@ -228,3 +229,46 @@ class TestMirrorHandlers:
              patch("newsbot.bot.drain") as mock_drain:
             await mirror_drain_job(context)
             mock_drain.assert_not_called()
+
+    async def test_mirror_drain_requeues_on_khmer_failure(self):
+        from newsbot.ai import KhmerTranslationFailed
+
+        payload = self._story_payload()
+        context = MagicMock()
+        with patch.dict("newsbot.bot.__dict__", {"NEWS_LANGUAGE": "km"}), \
+             patch("newsbot.bot.mirror_available", return_value=True), \
+             patch("newsbot.bot.drain", return_value=[payload]), \
+             patch("newsbot.bot._mirror_story", side_effect=KhmerTranslationFailed("no km")), \
+             patch("newsbot.bot.requeue") as mock_requeue:
+            await mirror_drain_job(context)
+            mock_requeue.assert_called_once_with(payload)
+
+    async def test_mirror_story_requeues_when_send_fails(self):
+        e = _entry("e1")
+        with patch.dict("newsbot.bot.__dict__", {"NEWS_LANGUAGE": "km"}), \
+             patch("newsbot.bot._cluster_to_story") as mock_cluster, \
+             patch("newsbot.bot.broadcast_stories", new=AsyncMock(return_value=set())), \
+             patch("newsbot.bot.requeue") as mock_requeue:
+            mock_cluster.return_value = StoryPost(
+                text="<b>Khmer</b>", primary_url="u", primary_source="Src",
+                entries=[e], entry_ids={e.id},
+            )
+            await _mirror_story(MagicMock(), self._story_payload())
+            mock_requeue.assert_called_once()
+
+
+class TestMirrorRequeue:
+    def test_requeue_increments_attempts(self):
+        mock_client = MagicMock()
+        with patch("newsbot.mirror.mirror_available", return_value=True), \
+             patch("newsbot.mirror._client", return_value=mock_client):
+            assert requeue({"kind": "story"}) is True
+            raw = mock_client.rpush.call_args[0][1]
+            import json
+            assert json.loads(raw)["_attempts"] == 1
+
+    def test_requeue_drops_after_max(self):
+        with patch("newsbot.mirror.mirror_available", return_value=True), \
+             patch("newsbot.mirror._client") as mock_client_fn:
+            assert requeue({"kind": "story", "_attempts": 3}) is False
+            mock_client_fn.assert_not_called()

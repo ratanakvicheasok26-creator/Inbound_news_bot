@@ -33,6 +33,8 @@ __all__ = [
     "collect_links",
     "pick_image_url",
     "rewrite_with_ai",
+    "KhmerTranslationFailed",
+    "ContentRejected",
 ]
 
 logger = logging.getLogger(__name__)
@@ -46,10 +48,25 @@ _OG_IMAGE_RE = re.compile(
     r'<meta\s+[^>]*property=["\']og:image["\'][^>]*content=["\']([^"\']+)["\']',
     re.IGNORECASE,
 )
+# Khmer Unicode block — used to detect when the model ignored language instructions.
+_KHMER_RE = re.compile(r"[\u1780-\u17FF]")
 
 
 class ContentRejected(Exception):
     """Raised when the AI flags a cluster as spam/advertising/non-news content."""
+
+
+class KhmerTranslationFailed(Exception):
+    """Raised when km mode cannot produce Khmer body text (avoid posting English)."""
+
+
+def _contains_khmer(text: str) -> bool:
+    return bool(text and _KHMER_RE.search(text))
+
+
+def _khmer_body_ok(headline: str, summary: str) -> bool:
+    """Headline and summary must both include Khmer script (brands may stay Latin)."""
+    return _contains_khmer(headline) and _contains_khmer(summary)
 
 
 _TAG_RE = re.compile(r"<[^>]+>")
@@ -277,29 +294,52 @@ Stories covering the same event:
 def rewrite_compact_khmer(cluster: list[Entry]) -> tuple[str, str]:
     """Return (khmer_title, khmer_summary) for batched digests in km mode.
 
-    Falls back to the original English title plus a best-effort Khmer
-    translation of the source summary if the AI call fails.
+    Never returns an English-only body. If translation cannot produce Khmer
+    script in both fields, raises KhmerTranslationFailed so the mirror can
+    requeue instead of posting English to the Khmer channel.
     """
     prompt = _build_compact_prompt_khmer(cluster)
     router = get_router()
     raw_output, provider = router.call(prompt, max_tokens=GROQ_MAX_TOKENS)
+    primary = cluster[0]
+    en_title = (primary.title or "Untitled").strip() or "Untitled"
+    en_summary = _strip_html((primary.summary or "No summary available.")[:200])
 
+    title = ""
+    summary = ""
     if raw_output:
         try:
             data = _parse_ai_json(raw_output)
             title = _strip_html(str(data.get("title", "") or "")).strip()
             summary = _strip_html(str(data.get("summary", "") or "")).strip()
-            if title and summary:
+            if title and not summary:
+                summary = _translate_to_khmer(en_summary, router)
+            elif summary and not title:
+                title = _translate_to_khmer(en_title, router)
+            if title and summary and _khmer_body_ok(title, summary):
                 logger.info("Compact Khmer rewrite via %s", provider)
                 return title, summary
+            if title and summary:
+                # Model returned valid JSON but ignored Khmer instructions.
+                logger.warning(
+                    "Compact Khmer rewrite via %s lacked Khmer script — translating",
+                    provider,
+                )
         except Exception:
             logger.debug("Compact Khmer rewrite parse failed", exc_info=True)
+            title, summary = "", ""
 
-    primary = cluster[0]
-    fallback_summary = _translate_to_khmer(
-        _strip_html((primary.summary or "No summary available.")[:200]), router
-    )
-    return (primary.title or "Untitled"), fallback_summary
+    # Translate whichever fields still lack Khmer (AI English, partial, or total fail).
+    if not title or not _contains_khmer(title):
+        title = _translate_to_khmer(title or en_title, router)
+    if not summary or not _contains_khmer(summary):
+        summary = _translate_to_khmer(summary or en_summary, router)
+
+    if not _khmer_body_ok(title, summary):
+        raise KhmerTranslationFailed(
+            f"Compact Khmer translation failed for '{en_title[:80]}'"
+        )
+    return title, summary
 
 
 def trim_for_caption(text: str, limit: int = _CAPTION_MAX) -> str:
@@ -482,59 +522,108 @@ def _fallback_data(cluster: list[Entry], urgent: bool) -> dict:
 
 
 def _translate_to_khmer(text: str, router) -> str:
-    """Best-effort single-text Khmer translation (used on fallback paths)."""
+    """Best-effort single-text Khmer translation (used on fallback paths).
+
+    Returns the translation when it contains Khmer script; otherwise returns
+    the original text unchanged so callers can detect failure via _contains_khmer.
+    """
     if NEWS_LANGUAGE != "km" or not text:
         return text
     prompt = (
         "Translate this tech news text into Khmer (ភាសាខ្មែរ). "
         "Keep brand names, company names, product names, and numbers as-is. "
+        "Write natural Khmer — never reply with an entire English sentence. "
         "Reply with only the translation, no quotes, no commentary.\n\n"
         f"{text[:800]}"
     )
     try:
         result, provider = router.call(prompt, max_tokens=400)
         if result and result.strip():
-            logger.info("Fallback text translated to Khmer via %s", provider)
-            return _strip_html(result.strip())
+            translated = _strip_html(result.strip())
+            if _contains_khmer(translated):
+                logger.info("Fallback text translated to Khmer via %s", provider)
+                return translated
+            logger.warning(
+                "Fallback Khmer translation via %s still lacked Khmer script",
+                provider,
+            )
     except Exception:
         logger.debug("Fallback Khmer translation failed", exc_info=True)
     return text
 
 
-def _khmerize_fallback(data: dict, router) -> dict:
-    """Translate headline + summary to Khmer when the main AI rewrite failed.
+def _khmerize_list_field(items: list, router) -> list:
+    """Translate list items that lack Khmer script (key_points)."""
+    out: list = []
+    for item in items:
+        if not isinstance(item, str) or not item.strip():
+            continue
+        if _contains_khmer(item):
+            out.append(item.strip())
+        else:
+            translated = _translate_to_khmer(item.strip(), router)
+            if _contains_khmer(translated):
+                out.append(translated)
+            # Drop English-only bullets rather than posting them on KM.
+    return out
 
-    Source names, the 'Reported by' key point, and metadata stay as-is.
-    Falls back to the original English text if translation also fails.
+
+def _khmerize_fallback(data: dict, router) -> dict:
+    """Translate headline/summary/key_points/tldr to Khmer after a failed rewrite.
+
+    Returns the best-effort dict. Callers must still check _khmer_body_ok.
     """
     if NEWS_LANGUAGE != "km":
         return data
-    headline = str(data.get("headline") or "").strip()
-    summary = str(data.get("summary") or "").strip()
+    out = dict(data)
+    headline = str(out.get("headline") or "").strip()
+    summary = str(out.get("summary") or "").strip()
     if not headline and not summary:
-        return data
-    prompt = (
-        "Translate the following tech news into Khmer (ភាសាខ្មែរ). "
-        "Keep brand names, company names, product names, and numbers as-is. "
-        'Reply with ONLY valid JSON like {"headline": "...", "summary": "..."}, '
-        "no preamble, no markdown fences.\n\n"
-        f"Headline: {headline}\nSummary: {summary[:500]}"
-    )
-    try:
-        result, provider = router.call(prompt, max_tokens=400)
-        if result:
-            parsed = _parse_ai_json(result)
-            if isinstance(parsed, dict):
-                out = dict(data)
-                if isinstance(parsed.get("headline"), str) and parsed["headline"].strip():
-                    out["headline"] = _strip_html(parsed["headline"].strip())
-                if isinstance(parsed.get("summary"), str) and parsed["summary"].strip():
-                    out["summary"] = _strip_html(parsed["summary"].strip())
-                logger.info("Fallback headline/summary translated to Khmer via %s", provider)
-                return out
-    except Exception:
-        logger.debug("Fallback Khmer translation failed", exc_info=True)
-    return data
+        return out
+
+    if not _khmer_body_ok(headline, summary):
+        prompt = (
+            "Translate the following tech news into Khmer (ភាសាខ្មែរ). "
+            "Keep brand names, company names, product names, and numbers as-is. "
+            "Never output an entire sentence in English. "
+            'Reply with ONLY valid JSON like {"headline": "...", "summary": "..."}, '
+            "no preamble, no markdown fences.\n\n"
+            f"Headline: {headline}\nSummary: {summary[:500]}"
+        )
+        try:
+            result, provider = router.call(prompt, max_tokens=400)
+            if result:
+                parsed = _parse_ai_json(result)
+                if isinstance(parsed, dict):
+                    if isinstance(parsed.get("headline"), str) and parsed["headline"].strip():
+                        out["headline"] = _strip_html(parsed["headline"].strip())
+                    if isinstance(parsed.get("summary"), str) and parsed["summary"].strip():
+                        out["summary"] = _strip_html(parsed["summary"].strip())
+                    logger.info(
+                        "Fallback headline/summary translated to Khmer via %s", provider
+                    )
+        except Exception:
+            logger.debug("Fallback Khmer JSON translation failed", exc_info=True)
+
+        # Field-by-field rescue if JSON translate still left Latin-only text.
+        if not _contains_khmer(str(out.get("headline") or "")):
+            out["headline"] = _translate_to_khmer(headline, router)
+        if not _contains_khmer(str(out.get("summary") or "")):
+            out["summary"] = _translate_to_khmer(summary, router)
+
+    key_points = out.get("key_points")
+    if isinstance(key_points, list) and key_points:
+        out["key_points"] = _khmerize_list_field(key_points, router)
+
+    tldr = str(out.get("tldr") or "").strip()
+    if tldr and not _contains_khmer(tldr):
+        translated_tldr = _translate_to_khmer(tldr, router)
+        if _contains_khmer(translated_tldr):
+            out["tldr"] = translated_tldr
+        else:
+            out["tldr"] = ""
+
+    return out
 
 
 def rewrite_with_ai(cluster: list[Entry], urgent: bool = False, header: str | None = None) -> str:
@@ -597,8 +686,22 @@ def rewrite_with_ai(cluster: list[Entry], urgent: bool = False, header: str | No
                 "tags": [],
             }
 
-    if used_fallback:
-        data = _khmerize_fallback(data, router)
+    # km: gate English "success" AND English fallbacks — never post Latin-only bodies.
+    if NEWS_LANGUAGE == "km":
+        headline = str(data.get("headline") or "")
+        summary = str(data.get("summary") or "")
+        if used_fallback or not _khmer_body_ok(headline, summary):
+            if not used_fallback:
+                logger.warning(
+                    "AI rewrite via %s lacked Khmer script — forcing translation",
+                    provider,
+                )
+            data = _khmerize_fallback(data, router)
+        if not _khmer_body_ok(str(data.get("headline") or ""), str(data.get("summary") or "")):
+            title = cluster[0].title if cluster else "?"
+            raise KhmerTranslationFailed(
+                f"Khmer translation failed for '{str(title)[:80]}'"
+            )
 
     data["source_name"] = source_name_str
 
