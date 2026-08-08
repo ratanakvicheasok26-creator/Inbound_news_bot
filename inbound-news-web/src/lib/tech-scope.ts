@@ -1,5 +1,4 @@
 import { CATEGORIES } from "@/lib/categories"
-import type { Story } from "@/lib/types"
 
 /** Canonical tech topic slugs used across the product. */
 export const TECH_CATEGORY_SLUGS: Set<string> = new Set(

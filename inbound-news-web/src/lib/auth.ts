@@ -13,8 +13,3 @@ export async function signIn(email: string, password: string) {
 export async function signOut() {
   return supabase.auth.signOut()
 }
-
-export async function getCurrentUser() {
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
-}

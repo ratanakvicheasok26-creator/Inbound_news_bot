@@ -3,6 +3,7 @@ import {
   type CompareArticleInput,
   type ComparisonResult,
 } from "@/lib/compare-analysis"
+import { getClientIp, rateLimit } from "@/lib/rate-limit"
 
 const GROQ_KEYS = [
   ...(process.env.GROQ_API_KEYS || "").split(","),
@@ -143,6 +144,14 @@ Content: ${content}`
 
 export async function POST(req: NextRequest) {
   try {
+    const limit = rateLimit(`compare:${getClientIp(req)}`, 15, 60_000)
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: "Too many requests" },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfter) } }
+      )
+    }
+
     const body = await req.json().catch(() => null)
     const a = body?.a as CompareArticleInput | undefined
     const b = body?.b as CompareArticleInput | undefined

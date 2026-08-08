@@ -100,17 +100,38 @@ def extract_image_url(article: dict[str, Any]) -> str | None:
     return None
 
 
+_MAX_REDIRECTS = 4
+
+
 def fetch_og_image(page_url: str, timeout: float = 4.0) -> str | None:
-    """Fetch og:image / twitter:image from an article page."""
+    """Fetch og:image / twitter:image from an article page.
+
+    Redirects are followed manually and each hop's host is re-validated, so a
+    30x from an allowed host to an internal one (e.g. cloud metadata at
+    169.254.169.254) cannot bypass the private-host guard.
+    """
     if not is_valid_image_url(page_url):
         return None
     try:
-        resp = httpx.get(
-            page_url,
-            timeout=timeout,
-            follow_redirects=True,
-            headers={"User-Agent": "InboundNewsBot/1.0 (image discovery)"},
-        )
+        url = page_url
+        resp = None
+        with httpx.Client(timeout=timeout, follow_redirects=False) as client:
+            for _ in range(_MAX_REDIRECTS + 1):
+                if not is_valid_image_url(url):
+                    return None
+                resp = client.get(
+                    url,
+                    headers={"User-Agent": "InboundNewsBot/1.0 (image discovery)"},
+                )
+                if resp.is_redirect:
+                    location = resp.headers.get("location")
+                    if not location:
+                        return None
+                    url = str(httpx.URL(url).join(location))
+                    continue
+                break
+        if resp is None:
+            return None
         resp.raise_for_status()
         html = resp.text[:120_000]
         for pattern in (_OG_IMAGE_RE, _TWITTER_IMAGE_RE):

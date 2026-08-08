@@ -31,19 +31,6 @@ export interface ComparisonResult {
 
 export const NOT_COVERED = "Not covered in the available content."
 
-export const EMPTY_COMPARISON: ComparisonResult = {
-  shared: [],
-  differencesA: [],
-  differencesB: [],
-  perspectives: [],
-  factsA: [],
-  factsB: [],
-  agreement: [],
-  disagreement: [],
-  summary: "",
-  aiGenerated: false,
-}
-
 function splitSentences(text: string): string[] {
   return text
     .split(/(?<=[.!?])\s+/)

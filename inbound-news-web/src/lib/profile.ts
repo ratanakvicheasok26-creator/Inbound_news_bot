@@ -128,10 +128,6 @@ export function toggleFollowedConcept(slug: string): boolean {
   return !followed
 }
 
-export function isConceptFollowed(slug: string): boolean {
-  return getProfile().followedConcepts.includes(slug)
-}
-
 export function updatePreferences(prefs: Partial<UserProfile["preferences"]>): void {
   const profile = getProfile()
   saveProfile({ preferences: { ...profile.preferences, ...prefs } })
@@ -172,12 +168,4 @@ export async function loadPreferencesFromSupabase(): Promise<void> {
       telegramDigest: data.telegram_digest ?? false,
     },
   })
-}
-
-export async function getDisplayName(): Promise<string> {
-  if (typeof window === "undefined") return "Reader"
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return "Guest Reader"
-  const { data } = await supabase.from("profiles").select("display_name").eq("id", user.id).single()
-  return data?.display_name || user.email?.split("@")[0] || "Reader"
 }

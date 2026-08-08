@@ -90,13 +90,17 @@ export function StoryContent({ story }: StoryContentProps) {
   const [activeTier, setActiveTier] = useState<"eli5" | "standard" | "deep">(initialTier)
   const [saved, setSaved] = useState(() => isStorySaved(story.id))
 
+  // Re-sync saved state when navigating between stories without a remount
+  // (render-time adjustment instead of a setState-in-effect cascade).
+  const [prevStoryId, setPrevStoryId] = useState(story.id)
+  if (prevStoryId !== story.id) {
+    setPrevStoryId(story.id)
+    setSaved(isStorySaved(story.id))
+  }
+
   useEffect(() => {
     trackStoryRead({ id: story.id, title: story.title, category: story.category || "" })
   }, [story.id, story.title, story.category])
-
-  useEffect(() => {
-    setSaved(isStorySaved(story.id))
-  }, [story.id])
 
   const handleTierChange = useCallback((tier: "eli5" | "standard" | "deep") => {
     setActiveTier((prev) => {

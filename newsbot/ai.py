@@ -13,8 +13,6 @@ import re
 import time
 from typing import Any
 
-import httpx
-
 from newsbot.config import (
     DIGEST_MIN_SOURCES,
     GROQ_MAX_TOKENS,
@@ -44,10 +42,6 @@ _CAPTION_MAX: int = 1024
 
 _REQUIRED_JSON_KEYS = ("urgency", "headline", "summary", "category")
 
-_OG_IMAGE_RE = re.compile(
-    r'<meta\s+[^>]*property=["\']og:image["\'][^>]*content=["\']([^"\']+)["\']',
-    re.IGNORECASE,
-)
 # Khmer Unicode block — used to detect when the model ignored language instructions.
 _KHMER_RE = re.compile(r"[\u1780-\u17FF]")
 
@@ -363,19 +357,15 @@ def collect_links(cluster: list[Entry], urgent: bool = False) -> list[tuple[str,
 
 
 def _fetch_og_image(url: str) -> str | None:
-    """Fallback: fetch og:image from the article page when RSS has no image."""
-    try:
-        resp = httpx.get(
-            url,
-            timeout=3,
-            follow_redirects=True,
-            headers={"User-Agent": "InboundNewsBot/1.0"},
-        )
-        resp.raise_for_status()
-        match = _OG_IMAGE_RE.search(resp.text)
-        return match.group(1) if match else None
-    except Exception:
-        return None
+    """Fallback: fetch og:image from the article page when RSS has no image.
+
+    Delegates to workers.images.fetch_og_image, which rejects private/loopback
+    hosts (SSRF guard) before making the request. A malicious feed link could
+    otherwise point at internal services (e.g. cloud metadata at 169.254.169.254).
+    """
+    from workers.images import fetch_og_image
+
+    return fetch_og_image(url)
 
 
 def pick_image_url(cluster: list[Entry]) -> str | None:

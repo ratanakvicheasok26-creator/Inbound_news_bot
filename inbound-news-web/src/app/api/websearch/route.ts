@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { getClientIp, rateLimit } from "@/lib/rate-limit"
 
 const EXA_API_KEY = process.env.EXA_API_KEY?.trim() || ""
 const EXA_URL = "https://api.exa.ai/search"
@@ -40,6 +41,14 @@ export async function GET(req: NextRequest) {
   }
   if (q.length > 100) {
     return NextResponse.json({ results: [], available: true })
+  }
+
+  const limit = rateLimit(`websearch:${getClientIp(req)}`, 20, 60_000)
+  if (!limit.ok) {
+    return NextResponse.json(
+      { results: [], available: true, error: "Too many requests" },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
+    )
   }
 
   try {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { getClientIp, rateLimit } from "@/lib/rate-limit"
 
 const GROQ_KEYS = [
   ...(process.env.GROQ_API_KEYS || "").split(","),
@@ -69,6 +70,14 @@ async function callGroq(prompt: string): Promise<string> {
 
 export async function POST(req: NextRequest) {
   try {
+    const limit = rateLimit(`local-lens:${getClientIp(req)}`, 20, 60_000)
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: "Too many requests", fallback: true },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfter) } }
+      )
+    }
+
     const { title, summary, category } = await req.json()
 
     if (typeof title !== "string" || !title.trim()) {
