@@ -8,6 +8,7 @@ import { getProfile, loadPreferencesFromSupabase } from "@/lib/profile"
 import { DashboardTab } from "@/components/account/DashboardTab"
 import { LibraryTab } from "@/components/account/LibraryTab"
 import { SettingsTab } from "@/components/account/SettingsTab"
+import { SyncSavesPrompt } from "@/components/account/SyncSavesPrompt"
 import type { User } from "@supabase/supabase-js"
 
 const tabs = [
@@ -21,24 +22,36 @@ export default function AccountPage() {
   const [activeTab, setActiveTab] = useState<"dashboard" | "library" | "settings">("dashboard")
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [profileTick, setProfileTick] = useState(0)
   const profile = getProfile()
   const stealthOn = profile.preferences.stealthMode
+  const hasSaves = profile.savedStoryIds.length > 0
 
   useEffect(() => {
     let mounted = true
     async function check() {
-      const { data: { user: u } } = await supabase.auth.getUser()
+      const {
+        data: { user: u },
+      } = await supabase.auth.getUser()
       if (!mounted) return
       setUser(u)
       setLoading(false)
       if (u) await loadPreferencesFromSupabase()
+      setProfileTick((t) => t + 1)
     }
     check()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
-      if (session?.user) loadPreferencesFromSupabase()
+      if (session?.user) {
+        loadPreferencesFromSupabase().then(() => setProfileTick((t) => t + 1))
+      }
     })
-    return () => { mounted = false; subscription.unsubscribe() }
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   async function handleSignOut() {
@@ -55,26 +68,8 @@ export default function AccountPage() {
     )
   }
 
-  if (!user) {
-    return (
-      <div className="container container-xs py-16 text-center">
-        <h1 className="page-title mb-3">Account</h1>
-        <p className="text-[15px] text-[var(--text-secondary)] mb-8">
-          Sign in so reading preferences can sync. Library, score, and saves stay on this device.
-        </p>
-        <Link href="/auth" className="btn-primary">
-          Sign in / Sign up
-        </Link>
-        <div className="mt-6">
-          <Link href="/" className="text-[13px] text-[var(--text-secondary)] hover:text-[var(--accent)]">
-            ← Continue as guest
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
-  const displayName = user.email?.split("@")[0] || "Reader"
+  const displayName = user?.email?.split("@")[0] || "Guest Reader"
+  const liveProfile = profileTick >= 0 ? getProfile() : profile
 
   return (
     <div className="container container-lg py-10 md:py-14">
@@ -83,7 +78,13 @@ export default function AccountPage() {
           <h1 className="page-title mb-2">Account</h1>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[14px] font-semibold">{displayName}</span>
-            <span className="text-[13px] text-[var(--text-secondary)]">{user.email}</span>
+            {user?.email ? (
+              <span className="text-[13px] text-[var(--text-secondary)]">{user.email}</span>
+            ) : (
+              <span className="text-[13px] text-[var(--text-secondary)]">
+                On this device · no sign-in required
+              </span>
+            )}
             {stealthOn && (
               <span className="meta-text text-[var(--accent)] bg-[var(--red-subtle-bg)] px-2 py-0.5 rounded-full">
                 Stealth
@@ -93,13 +94,23 @@ export default function AccountPage() {
         </div>
         <div className="flex items-center gap-2">
           <span className="meta-text bg-[var(--surface)] border border-[var(--border)] px-3 py-1.5 rounded-full">
-            {profile.literacyScore} pts
+            {liveProfile.literacyScore} pts
           </span>
-          <button type="button" onClick={handleSignOut} className="btn-ghost">
-            Sign out
-          </button>
+          {user ? (
+            <button type="button" onClick={handleSignOut} className="btn-ghost">
+              Sign out
+            </button>
+          ) : (
+            <Link href="/auth" className="btn-primary text-[13px] h-9 px-4">
+              Sign in
+            </Link>
+          )}
         </div>
       </div>
+
+      {!user && hasSaves && (
+        <SyncSavesPrompt variant="banner" force />
+      )}
 
       <div className="tier-toggle tier-toggle--full mb-8 max-w-md">
         {tabs.map((tab) => (
@@ -116,7 +127,9 @@ export default function AccountPage() {
 
       {activeTab === "dashboard" && <DashboardTab />}
       {activeTab === "library" && <LibraryTab />}
-      {activeTab === "settings" && <SettingsTab user={user} onSignOut={handleSignOut} />}
+      {activeTab === "settings" && (
+        <SettingsTab user={user} onSignOut={handleSignOut} />
+      )}
     </div>
   )
 }

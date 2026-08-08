@@ -24,6 +24,7 @@ import { StoryImage } from "@/components/story/StoryImage"
 import { ArrowLeft, Bookmark, BookmarkCheck, ExternalLink, GitCompareArrows, Newspaper } from "lucide-react"
 import Link from "next/link"
 import { summarizeCoverage } from "@/lib/outlet-roles"
+import { SyncSavesPrompt } from "@/components/account/SyncSavesPrompt"
 
 interface StoryContentProps {
   story: StoryWithArticles
@@ -132,6 +133,8 @@ export function StoryContent({ story }: StoryContentProps) {
           Back to feed
         </Link>
       </div>
+
+      <SyncSavesPrompt variant="banner" />
 
       <header className="pb-8 border-b border-[var(--border)]">
         <StoryImage

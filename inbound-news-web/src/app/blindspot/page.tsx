@@ -1,4 +1,4 @@
-import { getAllStories } from "@/lib/posts"
+import { getAllStoriesSafe } from "@/lib/posts"
 import { StoryRow } from "@/components/story/StoryRow"
 import { BlindspotCard } from "@/components/story/BlindspotCard"
 import { blindspotScore } from "@/lib/outlet-roles"
@@ -12,10 +12,15 @@ export const metadata = {
 }
 
 export default async function BlindspotPage() {
-  const stories = filterTechStories(await getAllStories(80))
+  const { stories: raw, error } = await getAllStoriesSafe(80)
+  const stories = filterTechStories(raw)
   const underreported = [...stories]
     .filter((s) => (s.source_count ?? 0) === 1)
-    .sort((a, b) => blindspotScore(b) - blindspotScore(a) || Date.parse(b.created_at || "") - Date.parse(a.created_at || ""))
+    .sort(
+      (a, b) =>
+        blindspotScore(b) - blindspotScore(a) ||
+        Date.parse(b.created_at || "") - Date.parse(a.created_at || "")
+    )
   const featured = underreported.slice(0, 4)
 
   return (
@@ -34,7 +39,12 @@ export default async function BlindspotPage() {
           singleton; the ones worth a look.
         </p>
 
-        {featured.length === 0 ? (
+        {error ? (
+          <div className="empty-state py-8 mb-10">
+            <p className="page-title mb-2">Could not load blindspots</p>
+            <p>{error}</p>
+          </div>
+        ) : featured.length === 0 ? (
           <p className="font-mono text-[12px] text-[var(--text-secondary)] mb-10">
             No underreported clusters yet.
           </p>
@@ -56,22 +66,26 @@ export default async function BlindspotPage() {
           </div>
         )}
 
-        <div className="section-header">
-          <h2 className="section-title">All underreported stories</h2>
-          <span className="font-mono text-[10px] text-[var(--text-secondary)]">
-            {underreported.length} stories
-          </span>
-        </div>
-        {underreported.length === 0 ? (
-          <div className="empty-state py-8">
-            <p>No underreported clusters yet.</p>
-          </div>
-        ) : (
-          <div>
-            {underreported.map((story) => (
-              <StoryRow key={story.id} story={story} />
-            ))}
-          </div>
+        {!error && (
+          <>
+            <div className="section-header">
+              <h2 className="section-title">All underreported stories</h2>
+              <span className="font-mono text-[10px] text-[var(--text-secondary)]">
+                {underreported.length} stories
+              </span>
+            </div>
+            {underreported.length === 0 ? (
+              <div className="empty-state py-8">
+                <p>No underreported clusters yet.</p>
+              </div>
+            ) : (
+              <div>
+                {underreported.map((story) => (
+                  <StoryRow key={story.id} story={story} />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>

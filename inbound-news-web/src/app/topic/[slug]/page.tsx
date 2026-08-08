@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { getStoriesByCategory } from "@/lib/posts"
+import { getStoriesByCategorySafe } from "@/lib/posts"
 import { prioritizeStoriesWithImages } from "@/lib/story-priority"
 import { CATEGORIES, getCategoryLabel } from "@/lib/categories"
 import { StoryRow } from "@/components/story/StoryRow"
@@ -17,7 +17,11 @@ export default async function TopicPage({
     notFound()
   }
 
-  const stories = await prioritizeStoriesWithImages(await getStoriesByCategory(slug))
+  const { stories: raw, error } = await getStoriesByCategorySafe(slug)
+  const stories = await prioritizeStoriesWithImages(raw, {
+    resolveLimit: 4,
+    concurrency: 2,
+  })
   const label = getCategoryLabel(slug)
 
   return (
@@ -29,7 +33,12 @@ export default async function TopicPage({
         </span>
       </div>
 
-      {stories.length === 0 ? (
+      {error ? (
+        <div className="empty-state">
+          <p className="page-title mb-2">Could not load this desk</p>
+          <p>{error}</p>
+        </div>
+      ) : stories.length === 0 ? (
         <div className="empty-state">
           <p>Nothing on this desk yet.</p>
         </div>

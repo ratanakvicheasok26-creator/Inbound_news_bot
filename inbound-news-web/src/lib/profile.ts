@@ -1,4 +1,5 @@
 import { supabase } from "./supabase"
+import { markSyncPromptPending } from "./sync-prompt"
 
 const STORAGE_KEY = "ib_profile"
 
@@ -105,6 +106,11 @@ export function toggleSavedStory(id: string): boolean {
     ? profile.savedStoryIds.filter((s) => s !== id)
     : [...profile.savedStoryIds, id]
   saveProfile({ savedStoryIds: next })
+  if (!saved && typeof window !== "undefined") {
+    void supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) markSyncPromptPending()
+    })
+  }
   return !saved
 }
 

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { getAllStories } from "@/lib/posts"
+import { getAllStoriesSafe } from "@/lib/posts"
+import { filterTechStories } from "@/lib/tech-scope"
 import { StoryRow } from "@/components/story/StoryRow"
 import { ArrowLeft, TrendingUp } from "lucide-react"
 
@@ -65,11 +66,17 @@ export default async function ConceptPage({ params }: { params: Promise<{ slug: 
 
   if (!concept) notFound()
 
-  const stories = await getAllStories()
-  const relatedStories = stories.filter((s) =>
-    s.tags?.some((t) => t.toLowerCase().includes(canonicalSlug) || t.toLowerCase().includes(slug)) ||
-    s.title.toLowerCase().includes(concept.name.toLowerCase())
-  ).slice(0, 10)
+  const { stories, error } = await getAllStoriesSafe(80)
+  const relatedStories = filterTechStories(stories)
+    .filter(
+      (s) =>
+        s.tags?.some(
+          (t) =>
+            t.toLowerCase().includes(canonicalSlug) ||
+            t.toLowerCase().includes(slug)
+        ) || s.title.toLowerCase().includes(concept.name.toLowerCase())
+    )
+    .slice(0, 10)
 
   return (
     <div className="container">
@@ -93,18 +100,6 @@ export default async function ConceptPage({ params }: { params: Promise<{ slug: 
         </p>
         <div className="mt-4 font-mono text-[11px] text-[var(--text-secondary)]">
           {relatedStories.length} related stor{relatedStories.length !== 1 ? "ies" : "y"}
-        </div>
-      </section>
-
-      {/* Coverage Volume Sparkline (placeholder) */}
-      <section className="py-8 border-b border-[var(--border)]">
-        <div className="section-header">
-          <h2 className="section-title">Coverage volume (12 months)</h2>
-        </div>
-        <div className="h-[120px] bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center">
-          <span className="font-mono text-[11px] text-[var(--text-secondary)] uppercase tracking-wider">
-            Coverage chart — coming soon
-          </span>
         </div>
       </section>
 
@@ -132,7 +127,11 @@ export default async function ConceptPage({ params }: { params: Promise<{ slug: 
         <div className="section-header">
           <h2 className="section-title">Related stories</h2>
         </div>
-        {relatedStories.length === 0 ? (
+        {error ? (
+          <div className="empty-state py-8">
+            <p>Could not load related stories: {error}</p>
+          </div>
+        ) : relatedStories.length === 0 ? (
           <div className="empty-state py-8">
             <p>No related stories yet.</p>
           </div>

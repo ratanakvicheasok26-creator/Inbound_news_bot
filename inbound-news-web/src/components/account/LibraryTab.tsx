@@ -6,6 +6,8 @@ import { Bookmark, X } from "lucide-react"
 import { getProfile, toggleSavedStory, toggleFollowedConcept } from "@/lib/profile"
 import { getCategoryLabel } from "@/lib/categories"
 import { formatDistanceToNow } from "@/lib/utils"
+import { SyncSavesPrompt } from "@/components/account/SyncSavesPrompt"
+import { supabase } from "@/lib/auth"
 import type { Story } from "@/lib/types"
 
 export function LibraryTab() {
@@ -13,6 +15,11 @@ export function LibraryTab() {
   const [concepts, setConcepts] = useState<string[]>(() => getProfile().followedConcepts)
   const [stories, setStories] = useState<Record<string, Story>>({})
   const [loading, setLoading] = useState(false)
+  const [isGuest, setIsGuest] = useState(true)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setIsGuest(!user))
+  }, [])
 
   useEffect(() => {
     if (savedIds.length === 0) return
@@ -31,7 +38,9 @@ export function LibraryTab() {
       }
     }
     fetchStories()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [savedIds])
 
   function handleUnsave(id: string) {
@@ -46,6 +55,8 @@ export function LibraryTab() {
 
   return (
     <div>
+      {isGuest && savedIds.length > 0 && <SyncSavesPrompt variant="inline" force />}
+
       <div className="mb-10">
         <div className="section-header">
           <h2 className="section-title">Saved stories</h2>

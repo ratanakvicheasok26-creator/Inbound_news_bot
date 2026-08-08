@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { getProfile, updatePreferences, resetProfile, syncPreferencesToSupabase } from "@/lib/profile"
 import type { User } from "@supabase/supabase-js"
 
 interface SettingsTabProps {
-  user: User
+  user: User | null
   onSignOut: () => void
 }
 
@@ -75,7 +76,7 @@ export function SettingsTab({ user, onSignOut }: SettingsTabProps) {
     const next = { ...prefs, [key]: value }
     setPrefs(next)
     updatePreferences({ [key]: value })
-    syncPreferencesToSupabase()
+    if (user) syncPreferencesToSupabase()
   }
 
   function handleDelete() {
@@ -121,12 +122,24 @@ export function SettingsTab({ user, onSignOut }: SettingsTabProps) {
 
       <div className="py-4">
         <p className="meta-text mb-2">Account</p>
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-[14px] text-[var(--text-secondary)] truncate">{user.email}</span>
-          <button type="button" onClick={onSignOut} className="btn-ghost shrink-0">
-            Sign out
-          </button>
-        </div>
+        {user ? (
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[14px] text-[var(--text-secondary)] truncate">{user.email}</span>
+            <button type="button" onClick={onSignOut} className="btn-ghost shrink-0">
+              Sign out
+            </button>
+          </div>
+        ) : (
+          <div>
+            <p className="text-[13px] text-[var(--text-secondary)] mb-3">
+              Optional — sign in to sync reading preferences across devices. Library and score stay
+              on this browser for now.
+            </p>
+            <Link href="/auth" className="btn-primary text-[13px] h-9 px-4 inline-flex items-center">
+              Sign in / Sign up
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="py-4">

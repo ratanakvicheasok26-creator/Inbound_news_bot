@@ -83,7 +83,7 @@ export default async function SourcePage({ params }: { params: Promise<{ slug: s
         </a>
       </section>
 
-      {/* Trust Radar */}
+      {/* Trust Radar — editorial estimates, not live measured scores */}
       <section className="py-8 border-b border-[var(--border)]">
         <div className="section-header">
           <h2 className="section-title">Trust radar</h2>
@@ -91,6 +91,10 @@ export default async function SourcePage({ params }: { params: Promise<{ slug: s
             {avgScore}/5
           </span>
         </div>
+        <p className="text-[13px] text-[var(--text-secondary)] mb-4 max-w-[58ch]">
+          Editorial estimates for this profile — not live audited scores. Use as orientation,
+          then read the outlet&apos;s own coverage below.
+        </p>
         <div className="grid gap-4 md:grid-cols-2">
           {[
             { label: "Primary Sourcing", score: scores.primary_sourcing },

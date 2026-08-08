@@ -123,7 +123,16 @@ export async function getAllStoriesSafe(limit = 60): Promise<StoriesResult> {
 }
 
 export async function getStoriesByCategory(category: string): Promise<Story[]> {
-  if (!isSupabaseConfigured) return []
+  const { stories } = await getStoriesByCategorySafe(category)
+  return stories
+}
+
+export async function getStoriesByCategorySafe(
+  category: string
+): Promise<StoriesResult> {
+  if (!isSupabaseConfigured) {
+    return { stories: [], error: "Supabase is not configured" }
+  }
 
   try {
     const { data, error } = await supabase
@@ -135,12 +144,12 @@ export async function getStoriesByCategory(category: string): Promise<Story[]> {
 
     if (error) {
       console.error("Failed to fetch stories by category:", error)
-      return []
+      return { stories: [], error: error.message }
     }
-    return enrichStoriesWithMedia(data || [])
+    return { stories: await enrichStoriesWithMedia(data || []), error: null }
   } catch (err) {
     console.error(err)
-    return []
+    return { stories: [], error: "Failed to load topic stories" }
   }
 }
 
@@ -275,7 +284,7 @@ export async function getStoryById(id: string): Promise<StoryWithArticles | null
   }
 }
 
-/** Fetch specific stories by id (for saved library). */
+/** Fetch specific stories by id (for saved library). Light select — no raw_json. */
 export async function getStoriesByIds(ids: string[]): Promise<Story[]> {
   if (!isSupabaseConfigured || ids.length === 0) return []
 
@@ -290,7 +299,8 @@ export async function getStoriesByIds(ids: string[]): Promise<Story[]> {
       console.error("Failed to fetch stories by ids:", error)
       return []
     }
-    return enrichStoriesWithMedia(data || [])
+    // Skip OG/raw enrichment — library only needs stored fields
+    return data || []
   } catch (err) {
     console.error(err)
     return []
