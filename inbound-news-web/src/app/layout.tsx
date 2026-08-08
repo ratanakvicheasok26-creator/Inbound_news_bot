@@ -53,8 +53,8 @@ export const metadata: Metadata = {
   description:
     "Technology coverage from Phnom Penh — map who covered a story, compare framing, spot blindspots, and cut jargon.",
   icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }, { url: "/icon.svg", sizes: "any" }],
-    apple: "/icon.svg",
+    icon: [{ url: "/inb.png", type: "image/png" }],
+    apple: "/inb.png",
   },
   openGraph: {
     title: "Inbound Reports — Decode the Tech.",
