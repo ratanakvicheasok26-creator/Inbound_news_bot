@@ -6,10 +6,11 @@ regular digest stories on a fixed schedule, with urgent stories checked
 separately and posted anytime.
 
 Schedule:
-  - Regular digest: fixed times at DIGEST_SCHEDULE_HOUR_AM / DIGEST_SCHEDULE_HOUR_PM
-    (default 5am and 5pm, Asia/Phnom_Penh)
+  - Scheduled 5am/5pm digests are disabled (unreliable); use /fetch for on-demand digests
+  - Daily Brief reminders: BRIEF_SCHEDULE_HOURS (default 6am, 12pm, 6pm, 10pm)
+    on both English and Khmer channels
   - Urgent keyword check: every URGENT_CHECK_INTERVAL_SECONDS, posts immediately
-  - Use /fetch for on-demand checks (subject to cooldown)
+  - Use /fetch for on-demand full digests (subject to cooldown)
 
 Setup:
   pip install -e .
@@ -33,13 +34,11 @@ import time as time_mod
 
 from telegram.ext import Application, CommandHandler, ContextTypes, filters
 
-from newsbot.bot import fetch_and_post, fetch_urgent_and_post, mirror_drain_job
+from newsbot.bot import fetch_and_post, fetch_urgent_and_post, fetch_pulse_and_post, mirror_drain_job
 from newsbot import config
 from newsbot.mirror import mirror_available
 from newsbot.config import (
-    BATCH_STORIES,
-    DIGEST_SCHEDULE_HOUR_AM,
-    DIGEST_SCHEDULE_HOUR_PM,
+    BRIEF_SCHEDULE_HOURS,
     DONATION_QR_IMAGE,
     DONATION_SCHEDULE_DAYS,
     DONATION_SCHEDULE_HOUR,
@@ -47,6 +46,8 @@ from newsbot.config import (
     TIMEZONE,
     URGENT_CHECK_INTERVAL_SECONDS,
     URGENT_FIRST_DELAY_SECONDS,
+    brief_button_label,
+    brief_text,
     donation_text,
     validate_config,
 )
@@ -66,11 +67,6 @@ logger = logging.getLogger(__name__)
 
 _fetch_last_run: dict[int, float] = {}
 _fetch_cooldown_lock = threading.Lock()
-
-
-async def poll_job(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Scheduled digest job — runs at DIGEST_SCHEDULE_HOUR_AM / PM."""
-    await fetch_and_post(context)
 
 
 async def urgent_job(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -125,6 +121,67 @@ async def donation_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         )
 
 
+async def brief_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Daily Brief habit post + (EN only) important news pulse.
+
+    Both EN and KM send the Brief CTA. English also posts a short important
+    skim; Khmer receives those stories via the Redis mirror.
+    """
+    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
+    from newsbot.bot import _resolve_channel_target
+    from newsbot.website_links import brief_url
+
+    chat_id, thread_id = _resolve_channel_target()
+    if chat_id is None:
+        logger.warning(
+            "TELEGRAM_CHANNEL_ID not set (NEWS_LANGUAGE=%s) — skipping brief reminder.",
+            config.NEWS_LANGUAGE,
+        )
+        return
+
+    url = brief_url()
+    text = brief_text(url)
+    markup = InlineKeyboardMarkup(
+        [[InlineKeyboardButton(brief_button_label(), url=url)]]
+    )
+    kwargs: dict = {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": False,
+        "reply_markup": markup,
+    }
+    if thread_id is not None:
+        kwargs["message_thread_id"] = thread_id
+
+    try:
+        await context.bot.send_message(**kwargs)
+        logger.info(
+            "Brief reminder sent to chat %s topic %s (lang=%s url=%s)",
+            chat_id,
+            thread_id,
+            config.NEWS_LANGUAGE,
+            url,
+        )
+    except Exception:
+        logger.exception(
+            "Failed to send brief reminder to %s (lang=%s)",
+            chat_id,
+            config.NEWS_LANGUAGE,
+        )
+        return
+
+    # Important skim lives on EN; KM picks it up from the mirror queue.
+    if config.NEWS_LANGUAGE == "en":
+        try:
+            n = await fetch_pulse_and_post(context)
+            if n:
+                logger.info("Brief pulse posted %d important stor(y/ies).", n)
+        except Exception:
+            logger.exception("Brief pulse failed")
+
+
 async def _reply(update: object, text: str) -> None:
     """Reply to a Telegram message (works for DMs, groups, and channels)."""
     msg = getattr(update, "effective_message", None)
@@ -141,20 +198,13 @@ async def start_command(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     chat_title = (effective_chat.title or effective_chat.first_name or "unknown") if effective_chat else "unknown"
     logger.info("[/start] chat_id=%s name=%s", chat_id, chat_title)
 
-    am = DIGEST_SCHEDULE_HOUR_AM
-    pm = DIGEST_SCHEDULE_HOUR_PM
-
-    def _hour_label(hour: int) -> str:
-        h12 = hour % 12 or 12
-        return f"{h12}{'am' if hour < 12 else 'pm'}"
-
     if chat_id not in subscribers:
         subscribers.add(chat_id)
         state.save_subscribers(subscribers)
         await _reply(
             update,
-            f"Subscribed! Regular stories post at {_hour_label(am)} and {_hour_label(pm)}. "
-            "Urgent alerts send anytime.",
+            "Subscribed! You'll get must-know alerts ASAP, Daily Brief skim "
+            "at set times, and a link to the full Brief on the site.",
         )
     else:
         await _reply(update, "You're already subscribed.")
@@ -255,8 +305,8 @@ def main() -> None:
     if app.job_queue is None:
         raise RuntimeError("job_queue must be available (install python-telegram-bot[job-queue])")
 
-    # Digest at fixed AM/PM times (not a repeating interval).
-    # Urgent stories keep a separate repeating check.
+    # Scheduled 5am/5pm digests removed — unreliable. Digests via /fetch only.
+    # Urgent stories keep a separate repeating check on the English bot.
     # Khmer mirror mode skips its own feed pipeline — it re-posts everything
     # the English bot publishes, so both channels stay in sync.
     is_km = config.NEWS_LANGUAGE == "km"
@@ -273,16 +323,6 @@ def main() -> None:
         )
         logger.info("Khmer mirror mode active — posting from the English bot's queue.")
     else:
-        app.job_queue.run_daily(
-            poll_job,
-            time=dt.time(hour=DIGEST_SCHEDULE_HOUR_AM, minute=0, tzinfo=TIMEZONE),
-            name="digest_am",
-        )
-        app.job_queue.run_daily(
-            poll_job,
-            time=dt.time(hour=DIGEST_SCHEDULE_HOUR_PM, minute=0, tzinfo=TIMEZONE),
-            name="digest_pm",
-        )
         app.job_queue.run_repeating(
             urgent_job,
             interval=URGENT_CHECK_INTERVAL_SECONDS,
@@ -296,25 +336,32 @@ def main() -> None:
         days=DONATION_SCHEDULE_DAYS,  # Friday
         name="donation",
     )
+    # Daily Brief catch-up reminders — both channels, every day.
+    for hour in BRIEF_SCHEDULE_HOURS:
+        app.job_queue.run_daily(
+            brief_job,
+            time=dt.time(hour=hour, minute=0, tzinfo=TIMEZONE),
+            name=f"brief_{hour:02d}",
+        )
+    brief_hours_label = ", ".join(f"{h:02d}:00" for h in BRIEF_SCHEDULE_HOURS)
 
     if is_km:
         logger.info(
-            "Bot running in Khmer mirror mode. Donation Fri at %02d:00 (%s). "
-            "News posts mirror the English channel automatically.",
-            DONATION_SCHEDULE_HOUR,
+            "Bot running in Khmer mirror mode. Brief reminders at %s (%s). "
+            "Donation Fri at %02d:00. News posts mirror the English channel automatically.",
+            brief_hours_label,
             TIMEZONE,
+            DONATION_SCHEDULE_HOUR,
         )
     else:
-        mode = "batched" if BATCH_STORIES else "individual"
         logger.info(
-            "Bot running. %s digest at %02d:00 and %02d:00 (%s). "
-            "Donation Fri at %02d:00. Urgent checks every %ds. Use /fetch for on-demand.",
-            mode.capitalize(),
-            DIGEST_SCHEDULE_HOUR_AM,
-            DIGEST_SCHEDULE_HOUR_PM,
+            "Bot running. Scheduled digests disabled. "
+            "ASAP urgent checks every %ds. Brief+important pulse at %s (%s). "
+            "Donation Fri at %02d:00. /fetch for manual digest.",
+            URGENT_CHECK_INTERVAL_SECONDS,
+            brief_hours_label,
             TIMEZONE,
             DONATION_SCHEDULE_HOUR,
-            URGENT_CHECK_INTERVAL_SECONDS,
         )
 
     try:

@@ -7,6 +7,7 @@ from newsbot.feeds import (
     _title_similarity,
     cluster_entries,
     extract_image_url,
+    looks_telegram_important,
     looks_urgent,
 )
 
@@ -152,3 +153,50 @@ class TestLooksUrgent:
 
     def test_empty_entries(self):
         assert looks_urgent([]) is False
+
+
+class TestLooksTelegramImportant:
+    def test_urgent_is_important(self):
+        entries = [
+            Entry(
+                id="1",
+                title="Critical vulnerability in library",
+                summary="",
+                link="http://a.com",
+                source_name="A",
+            )
+        ]
+        assert looks_telegram_important(entries) is True
+
+    def test_multi_source_is_important(self):
+        entries = [
+            Entry(id="1", title="Startup raises funding", summary="Series B", link="http://a.com", source_name="A"),
+            Entry(id="2", title="Startup raises funding", summary="Big round", link="http://b.com", source_name="B"),
+        ]
+        assert looks_telegram_important(entries) is True
+        assert looks_urgent(entries) is False
+
+    def test_important_keyword_single_source(self):
+        entries = [
+            Entry(
+                id="1",
+                title="OpenAI unveils new model",
+                summary="Launching today",
+                link="http://a.com",
+                source_name="A",
+            )
+        ]
+        assert looks_telegram_important(entries) is True
+
+    def test_thin_single_source_not_important(self):
+        entries = [
+            Entry(
+                id="1",
+                title="Random gadget tip of the week",
+                summary="How to clean your keyboard",
+                link="http://a.com",
+                source_name="A",
+            )
+        ]
+        assert looks_telegram_important(entries) is False
+        assert looks_urgent(entries) is False

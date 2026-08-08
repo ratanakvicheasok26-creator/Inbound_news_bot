@@ -35,11 +35,19 @@ from newsbot.config import (
     MAX_URGENT_POSTS_PER_RUN,
     NEWS_LANGUAGE,
     PREPARE_ENTRIES_TIMEOUT_SECONDS,
+    PULSE_MAX_STORIES,
     TELEGRAM_CHANNEL_ID,
     TELEGRAM_THREAD_ID,
     TIMEZONE,
 )
-from newsbot.feeds import Entry, cluster_entries, collect_new_entries, looks_urgent, normalize_title_key
+from newsbot.feeds import (
+    Entry,
+    cluster_entries,
+    collect_new_entries,
+    looks_telegram_important,
+    looks_urgent,
+    normalize_title_key,
+)
 from newsbot.mirror import (
     build_batch_payload,
     build_story_payload,
@@ -59,6 +67,7 @@ __all__ = [
     "broadcast_batched",
     "fetch_and_post",
     "fetch_urgent_and_post",
+    "fetch_pulse_and_post",
     "mirror_drain_job",
 ]
 
@@ -736,8 +745,84 @@ async def fetch_and_post(context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def fetch_urgent_and_post(context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Hourly urgent path: keyword matches only; skip already-posted IDs."""
+    """ASAP path: rare must-know keyword matches only; skip already-posted IDs."""
     return await _run_pipeline(context, urgent=True)
+
+
+async def fetch_pulse_and_post(context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Brief-slot important skim for Telegram. EN only — KM receives via mirror.
+
+    Posts only clusters that look Telegram-important (multi-source, urgent, or
+    important keywords). Everything else stays on the website Brief.
+    """
+    if NEWS_LANGUAGE != "en":
+        return 0
+    return await _run_pulse_pipeline(context)
+
+
+async def _run_pulse_pipeline(context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Short important batch for Brief hours — capped, skim-friendly."""
+    async with _pipeline_lock:
+        state = get_state()
+        posted_ids = state.load_posted_ids()
+        posted_titles = state.load_posted_titles()
+        entries = collect_new_entries(posted_ids, posted_titles)
+        if not entries:
+            logger.info("No new entries for Brief pulse.")
+            return 0
+
+        worthy = [
+            c for c in cluster_entries(entries) if looks_telegram_important(c)
+        ]
+        clusters = _rank_clusters(worthy)[:PULSE_MAX_STORIES]
+        if not clusters:
+            logger.info("No Telegram-important clusters for Brief pulse.")
+            return 0
+
+        if len(clusters) == 1:
+            story = await asyncio.to_thread(
+                _cluster_to_story, clusters[0], urgent=looks_urgent(clusters[0])
+            )
+            if not story:
+                return 0
+            succeeded = await broadcast_stories(context, [story])
+            if succeeded:
+                _mark_posted([story], succeeded)
+                _publish_mirror_stories([story], succeeded)
+                logger.info("Sent Brief pulse (1 story).")
+                return 1
+            return 0
+
+        def _prepare_batched() -> list[BatchedStory]:
+            result: list[BatchedStory] = []
+            for cluster in clusters:
+                entry = _cluster_to_batched(cluster)
+                if entry:
+                    result.append(entry)
+            return result
+
+        try:
+            batched = await asyncio.wait_for(
+                asyncio.to_thread(_prepare_batched),
+                timeout=PREPARE_ENTRIES_TIMEOUT_SECONDS,
+            )
+        except asyncio.TimeoutError:
+            logger.error(
+                "Brief pulse rewrite timed out after %.0fs",
+                PREPARE_ENTRIES_TIMEOUT_SECONDS,
+            )
+            return 0
+
+        if not batched:
+            return 0
+
+        succeeded = await broadcast_batched(context, batched)
+        if succeeded:
+            _mark_posted_batched(batched, succeeded)
+            _publish_mirror_batched(batched)
+            logger.info("Sent Brief pulse with %d stor(y/ies).", len(batched))
+            return len(batched)
+        return 0
 
 
 def _publish_mirror_stories(stories: list[StoryPost], succeeded: set[str]) -> None:

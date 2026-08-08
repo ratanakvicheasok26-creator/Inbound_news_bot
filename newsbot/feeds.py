@@ -24,6 +24,8 @@ from newsbot.config import (
     CONTENT_DEDUP_THRESHOLD,
     FEED_GLOBAL_TIMEOUT_EXTRA,
     FEED_TIMEOUT_SECONDS,
+    IMPORTANT_KEYWORDS,
+    IMPORTANT_MIN_SOURCES,
     MAX_ENTRY_AGE_HOURS,
     MAX_ITEMS_PER_FEED,
     RSS_FEEDS,
@@ -40,6 +42,7 @@ __all__ = [
     "collect_new_entries",
     "cluster_entries",
     "looks_urgent",
+    "looks_telegram_important",
 ]
 
 logger = logging.getLogger(__name__)
@@ -392,6 +395,21 @@ def cluster_entries(
 
 
 def looks_urgent(entries: list[Entry]) -> bool:
-    """Keyword-based urgency check on combined title + summary text."""
+    """Rare ASAP Telegram interrupt — must-know keyword hits only."""
     blob = " ".join(f"{e.title} {e.summary}" for e in entries).lower()
     return any(kw in blob for kw in URGENT_KEYWORDS)
+
+
+def looks_telegram_important(entries: list[Entry]) -> bool:
+    """Worthy of the Telegram channel (urgent ASAP or Brief-slot pulse).
+
+    Everything else stays on the website Brief / story pages only.
+    """
+    if not entries:
+        return False
+    if looks_urgent(entries):
+        return True
+    if len(entries) >= IMPORTANT_MIN_SOURCES:
+        return True
+    blob = " ".join(f"{e.title} {e.summary}" for e in entries).lower()
+    return any(kw in blob for kw in IMPORTANT_KEYWORDS)

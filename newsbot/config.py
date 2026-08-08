@@ -48,11 +48,17 @@ __all__ = [
     "DONATION_QR_IMAGE",
     "DONATION_TEXT",
     "donation_text",
+    "BRIEF_SCHEDULE_HOURS",
+    "brief_text",
+    "brief_button_label",
     "DIGEST_HEADER_TEXT",
     "URGENT_CHECK_INTERVAL_SECONDS",
     "URGENT_FIRST_DELAY_SECONDS",
     "MAX_URGENT_POSTS_PER_RUN",
     "URGENT_KEYWORDS",
+    "IMPORTANT_KEYWORDS",
+    "IMPORTANT_MIN_SOURCES",
+    "PULSE_MAX_STORIES",
     "URGENCY_LEVELS",
     "NEWS_CATEGORIES",
     "DISABLE_POSTING",
@@ -171,6 +177,56 @@ def donation_text() -> str:
 
 
 DONATION_TEXT: str = os.environ.get("DONATION_TEXT", "").strip() or _DEFAULT_DONATION_TEXT
+
+# Dedicated Daily Brief reminders (Asia/Phnom_Penh). Both EN and KM bots post
+# to their own channel — complements ranked digests with a catch-up CTA.
+def _parse_brief_hours(raw: str) -> tuple[int, ...]:
+    parts = [p.strip() for p in (raw or "").split(",") if p.strip()]
+    hours: list[int] = []
+    for p in parts:
+        try:
+            h = int(p)
+        except ValueError:
+            continue
+        if 0 <= h <= 23 and h not in hours:
+            hours.append(h)
+    return tuple(hours) if hours else (6, 12, 18, 22)
+
+
+BRIEF_SCHEDULE_HOURS: tuple[int, ...] = _parse_brief_hours(
+    os.environ.get("BRIEF_SCHEDULE_HOURS", "6,12,18,22")
+)
+_DEFAULT_BRIEF_TEXT = (
+    "<b>Today's Brief</b>\n\n"
+    "Must-know tech hits this channel as it breaks. "
+    "Below (and on the site) is a short keep-up skim — "
+    "full sources and Local Lens on Inbound Reports.\n\n"
+    '<a href="{brief_url}">Open today\'s Brief →</a>'
+)
+_DEFAULT_BRIEF_TEXT_KM = (
+    "<b>សេចក្តីសង្ខេបថ្ងៃនេះ (Brief)</b>\n\n"
+    "ព័ត៌មានសំខាន់ៗផ្ញើមកកាន់ឆានែលនេះភ្លាមៗ។ "
+    "ខាងក្រោម (និងនៅលើគេហទំព័រ) ជាការត្រួតពិនិត្យរហ័ស — "
+    "មានប្រភពពេញលេញ និង Local Lens នៅលើ Inbound Reports។\n\n"
+    '<a href="{brief_url}">បើក Brief ថ្ងៃនេះ →</a>'
+)
+
+
+def brief_text(brief_url: str) -> str:
+    """Daily Brief reminder caption — language follows NEWS_LANGUAGE."""
+    if NEWS_LANGUAGE == "km":
+        template = os.environ.get("BRIEF_TEXT_KM", "").strip() or _DEFAULT_BRIEF_TEXT_KM
+    else:
+        template = os.environ.get("BRIEF_TEXT", "").strip() or _DEFAULT_BRIEF_TEXT
+    return template.replace("{brief_url}", brief_url)
+
+
+def brief_button_label() -> str:
+    if NEWS_LANGUAGE == "km":
+        return "បើក Brief ថ្ងៃនេះ →"
+    return "Open today's Brief →"
+
+
 _DEFAULT_DIGEST_HEADER = "📰 <b>Inbound Reports</b>"
 DIGEST_HEADER_TEXT: str = os.environ.get(
     "DIGEST_HEADER_TEXT", _DEFAULT_DIGEST_HEADER
@@ -193,21 +249,63 @@ FETCH_COOLDOWN_SECONDS: int = 300  # 5 minutes
 LINK_CAP_URGENT: int = 3
 LINK_CAP_NORMAL: int = 5
 
-# ---- Batching ----
+# ---- Batching / pulse ----
 BATCH_STORIES: bool = True
 BATCH_MAX_STORIES: int = 6
 BATCH_POLL_INTERVAL_MINUTES: int = 180
 URGENT_POST_IMMEDIATELY: bool = True
+# Brief-slot pulse: short important skim on Telegram; everything else stays on the website.
+PULSE_MAX_STORIES: int = int(os.environ.get("PULSE_MAX_STORIES", "4"))
+# Multi-source clusters are Telegram-worthy even without urgent keywords.
+IMPORTANT_MIN_SOURCES: int = int(os.environ.get("IMPORTANT_MIN_SOURCES", "2"))
 
 # ---- Feature toggles ----
 DISABLE_POSTING: bool = False
 
-# ---- Urgency keywords ----
+# ---- Urgency keywords (ASAP Telegram interrupts — keep rare / must-know) ----
 URGENT_KEYWORDS: tuple[str, ...] = (
-    "zero-day", "0-day", "critical vulnerability", "rce", "exploit",
-    "data breach", "ransomware", "outage", "down globally", "major outage",
-    "security incident", "product recall", "actively exploited",
-    "emergency patch", "widespread outage", "breach", "cve", "downtime",
+    "zero-day",
+    "0-day",
+    "critical vulnerability",
+    "actively exploited",
+    "emergency patch",
+    "ransomware",
+    "data breach",
+    "security incident",
+    "major outage",
+    "down globally",
+    "widespread outage",
+    "product recall",
+    "massive layoffs",
+    "antitrust",
+)
+
+# Broader “tech people care” cues for Brief-slot pulse (with multi-source or alone).
+IMPORTANT_KEYWORDS: tuple[str, ...] = (
+    "acquisition",
+    "acquires",
+    "merger",
+    "ipo",
+    "layoffs",
+    "laid off",
+    "shutdown",
+    "shutting down",
+    "banned",
+    "ban on",
+    "antitrust",
+    "regulation",
+    "regulators",
+    "openai",
+    "anthropic",
+    "nvidia",
+    "spacex",
+    "apple intelligence",
+    "gemini",
+    "chatgpt",
+    "launching",
+    "unveils",
+    "open-sources",
+    "open sourced",
 )
 
 # ---- Template urgency levels ----

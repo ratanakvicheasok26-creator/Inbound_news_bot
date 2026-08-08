@@ -16,13 +16,19 @@ def reload_config(monkeypatch):
             else:
                 monkeypatch.setenv(key, value)
         import newsbot.config as cfg
+        import newsbot.feeds as feeds
 
-        return importlib.reload(cfg)
+        cfg = importlib.reload(cfg)
+        importlib.reload(feeds)
+        return cfg
 
     yield _reload
+    monkeypatch.setenv("NEWS_LANGUAGE", "en")
     import newsbot.config as cfg
+    import newsbot.feeds as feeds
 
     importlib.reload(cfg)
+    importlib.reload(feeds)
 
 
 def test_donation_days_friday_only(reload_config):
