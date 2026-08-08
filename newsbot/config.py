@@ -135,8 +135,25 @@ DIGEST_MAX_STORIES: int = 10
 DIGEST_SCHEDULE_HOUR_AM: int = int(os.environ.get("DIGEST_SCHEDULE_HOUR_AM", "5"))
 DIGEST_SCHEDULE_HOUR_PM: int = int(os.environ.get("DIGEST_SCHEDULE_HOUR_PM", "17"))
 DONATION_SCHEDULE_HOUR: int = int(os.environ.get("DONATION_SCHEDULE_HOUR", "22"))  # 10 PM
-# Friday only (datetime.weekday: Mon=0 … Sun=6). Both EN and KM bots schedule this.
-DONATION_SCHEDULE_DAYS: tuple[int, ...] = (4,)
+
+
+def _parse_donation_days(raw: str) -> tuple[int, ...]:
+    parts = [p.strip() for p in (raw or "").split(",") if p.strip()]
+    days: list[int] = []
+    for p in parts:
+        try:
+            d = int(p)
+        except ValueError:
+            continue
+        if 0 <= d <= 6 and d not in days:
+            days.append(d)
+    return tuple(days) if days else (5,)  # Saturday
+
+
+# Saturday only (datetime.weekday: Mon=0 … Sun=6). Both EN and KM bots schedule this.
+DONATION_SCHEDULE_DAYS: tuple[int, ...] = _parse_donation_days(
+    os.environ.get("DONATION_SCHEDULE_DAYS", "5")
+)
 DONATION_QR_IMAGE: str = os.environ.get("DONATION_QR_IMAGE", "qr_aba_news.jpg")
 _DEFAULT_DONATION_TEXT = (
     "<b>Support Inbound Reports</b>\n\n"
@@ -170,7 +187,7 @@ _DEFAULT_DONATION_TEXT_KM = (
 
 
 def donation_text() -> str:
-    """Friday donation caption for this deployment (EN or KM via NEWS_LANGUAGE)."""
+    """Weekly donation caption for this deployment (EN or KM via NEWS_LANGUAGE)."""
     if NEWS_LANGUAGE == "km":
         return os.environ.get("DONATION_TEXT_KM", "").strip() or _DEFAULT_DONATION_TEXT_KM
     return os.environ.get("DONATION_TEXT", "").strip() or _DEFAULT_DONATION_TEXT

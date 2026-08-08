@@ -75,7 +75,7 @@ async def urgent_job(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def donation_job(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send Friday donation post to this bot's TELEGRAM_CHANNEL_ID.
+    """Send Saturday donation post to this bot's TELEGRAM_CHANNEL_ID.
 
     English and Khmer are separate Railway services — each posts to its own
     channel, with caption language from NEWS_LANGUAGE.
@@ -333,7 +333,7 @@ def main() -> None:
     app.job_queue.run_daily(
         donation_job,
         time=dt.time(hour=DONATION_SCHEDULE_HOUR, minute=0, tzinfo=TIMEZONE),
-        days=DONATION_SCHEDULE_DAYS,  # Friday
+        days=DONATION_SCHEDULE_DAYS,  # Saturday
         name="donation",
     )
     # Daily Brief catch-up reminders — both channels, every day.
@@ -348,7 +348,7 @@ def main() -> None:
     if is_km:
         logger.info(
             "Bot running in Khmer mirror mode. Brief reminders at %s (%s). "
-            "Donation Fri at %02d:00. News posts mirror the English channel automatically.",
+            "Donation Sat at %02d:00. News posts mirror the English channel automatically.",
             brief_hours_label,
             TIMEZONE,
             DONATION_SCHEDULE_HOUR,
@@ -357,7 +357,7 @@ def main() -> None:
         logger.info(
             "Bot running. Scheduled digests disabled. "
             "ASAP urgent checks every %ds. Brief+important pulse at %s (%s). "
-            "Donation Fri at %02d:00. /fetch for manual digest.",
+            "Donation Sat at %02d:00. /fetch for manual digest.",
             URGENT_CHECK_INTERVAL_SECONDS,
             brief_hours_label,
             TIMEZONE,

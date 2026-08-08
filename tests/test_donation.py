@@ -1,4 +1,4 @@
-"""Donation caption language + Friday schedule constant."""
+"""Donation caption language + Saturday schedule constant."""
 
 from __future__ import annotations
 
@@ -31,9 +31,19 @@ def reload_config(monkeypatch):
     importlib.reload(feeds)
 
 
-def test_donation_days_friday_only(reload_config):
+def test_donation_days_saturday_only(reload_config):
     cfg = reload_config()
-    assert cfg.DONATION_SCHEDULE_DAYS == (4,)
+    assert cfg.DONATION_SCHEDULE_DAYS == (5,)
+
+
+def test_donation_days_env_override(reload_config):
+    cfg = reload_config(DONATION_SCHEDULE_DAYS="0,4")
+    assert cfg.DONATION_SCHEDULE_DAYS == (0, 4)
+
+
+def test_donation_days_env_invalid_defaults_saturday(reload_config):
+    cfg = reload_config(DONATION_SCHEDULE_DAYS="bogus")
+    assert cfg.DONATION_SCHEDULE_DAYS == (5,)
 
 
 def test_donation_text_english_default(reload_config):
