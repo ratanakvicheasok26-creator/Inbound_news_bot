@@ -1,6 +1,7 @@
 import type { Article } from "@/lib/types"
 import { resolveStoryDek } from "@/lib/story-body"
 import { formatDistanceToNow } from "@/lib/utils"
+import { OUTLET_ROLE_LABELS, roleForOutlet } from "@/lib/outlet-roles"
 import { ExternalLink, GitCompareArrows } from "lucide-react"
 import Link from "next/link"
 
@@ -28,6 +29,10 @@ function sourcePageSlug(domain: string): string | null {
 export function SourceComparisonRow({ article, framing }: SourceComparisonRowProps) {
   const domain = article.source_domain || ""
   const sourceSlug = domain ? sourcePageSlug(domain) : null
+  const role = roleForOutlet({
+    source_name: article.source_name,
+    source_domain: domain,
+  })
 
   return (
     <div className="source-row">
@@ -36,6 +41,9 @@ export function SourceComparisonRow({ article, framing }: SourceComparisonRowPro
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
             <span className="text-[13px] font-semibold text-[var(--text-primary)]">
               {article.source_name || domain || "Unknown"}
+            </span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-secondary)] bg-[var(--surface-alt)] px-1.5 py-0.5 rounded-[var(--radius-sm)]">
+              {OUTLET_ROLE_LABELS[role]}
             </span>
             {domain && (
               sourceSlug ? (

@@ -8,6 +8,7 @@ import { formatDistanceToNow } from "@/lib/utils"
 import { Bookmark, BookmarkCheck } from "lucide-react"
 import { toggleSavedStory, isStorySaved } from "@/lib/profile"
 import { StoryImage } from "@/components/story/StoryImage"
+import { CoverageMeta } from "@/components/story/CoverageMeta"
 
 /** Equal-weight story tile for balanced home grids. */
 export function StoryCard({ story }: { story: Story }) {
@@ -29,9 +30,6 @@ export function StoryCard({ story }: { story: Story }) {
       <div className="flex flex-1 flex-col p-4 sm:p-5">
         <div className="mb-2.5 flex items-center gap-2 flex-wrap">
           <span className="chip">{categoryLabel}</span>
-          <span className="meta-text tabular-nums">
-            {story.source_count} source{story.source_count !== 1 ? "s" : ""}
-          </span>
           <span className="meta-text">{formatDistanceToNow(story.created_at)}</span>
         </div>
 
@@ -40,6 +38,10 @@ export function StoryCard({ story }: { story: Story }) {
             {story.title}
           </h3>
         </Link>
+
+        <div className="mt-3">
+          <CoverageMeta story={story} maxNames={2} />
+        </div>
 
         <div className="mt-4 flex items-center justify-between gap-2 border-t border-[var(--border)] pt-3">
           <Link

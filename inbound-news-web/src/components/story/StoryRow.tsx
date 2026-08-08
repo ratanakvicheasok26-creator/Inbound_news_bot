@@ -9,6 +9,7 @@ import { formatDistanceToNow } from "@/lib/utils"
 import { Bookmark, BookmarkCheck } from "lucide-react"
 import { toggleSavedStory, isStorySaved } from "@/lib/profile"
 import { StoryImage } from "@/components/story/StoryImage"
+import { CoverageMeta } from "@/components/story/CoverageMeta"
 
 export function StoryRow({ story }: { story: Story }) {
   const [saved, setSaved] = useState(() => isStorySaved(story.id))
@@ -29,9 +30,6 @@ export function StoryRow({ story }: { story: Story }) {
       <div className="min-w-0 flex-1">
         <div className="mb-1.5 flex items-center gap-2 flex-wrap">
           <span className="meta-text text-[var(--accent)]">{categoryLabel}</span>
-          <span className="meta-text tabular-nums">
-            {story.source_count} source{story.source_count !== 1 ? "s" : ""}
-          </span>
           <span className="meta-text">{formatDistanceToNow(story.created_at)}</span>
         </div>
 
@@ -46,6 +44,10 @@ export function StoryRow({ story }: { story: Story }) {
             {dek}
           </p>
         )}
+
+        <div className="mt-2">
+          <CoverageMeta story={story} showBar={false} maxNames={3} />
+        </div>
       </div>
 
       <button

@@ -48,7 +48,6 @@ const SOCIAL_LINKS = [
   { href: "https://x.com/inboundcrewm?s=11", label: "X (Twitter)", icon: XIcon },
   { href: "https://www.facebook.com/inboundcrew420", label: "Facebook", icon: FacebookIcon },
   { href: "mailto:inboundcrew82@gmail.com", label: "Email", icon: Mail },
-  
 ]
 
 const LEGAL_LINKS = [
@@ -83,8 +82,8 @@ export function Footer() {
               />
             </Link>
             <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[360px]">
-              Tech news aggregation from Phnom Penh. We cluster sources and
-              explain jargon so readers can decode coverage — not chase hype.
+              Technology news from Phnom Penh. We map who covered a story, how they framed it,
+              and what&apos;s undercovered — literacy tools included, not hype chase.
             </p>
           </div>
 

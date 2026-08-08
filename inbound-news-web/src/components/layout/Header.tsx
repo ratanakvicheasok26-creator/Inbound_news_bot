@@ -15,8 +15,9 @@ import type { User } from "@supabase/supabase-js"
 const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/brief", label: "Brief" },
+  { href: "/compare", label: "Compare" },
+  { href: "/blindspot", label: "Blindspot" },
   { href: "/glossary", label: "Glossary" },
-  { href: "/about", label: "About" },
 ]
 
 export function Header() {

@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from "./supabase"
 import { pickArticleImage, isValidImageUrl } from "./story-images"
+import { uniqueOutlets } from "./outlet-roles"
 import type { Story, Article, StoryWithArticles } from "./types"
 
 export type StoriesResult = {
@@ -20,7 +21,7 @@ function escapeOrValue(value: string): string {
   return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`
 }
 
-/** Attach primary_url + best image_url from linked articles (batch). */
+/** Attach primary_url, images, and coverage_outlets from linked articles (batch). */
 async function enrichStoriesWithMedia(stories: Story[]): Promise<Story[]> {
   if (stories.length === 0) return stories
 
@@ -51,20 +52,28 @@ async function enrichStoriesWithMedia(stories: Story[]): Promise<Story[]> {
 
   const articleById = new Map(articles.map((a) => [a.id, a]))
   const firstArticleByStory = new Map<string, (typeof articles)[0]>()
+  const articlesByStory = new Map<string, (typeof articles)[0][]>()
 
   for (const link of links) {
     if (!link.story_id || !link.article_id) continue
-    if (firstArticleByStory.has(link.story_id)) continue
     const article = articleById.get(link.article_id)
-    if (article) firstArticleByStory.set(link.story_id, article)
+    if (!article) continue
+    if (!firstArticleByStory.has(link.story_id)) {
+      firstArticleByStory.set(link.story_id, article)
+    }
+    const list = articlesByStory.get(link.story_id) || []
+    list.push(article)
+    articlesByStory.set(link.story_id, list)
   }
 
   return stories
     .map((story) => {
       const primary = firstArticleByStory.get(story.id)
+      const linked = articlesByStory.get(story.id) || []
       const fromArticle = primary ? pickArticleImage(primary) : null
       const image =
         (isValidImageUrl(story.image_url) ? story.image_url : null) || fromArticle
+      const coverage_outlets = uniqueOutlets(linked, 5)
 
       return {
         ...story,
@@ -73,6 +82,8 @@ async function enrichStoriesWithMedia(stories: Story[]): Promise<Story[]> {
         primary_source: story.primary_source || primary?.source_name || null,
         primary_source_domain:
           story.primary_source_domain || primary?.source_domain || null,
+        coverage_outlets:
+          coverage_outlets.length > 0 ? coverage_outlets : story.coverage_outlets,
       }
     })
     .sort((a, b) => {
@@ -255,6 +266,7 @@ export async function getStoryById(id: string): Promise<StoryWithArticles | null
       primary_url: primary?.url || null,
       primary_source: primary?.source_name || null,
       primary_source_domain: primary?.source_domain || null,
+      coverage_outlets: uniqueOutlets(articles, 8),
       articles,
     }
   } catch (err) {

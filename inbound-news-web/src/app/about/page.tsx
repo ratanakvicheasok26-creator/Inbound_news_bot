@@ -20,18 +20,19 @@ export default function AboutPage() {
 
       <h2>What this is</h2>
       <p>
-        Inbound Reports is a tech news aggregator based in Phnom Penh. We collect stories from a
-        shared source network, cluster related coverage, and present concise English summaries with
-        literacy tools — jargon highlighting, ELI5 / Standard / Deep reading tiers, and a
-        coverage-intensity signal — so readers can decode tech news instead of only scrolling it.
-        See our <Link href="/legal/methodology">methodology</Link> page for how each layer works.
+        Inbound Reports is a technology news aggregator based in Phnom Penh — Ground News–style
+        coverage mapping for tech people. We cluster related tech stories and show outlet count,
+        roles (Booster / Trade / Critical / Community / Research / Corporate), Compare framing, and
+        Blindspot undercoverage — plus literacy tools (jargon, reading tiers when copy differs,
+        Cambodia Local Lens). See our <Link href="/legal/methodology">methodology</Link> page for
+        how each layer works.
       </p>
 
       <h2>Source network</h2>
       <p>
-        We run <strong>900+ active global and regional tech sources</strong>, scaling daily.
-        Adding a source is as simple as editing a YAML file — no application code or database
-        schema changes required.
+        We maintain a large curated source registry for Telegram and website ingest. The live site
+        shows clustered stories from the website pipeline; not every registered feed appears on
+        every page every day.
       </p>
 
       <h2>AI stack</h2>
@@ -45,8 +46,8 @@ export default function AboutPage() {
       <h2>The Inbound Crew</h2>
       <p>
         We are a small tech crew in Phnom Penh. The product exists to increase digital literacy —
-        showing source density and framing signals, and explaining jargon in context (Glossary) —
-        not to maximize engagement.
+        showing multi-source coverage and explaining jargon in context (Glossary) — not to maximize
+        engagement.
       </p>
 
       <h2>Donation</h2>

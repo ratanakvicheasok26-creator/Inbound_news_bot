@@ -3,6 +3,7 @@ import { getCategoryLabel } from "@/lib/categories"
 import { resolveStoryDek } from "@/lib/story-body"
 import { formatDistanceToNow } from "@/lib/utils"
 import { StoryImage } from "@/components/story/StoryImage"
+import { CoverageMeta } from "@/components/story/CoverageMeta"
 import Link from "next/link"
 
 export function LeadStoryCard({ story }: { story: Story }) {
@@ -26,9 +27,6 @@ export function LeadStoryCard({ story }: { story: Story }) {
         <div className="lg:py-4">
           <div className="mb-4 flex items-center gap-2.5 flex-wrap">
             <span className="chip">{categoryLabel}</span>
-            <span className="meta-text tabular-nums">
-              {story.source_count} source{story.source_count !== 1 ? "s" : ""}
-            </span>
             <span className="meta-text">{formatDistanceToNow(story.created_at)}</span>
           </div>
 
@@ -43,6 +41,10 @@ export function LeadStoryCard({ story }: { story: Story }) {
               {dek}
             </p>
           )}
+
+          <div className="mt-4 max-w-[52ch]">
+            <CoverageMeta story={story} maxNames={3} />
+          </div>
 
           <div className="mt-6">
             <Link href={`/story/${story.id}`} className="btn-primary">

@@ -1,10 +1,11 @@
 import Link from "next/link"
 import { getAllStories } from "@/lib/posts"
 import { rankStoriesForFeed } from "@/lib/story-priority"
+import { filterTechStories } from "@/lib/tech-scope"
 import { formatDistanceToNow } from "@/lib/utils"
 
 export async function Ticker() {
-  const stories = await getAllStories(16)
+  const stories = filterTechStories(await getAllStories(32))
   const items = rankStoriesForFeed(stories).slice(0, 4)
   if (items.length === 0) return null
 

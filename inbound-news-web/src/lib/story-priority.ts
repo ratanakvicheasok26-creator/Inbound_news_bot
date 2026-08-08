@@ -1,6 +1,7 @@
 import { isValidImageUrl } from "./story-images"
 import { resolveOgImage } from "./og-image"
 import { isUsefulSummary } from "./story-body"
+import { isTechRelevant } from "./tech-scope"
 import type { Story } from "./types"
 
 export type PriorityOptions = {
@@ -37,7 +38,8 @@ function ageHours(createdAt: string): number {
 
 /**
  * Higher = better homepage / brief placement.
- * Prefers multi-source, imaged, recent, useful summaries; demotes forum-only noise.
+ * Prefers multi-source, imaged, recent, useful summaries; demotes forum-only noise
+ * and non-tech outliers.
  */
 export function feedScore(story: Story): number {
   const sources = Math.max(0, story.source_count || 0)
@@ -69,6 +71,9 @@ export function feedScore(story: Story): number {
   // Very short titles often mean incomplete ingest
   if (title.length > 0 && title.length < 24) score -= 15
 
+  // Tech-only product: bury non-tech so they never win the lead slot
+  if (!isTechRelevant(story)) score -= 200
+
   return score
 }
 
@@ -84,11 +89,13 @@ export function rankStoriesForFeed(stories: Story[]): Story[] {
 }
 
 /**
- * Pick top feed stories. Prefer items with at least one source when enough exist.
+ * Pick top feed stories. Tech-relevant only; prefer items with at least one
+ * source when enough exist.
  */
 export function selectFeedStories(stories: Story[], limit: number): Story[] {
   if (stories.length === 0 || limit <= 0) return []
-  const ranked = rankStoriesForFeed(stories)
+  const tech = stories.filter(isTechRelevant)
+  const ranked = rankStoriesForFeed(tech.length > 0 ? tech : stories)
   const withSources = ranked.filter((s) => (s.source_count || 0) >= 1)
   const minNeeded = Math.min(3, limit)
   const pool = withSources.length >= minNeeded ? withSources : ranked

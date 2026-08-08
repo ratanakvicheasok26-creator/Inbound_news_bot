@@ -1,18 +1,21 @@
 import { getAllStories } from "@/lib/posts"
 import { StoryRow } from "@/components/story/StoryRow"
 import { BlindspotCard } from "@/components/story/BlindspotCard"
+import { blindspotScore } from "@/lib/outlet-roles"
+import { filterTechStories } from "@/lib/tech-scope"
 import { Eye } from "lucide-react"
 
 export const metadata = {
   title: "Blindspot — Inbound Reports",
-  description: "Clustered tech stories with few sources — easy to miss in mainstream feeds.",
+  description:
+    "Undercovered technology stories in our cluster graph — single-outlet tech coverage worth noticing.",
 }
 
 export default async function BlindspotPage() {
-  const stories = await getAllStories()
+  const stories = filterTechStories(await getAllStories(80))
   const underreported = [...stories]
-    .filter((s) => (s.source_count ?? 0) <= 3)
-    .sort((a, b) => (a.source_count ?? 0) - (b.source_count ?? 0))
+    .filter((s) => (s.source_count ?? 0) === 1)
+    .sort((a, b) => blindspotScore(b) - blindspotScore(a) || Date.parse(b.created_at || "") - Date.parse(a.created_at || ""))
   const featured = underreported.slice(0, 4)
 
   return (
@@ -26,8 +29,9 @@ export default async function BlindspotPage() {
         </div>
 
         <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed max-w-[640px] mb-8">
-          Clustered stories with few sources — coverage that is easy to miss in mainstream
-          tech feeds. Source count is the signal; literacy is the goal.
+          Undercovered technology stories in our cluster graph — single-outlet tech coverage
+          ranked for signal (useful summary, non-forum sources, security/AI/policy). Not every
+          singleton; the ones worth a look.
         </p>
 
         {featured.length === 0 ? (
@@ -42,6 +46,10 @@ export default async function BlindspotPage() {
                 title={story.title}
                 summary={story.summary_en || undefined}
                 sourceCount={story.source_count ?? 0}
+                sourceNames={
+                  story.coverage_outlets?.map((o) => o.name) ||
+                  (story.primary_source ? [story.primary_source] : undefined)
+                }
                 href={`/story/${story.id}`}
               />
             ))}

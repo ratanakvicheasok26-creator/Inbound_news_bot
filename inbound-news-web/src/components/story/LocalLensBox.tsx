@@ -23,29 +23,50 @@ function fallbackText(category?: string) {
   return FALLBACK[category || ""] || FALLBACK.ai
 }
 
-function readCached(storyTitle?: string): string | null {
+type LensCache = { text: string; fallback?: boolean }
+
+function readCached(storyTitle?: string): LensCache | null {
   if (!storyTitle || typeof window === "undefined") return null
   try {
-    return localStorage.getItem(`lens-${storyTitle.slice(0, 80)}`)
+    const raw = localStorage.getItem(`lens-${storyTitle.slice(0, 80)}`)
+    if (!raw) return null
+    if (raw.startsWith("{")) {
+      const parsed = JSON.parse(raw) as LensCache
+      if (parsed?.text) return parsed
+    }
+    // Legacy plain-string cache
+    return { text: raw, fallback: false }
   } catch {
     return null
+  }
+}
+
+function writeCached(storyTitle: string, payload: LensCache) {
+  try {
+    localStorage.setItem(
+      `lens-${storyTitle.slice(0, 80)}`,
+      JSON.stringify(payload)
+    )
+  } catch {
+    // ignore quota / private mode
   }
 }
 
 export function LocalLensBox({ category, storyTitle, storySummary }: LocalLensBoxProps) {
   const cached = readCached(storyTitle)
   const [text, setText] = useState<string | null>(
-    () => cached || (storyTitle ? null : fallbackText(category))
+    () => cached?.text || (storyTitle ? null : fallbackText(category))
+  )
+  const [isFallback, setIsFallback] = useState(
+    () => Boolean(cached?.fallback) || (!storyTitle && Boolean(category))
   )
   const [loading, setLoading] = useState(() => Boolean(storyTitle) && !cached)
-  const [error, setError] = useState(false)
   const fetched = useRef(false)
 
   useEffect(() => {
     if (!storyTitle || cached || fetched.current) return
     fetched.current = true
 
-    const cacheKey = `lens-${storyTitle.slice(0, 80)}`
     let cancelled = false
 
     fetch("/api/local-lens", {
@@ -53,26 +74,35 @@ export function LocalLensBox({ category, storyTitle, storySummary }: LocalLensBo
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: storyTitle, summary: storySummary, category }),
     })
-      .then((res) => res.json())
-      .then((data) => {
+      .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
         if (cancelled) return
-        if (data.text) {
+        if (ok && data.text && !data.fallback) {
           setText(data.text)
-          try { localStorage.setItem(cacheKey, data.text) } catch {}
-        } else {
-          throw new Error(data.error || "No text returned")
+          setIsFallback(false)
+          writeCached(storyTitle, { text: data.text, fallback: false })
+          return
         }
+        // API error or explicit fallback — use category copy, never a blank box
+        const fb = fallbackText(category)
+        setText(fb)
+        setIsFallback(true)
+        writeCached(storyTitle, { text: fb, fallback: true })
       })
       .catch(() => {
         if (cancelled) return
-        setError(true)
-        setText(fallbackText(category))
+        const fb = fallbackText(category)
+        setText(fb)
+        setIsFallback(true)
+        writeCached(storyTitle, { text: fb, fallback: true })
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
       })
 
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [category, storyTitle, storySummary, cached])
 
   return (
@@ -89,9 +119,9 @@ export function LocalLensBox({ category, storyTitle, storySummary }: LocalLensBo
           {text}
         </p>
       )}
-      {error && (
+      {isFallback && !loading && (
         <p className="mt-2 text-[11px] text-[var(--text-secondary)] opacity-70">
-          Context fallback — live lens unavailable
+          Category context — story-specific lens unavailable
         </p>
       )}
     </aside>

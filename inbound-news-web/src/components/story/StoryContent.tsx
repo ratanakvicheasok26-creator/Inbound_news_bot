@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { LocalLensBox } from "@/components/story/LocalLensBox"
 import { ReadingTierToggle } from "@/components/story/ReadingTierToggle"
 import { StoryTimeline, deriveTimelineNodes } from "@/components/story/StoryTimeline"
@@ -14,16 +14,16 @@ import {
   getProfile,
   trackStoryRead,
   recordTierSwitch,
-  recordSourceComparison,
   recordJargonTap,
   toggleSavedStory,
   isStorySaved,
 } from "@/lib/profile"
-import type { StoryWithArticles, Article } from "@/lib/types"
-import { isUsefulSummary, resolveStoryBody } from "@/lib/story-body"
+import type { StoryWithArticles } from "@/lib/types"
+import { resolveStoryBody, buildTierTexts, tiersHaveDistinctContent } from "@/lib/story-body"
 import { StoryImage } from "@/components/story/StoryImage"
-import { ArrowLeft, Bookmark, BookmarkCheck, ExternalLink, Newspaper } from "lucide-react"
+import { ArrowLeft, Bookmark, BookmarkCheck, ExternalLink, GitCompareArrows, Newspaper } from "lucide-react"
 import Link from "next/link"
+import { summarizeCoverage } from "@/lib/outlet-roles"
 
 interface StoryContentProps {
   story: StoryWithArticles
@@ -75,50 +75,6 @@ function deriveRelatedConcepts(
   return Array.from(found.values())
 }
 
-function deriveTierSummary(
-  summary: string,
-  tier: "eli5" | "standard" | "deep",
-  articles: Article[]
-): string {
-  const sentences = summary.split(/(?<=[.!?])\s+/).filter(Boolean)
-  if (tier === "eli5") {
-    return sentences
-      .slice(0, Math.max(2, Math.ceil(sentences.length / 3)))
-      .map((s) =>
-        s
-          .replace(/\b(?:utilize|implement|facilitate|leverage|infrastructure|paradigm|methodology|comprehensive|significant|substantial|innovative|ecosystem)\b/gi, (m) => {
-            const map: Record<string, string> = {
-              utilize: "use",
-              implement: "do",
-              facilitate: "help",
-              leverage: "use",
-              infrastructure: "setup",
-              paradigm: "idea",
-              methodology: "way",
-              comprehensive: "full",
-              significant: "big",
-              substantial: "large",
-              innovative: "new",
-              ecosystem: "system",
-            }
-            return map[m.toLowerCase()] || m
-          })
-          .replace(/,\s*which\s+(?:is|are|has|have|was|were)\s+\w+[\w\s,]*/gi, "")
-          .replace(/\s*\(.*?\)\s*/g, "")
-      )
-      .join(" ")
-  }
-  if (tier === "deep") {
-    const extras = articles
-      .map((a) => (a.summary || "").trim())
-      .filter((s) => isUsefulSummary(s) && s !== summary)
-      .slice(0, 2)
-    if (extras.length === 0) return summary
-    return [summary, ...extras].join(" ")
-  }
-  return summary
-}
-
 function initialTier(): "eli5" | "standard" | "deep" {
   try {
     const tier = getProfile().preferences?.defaultTier
@@ -132,7 +88,6 @@ function initialTier(): "eli5" | "standard" | "deep" {
 export function StoryContent({ story }: StoryContentProps) {
   const [activeTier, setActiveTier] = useState<"eli5" | "standard" | "deep">(initialTier)
   const [saved, setSaved] = useState(() => isStorySaved(story.id))
-  const sourceViewed = useRef(false)
 
   useEffect(() => {
     trackStoryRead({ id: story.id, title: story.title, category: story.category || "" })
@@ -153,18 +108,18 @@ export function StoryContent({ story }: StoryContentProps) {
   const articles = story.articles || []
   const tags = story.tags || []
   const body = resolveStoryBody(story)
+  const tierTexts = buildTierTexts(body, articles)
+  const showTierToggle = tiersHaveDistinctContent(tierTexts)
   const relatedConcepts = deriveRelatedConcepts(tags, story.title, body)
 
-  useEffect(() => {
-    if (!sourceViewed.current && articles.length > 0) {
-      sourceViewed.current = true
-      recordSourceComparison()
-    }
-  }, [articles.length])
-
   const timelineNodes = deriveTimelineNodes(articles)
-  const displaySummary = deriveTierSummary(body, activeTier, articles)
+  const displaySummary = showTierToggle ? tierTexts[activeTier] : tierTexts.standard
   const primaryUrl = story.primary_url || articles[0]?.url || null
+  const coverage = summarizeCoverage(articles, story.source_count)
+  const compareBothHref =
+    articles.length >= 2
+      ? `/compare?a=${articles[0].id}&b=${articles[1].id}`
+      : null
 
   return (
     <div className="container pb-12">
@@ -210,7 +165,9 @@ export function StoryContent({ story }: StoryContentProps) {
               {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
               {saved ? "Saved" : "Save"}
             </button>
-            <ReadingTierToggle active={activeTier} onChange={handleTierChange} />
+            {showTierToggle && (
+              <ReadingTierToggle active={activeTier} onChange={handleTierChange} />
+            )}
           </div>
         </div>
 
@@ -219,8 +176,9 @@ export function StoryContent({ story }: StoryContentProps) {
         </h1>
 
         <p className="mt-3 text-[14px] text-[var(--text-secondary)] max-w-[58ch]">
-          Aggregated coverage — switch ELI5 / Standard / Deep for your reading
-          level. Local Lens adds Cambodia context beside the summary.
+          {showTierToggle
+            ? "Technology coverage map — switch ELI5 / Standard / Deep when the text actually differs. Compare outlets below; Local Lens adds Cambodia context."
+            : "Technology coverage with jargon highlights. Compare outlets below; Local Lens adds Cambodia context."}
         </p>
 
         {primaryUrl && (
@@ -241,7 +199,7 @@ export function StoryContent({ story }: StoryContentProps) {
       <section className="py-8">
         <div className="grid gap-6 md:gap-8 lg:grid-cols-[1.5fr_0.85fr]">
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-4 sm:p-6 md:p-8">
-            {activeTier !== "standard" && (
+            {showTierToggle && activeTier !== "standard" && (
               <p className="meta-text text-[var(--accent)] mb-3">
                 {activeTier === "eli5" ? "Simplified" : "Deep coverage"}
               </p>
@@ -275,7 +233,19 @@ export function StoryContent({ story }: StoryContentProps) {
               <Newspaper className="mr-2 inline h-3.5 w-3.5" />
               Source coverage ({articles.length})
             </h2>
+            {compareBothHref && (
+              <Link
+                href={compareBothHref}
+                className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)]"
+              >
+                <GitCompareArrows className="h-3.5 w-3.5" />
+                Compare coverage
+              </Link>
+            )}
           </div>
+          <p className="text-[13px] text-[var(--text-secondary)] mb-4 max-w-[64ch]">
+            Coverage map — {coverage.mapLine}
+          </p>
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] px-5 md:px-6">
             {articles.map((article) => (
               <SourceComparisonRow key={article.id} article={article} />

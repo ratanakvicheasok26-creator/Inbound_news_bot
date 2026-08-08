@@ -1,3 +1,10 @@
+import type { OutletRole } from "@/lib/outlet-roles"
+
+export type { CoverageOutlet } from "@/lib/outlet-roles"
+export type { OutletRole }
+
+import type { CoverageOutlet } from "@/lib/outlet-roles"
+
 export type Story = {
   id: string
   title: string
@@ -10,6 +17,8 @@ export type Story = {
   primary_url?: string | null
   primary_source?: string | null
   primary_source_domain?: string | null
+  /** Unique outlets from linked articles (client enrich). */
+  coverage_outlets?: CoverageOutlet[]
 }
 
 export type Article = {

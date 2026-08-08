@@ -40,7 +40,10 @@ export default async function BriefDatePage({
 
   const today = todayPhnomPenhYmd()
   const { stories, error } = await getStoriesForBrief(date)
-  const prioritized = await prioritizeStoriesWithImages(stories)
+  const prioritized = await prioritizeStoriesWithImages(stories, {
+    resolveLimit: 6,
+    concurrency: 3,
+  })
   const ranked = selectFeedStories(prioritized, 24)
   const isToday = date === today
   const prev = shiftYmd(date, -1)
@@ -58,8 +61,8 @@ export default async function BriefDatePage({
           {isToday ? "Today’s Brief" : formatBriefHeading(date)}
         </h1>
         <p className="mt-3 max-w-[52ch] text-[15px] leading-[1.6] text-[var(--text-secondary)]">
-          What Telegram teases — open each story for ELI5/Standard/Deep reading,
-          multi-source coverage, and Local Lens for Cambodia.
+          Today&apos;s technology coverage — open each story for the coverage map, Compare,
+          ELI5/Standard/Deep when it differs, and Local Lens for Cambodia.
         </p>
         <div className="mt-5 flex flex-wrap items-center gap-4 text-[13px] font-semibold">
           <Link href={`/brief/${prev}`} className="text-[var(--text-secondary)] hover:text-[var(--accent)]">

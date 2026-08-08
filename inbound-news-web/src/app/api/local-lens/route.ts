@@ -84,6 +84,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Input too long" }, { status: 400 })
     }
 
+    if (GROQ_KEYS.length === 0) {
+      return NextResponse.json(
+        { error: "Local Lens unavailable", fallback: true },
+        { status: 503 }
+      )
+    }
+
     const prompt = `Story title: "${title}"
 ${summary ? `Summary: "${summary}"` : ""}
 ${category ? `Category: ${category}` : ""}
@@ -91,10 +98,16 @@ ${category ? `Category: ${category}` : ""}
 Explain why this story matters specifically for Cambodia.`
 
     const text = await callGroq(prompt)
+    if (!text.trim()) {
+      return NextResponse.json(
+        { error: "Empty lens response", fallback: true },
+        { status: 502 }
+      )
+    }
 
-    return NextResponse.json({ text })
+    return NextResponse.json({ text, fallback: false })
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error"
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ error: message, fallback: true }, { status: 500 })
   }
 }

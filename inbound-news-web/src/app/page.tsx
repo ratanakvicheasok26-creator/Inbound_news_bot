@@ -9,9 +9,11 @@ export const revalidate = 60
 export default async function HomePage() {
   // Over-fetch then rank so multi-source / imaged stories win the lead slot
   // even when noisier forum items are newer in the raw ingest order.
-  const { stories, error } = await getAllStoriesSafe(48)
+  const { stories, error } = await getAllStoriesSafe(72)
+  // Prefer stored images; only resolve a few missing OGs so home stays fast.
   const prioritized = await prioritizeStoriesWithImages(stories, {
-    resolveLimit: 32,
+    resolveLimit: 6,
+    concurrency: 3,
   })
   const feed = selectFeedStories(prioritized, 13)
 
@@ -47,8 +49,8 @@ export default async function HomePage() {
               Decode the Tech.
             </h1>
             <p className="mt-4 max-w-[46ch] text-[15px] md:text-[17px] leading-[1.6] text-[var(--text-secondary)]">
-              Aggregated coverage from Phnom Penh — clustered sources, cut jargon, read with
-              Local Lens.
+              Technology coverage from Phnom Penh — who covered it, how they framed it, and
+              what&apos;s undercovered. Compare outlets, cut jargon, Local Lens for Cambodia.
             </p>
           </div>
 
@@ -93,7 +95,7 @@ export default async function HomePage() {
           <Link href="/about" className="hover:text-[var(--accent)] transition-colors">
             About
           </Link>
-          <span>ELI5 · Standard · Deep on every story</span>
+          <span>Coverage map · Compare · Blindspot · ELI5 / Standard / Deep</span>
         </div>
       </section>
     </div>

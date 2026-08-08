@@ -51,7 +51,7 @@ const notoKhmer = Noto_Sans_Khmer({
 export const metadata: Metadata = {
   title: "Inbound Reports — Decode the Tech.",
   description:
-    "Tech news aggregation from Phnom Penh — cluster sources, cut jargon, and read with Local Lens.",
+    "Technology coverage from Phnom Penh — map who covered a story, compare framing, spot blindspots, and cut jargon.",
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }, { url: "/icon.svg", sizes: "any" }],
     apple: "/icon.svg",
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Inbound Reports — Decode the Tech.",
     description:
-      "Tech news aggregation from Phnom Penh — cluster sources, cut jargon, and read with Local Lens.",
+      "Technology coverage from Phnom Penh — map who covered a story, compare framing, spot blindspots, and cut jargon.",
     type: "website",
     locale: "en_US",
     siteName: "Inbound Reports",
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Inbound Reports — Decode the Tech.",
     description:
-      "Tech news aggregation from Phnom Penh — cluster sources, cut jargon, and read with Local Lens.",
+      "Technology coverage from Phnom Penh — map who covered a story, compare framing, spot blindspots, and cut jargon.",
   },
 };
 

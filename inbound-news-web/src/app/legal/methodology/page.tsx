@@ -85,6 +85,11 @@ export default function MethodologyPage() {
         it is not a stored AI hype score. Per-article title heuristics on the story page remain a
         lightweight linguistic signal only.
       </p>
+      <p>
+        <strong>Outlet roles (tech axes):</strong> each source is labeled Booster, Trade, Critical,
+        Community, Research, or Corporate from a static domain/name map — coverage roles for tech
+        outlets, not political left/right.
+      </p>
 
       <h2>5. The Literacy Layer</h2>
       <p>
@@ -93,10 +98,10 @@ export default function MethodologyPage() {
         term opens a popover with a plain-English definition and an analogy.
       </p>
       <p>
-        <strong>ELI5 (Explain Like I&apos;m 5):</strong> A simplified reading tier that uses
-        text processing — replacing complex vocabulary with simpler alternatives and removing
-        parenthetical asides — to make technical news more accessible. This is a deterministic
-        text simplification, not an AI rewrite.
+        <strong>Reading tiers (ELI5 / Standard / Deep):</strong> Deterministic text processing —
+        simplifying vocabulary for ELI5 and appending source-context notes for Deep when available.
+        The tier toggle only appears when those variants actually differ from Standard; identical
+        copy is not presented as three modes.
       </p>
       <p>
         <strong>Language:</strong> The web product is English-first today. Khmer UI and full story
@@ -109,8 +114,8 @@ export default function MethodologyPage() {
         On each story page, a sidebar box attempts to generate a paragraph explaining why that story
         matters specifically to a Cambodian audience. This uses a lightweight AI model (Groq /
         Llama 3.1 8B) with a prompt focused on Cambodian relevance. The feature is best-effort:
-        if the AI is unavailable, a fallback paragraph based on the story&apos;s category is shown
-        instead.
+        if the AI is unavailable, a category-level fallback paragraph is shown and labeled as
+        category context rather than a story-specific lens.
       </p>
 
       <h2>7. Hype Predictions (Hype Retrospective)</h2>

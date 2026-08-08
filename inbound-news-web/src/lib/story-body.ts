@@ -113,8 +113,12 @@ export function resolveStoryBody(story: StoryWithArticles): string {
   for (const article of story.articles || []) {
     if (article.summary) candidates.push(article.summary)
   }
-  const good = candidates.map((s) => s.trim()).find(isUsefulSummary)
-  if (good) return good
+  // Prefer longer useful summaries first (ingest rewrite quality varies).
+  const useful = candidates
+    .map((s) => s.trim())
+    .filter(isUsefulSummary)
+    .sort((a, b) => b.length - a.length)
+  if (useful[0]) return useful[0]
 
   for (const article of story.articles || []) {
     const rebuilt = summaryFromArticleRaw(article)
@@ -122,6 +126,75 @@ export function resolveStoryBody(story: StoryWithArticles): string {
   }
 
   return synthesizeStoryBody(story)
+}
+
+const ELI5_WORD_MAP: Record<string, string> = {
+  utilize: "use",
+  implement: "build",
+  facilitate: "help",
+  leverage: "use",
+  infrastructure: "systems",
+  paradigm: "approach",
+  methodology: "method",
+  comprehensive: "full",
+  significant: "big",
+  substantial: "large",
+  innovative: "new",
+  ecosystem: "network",
+  vulnerability: "security hole",
+  ransomware: "ransom malware",
+  acquisition: "buyout",
+  regulators: "rule-makers",
+  antitrust: "anti-monopoly",
+}
+
+function simplifyForEli5(text: string): string {
+  const sentences = text.split(/(?<=[.!?])\s+/).filter(Boolean)
+  const kept = sentences.slice(0, Math.min(3, Math.max(2, Math.ceil(sentences.length / 2))))
+  return kept
+    .map((s) =>
+      s
+        .replace(
+          /\b(?:utilize|implement|facilitate|leverage|infrastructure|paradigm|methodology|comprehensive|significant|substantial|innovative|ecosystem|vulnerability|ransomware|acquisition|regulators|antitrust)\b/gi,
+          (m) => ELI5_WORD_MAP[m.toLowerCase()] || m
+        )
+        .replace(/\s*\([^)]{0,80}\)\s*/g, " ")
+        .replace(/\s{2,}/g, " ")
+        .trim()
+    )
+    .filter(Boolean)
+    .join(" ")
+}
+
+function deepenWithSources(standard: string, articles: Article[]): string {
+  const extras = articles
+    .map((a) => (a.summary || "").trim())
+    .filter((s) => isUsefulSummary(s))
+    .filter((s) => s !== standard && !standard.includes(s.slice(0, 80)))
+    .slice(0, 2)
+  if (extras.length === 0) return standard
+  return [standard, ...extras].join(" ")
+}
+
+export type ReadingTier = "eli5" | "standard" | "deep"
+
+/** Build tier texts from one solid body. Same layout — only copy differs when useful. */
+export function buildTierTexts(
+  standardBody: string,
+  articles: Article[] = []
+): Record<ReadingTier, string> {
+  const standard = standardBody.trim()
+  const eli5 = simplifyForEli5(standard) || standard
+  const deep = deepenWithSources(standard, articles)
+  return { eli5, standard, deep }
+}
+
+/** True when at least one non-standard tier is meaningfully different. */
+export function tiersHaveDistinctContent(tiers: Record<ReadingTier, string>): boolean {
+  const norm = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase()
+  const standard = norm(tiers.standard)
+  if (!standard) return false
+  return norm(tiers.eli5) !== standard || norm(tiers.deep) !== standard
 }
 
 /** Short dek for cards — omit junk placeholders entirely. */
