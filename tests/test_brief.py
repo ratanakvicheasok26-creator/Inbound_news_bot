@@ -56,3 +56,29 @@ def test_brief_text_khmer(reload_config):
     assert "https://example.com/brief/2026-08-08" in text
     assert "Today's Brief" not in text
     assert "បើក Brief" in cfg.brief_button_label()
+
+
+def test_brief_text_explicit_language(reload_config):
+    cfg = reload_config(NEWS_LANGUAGE="km", BRIEF_TEXT="", BRIEF_TEXT_KM="")
+    text_en = cfg.brief_text("https://example.com/brief/2026-08-08", language="en")
+    assert "Today's Brief" in text_en
+    assert "https://example.com/brief/2026-08-08" in text_en
+    assert cfg.brief_button_label(language="en") == "Open today's Brief →"
+
+
+def test_brief_extra_channels_parse(reload_config):
+    cfg = reload_config(
+        BRIEF_EXTRA_CHANNELS=(
+            '[{"chat_id": -100111222333, "thread_id": null, "language": "en"}, '
+            '{"chat_id": -100444555666, "thread_id": 7, "language": "km"}]'
+        )
+    )
+    assert cfg.BRIEF_EXTRA_CHANNELS == [
+        {"chat_id": -100111222333, "thread_id": None, "language": "en"},
+        {"chat_id": -100444555666, "thread_id": 7, "language": "km"},
+    ]
+
+
+def test_brief_extra_channels_invalid(reload_config):
+    cfg = reload_config(BRIEF_EXTRA_CHANNELS="not-json")
+    assert cfg.BRIEF_EXTRA_CHANNELS == []

@@ -12,10 +12,14 @@ instead of every tier-1 URL.
 
 from __future__ import annotations
 
+import json
+import logging
 import os
 from zoneinfo import ZoneInfo
 
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -49,6 +53,7 @@ __all__ = [
     "DONATION_TEXT",
     "donation_text",
     "BRIEF_SCHEDULE_HOURS",
+    "BRIEF_EXTRA_CHANNELS",
     "brief_text",
     "brief_button_label",
     "DIGEST_HEADER_TEXT",
@@ -229,19 +234,64 @@ _DEFAULT_BRIEF_TEXT_KM = (
 )
 
 
-def brief_text(brief_url: str) -> str:
-    """Daily Brief reminder caption — language follows NEWS_LANGUAGE."""
-    if NEWS_LANGUAGE == "km":
+def brief_text(brief_url: str, language: str | None = None) -> str:
+    """Daily Brief reminder caption — follows NEWS_LANGUAGE (or an explicit language)."""
+    lang = (language or NEWS_LANGUAGE).lower()
+    if lang == "km":
         template = os.environ.get("BRIEF_TEXT_KM", "").strip() or _DEFAULT_BRIEF_TEXT_KM
     else:
         template = os.environ.get("BRIEF_TEXT", "").strip() or _DEFAULT_BRIEF_TEXT
     return template.replace("{brief_url}", brief_url)
 
 
-def brief_button_label() -> str:
-    if NEWS_LANGUAGE == "km":
+def brief_button_label(language: str | None = None) -> str:
+    """Brief button label — follows NEWS_LANGUAGE (or an explicit language)."""
+    if (language or NEWS_LANGUAGE).lower() == "km":
         return "បើក Brief ថ្ងៃនេះ →"
     return "Open today's Brief →"
+
+
+def _parse_brief_extra_channels(raw: str) -> list[dict]:
+    """Parse BRIEF_EXTRA_CHANNELS as a JSON list.
+
+    Each entry: {"chat_id": -100..., "thread_id": null, "language": "en"|"km"}.
+    Lets a deployment also post the Brief CTA to other chats (e.g. the English
+    channel) in that chat's language, alongside its own TELEGRAM_CHANNEL_ID.
+    """
+    raw = (raw or "").strip()
+    if not raw:
+        return []
+    try:
+        data = json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        logger.warning("BRIEF_EXTRA_CHANNELS is not valid JSON — ignoring: %.200s", raw)
+        return []
+
+    targets: list[dict] = []
+    for item in data if isinstance(data, list) else []:
+        if not isinstance(item, dict):
+            continue
+        try:
+            chat_id = int(item["chat_id"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        thread_id = item.get("thread_id")
+        if thread_id is not None:
+            try:
+                thread_id = int(thread_id)
+            except (TypeError, ValueError):
+                thread_id = None
+        language = str(item.get("language") or "en").strip().lower()
+        if language not in ("en", "km"):
+            language = "en"
+        targets.append({"chat_id": chat_id, "thread_id": thread_id, "language": language})
+    return targets
+
+
+# Optional extra chats that get the Brief CTA (in their own language) each slot.
+BRIEF_EXTRA_CHANNELS: list[dict] = _parse_brief_extra_channels(
+    os.environ.get("BRIEF_EXTRA_CHANNELS", "")
+)
 
 
 _DEFAULT_DIGEST_HEADER = "📰 <b>Inbound Reports</b>"
