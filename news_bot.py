@@ -38,7 +38,6 @@ from newsbot.bot import fetch_and_post, fetch_urgent_and_post, fetch_pulse_and_p
 from newsbot import config
 from newsbot.mirror import mirror_available
 from newsbot.config import (
-    BRIEF_EXTRA_CHANNELS,
     BRIEF_SCHEDULE_HOURS,
     DONATION_QR_IMAGE,
     DONATION_SCHEDULE_DAYS,
@@ -47,8 +46,6 @@ from newsbot.config import (
     TIMEZONE,
     URGENT_CHECK_INTERVAL_SECONDS,
     URGENT_FIRST_DELAY_SECONDS,
-    brief_button_label,
-    brief_text,
     donation_text,
     validate_config,
 )
@@ -123,73 +120,18 @@ async def donation_job(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def brief_job(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Daily Brief habit post + (EN only) important news pulse.
+    """Daily Brief digest at 6/12/18/22 Phnom Penh.
 
-    Each deployment posts the Brief CTA to its own channel plus any
-    BRIEF_EXTRA_CHANNELS targets (each in that target's language). English
-    also posts a short important skim; Khmer receives those stories via the
-    Redis mirror.
+    The EN bot posts a short important skim in the digest format; the Khmer
+    bot receives the same stories via the Redis mirror. No plain CTA card —
+    the digest itself carries the Brief footer link.
     """
-    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-
-    from newsbot.bot import _resolve_channel_target
-    from newsbot.website_links import brief_url
-
-    primary_chat, primary_thread = _resolve_channel_target()
-    targets: list[tuple[int, int | None, str]] = []
-    if primary_chat is not None:
-        targets.append((primary_chat, primary_thread, config.NEWS_LANGUAGE))
-    for extra in BRIEF_EXTRA_CHANNELS:
-        if extra["chat_id"] != primary_chat:
-            targets.append((extra["chat_id"], extra["thread_id"], extra["language"]))
-    if not targets:
-        logger.warning(
-            "TELEGRAM_CHANNEL_ID not set and no BRIEF_EXTRA_CHANNELS "
-            "(NEWS_LANGUAGE=%s) — skipping brief reminder.",
-            config.NEWS_LANGUAGE,
-        )
-        return
-
-    url = brief_url()
-    for chat_id, thread_id, language in targets:
-        text = brief_text(url, language=language)
-        markup = InlineKeyboardMarkup(
-            [[InlineKeyboardButton(brief_button_label(language=language), url=url)]]
-        )
-        kwargs: dict = {
-            "chat_id": chat_id,
-            "text": text,
-            "parse_mode": "HTML",
-            "disable_web_page_preview": False,
-            "reply_markup": markup,
-        }
-        if thread_id is not None:
-            kwargs["message_thread_id"] = thread_id
-
-        try:
-            await context.bot.send_message(**kwargs)
-            logger.info(
-                "Brief reminder sent to chat %s topic %s (lang=%s url=%s)",
-                chat_id,
-                thread_id,
-                language,
-                url,
-            )
-        except Exception:
-            logger.exception(
-                "Failed to send brief reminder to %s (lang=%s)",
-                chat_id,
-                language,
-            )
-
-    # Important skim lives on EN; KM picks it up from the mirror queue.
-    if config.NEWS_LANGUAGE == "en":
-        try:
-            n = await fetch_pulse_and_post(context)
-            if n:
-                logger.info("Brief pulse posted %d important stor(y/ies).", n)
-        except Exception:
-            logger.exception("Brief pulse failed")
+    try:
+        n = await fetch_pulse_and_post(context)
+        if n:
+            logger.info("Brief pulse posted %d important stor(y/ies).", n)
+    except Exception:
+        logger.exception("Brief pulse failed")
 
 
 async def _reply(update: object, text: str) -> None:
@@ -354,11 +296,6 @@ def main() -> None:
             name=f"brief_{hour:02d}",
         )
     brief_hours_label = ", ".join(f"{h:02d}:00" for h in BRIEF_SCHEDULE_HOURS)
-    extra_label = ", ".join(
-        f"chat={t['chat_id']} lang={t['language']}" for t in BRIEF_EXTRA_CHANNELS
-    )
-    if extra_label:
-        logger.info("Brief extra targets: %s", extra_label)
 
     if is_km:
         logger.info(
