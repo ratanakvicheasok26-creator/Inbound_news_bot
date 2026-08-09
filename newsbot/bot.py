@@ -157,13 +157,18 @@ def _brief_keyboard() -> InlineKeyboardMarkup:
     )
 
 
-def _attribution_line(links: list[tuple[str, str]], website_url: str, limit: int = 3) -> str:
-    """Plain source names + website deep link (no outbound source hrefs)."""
-    names = [_html_escape(name) for _, name in links[:limit] if name]
-    attribution = " · ".join(names) if names else "Multiple sources"
-    safe_url = html.escape(website_url, quote=True)
-    read_label = "sources + Local Lens"
-    return f'{attribution} · <a href="{safe_url}">{read_label}</a>'
+def _attribution_line(links: list[tuple[str, str]], limit: int = 3) -> str:
+    """Hyperlink each source name directly to its original news article URL."""
+    items: list[str] = []
+    for url, name in links[:limit]:
+        safe_url = html.escape(url, quote=True)
+        safe_name = _html_escape(name or "Source")
+        items.append(f'<a href="{safe_url}">{safe_name}</a>')
+
+    if not items:
+        return ""
+
+    return f'<i>{" · ".join(items)}</i>'
 
 
 def _website_url_for_cluster(
@@ -401,7 +406,7 @@ def _cluster_to_batched(
     return BatchedStory(
         title=title,
         summary=summary,
-        source_line=_attribution_line(links, website),
+        source_line=_attribution_line(links),
         website_url=website,
         image_url=pick_image_url(cluster),
         entry_ids={e.id for e in cluster},
@@ -419,23 +424,22 @@ def _pick_batch_image(batched: list[BatchedStory]) -> str | None:
 
 def _compile_batch_message(batched: list[BatchedStory]) -> str:
     now = datetime.now(TIMEZONE).strftime("%b %d, %Y · %I:%M %p")
-    separator = "━" * 20
+    separator = "─────────────────────────────"
     brief = html.escape(brief_url(), quote=True)
     tease_line = (
-        'Tease only — full sources + <b>Local Lens (Cambodia)</b> on the '
-        f'<a href="{brief}">daily Brief</a>.'
+        '💡 <i>Tease only — full sources + <b>Local Lens (Cambodia)</b> on the '
+        f'<a href="{brief}">daily Brief</a>.</i>'
     )
-    brief_footer = f'<a href="{brief}">→ Open today\'s Brief on Inbound Reports</a>'
+    brief_footer = f'🌐 <a href="{brief}"><b>Open today\'s Brief on Inbound Reports →</b></a>'
     parts: list[str] = [
-        f"{DIGEST_HEADER_TEXT} — {now}",
+        f"📰 <b>{DIGEST_HEADER_TEXT}</b> · <i>{now}</i>",
         separator,
         tease_line,
     ]
 
     for s in batched:
         parts.append("")
-        safe_url = html.escape(s.website_url, quote=True)
-        parts.append(f'▸ <b><a href="{safe_url}">{_html_escape(s.title)}</a></b>')
+        parts.append(f'🔹 <b>{_html_escape(s.title)}</b>')
         # Keep Telegram short so the site visit still pays off
         teaser = (s.summary or "").strip()
         if len(teaser) > 280:

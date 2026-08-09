@@ -24,19 +24,24 @@ from newsbot.config import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-DEMO_MESSAGE = """<b>📰 Tech News — Demo · Jul 23, 2026 · 3:45 PM</b>
+DEMO_MESSAGE = """📰 <b>Inbound Reports</b> · <i>Aug 08, 2026 · 06:00 PM</i>
+─────────────────────────────
+💡 <i>Tease only — full coverage + <b>Local Lens (Cambodia)</b> on the <a href="https://inbound-news-web.vercel.app">daily Brief</a>.</i>
 
-▸ <b>Apple Announces M4 Chip</b>
+🔹 <b>Apple Announces M4 Chip</b>
 Apple's M4 brings a 16-core Neural Engine delivering 38 TOPS, a 40% GPU uplift over M3, and up to 128 GB unified memory. The chip targets AI inference workloads and high-end content creation.
-<a href="https://www.macrumors.com">MacRumors</a> · <a href="https://9to5mac.com">9to5Mac</a>
+<i><a href="https://www.macrumors.com">MacRumors</a> · <a href="https://9to5mac.com">9to5Mac</a></i>
 
-▸ <b>Google Releases Gemini 3.0</b>
+🔹 <b>Google Releases Gemini 3.0</b>
 Gemini 3.0 introduces real-time video understanding and a 2M-token context window. Pricing starts at $0.15 per 1K tokens — 40% cheaper than GPT-5.6. The model can analyze live camera feeds for retail and industrial applications.
-<a href="https://www.theverge.com">The Verge</a> · <a href="https://techcrunch.com">TechCrunch</a>
+<i><a href="https://www.theverge.com">The Verge</a> · <a href="https://techcrunch.com">TechCrunch</a></i>
 
-▸ <b>Critical RCE in libopenssl</b>
+🔹 <b>Critical RCE in libopenssl</b>
 A buffer overflow in libopenssl 3.x (CVE-2026-4418) allows remote code execution via crafted TLS handshakes. All major Linux distros have released patches. Federal agencies must remediate within 7 days per CISA BOD-26-02.
-<a href="https://www.bleepingcomputer.com">BleepingComputer</a> · <a href="https://krebsonsecurity.com">Krebs on Security</a>"""
+<i><a href="https://www.bleepingcomputer.com">BleepingComputer</a> · <a href="https://krebsonsecurity.com">Krebs on Security</a></i>
+
+─────────────────────────────
+🌐 <a href="https://inbound-news-web.vercel.app"><b>Open today's Brief on Inbound Reports →</b></a>"""
 
 
 async def main() -> None:
