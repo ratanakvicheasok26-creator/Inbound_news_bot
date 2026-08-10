@@ -6,7 +6,8 @@ regular digest stories on a fixed schedule, with urgent stories checked
 separately and posted anytime.
 
 Schedule:
-  - 5am/5pm digests: top stories posted individually to the English channel (mirrored to Khmer)
+  - 5am–5pm digests: new stories trickle out individually throughout the day
+    (hourly check + 5am morning catch-up) to the English channel, mirrored to Khmer
   - Daily Brief reminders: BRIEF_SCHEDULE_HOURS (default 6am, 12pm, 6pm, 10pm)
     on both English and Khmer channels
   - Urgent keyword check: every URGENT_CHECK_INTERVAL_SECONDS, posts immediately
@@ -44,6 +45,7 @@ from newsbot import config
 from newsbot.mirror import mirror_available
 from newsbot.config import (
     BRIEF_SCHEDULE_HOURS,
+    DIGEST_CHECK_INTERVAL_SECONDS,
     DIGEST_SCHEDULE_HOUR_AM,
     DIGEST_SCHEDULE_HOUR_PM,
     DONATION_QR_IMAGE,
@@ -80,10 +82,21 @@ async def urgent_job(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def digest_job(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Scheduled 5am/5pm digest — each top story posted individually to the channel.
+    """Trickle digest — post new stories individually as they appear.
 
-    English only; the Khmer bot receives the same stories via the Redis mirror.
+    Runs during the 5am–5pm Phnom Penh window on the English bot. Each run
+    posts the latest unposted stories one message each; the Khmer bot
+    receives the same stories via the Redis mirror.
     """
+    now = dt.datetime.now(TIMEZONE)
+    if not (DIGEST_SCHEDULE_HOUR_AM <= now.hour < DIGEST_SCHEDULE_HOUR_PM):
+        logger.debug(
+            "Digest window closed (now %s, window %02d:00–%02d:00) — skipping.",
+            now.strftime("%H:%M"),
+            DIGEST_SCHEDULE_HOUR_AM,
+            DIGEST_SCHEDULE_HOUR_PM,
+        )
+        return
     try:
         n = await fetch_individual_and_post(context)
         if n:
@@ -302,18 +315,20 @@ def main() -> None:
             first=URGENT_FIRST_DELAY_SECONDS,
             name="urgent_check",
         )
-    # 5am/5pm digests — English bot only, each story posted individually.
-    # The Khmer bot mirrors these automatically.
+    # 5am morning catch-up + hourly trickle during the 5am–5pm window.
+    # English bot only, each story posted individually. The Khmer bot
+    # mirrors these automatically.
     if not is_km:
         app.job_queue.run_daily(
             digest_job,
             time=dt.time(hour=DIGEST_SCHEDULE_HOUR_AM, minute=0, tzinfo=TIMEZONE),
             name="digest_am",
         )
-        app.job_queue.run_daily(
+        app.job_queue.run_repeating(
             digest_job,
-            time=dt.time(hour=DIGEST_SCHEDULE_HOUR_PM, minute=0, tzinfo=TIMEZONE),
-            name="digest_pm",
+            interval=DIGEST_CHECK_INTERVAL_SECONDS,
+            first=DIGEST_CHECK_INTERVAL_SECONDS,
+            name="digest_trickle",
         )
     # Both EN and KM deployments schedule this — each posts to its own channel.
     app.job_queue.run_daily(
@@ -341,12 +356,13 @@ def main() -> None:
         )
     else:
         logger.info(
-            "Bot running. Digests at %02d:00 and %02d:00 (%s). "
+            "Bot running. Digest trickle %02d:00–%02d:00 (%s, every %d min). "
             "ASAP urgent checks every %ds. Brief+important pulse at %s (%s). "
             "Donation Sat at %02d:00. /fetch for manual digest.",
             DIGEST_SCHEDULE_HOUR_AM,
             DIGEST_SCHEDULE_HOUR_PM,
             TIMEZONE,
+            DIGEST_CHECK_INTERVAL_SECONDS // 60,
             URGENT_CHECK_INTERVAL_SECONDS,
             brief_hours_label,
             TIMEZONE,

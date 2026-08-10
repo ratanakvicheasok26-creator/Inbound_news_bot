@@ -55,6 +55,7 @@ __all__ = [
     "URGENT_CHECK_INTERVAL_SECONDS",
     "URGENT_FIRST_DELAY_SECONDS",
     "MAX_URGENT_POSTS_PER_RUN",
+    "DIGEST_CHECK_INTERVAL_SECONDS",
     "URGENT_KEYWORDS",
     "IMPORTANT_KEYWORDS",
     "IMPORTANT_MIN_SOURCES",
@@ -257,6 +258,8 @@ WEBSITE_BASE_URL: str = (
 URGENT_CHECK_INTERVAL_SECONDS: int = 60 * 30  # every 30 minutes
 URGENT_FIRST_DELAY_SECONDS: int = 60
 POLL_INTERVAL_SECONDS: int = int(os.environ.get("POLL_INTERVAL_SECONDS", "7200"))
+# How often the digest re-checks for new stories during the 5am–5pm window.
+DIGEST_CHECK_INTERVAL_SECONDS: int = 60 * int(os.environ.get("DIGEST_CHECK_INTERVAL_MINUTES", "60"))
 
 # ---- Rate limiting ----
 MAX_URGENT_POSTS_PER_RUN: int = 2
