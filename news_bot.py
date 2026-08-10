@@ -35,7 +35,6 @@ import time as time_mod
 from telegram.ext import Application, CommandHandler, ContextTypes, filters
 
 from newsbot.bot import (
-    fetch_and_post,
     fetch_individual_and_post,
     fetch_pulse_and_post,
     fetch_urgent_and_post,
@@ -233,9 +232,9 @@ async def fetch_command(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     await _reply(update, "Fetching latest tech news...")
 
     try:
-        posted_count = await fetch_and_post(context)
+        posted_count = await fetch_individual_and_post(context)
     except Exception:
-        logger.exception("[/fetch] fetch_and_post raised for chat_id=%s", chat_id)
+        logger.exception("[/fetch] fetch raised for chat_id=%s", chat_id)
         await _reply(update, "Couldn't fetch news right now — something went wrong. Check the logs.")
         return
 

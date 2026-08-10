@@ -99,7 +99,7 @@ class TestFetchCommand:
         update.effective_message.reply_text = AsyncMock()
         context = MagicMock()
 
-        with patch("news_bot.fetch_and_post", new_callable=AsyncMock, return_value=3):
+        with patch("news_bot.fetch_individual_and_post", new_callable=AsyncMock, return_value=3):
             import asyncio
             asyncio.run(fetch_command(update, context))
 
@@ -113,7 +113,7 @@ class TestFetchCommand:
         update.effective_message.reply_text = AsyncMock()
         context = MagicMock()
 
-        with patch("news_bot.fetch_and_post", new_callable=AsyncMock, return_value=0), \
+        with patch("news_bot.fetch_individual_and_post", new_callable=AsyncMock, return_value=0), \
              patch("news_bot._fetch_last_run", {}):
             import asyncio
             asyncio.run(fetch_command(update, context))
@@ -127,7 +127,7 @@ class TestFetchCommand:
         update.effective_message.reply_text = AsyncMock()
         context = MagicMock()
 
-        with patch("news_bot.fetch_and_post", new_callable=AsyncMock, side_effect=RuntimeError("boom")), \
+        with patch("news_bot.fetch_individual_and_post", new_callable=AsyncMock, side_effect=RuntimeError("boom")), \
              patch("news_bot._fetch_last_run", {}):
             import asyncio
             asyncio.run(fetch_command(update, context))
