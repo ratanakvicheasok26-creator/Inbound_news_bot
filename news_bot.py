@@ -6,7 +6,7 @@ regular digest stories on a fixed schedule, with urgent stories checked
 separately and posted anytime.
 
 Schedule:
-  - Scheduled 5am/5pm digests are disabled (unreliable); use /fetch for on-demand digests
+  - 5am/5pm digests: top stories posted individually to the English channel (mirrored to Khmer)
   - Daily Brief reminders: BRIEF_SCHEDULE_HOURS (default 6am, 12pm, 6pm, 10pm)
     on both English and Khmer channels
   - Urgent keyword check: every URGENT_CHECK_INTERVAL_SECONDS, posts immediately
@@ -34,11 +34,19 @@ import time as time_mod
 
 from telegram.ext import Application, CommandHandler, ContextTypes, filters
 
-from newsbot.bot import fetch_and_post, fetch_urgent_and_post, fetch_pulse_and_post, mirror_drain_job
+from newsbot.bot import (
+    fetch_and_post,
+    fetch_individual_and_post,
+    fetch_pulse_and_post,
+    fetch_urgent_and_post,
+    mirror_drain_job,
+)
 from newsbot import config
 from newsbot.mirror import mirror_available
 from newsbot.config import (
     BRIEF_SCHEDULE_HOURS,
+    DIGEST_SCHEDULE_HOUR_AM,
+    DIGEST_SCHEDULE_HOUR_PM,
     DONATION_QR_IMAGE,
     DONATION_SCHEDULE_DAYS,
     DONATION_SCHEDULE_HOUR,
@@ -70,6 +78,19 @@ _fetch_cooldown_lock = threading.Lock()
 async def urgent_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Urgent check — keyword matches not already posted. Runs every URGENT_CHECK_INTERVAL_SECONDS."""
     await fetch_urgent_and_post(context)
+
+
+async def digest_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Scheduled 5am/5pm digest — each top story posted individually to the channel.
+
+    English only; the Khmer bot receives the same stories via the Redis mirror.
+    """
+    try:
+        n = await fetch_individual_and_post(context)
+        if n:
+            logger.info("Digest posted %d individual stor(y/ies).", n)
+    except Exception:
+        logger.exception("Digest failed")
 
 
 async def donation_job(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -257,10 +278,11 @@ def main() -> None:
     if app.job_queue is None:
         raise RuntimeError("job_queue must be available (install python-telegram-bot[job-queue])")
 
-    # Scheduled 5am/5pm digests removed — unreliable. Digests via /fetch only.
-    # Urgent stories keep a separate repeating check on the English bot.
-    # Khmer mirror mode skips its own feed pipeline — it re-posts everything
-    # the English bot publishes, so both channels stay in sync.
+    # Scheduled 5am/5pm digests post the top stories individually on the
+    # English bot. Urgent stories keep a separate repeating check on the
+    # English bot. Khmer mirror mode skips its own feed pipeline — it
+    # re-posts everything the English bot publishes, so both channels stay
+    # in sync.
     is_km = config.NEWS_LANGUAGE == "km"
     if is_km:
         if not mirror_available():
@@ -280,6 +302,19 @@ def main() -> None:
             interval=URGENT_CHECK_INTERVAL_SECONDS,
             first=URGENT_FIRST_DELAY_SECONDS,
             name="urgent_check",
+        )
+    # 5am/5pm digests — English bot only, each story posted individually.
+    # The Khmer bot mirrors these automatically.
+    if not is_km:
+        app.job_queue.run_daily(
+            digest_job,
+            time=dt.time(hour=DIGEST_SCHEDULE_HOUR_AM, minute=0, tzinfo=TIMEZONE),
+            name="digest_am",
+        )
+        app.job_queue.run_daily(
+            digest_job,
+            time=dt.time(hour=DIGEST_SCHEDULE_HOUR_PM, minute=0, tzinfo=TIMEZONE),
+            name="digest_pm",
         )
     # Both EN and KM deployments schedule this — each posts to its own channel.
     app.job_queue.run_daily(
@@ -307,9 +342,12 @@ def main() -> None:
         )
     else:
         logger.info(
-            "Bot running. Scheduled digests disabled. "
+            "Bot running. Digests at %02d:00 and %02d:00 (%s). "
             "ASAP urgent checks every %ds. Brief+important pulse at %s (%s). "
             "Donation Sat at %02d:00. /fetch for manual digest.",
+            DIGEST_SCHEDULE_HOUR_AM,
+            DIGEST_SCHEDULE_HOUR_PM,
+            TIMEZONE,
             URGENT_CHECK_INTERVAL_SECONDS,
             brief_hours_label,
             TIMEZONE,

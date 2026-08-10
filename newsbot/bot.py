@@ -66,6 +66,7 @@ __all__ = [
     "broadcast_stories",
     "broadcast_batched",
     "fetch_and_post",
+    "fetch_individual_and_post",
     "fetch_urgent_and_post",
     "fetch_pulse_and_post",
     "mirror_drain_job",
@@ -745,6 +746,16 @@ async def fetch_and_post(context: ContextTypes.DEFAULT_TYPE) -> int:
     """Fetch feeds. Batched path when BATCH_STORIES is on, else individual path."""
     if BATCH_STORIES:
         return await _run_batched_pipeline(context)
+    return await _run_pipeline(context, urgent=False)
+
+
+async def fetch_individual_and_post(context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Digest path: post each top story as its own Telegram message.
+
+    Sends every story separately (with sources) to the channel and
+    subscribers, and enqueues a mirror payload per story so the Khmer bot
+    re-posts each one individually too.
+    """
     return await _run_pipeline(context, urgent=False)
 
 
