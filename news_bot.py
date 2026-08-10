@@ -175,7 +175,11 @@ async def _reply(update: object, text: str) -> None:
 
 
 async def start_command(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Subscribe the current chat to future news broadcasts."""
+    """Subscribe the current chat to future news broadcasts.
+
+    When run inside a group forum topic (e.g. the News topic), the bot records
+    that topic and posts future news there instead of the General topic.
+    """
     state = get_state()
     subscribers = state.load_subscribers()
     effective_chat = getattr(update, "effective_chat", None)
@@ -183,16 +187,41 @@ async def start_command(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     chat_title = (effective_chat.title or effective_chat.first_name or "unknown") if effective_chat else "unknown"
     logger.info("[/start] chat_id=%s name=%s", chat_id, chat_title)
 
+    msg = getattr(update, "effective_message", None)
+    thread_id = getattr(msg, "message_thread_id", None)
+    chat_type = getattr(effective_chat, "type", "") if effective_chat else ""
+    in_topic = chat_type in ("group", "supergroup") and thread_id is not None
+    if in_topic:
+        group_threads = state.load_group_threads()
+        group_threads[chat_id] = thread_id
+        state.save_group_threads(group_threads)
+        logger.info(
+            "[/start] recorded topic for chat_id=%s thread=%s",
+            chat_id,
+            thread_id,
+        )
+
     if chat_id not in subscribers:
         subscribers.add(chat_id)
         state.save_subscribers(subscribers)
-        await _reply(
-            update,
-            "Subscribed! You'll get must-know alerts ASAP, Daily Brief skim "
-            "at set times, and a link to the full Brief on the site.",
-        )
+        if in_topic:
+            await _reply(
+                update,
+                "Subscribed! News will be posted to this topic. "
+                "You'll get must-know alerts ASAP, Daily Brief skim at set "
+                "times, and a link to the full Brief on the site.",
+            )
+        else:
+            await _reply(
+                update,
+                "Subscribed! You'll get must-know alerts ASAP, Daily Brief skim "
+                "at set times, and a link to the full Brief on the site.",
+            )
     else:
-        await _reply(update, "You're already subscribed.")
+        if in_topic:
+            await _reply(update, "You're already subscribed. News will be posted to this topic.")
+        else:
+            await _reply(update, "You're already subscribed.")
 
 
 async def stop_command(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:

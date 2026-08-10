@@ -50,6 +50,24 @@ class TestStartCommand:
         update.effective_message.reply_text.assert_awaited_once()
         assert "already" in update.effective_message.reply_text.call_args[0][0].lower()
 
+    def test_records_group_topic_on_start(self):
+        update = MagicMock()
+        update.effective_chat.id = -100123
+        update.effective_chat.type = "supergroup"
+        update.effective_message.message_thread_id = 7
+        update.effective_message.reply_text = AsyncMock()
+        context = MagicMock()
+
+        with patch("news_bot.get_state") as mock_state:
+            mock_state.return_value.load_subscribers.return_value = {-100123}
+            mock_state.return_value.load_group_threads.return_value = {}
+            import asyncio
+            asyncio.run(start_command(update, context))
+
+        mock_state.return_value.save_group_threads.assert_called_once_with({-100123: 7})
+        update.effective_message.reply_text.assert_awaited_once()
+        assert "this topic" in update.effective_message.reply_text.call_args[0][0]
+
 
 class TestStopCommand:
     def test_unsubscribes(self):

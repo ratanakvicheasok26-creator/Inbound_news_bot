@@ -21,6 +21,9 @@ class TestFileState:
         titles_path = self._posted_path.replace(".json", "_titles.json")
         if os.path.exists(titles_path):
             os.remove(titles_path)
+        group_threads_path = self._sub_path.replace("subscribers", "group_threads")
+        if os.path.exists(group_threads_path):
+            os.remove(group_threads_path)
         os.rmdir(self._tmp)
         reset_state()
 
@@ -36,6 +39,27 @@ class TestFileState:
         self.state.save_subscribers({111})
         self.state.save_subscribers({222, 333})
         assert self.state.load_subscribers() == {222, 333}
+
+    def test_load_group_threads_empty(self):
+        assert self.state.load_group_threads() == {}
+
+    def test_save_and_load_group_threads(self):
+        self.state.save_group_threads({-100: 42, -101: 7})
+        assert self.state.load_group_threads() == {-100: 42, -101: 7}
+
+    def test_save_group_threads_replaces_previous(self):
+        self.state.save_group_threads({-100: 1})
+        self.state.save_group_threads({-100: 42})
+        assert self.state.load_group_threads() == {-100: 42}
+
+    def test_corrupt_group_threads_file_returns_empty(self):
+        path = self._sub_path.replace("subscribers", "group_threads")
+        with open(path, "w") as f:
+            f.write("not valid json {{{")
+        assert self.state.load_group_threads() == {}
+
+    def test_missing_group_threads_file_returns_empty(self):
+        assert self.state.load_group_threads() == {}
 
     def test_corrupt_subscribers_file_returns_empty(self):
         with open(self._sub_path, "w") as f:

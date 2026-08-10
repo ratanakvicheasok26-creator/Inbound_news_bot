@@ -153,6 +153,7 @@ def test_broadcast_stories_sends_separately_with_button():
             "newsbot.bot.get_state"
         ) as mock_state:
             mock_state.return_value.load_subscribers.return_value = set()
+            mock_state.return_value.load_group_threads.return_value = {}
             return await broadcast_stories(context, [post1, post2])
 
     ids = asyncio.run(_run())
@@ -167,3 +168,33 @@ def test_broadcast_stories_sends_separately_with_button():
     photo_kwargs = mock_bot.send_photo.await_args.kwargs
     assert photo_kwargs["photo"] == "https://img.com/x.jpg"
     assert photo_kwargs["reply_markup"].inline_keyboard[0][0].url == f"{site}/story/2"
+
+
+def test_broadcast_routes_subscribed_group_to_recorded_topic():
+    post = StoryPost(
+        text="<b>One</b>",
+        primary_url="https://inbound-news-web.vercel.app/story/1",
+        primary_source="Source A",
+        entry_ids={"1"},
+    )
+
+    mock_bot = MagicMock()
+    mock_bot.send_message = AsyncMock()
+    context = MagicMock()
+    context.bot = mock_bot
+
+    async def _run():
+        with patch("newsbot.bot.TELEGRAM_CHANNEL_ID", -100), patch("newsbot.bot.TELEGRAM_THREAD_ID", None), patch(
+            "newsbot.bot.get_state"
+        ) as mock_state:
+            mock_state.return_value.load_subscribers.return_value = {-100}
+            mock_state.return_value.load_group_threads.return_value = {-100: 42}
+            return await broadcast_stories(context, [post])
+
+    ids = asyncio.run(_run())
+
+    assert ids == {"1"}
+    assert mock_bot.send_message.await_count == 1
+    kwargs = mock_bot.send_message.await_args.kwargs
+    assert kwargs["chat_id"] == -100
+    assert kwargs["message_thread_id"] == 42

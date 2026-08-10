@@ -234,18 +234,23 @@ async def broadcast_stories(
         logger.info("Posting disabled via DISABLE_POSTING — skipping %d stories.", len(stories))
         return set()
 
-    targets: dict[int, int | None] = {}
+    state = get_state()
+    group_threads: dict[int, int] = state.load_group_threads()
 
+    targets: dict[int, int | None] = {}
     channel_id, thread_id_for_channel = _resolve_channel_target()
     if channel_id is not None:
-        targets[channel_id] = thread_id_for_channel
+        targets[channel_id] = group_threads.get(channel_id, thread_id_for_channel)
 
-    state = get_state()
     for chat_id in state.load_subscribers():
         chat_id = int(chat_id)
         # A subscriber that happens to be the known channel still gets routed
         # to the right topic/thread, instead of silently falling back to None.
-        targets.setdefault(chat_id, thread_id_for_channel if chat_id == channel_id else None)
+        # Subscribed groups use their recorded topic (e.g. the News topic) when
+        # /start was run inside one.
+        if chat_id in targets:
+            continue
+        targets[chat_id] = group_threads.get(chat_id)
 
     if not targets:
         logger.warning("No channel or subscribers configured — nothing to send.")

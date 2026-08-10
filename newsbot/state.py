@@ -33,6 +33,7 @@ from newsbot.config import NEWS_LANGUAGE
 _LANG_PREFIX: str = "" if NEWS_LANGUAGE == "en" else f"{NEWS_LANGUAGE}:"
 
 _SUBSCRIBERS_KEY = f"newsbot:{_LANG_PREFIX}subscribers"
+_GROUP_THREADS_KEY = f"newsbot:{_LANG_PREFIX}group_threads"
 _POSTED_ID_PREFIX = f"newsbot:{_LANG_PREFIX}posted:"
 _POSTED_TITLE_PREFIX = f"newsbot:{_LANG_PREFIX}posted_title:"
 
@@ -45,6 +46,12 @@ class StateBackend(ABC):
 
     @abstractmethod
     def save_subscribers(self, ids: set[int]) -> None: ...
+
+    @abstractmethod
+    def load_group_threads(self) -> dict[int, int]: ...
+
+    @abstractmethod
+    def save_group_threads(self, mapping: dict[int, int]) -> None: ...
 
     @abstractmethod
     def load_posted_ids(self) -> set[str]: ...
@@ -84,6 +91,24 @@ class RedisState(StateBackend):
         pipe.delete(_SUBSCRIBERS_KEY)
         if ids:
             pipe.sadd(_SUBSCRIBERS_KEY, *(str(cid) for cid in ids))
+        pipe.execute()
+
+    def load_group_threads(self) -> dict[int, int]:
+        raw = self._r.hgetall(_GROUP_THREADS_KEY)
+        try:
+            return {int(k): int(v) for k, v in raw.items()}
+        except (ValueError, TypeError):
+            logger.exception("Failed to parse group threads from Redis")
+            return {}
+
+    def save_group_threads(self, mapping: dict[int, int]) -> None:
+        pipe = self._r.pipeline()
+        pipe.delete(_GROUP_THREADS_KEY)
+        if mapping:
+            pipe.hset(
+                _GROUP_THREADS_KEY,
+                mapping={str(k): str(v) for k, v in mapping.items()},
+            )
         pipe.execute()
 
     def _load_redis_set(self, prefix: str) -> set[str]:
@@ -196,6 +221,29 @@ class FileState(StateBackend):
 
     def save_subscribers(self, ids: set[int]) -> None:
         self._save_json_set(self._subscribers_path, ids)
+
+    def _group_threads_path(self) -> str:
+        return self._subscribers_path.replace("subscribers", "group_threads")
+
+    def load_group_threads(self) -> dict[int, int]:
+        path = self._group_threads_path()
+        if os.path.exists(path):
+            try:
+                with open(path, "r") as f:
+                    data = json.load(f)
+                return {int(k): int(v) for k, v in data.items()}
+            except (json.JSONDecodeError, OSError, ValueError, TypeError):
+                logger.exception("Failed to load %s", path)
+        return {}
+
+    def save_group_threads(self, mapping: dict[int, int]) -> None:
+        try:
+            self._atomic_write(
+                self._group_threads_path(),
+                {str(k): v for k, v in mapping.items()},
+            )
+        except OSError:
+            logger.exception("Failed to save %s", self._group_threads_path())
 
     def load_posted_ids(self) -> set[str]:
         return self._load_json_set(self._posted_path)
