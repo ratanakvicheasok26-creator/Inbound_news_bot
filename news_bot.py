@@ -35,14 +35,12 @@ import time as time_mod
 
 from telegram.ext import Application, CommandHandler, ContextTypes, filters
 
+from newsbot import config
 from newsbot.bot import (
     fetch_individual_and_post,
-    fetch_pulse_and_post,
     fetch_urgent_and_post,
     mirror_drain_job,
 )
-from newsbot import config
-from newsbot.mirror import mirror_available
 from newsbot.config import (
     BRIEF_SCHEDULE_HOURS,
     DIGEST_CHECK_INTERVAL_SECONDS,
@@ -55,10 +53,13 @@ from newsbot.config import (
     TIMEZONE,
     URGENT_CHECK_INTERVAL_SECONDS,
     URGENT_FIRST_DELAY_SECONDS,
+    brief_button_label,
+    brief_text,
     donation_text,
     validate_config,
 )
 from newsbot.health import start_health_server
+from newsbot.mirror import mirror_available
 from newsbot.state import acquire_instance_lock, get_state, release_instance_lock
 
 logging.basicConfig(
@@ -153,18 +154,55 @@ async def donation_job(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def brief_job(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Daily Brief digest at 6/12/18/22 Phnom Penh.
+    """Daily Brief CTA at the BRIEF_SCHEDULE_HOURS (Phnom Penh).
 
-    The EN bot posts a short important skim in the digest format; the Khmer
-    bot receives the same stories via the Redis mirror. No plain CTA card —
-    the digest itself carries the Brief footer link.
+    English and Khmer are separate deployments — each posts the Brief card to
+    its own TELEGRAM_CHANNEL_ID in its own language. Simple and guaranteed:
+    no dependence on the pulse pipeline or the Redis mirror.
     """
+    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
+    from newsbot.bot import _resolve_channel_target
+    from newsbot.website_links import brief_url
+
+    chat_id, thread_id = _resolve_channel_target()
+    if chat_id is None:
+        logger.warning(
+            "TELEGRAM_CHANNEL_ID not set (NEWS_LANGUAGE=%s) — skipping brief.",
+            config.NEWS_LANGUAGE,
+        )
+        return
+
+    url = brief_url()
+    text = brief_text(url)
+    markup = InlineKeyboardMarkup(
+        [[InlineKeyboardButton(brief_button_label(), url=url)]]
+    )
+    kwargs: dict = {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": False,
+        "reply_markup": markup,
+    }
+    if thread_id is not None:
+        kwargs["message_thread_id"] = thread_id
+
     try:
-        n = await fetch_pulse_and_post(context)
-        if n:
-            logger.info("Brief pulse posted %d important stor(y/ies).", n)
+        await context.bot.send_message(**kwargs)
+        logger.info(
+            "Brief sent to chat %s topic %s (lang=%s url=%s)",
+            chat_id,
+            thread_id,
+            config.NEWS_LANGUAGE,
+            url,
+        )
     except Exception:
-        logger.exception("Brief pulse failed")
+        logger.exception(
+            "Failed to send brief to %s (lang=%s)",
+            chat_id,
+            config.NEWS_LANGUAGE,
+        )
 
 
 async def _reply(update: object, text: str) -> None:
