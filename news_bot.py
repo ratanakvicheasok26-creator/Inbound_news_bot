@@ -258,9 +258,18 @@ async def fetch_command(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
         )
         return
 
-    # When an admin allowlist is configured, only those chats may trigger a
-    # manual fetch — otherwise anyone could burn AI quota and hammer feeds.
-    if FETCH_ADMIN_CHAT_IDS and chat_id not in FETCH_ADMIN_CHAT_IDS:
+    # /fetch burns feed + AI quota — require an explicit admin allowlist.
+    if not FETCH_ADMIN_CHAT_IDS:
+        logger.warning(
+            "[/fetch] rejected chat_id=%s — FETCH_ADMIN_CHAT_IDS is not configured",
+            chat_id,
+        )
+        await _reply(
+            update,
+            "Manual fetch is disabled until operators set FETCH_ADMIN_CHAT_IDS.",
+        )
+        return
+    if chat_id not in FETCH_ADMIN_CHAT_IDS:
         logger.info("[/fetch] rejected non-admin chat_id=%s", chat_id)
         await _reply(update, "This command is limited to the channel operators.")
         return

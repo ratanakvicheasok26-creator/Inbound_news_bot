@@ -65,7 +65,7 @@ def _check_ai_providers() -> dict:
 
 
 def _build_health_response() -> dict:
-    """Build the full health response."""
+    """Build a minimal health response (no provider inventory / key counts)."""
     db_status = _check_database()
     ai_status = _check_ai_providers()
 
@@ -82,10 +82,16 @@ def _build_health_response() -> dict:
     else:
         status = "ok"
 
+    # Public surface: status + uptime only. DB/AI detail stays internal to avoid
+    # advertising provider inventory and key counts to the open internet.
+    db_public = {"status": db_status.get("status", "unknown")}
+    if db_status.get("status") == "ok" and "latency_ms" in db_status:
+        db_public["latency_ms"] = db_status["latency_ms"]
+
     return {
         "status": status,
-        "database": db_status,
-        "ai_providers": ai_status,
+        "database": db_public,
+        "ai_ok": any_ai,
         "uptime_seconds": round(time.time() - _start_time),
     }
 

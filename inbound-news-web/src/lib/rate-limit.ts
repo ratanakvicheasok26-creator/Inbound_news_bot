@@ -17,8 +17,10 @@ const MAX_KEYS = 10_000
 /**
  * Best-effort client IP.
  *
- * Prefer platform-provided headers (Vercel/Railway) over the first hop of
- * `x-forwarded-for`, which a caller can spoof when hitting the origin directly.
+ * Prefer platform-provided headers (Vercel/CF/Railway). Do not trust a
+ * client-supplied `x-forwarded-for` alone — when no platform header is
+ * present, fall back to a shared "unknown" bucket so spoofed XFF cannot
+ * mint unlimited per-IP quotas.
  */
 export function getClientIp(req: NextRequest): string {
   const vercel = req.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim()
@@ -27,13 +29,7 @@ export function getClientIp(req: NextRequest): string {
   if (realIp) return realIp
   const cf = req.headers.get("cf-connecting-ip")?.trim()
   if (cf) return cf
-  const xff = req.headers.get("x-forwarded-for")
-  if (xff) {
-    // Prefer the right-most hop (closest to our edge) when the platform has
-    // appended its own entry; fall back to the first hop otherwise.
-    const parts = xff.split(",").map((p) => p.trim()).filter(Boolean)
-    if (parts.length) return parts[parts.length - 1]
-  }
+  // Untrusted / missing platform identity — shared bucket (stricter effective cap).
   return "unknown"
 }
 
@@ -49,6 +45,8 @@ export function rateLimit(
 
   if (!bucket || now >= bucket.resetAt) {
     if (store.size >= MAX_KEYS) pruneExpired(now)
+    // Still over cap: drop oldest entries instead of wiping everyone.
+    if (store.size >= MAX_KEYS) evictOldest(Math.ceil(MAX_KEYS * 0.1))
     store.set(key, { count: 1, resetAt: now + windowMs })
     return { ok: true, retryAfter: 0 }
   }
@@ -65,6 +63,13 @@ function pruneExpired(now: number): void {
   for (const [key, bucket] of store) {
     if (now >= bucket.resetAt) store.delete(key)
   }
-  // If everything is still live, drop the whole map to bound memory.
-  if (store.size >= MAX_KEYS) store.clear()
+}
+
+function evictOldest(n: number): void {
+  let removed = 0
+  for (const key of store.keys()) {
+    store.delete(key)
+    removed++
+    if (removed >= n) break
+  }
 }

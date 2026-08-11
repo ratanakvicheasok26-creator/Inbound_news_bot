@@ -11,6 +11,7 @@ import logging
 import os
 import tempfile
 import threading
+import uuid
 from abc import ABC, abstractmethod
 
 __all__ = [
@@ -351,6 +352,21 @@ def reset_state() -> None:
 
 _INSTANCE_LOCK_KEY = f"newsbot:instance_lock:{_LANG_PREFIX}".rstrip(":")
 _INSTANCE_LOCK_TTL_SECONDS = 900
+_INSTANCE_LOCK_TOKEN = f"{os.getpid()}-{uuid.uuid4().hex}"
+
+_REFRESH_LOCK_LUA = """
+if redis.call('GET', KEYS[1]) == ARGV[1] then
+  return redis.call('SET', KEYS[1], ARGV[1], 'EX', ARGV[2])
+end
+return 0
+"""
+
+_RELEASE_LOCK_LUA = """
+if redis.call('GET', KEYS[1]) == ARGV[1] then
+  return redis.call('DEL', KEYS[1])
+end
+return 0
+"""
 
 
 def acquire_instance_lock() -> bool:
@@ -358,8 +374,9 @@ def acquire_instance_lock() -> bool:
 
     Prevents two long-poll replicas (e.g. overlapping Railway/Render
     deploys) from both polling Telegram and both firing the scheduled
-    jobs. Returns False when no Redis is available or the lock is held
-    by another instance.
+    jobs. Returns False when Redis is configured but unavailable or the
+    lock is held by another instance. Without REDIS_URL, returns True
+    (local/dev).
     """
     redis_url = os.environ.get("REDIS_URL", "").strip()
     if not redis_url:
@@ -370,7 +387,12 @@ def acquire_instance_lock() -> bool:
 
         r = redis.Redis.from_url(redis_url, decode_responses=True)
         r.ping()
-        acquired = r.set(_INSTANCE_LOCK_KEY, "1", nx=True, ex=_INSTANCE_LOCK_TTL_SECONDS)
+        acquired = r.set(
+            _INSTANCE_LOCK_KEY,
+            _INSTANCE_LOCK_TOKEN,
+            nx=True,
+            ex=_INSTANCE_LOCK_TTL_SECONDS,
+        )
         if not acquired:
             logger.error(
                 "Another bot instance holds the lock (%s) — refusing to start to "
@@ -381,17 +403,15 @@ def acquire_instance_lock() -> bool:
         logger.info("Acquired single-instance lock (%s).", _INSTANCE_LOCK_KEY)
         return True
     except Exception:
-        logger.exception("Failed to acquire Redis instance lock — starting anyway.")
-        return True
+        logger.exception(
+            "Failed to acquire Redis instance lock — refusing to start "
+            "(fail-closed; set REDIS_URL correctly or unset it for local-only)."
+        )
+        return False
 
 
 def refresh_instance_lock() -> None:
-    """Renew the single-instance lock TTL.
-
-    The poller runs indefinitely, so without renewal the 15-minute lock key
-    would expire and a second replica (e.g. an overlapping deploy) could start
-    and double-post. Called on a repeating schedule well inside the TTL.
-    """
+    """Renew the single-instance lock TTL only if we still own it."""
     redis_url = os.environ.get("REDIS_URL", "").strip()
     if not redis_url:
         return
@@ -399,13 +419,19 @@ def refresh_instance_lock() -> None:
         import redis
 
         r = redis.Redis.from_url(redis_url, decode_responses=True)
-        r.set(_INSTANCE_LOCK_KEY, "1", ex=_INSTANCE_LOCK_TTL_SECONDS)
+        r.eval(
+            _REFRESH_LOCK_LUA,
+            1,
+            _INSTANCE_LOCK_KEY,
+            _INSTANCE_LOCK_TOKEN,
+            str(_INSTANCE_LOCK_TTL_SECONDS),
+        )
     except Exception:
         logger.warning("Failed to refresh Redis instance lock.", exc_info=True)
 
 
 def release_instance_lock() -> None:
-    """Best-effort release of the single-instance lock."""
+    """Best-effort release of the single-instance lock (owner only)."""
     redis_url = os.environ.get("REDIS_URL", "").strip()
     if not redis_url:
         return
@@ -413,6 +439,6 @@ def release_instance_lock() -> None:
         import redis
 
         r = redis.Redis.from_url(redis_url, decode_responses=True)
-        r.delete(_INSTANCE_LOCK_KEY)
+        r.eval(_RELEASE_LOCK_LUA, 1, _INSTANCE_LOCK_KEY, _INSTANCE_LOCK_TOKEN)
     except Exception:
         logger.debug("Failed to release Redis instance lock.", exc_info=True)

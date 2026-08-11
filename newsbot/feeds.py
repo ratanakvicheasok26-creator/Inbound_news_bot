@@ -18,7 +18,7 @@ from typing import Any
 import feedparser
 import httpx
 
-from workers.images import resolves_to_private
+from workers.images import is_valid_image_url, resolves_to_private
 
 from newsbot.config import (
     CLUSTER_SIMILARITY_THRESHOLD,
@@ -61,12 +61,12 @@ _USER_AGENT = (
 
 
 def _get_http_client() -> httpx.Client:
-    """Return a per-thread httpx.Client instance."""
+    """Return a per-thread httpx.Client instance (no auto-redirects — SSRF-safe)."""
     client = getattr(_thread_local, "client", None)
     if client is None:
         client = httpx.Client(
             timeout=FEED_TIMEOUT_SECONDS,
-            follow_redirects=True,
+            follow_redirects=False,
             headers={"User-Agent": _USER_AGENT},
         )
         _thread_local.client = client
@@ -192,32 +192,49 @@ class Entry:
 
 
 def extract_image_url(raw_entry: Any) -> str | None:
-    """Pull an image URL from common RSS/Atom media fields, if present."""
+    """Pull an image URL from common RSS/Atom media fields, if present.
+
+    Returns only http(s) URLs that pass the private-host SSRF guard.
+    """
+    def _ok(url: object) -> str | None:
+        if isinstance(url, str) and is_valid_image_url(url):
+            return url.strip()
+        return None
+
     media_content = getattr(raw_entry, "media_content", None) or raw_entry.get("media_content")
     if media_content:
         for item in media_content:
             url = item.get("url") if isinstance(item, dict) else None
             medium = (item.get("medium") or item.get("type") or "") if isinstance(item, dict) else ""
             if url and (not medium or "image" in str(medium).lower() or str(medium).startswith("image/")):
-                return url
+                ok = _ok(url)
+                if ok:
+                    return ok
             if url and str(url).lower().endswith((".jpg", ".jpeg", ".png", ".gif", ".webp")):
-                return url
+                ok = _ok(url)
+                if ok:
+                    return ok
 
     media_thumbnail = getattr(raw_entry, "media_thumbnail", None) or raw_entry.get("media_thumbnail")
     if media_thumbnail:
         for item in media_thumbnail:
             url = item.get("url") if isinstance(item, dict) else None
-            if url:
-                return url
+            ok = _ok(url)
+            if ok:
+                return ok
 
     enclosures = getattr(raw_entry, "enclosures", None) or raw_entry.get("enclosures") or []
     for enc in enclosures:
         href = enc.get("href") or enc.get("url") if isinstance(enc, dict) else None
         enc_type = (enc.get("type") or "") if isinstance(enc, dict) else ""
         if href and str(enc_type).startswith("image/"):
-            return href
+            ok = _ok(href)
+            if ok:
+                return ok
         if href and str(href).lower().endswith((".jpg", ".jpeg", ".png", ".gif", ".webp")):
-            return href
+            ok = _ok(href)
+            if ok:
+                return ok
 
     for field in ("summary", "description", "content"):
         value = raw_entry.get(field) if hasattr(raw_entry, "get") else None
@@ -228,7 +245,9 @@ def extract_image_url(raw_entry: Any) -> str | None:
         if isinstance(value, str):
             match = _IMG_SRC_RE.search(value)
             if match:
-                return match.group(1)
+                ok = _ok(match.group(1))
+                if ok:
+                    return ok
 
     return None
 
@@ -289,33 +308,64 @@ def _is_title_duplicate(title: str, posted_titles: set[str], threshold: float = 
 # Hard cap on a single feed body. A compromised or misbehaving feed host (or a
 # redirect to a huge payload) must not be able to exhaust worker memory.
 _MAX_FEED_BYTES: int = int(os.environ.get("MAX_FEED_BYTES", str(8 * 1024 * 1024)))
+_MAX_FEED_REDIRECTS = 4
+
+
+def _feed_url_allowed(url: str) -> bool:
+    """Reject non-http(s) and private/loopback destinations before dialing."""
+    try:
+        parsed = httpx.URL(url)
+    except Exception:
+        return False
+    if parsed.scheme not in ("http", "https"):
+        return False
+    host = parsed.host or ""
+    if not host or resolves_to_private(host):
+        return False
+    return True
 
 
 def _fetch_feed(url: str) -> Any:
-    """Fetch one RSS feed with a byte cap and SSRF-safe final host, then parse.
+    """Fetch one RSS feed with a byte cap and per-hop SSRF checks, then parse.
 
-    Streams the response so an oversized body is truncated instead of loaded
-    whole, and rejects feeds that (via redirects) resolve to a private/loopback
-    host so a poisoned feed URL cannot pivot to internal services.
+    Redirects are followed manually so an open redirect to cloud metadata or
+    an internal host cannot be dialed. Oversized bodies are truncated.
     """
+    if not _feed_url_allowed(url):
+        raise ValueError(f"feed URL blocked by SSRF guard: {url!r}")
+
     client = _get_http_client()
-    with client.stream("GET", url) as resp:
-        resp.raise_for_status()
-        final_host = resp.url.host or ""
-        if resolves_to_private(final_host):
-            raise ValueError(f"feed resolved to a private host: {final_host!r}")
-        chunks: list[bytes] = []
-        total = 0
-        for chunk in resp.iter_bytes():
-            total += len(chunk)
-            if total > _MAX_FEED_BYTES:
-                logger.warning(
-                    "Feed %s exceeded %d bytes — truncating body.", url, _MAX_FEED_BYTES
-                )
-                chunks.append(chunk[: len(chunk) - (total - _MAX_FEED_BYTES)])
-                break
-            chunks.append(chunk)
-    return feedparser.parse(b"".join(chunks))
+    current = url
+    resp = None
+    for _ in range(_MAX_FEED_REDIRECTS + 1):
+        if not _feed_url_allowed(current):
+            raise ValueError(f"feed redirect blocked by SSRF guard: {current!r}")
+        with client.stream("GET", current) as streamed:
+            if streamed.is_redirect:
+                location = streamed.headers.get("location")
+                if not location:
+                    raise ValueError("feed redirect missing Location")
+                current = str(httpx.URL(current).join(location))
+                continue
+            streamed.raise_for_status()
+            final_host = streamed.url.host or ""
+            if resolves_to_private(final_host):
+                raise ValueError(f"feed resolved to a private host: {final_host!r}")
+            chunks: list[bytes] = []
+            total = 0
+            for chunk in streamed.iter_bytes():
+                total += len(chunk)
+                if total > _MAX_FEED_BYTES:
+                    logger.warning(
+                        "Feed %s exceeded %d bytes — truncating body.",
+                        url,
+                        _MAX_FEED_BYTES,
+                    )
+                    chunks.append(chunk[: len(chunk) - (total - _MAX_FEED_BYTES)])
+                    break
+                chunks.append(chunk)
+            return feedparser.parse(b"".join(chunks))
+    raise ValueError(f"feed exceeded {_MAX_FEED_REDIRECTS} redirects: {url!r}")
 
 
 def collect_new_entries(posted_ids: set[str], posted_titles: set[str] | None = None) -> list[Entry]:

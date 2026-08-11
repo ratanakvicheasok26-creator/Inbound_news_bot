@@ -293,7 +293,8 @@ def _parse_admin_chat_ids(raw: str) -> frozenset[int]:
     return frozenset(ids)
 
 
-# When set, /fetch is restricted to these chat ids (admins). Empty = open (legacy).
+# When set, /fetch is restricted to these chat ids (admins).
+# Empty = /fetch disabled (fail-closed for scale / quota abuse).
 FETCH_ADMIN_CHAT_IDS: frozenset[int] = _parse_admin_chat_ids(
     os.environ.get("FETCH_ADMIN_CHAT_IDS", "")
 )

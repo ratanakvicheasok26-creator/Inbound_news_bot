@@ -25,4 +25,6 @@ def test_health_response_skipped_db_when_no_supabase(monkeypatch):
         body = _build_health_response()
 
     assert body["database"]["status"] == "skipped"
+    assert body["ai_ok"] is True
+    assert "ai_providers" not in body
     assert body["status"] in ("ok", "degraded")

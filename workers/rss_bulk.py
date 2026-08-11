@@ -33,7 +33,8 @@ import yaml
 
 from workers.categories import normalize_category
 from workers.db import get_supabase
-from workers.images import extract_image_url
+from workers.images import extract_image_url, resolves_to_private
+from newsbot.feeds import _feed_url_allowed, _MAX_FEED_REDIRECTS, _MAX_FEED_BYTES
 
 logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -135,10 +136,42 @@ def _fetch_one(url: str) -> list[dict[str, Any]]:
     """Fetch a single RSS feed and return normalized articles."""
     articles: list[dict[str, Any]] = []
     try:
-        resp = httpx.get(url, timeout=_FEED_TIMEOUT, follow_redirects=True,
-                         headers={"User-Agent": "InboundNewsBot/1.0 (website ingestion)"})
-        resp.raise_for_status()
-        feed = feedparser.parse(resp.text)
+        if not _feed_url_allowed(url):
+            return []
+        current = url
+        body = b""
+        with httpx.Client(
+            timeout=_FEED_TIMEOUT,
+            follow_redirects=False,
+            headers={"User-Agent": "InboundNewsBot/1.0 (website ingestion)"},
+        ) as client:
+            for _ in range(_MAX_FEED_REDIRECTS + 1):
+                if not _feed_url_allowed(current):
+                    return []
+                with client.stream("GET", current) as resp:
+                    if resp.is_redirect:
+                        location = resp.headers.get("location")
+                        if not location:
+                            return []
+                        current = str(httpx.URL(current).join(location))
+                        continue
+                    resp.raise_for_status()
+                    final_host = resp.url.host or ""
+                    if resolves_to_private(final_host):
+                        return []
+                    chunks: list[bytes] = []
+                    total = 0
+                    for chunk in resp.iter_bytes():
+                        total += len(chunk)
+                        if total > _MAX_FEED_BYTES:
+                            chunks.append(chunk[: len(chunk) - (total - _MAX_FEED_BYTES)])
+                            break
+                        chunks.append(chunk)
+                    body = b"".join(chunks)
+                    break
+            else:
+                return []
+        feed = feedparser.parse(body)
     except Exception:
         return []
 

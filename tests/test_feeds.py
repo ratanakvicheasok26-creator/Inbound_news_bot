@@ -214,15 +214,16 @@ class TestSsrfGuards:
         assert not is_valid_image_url("http://192.168.1.1/x.jpg")
         assert is_valid_image_url("https://cdn.example.com/x.jpg")
 
+    def test_rejects_ipv4_mapped_and_ambiguous_literals(self):
+        from workers.images import _is_private_host, is_valid_image_url
 
-class TestSsrfGuards:
-    def test_private_hosts_blocked(self):
-        from workers.images import _is_private_host, is_valid_image_url, resolves_to_private
-
-        assert _is_private_host("127.0.0.1")
-        assert _is_private_host("10.1.2.3")
-        assert _is_private_host("169.254.169.254")
-        assert _is_private_host("metadata.google.internal")
-        assert resolves_to_private("localhost")
-        assert not is_valid_image_url("http://192.168.1.1/x.jpg")
-        assert is_valid_image_url("https://cdn.example.com/x.jpg")
+        # IPv4-mapped link-local / metadata
+        assert _is_private_host("::ffff:a9fe:a9fe")
+        assert _is_private_host("::ffff:169.254.169.254")
+        assert not is_valid_image_url("http://[::ffff:a9fe:a9fe]/x.jpg")
+        # Hex / integer / short forms httpx would dial as loopback
+        assert _is_private_host("0x7f.0.0.1")
+        assert _is_private_host("2130706433")
+        assert not is_valid_image_url("http://0x7f.0.0.1/x.jpg")
+        assert not is_valid_image_url("http://2130706433/x.jpg")
+        assert not is_valid_image_url("http://user:pass@cdn.example.com/x.jpg")

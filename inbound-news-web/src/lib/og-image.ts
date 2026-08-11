@@ -51,6 +51,46 @@ async function safeFetchHtml(pageUrl: string): Promise<Response | null> {
   return null
 }
 
+const MAX_HTML_BYTES = 160_000
+
+async function readHtmlCapped(res: Response): Promise<string> {
+  // Prefer Content-Length when present; otherwise stream until the cap.
+  const len = Number(res.headers.get("content-length") || "0")
+  if (len > 0 && len <= MAX_HTML_BYTES) {
+    return (await res.text()).slice(0, MAX_HTML_BYTES)
+  }
+  if (!res.body) {
+    return (await res.text()).slice(0, MAX_HTML_BYTES)
+  }
+  const reader = res.body.getReader()
+  const chunks: Uint8Array[] = []
+  let total = 0
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    if (!value) continue
+    total += value.byteLength
+    if (total > MAX_HTML_BYTES) {
+      const over = total - MAX_HTML_BYTES
+      chunks.push(value.slice(0, value.byteLength - over))
+      try {
+        await reader.cancel()
+      } catch {
+        /* ignore */
+      }
+      break
+    }
+    chunks.push(value)
+  }
+  const merged = new Uint8Array(chunks.reduce((n, c) => n + c.byteLength, 0))
+  let offset = 0
+  for (const c of chunks) {
+    merged.set(c, offset)
+    offset += c.byteLength
+  }
+  return new TextDecoder("utf-8", { fatal: false }).decode(merged)
+}
+
 /**
  * Fetch Open Graph / Twitter image for a page URL.
  * Cached by Next fetch (revalidate 24h).
@@ -62,7 +102,7 @@ export async function resolveOgImage(pageUrl: string): Promise<string | null> {
   try {
     const res = await safeFetchHtml(pageUrl)
     if (!res || !res.ok) return null
-    const html = (await res.text()).slice(0, 160_000)
+    const html = await readHtmlCapped(res)
     for (const re of [OG_RE, OG_RE_ALT, TW_RE, TW_RE_ALT]) {
       const m = html.match(re)
       if (m?.[1]) {

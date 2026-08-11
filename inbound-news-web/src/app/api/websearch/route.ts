@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ results: [], available: true })
   }
 
-  const limit = rateLimit(`websearch:${getClientIp(req)}`, 20, 60_000)
+  const limit = rateLimit(`websearch:${getClientIp(req)}`, 8, 60_000)
   if (!limit.ok) {
     return NextResponse.json(
       { results: [], available: true, error: "Too many requests" },

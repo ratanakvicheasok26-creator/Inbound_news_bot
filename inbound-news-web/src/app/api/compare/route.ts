@@ -142,7 +142,7 @@ Content: ${content}`
 
 export async function POST(req: NextRequest) {
   try {
-    const limit = rateLimit(`compare:${getClientIp(req)}`, 15, 60_000)
+    const limit = rateLimit(`compare:${getClientIp(req)}`, 6, 60_000)
     if (!limit.ok) {
       return NextResponse.json(
         { error: "Too many requests" },

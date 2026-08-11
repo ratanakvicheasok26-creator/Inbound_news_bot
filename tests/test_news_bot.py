@@ -105,7 +105,8 @@ class TestFetchCommand:
         update.effective_message.reply_text = AsyncMock()
         context = MagicMock()
 
-        with patch("news_bot._fetch_last_run", {12345: 9999999999.0}), \
+        with patch("news_bot.FETCH_ADMIN_CHAT_IDS", frozenset({12345})), \
+             patch("news_bot._fetch_last_run", {12345: 9999999999.0}), \
              patch("news_bot._global_fetch_last_run", 0.0):
             import asyncio
             asyncio.run(fetch_command(update, context))
@@ -118,7 +119,8 @@ class TestFetchCommand:
         update.effective_message.reply_text = AsyncMock()
         context = MagicMock()
 
-        with patch("news_bot.fetch_individual_and_post", new_callable=AsyncMock, return_value=3), \
+        with patch("news_bot.FETCH_ADMIN_CHAT_IDS", frozenset({12345})), \
+             patch("news_bot.fetch_individual_and_post", new_callable=AsyncMock, return_value=3), \
              patch("news_bot._fetch_last_run", {}), \
              patch("news_bot._global_fetch_last_run", 0.0):
             import asyncio
@@ -134,7 +136,8 @@ class TestFetchCommand:
         update.effective_message.reply_text = AsyncMock()
         context = MagicMock()
 
-        with patch("news_bot.fetch_individual_and_post", new_callable=AsyncMock, return_value=0), \
+        with patch("news_bot.FETCH_ADMIN_CHAT_IDS", frozenset({12345})), \
+             patch("news_bot.fetch_individual_and_post", new_callable=AsyncMock, return_value=0), \
              patch("news_bot._fetch_last_run", {}), \
              patch("news_bot._global_fetch_last_run", 0.0):
             import asyncio
@@ -149,7 +152,8 @@ class TestFetchCommand:
         update.effective_message.reply_text = AsyncMock()
         context = MagicMock()
 
-        with patch("news_bot.fetch_individual_and_post", new_callable=AsyncMock, side_effect=RuntimeError("boom")), \
+        with patch("news_bot.FETCH_ADMIN_CHAT_IDS", frozenset({12345})), \
+             patch("news_bot.fetch_individual_and_post", new_callable=AsyncMock, side_effect=RuntimeError("boom")), \
              patch("news_bot._fetch_last_run", {}), \
              patch("news_bot._global_fetch_last_run", 0.0):
             import asyncio
@@ -157,6 +161,20 @@ class TestFetchCommand:
 
         calls = update.effective_message.reply_text.await_args_list
         assert "wrong" in calls[1].args[0].lower()
+
+    def test_rejects_when_allowlist_empty(self):
+        update = MagicMock()
+        update.effective_chat.id = 12345
+        update.effective_message.reply_text = AsyncMock()
+        context = MagicMock()
+
+        with patch("news_bot.FETCH_ADMIN_CHAT_IDS", frozenset()), \
+             patch("news_bot.fetch_individual_and_post", new_callable=AsyncMock) as mock_fetch:
+            import asyncio
+            asyncio.run(fetch_command(update, context))
+
+        mock_fetch.assert_not_awaited()
+        assert "disabled" in update.effective_message.reply_text.call_args[0][0].lower()
 
     def test_rejects_non_admin_when_allowlist_set(self):
         update = MagicMock()
@@ -178,7 +196,8 @@ class TestFetchCommand:
         update.effective_message.reply_text = AsyncMock()
         context = MagicMock()
 
-        with patch("news_bot._fetch_last_run", {}), \
+        with patch("news_bot.FETCH_ADMIN_CHAT_IDS", frozenset({222})), \
+             patch("news_bot._fetch_last_run", {}), \
              patch("news_bot._global_fetch_last_run", 9999999999.0), \
              patch("news_bot.fetch_individual_and_post", new_callable=AsyncMock) as mock_fetch:
             import asyncio
