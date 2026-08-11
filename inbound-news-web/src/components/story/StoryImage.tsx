@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { proxiedImageUrl, isValidImageUrl } from "@/lib/story-images"
+import { resolveImageCached } from "@/lib/client-fetch"
 
 type StoryImageProps = {
   imageUrl?: string | null
@@ -53,15 +54,14 @@ export function StoryImage({
     }
     if (!pageUrl || !isValidImageUrl(pageUrl)) return
 
-    let cancelled = false
-    fetch(`/api/resolve-image?url=${encodeURIComponent(pageUrl)}`)
-      .then((r) => r.json())
-      .then((data: { imageUrl?: string | null }) => {
-        if (cancelled) return
-        if (isValidImageUrl(data.imageUrl)) {
-          setRaw(data.imageUrl)
+    const controller = new AbortController()
+    resolveImageCached(pageUrl, controller.signal)
+      .then((resolved) => {
+        if (controller.signal.aborted) return
+        if (isValidImageUrl(resolved)) {
+          setRaw(resolved)
           setUseDirect(false)
-          setSrc(proxiedImageUrl(data.imageUrl, w, h))
+          setSrc(proxiedImageUrl(resolved, w, h))
           setFailed(false)
         }
       })
@@ -70,7 +70,7 @@ export function StoryImage({
       })
 
     return () => {
-      cancelled = true
+      controller.abort()
     }
   }, [imageUrl, pageUrl, w, h])
   /* eslint-enable react-hooks/set-state-in-effect */

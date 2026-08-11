@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { escapeOrValue } from "@/lib/posts"
+import { getClientIp, rateLimit } from "@/lib/rate-limit"
 
 const STORY_COLUMNS = "id, title, category, tags, created_at"
 const ARTICLE_COLUMNS = "id, title, url, source_name, source_domain, published_at"
@@ -24,16 +25,25 @@ function firstToken(q: string): string {
  */
 export async function GET(req: NextRequest) {
   try {
+    const limit = rateLimit(`suggest:${getClientIp(req)}`, 60, 60_000)
+    if (!limit.ok) {
+      return NextResponse.json(
+        { stories: [], articles: [] },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
+      )
+    }
+
     if (!isSupabaseConfigured) {
       return NextResponse.json({ stories: [], articles: [] }, { status: 503 })
     }
 
     const q = req.nextUrl.searchParams.get("q")?.trim() ?? ""
-    if (!q) return NextResponse.json({ stories: [], articles: [] })
+    // Require 2+ chars to cut single-keystroke DB storms from typeahead.
+    if (q.length < 2) return NextResponse.json({ stories: [], articles: [] })
     if (q.length > 60) return NextResponse.json({ stories: [], articles: [] })
 
     const term = firstToken(q)
-    if (!term) return NextResponse.json({ stories: [], articles: [] })
+    if (!term || term.length < 2) return NextResponse.json({ stories: [], articles: [] })
     const escaped = escapeOrValue(`%${term}%`)
 
     const [storiesRes, articlesRes] = await Promise.all([

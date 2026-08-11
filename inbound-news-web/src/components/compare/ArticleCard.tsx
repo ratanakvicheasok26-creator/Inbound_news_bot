@@ -1,7 +1,7 @@
-import Link from "next/link"
 import { ExternalLink, Plus } from "lucide-react"
 import type { CompareOption } from "@/lib/compare"
 import { formatDate } from "@/lib/utils"
+import { safeExternalHref } from "@/lib/client-fetch"
 
 interface ArticleCardProps {
   option: CompareOption | null
@@ -12,6 +12,7 @@ interface ArticleCardProps {
 
 export function ArticleCard({ option, slot, active, onChoose }: ArticleCardProps) {
   const sourceName = option?.source_name || option?.source_domain || "Unknown"
+  const optionHref = option ? safeExternalHref(option.url) : null
 
   if (!option) {
     return (
@@ -60,15 +61,17 @@ export function ArticleCard({ option, slot, active, onChoose }: ArticleCardProps
       )}
 
       <div className="mt-auto pt-1">
-        <Link
-          href={option.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)]"
-        >
-          Read original
-          <ExternalLink className="h-3.5 w-3.5" />
-        </Link>
+        {optionHref ? (
+          <a
+            href={optionHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)]"
+          >
+            Read original
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        ) : null}
       </div>
     </article>
   )

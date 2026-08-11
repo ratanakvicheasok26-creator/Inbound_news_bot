@@ -200,3 +200,29 @@ class TestLooksTelegramImportant:
         ]
         assert looks_telegram_important(entries) is False
         assert looks_urgent(entries) is False
+
+
+class TestSsrfGuards:
+    def test_private_hosts_blocked(self):
+        from workers.images import _is_private_host, is_valid_image_url, resolves_to_private
+
+        assert _is_private_host("127.0.0.1")
+        assert _is_private_host("10.1.2.3")
+        assert _is_private_host("169.254.169.254")
+        assert _is_private_host("metadata.google.internal")
+        assert resolves_to_private("localhost")
+        assert not is_valid_image_url("http://192.168.1.1/x.jpg")
+        assert is_valid_image_url("https://cdn.example.com/x.jpg")
+
+
+class TestSsrfGuards:
+    def test_private_hosts_blocked(self):
+        from workers.images import _is_private_host, is_valid_image_url, resolves_to_private
+
+        assert _is_private_host("127.0.0.1")
+        assert _is_private_host("10.1.2.3")
+        assert _is_private_host("169.254.169.254")
+        assert _is_private_host("metadata.google.internal")
+        assert resolves_to_private("localhost")
+        assert not is_valid_image_url("http://192.168.1.1/x.jpg")
+        assert is_valid_image_url("https://cdn.example.com/x.jpg")

@@ -3,6 +3,8 @@
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 from newsbot.bot import (
     StoryPost,
     _rank_clusters,
@@ -198,3 +200,86 @@ def test_broadcast_routes_subscribed_group_to_recorded_topic():
     kwargs = mock_bot.send_message.await_args.kwargs
     assert kwargs["chat_id"] == -100
     assert kwargs["message_thread_id"] == 42
+
+
+class TestTgSend:
+    def test_retries_on_retry_after_then_succeeds(self, monkeypatch):
+        from telegram.error import RetryAfter
+
+        from newsbot.bot import _tg_send
+
+        monkeypatch.setattr("newsbot.bot._SEND_THROTTLE_SECONDS", 0.0)
+        calls = {"n": 0}
+
+        async def flaky(**kwargs):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise RetryAfter(0)
+            return "sent"
+
+        result = asyncio.run(_tg_send(flaky))
+        assert result == "sent"
+        assert calls["n"] == 2
+
+    def test_forbidden_propagates_immediately(self, monkeypatch):
+        from telegram.error import Forbidden
+
+        from newsbot.bot import _tg_send
+
+        monkeypatch.setattr("newsbot.bot._SEND_THROTTLE_SECONDS", 0.0)
+        calls = {"n": 0}
+
+        async def blocked(**kwargs):
+            calls["n"] += 1
+            raise Forbidden("blocked")
+
+        with pytest.raises(Forbidden):
+            asyncio.run(_tg_send(blocked))
+        assert calls["n"] == 1
+
+
+class TestSafeLink:
+    def test_accepts_public_https(self):
+        from newsbot.bot import _safe_link
+
+        assert _safe_link("https://example.com/story/1") == "https://example.com/story/1"
+
+    def test_rejects_private_and_bad_schemes(self):
+        from newsbot.bot import _safe_link
+
+        assert _safe_link("http://169.254.169.254/latest/meta-data") is None
+        assert _safe_link("http://127.0.0.1:8080/") is None
+        assert _safe_link("javascript:alert(1)") is None
+        assert _safe_link(None) is None
+        assert _safe_link(123) is None
+
+
+class TestPickImageUrl:
+    def test_rejects_private_image_and_falls_back_to_og(self):
+        from newsbot.ai import pick_image_url
+        from newsbot.feeds import Entry
+
+        entry = Entry(
+            id="1",
+            title="t",
+            summary="s",
+            link="https://example.com/article",
+            source_name="Example",
+            image_url="http://169.254.169.254/x.jpg",
+        )
+        with patch("newsbot.ai._fetch_og_image", return_value="https://cdn.example.com/og.jpg"):
+            assert pick_image_url([entry]) == "https://cdn.example.com/og.jpg"
+
+    def test_accepts_valid_public_image(self):
+        from newsbot.ai import pick_image_url
+        from newsbot.feeds import Entry
+
+        entry = Entry(
+            id="1",
+            title="t",
+            summary="s",
+            link="https://example.com/article",
+            source_name="Example",
+            image_url="https://cdn.example.com/a.jpg",
+        )
+        assert pick_image_url([entry]) == "https://cdn.example.com/a.jpg"

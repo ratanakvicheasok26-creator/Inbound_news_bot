@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "@/lib/utils"
 import { OUTLET_ROLE_LABELS, roleForOutlet } from "@/lib/outlet-roles"
 import { ExternalLink, GitCompareArrows } from "lucide-react"
 import Link from "next/link"
+import { safeExternalHref } from "@/lib/client-fetch"
 
 interface SourceComparisonRowProps {
   article: Article
@@ -33,6 +34,7 @@ export function SourceComparisonRow({ article, framing }: SourceComparisonRowPro
     source_name: article.source_name,
     source_domain: domain,
   })
+  const articleHref = safeExternalHref(article.url)
 
   return (
     <div className="source-row">
@@ -75,15 +77,17 @@ export function SourceComparisonRow({ article, framing }: SourceComparisonRowPro
           )}
         </div>
 
-        <a
-          href={article.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="shrink-0 w-9 h-9 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--surface-alt)] transition-colors"
-          aria-label="Open source"
-        >
-          <ExternalLink className="h-4 w-4" />
-        </a>
+        {articleHref ? (
+          <a
+            href={articleHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 w-9 h-9 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--surface-alt)] transition-colors"
+            aria-label="Open source"
+          >
+            <ExternalLink className="h-4 w-4" />
+          </a>
+        ) : null}
       </div>
 
       <Link

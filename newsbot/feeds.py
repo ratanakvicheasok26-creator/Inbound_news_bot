@@ -5,6 +5,7 @@ from __future__ import annotations
 import concurrent.futures
 import html
 import logging
+import os
 import random
 import re
 import threading
@@ -16,6 +17,8 @@ from typing import Any
 
 import feedparser
 import httpx
+
+from workers.images import resolves_to_private
 
 from newsbot.config import (
     CLUSTER_SIMILARITY_THRESHOLD,
@@ -283,12 +286,36 @@ def _is_title_duplicate(title: str, posted_titles: set[str], threshold: float = 
     return False
 
 
+# Hard cap on a single feed body. A compromised or misbehaving feed host (or a
+# redirect to a huge payload) must not be able to exhaust worker memory.
+_MAX_FEED_BYTES: int = int(os.environ.get("MAX_FEED_BYTES", str(8 * 1024 * 1024)))
+
+
 def _fetch_feed(url: str) -> Any:
-    """Fetch a single RSS feed using httpx (real timeout) then parse with feedparser."""
+    """Fetch one RSS feed with a byte cap and SSRF-safe final host, then parse.
+
+    Streams the response so an oversized body is truncated instead of loaded
+    whole, and rejects feeds that (via redirects) resolve to a private/loopback
+    host so a poisoned feed URL cannot pivot to internal services.
+    """
     client = _get_http_client()
-    resp = client.get(url)
-    resp.raise_for_status()
-    return feedparser.parse(resp.text)
+    with client.stream("GET", url) as resp:
+        resp.raise_for_status()
+        final_host = resp.url.host or ""
+        if resolves_to_private(final_host):
+            raise ValueError(f"feed resolved to a private host: {final_host!r}")
+        chunks: list[bytes] = []
+        total = 0
+        for chunk in resp.iter_bytes():
+            total += len(chunk)
+            if total > _MAX_FEED_BYTES:
+                logger.warning(
+                    "Feed %s exceeded %d bytes — truncating body.", url, _MAX_FEED_BYTES
+                )
+                chunks.append(chunk[: len(chunk) - (total - _MAX_FEED_BYTES)])
+                break
+            chunks.append(chunk)
+    return feedparser.parse(b"".join(chunks))
 
 
 def collect_new_entries(posted_ids: set[str], posted_titles: set[str] | None = None) -> list[Entry]:

@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 
 _QUEUE_KEY = "newsbot:mirror:queue"
 _MAX_REQUEUE_ATTEMPTS = 3
+# Bound queue growth if the Khmer bot is down — drop oldest when over capacity.
+_MAX_QUEUE_LENGTH: int = int(os.environ.get("MIRROR_MAX_QUEUE_LENGTH", "500"))
 
 
 def mirror_available() -> bool:
@@ -89,6 +91,8 @@ def publish(payload: dict) -> None:
     try:
         client = _client()
         client.rpush(_QUEUE_KEY, json.dumps(payload, ensure_ascii=False))
+        # Trim from the left (oldest) so a stalled KM bot cannot grow Redis forever.
+        client.ltrim(_QUEUE_KEY, -_MAX_QUEUE_LENGTH, -1)
         client.close()
         logger.info("Mirror: enqueued %s payload for the Khmer bot.", payload.get("kind"))
     except Exception:

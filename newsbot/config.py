@@ -12,6 +12,7 @@ instead of every tier-1 URL.
 
 from __future__ import annotations
 
+import logging
 import os
 from zoneinfo import ZoneInfo
 
@@ -21,11 +22,6 @@ load_dotenv()
 
 __all__ = [
     "validate_config",
-    "create_groq_client",
-    "create_gemini_client",
-    "GEMINI_MODEL",
-    "create_openrouter_client",
-    "OPENROUTER_MODEL",
     "REDIS_URL",
     "RSS_FEEDS",
     "MAX_ITEMS_PER_FEED",
@@ -35,14 +31,10 @@ __all__ = [
     "CLUSTER_TITLE_WEIGHT",
     "CLUSTER_SUMMARY_WEIGHT",
     "CONTENT_DEDUP_THRESHOLD",
-    "GROQ_MODEL",
-    "GROQ_BASE_URL",
     "GROQ_MAX_TOKENS",
     "TIMEZONE",
     "DIGEST_MIN_SOURCES",
     "DIGEST_MAX_STORIES",
-    "DIGEST_SCHEDULE_HOUR_AM",
-    "DIGEST_SCHEDULE_HOUR_PM",
     "DONATION_SCHEDULE_HOUR",
     "DONATION_SCHEDULE_DAYS",
     "DONATION_QR_IMAGE",
@@ -55,17 +47,19 @@ __all__ = [
     "URGENT_CHECK_INTERVAL_SECONDS",
     "URGENT_FIRST_DELAY_SECONDS",
     "MAX_URGENT_POSTS_PER_RUN",
-    "DIGEST_CHECK_INTERVAL_SECONDS",
     "URGENT_KEYWORDS",
     "IMPORTANT_KEYWORDS",
     "IMPORTANT_MIN_SOURCES",
-    "PULSE_MAX_STORIES",
     "URGENCY_LEVELS",
     "NEWS_CATEGORIES",
     "DISABLE_POSTING",
     "POSTED_LOG",
     "SUBSCRIBERS_LOG",
     "FETCH_COOLDOWN_SECONDS",
+    "FETCH_GLOBAL_COOLDOWN_SECONDS",
+    "FETCH_ADMIN_CHAT_IDS",
+    "MAX_SUBSCRIBERS",
+    "INSTANCE_LOCK_HEARTBEAT_SECONDS",
     "LINK_CAP_URGENT",
     "LINK_CAP_NORMAL",
     "PREPARE_ENTRIES_TIMEOUT_SECONDS",
@@ -81,35 +75,64 @@ __all__ = [
     "NEWS_LANGUAGE",
 ]
 
+def _env_int(name: str, default: int) -> int:
+    """Read an int env var, falling back to the default on a bad value.
+
+    Prevents a single typo in a Railway variable from crash-looping the worker;
+    the bad value is logged and the safe default is used instead.
+    """
+    raw = os.environ.get(name)
+    if raw is None or raw.strip() == "":
+        return default
+    try:
+        return int(raw)
+    except (ValueError, TypeError):
+        logging.getLogger(__name__).warning(
+            "Invalid %s=%r — using default %d.", name, raw, default
+        )
+        return default
+
+
+def _env_float(name: str, default: float) -> float:
+    raw = os.environ.get(name)
+    if raw is None or raw.strip() == "":
+        return default
+    try:
+        return float(raw)
+    except (ValueError, TypeError):
+        logging.getLogger(__name__).warning(
+            "Invalid %s=%r — using default %s.", name, raw, default
+        )
+        return default
+
+
 # ---- Redis (optional — enables persistent state on Railway/Render) ----
 REDIS_URL: str = os.environ.get("REDIS_URL", "").strip()
 
 # ---- RSS (curated subset — sources.yaml tags almost all RSS as tier [1,2]) ----
 from newsbot.source_registry import get_bot_rss_feeds as _get_bot_rss_feeds
 
-BOT_MAX_FEEDS: int = int(os.environ.get("BOT_MAX_FEEDS", "130"))
+BOT_MAX_FEEDS: int = _env_int("BOT_MAX_FEEDS", 130)
 RSS_FEEDS: list[str] = _get_bot_rss_feeds(limit=BOT_MAX_FEEDS)
 
-MAX_ITEMS_PER_FEED: int = int(os.environ.get("MAX_ITEMS_PER_FEED", "3"))
-MAX_ENTRY_AGE_HOURS: int = int(os.environ.get("MAX_ENTRY_AGE_HOURS", "24"))
-FEED_TIMEOUT_SECONDS: int = int(os.environ.get("FEED_TIMEOUT_SECONDS", "10"))
-FEED_GLOBAL_TIMEOUT_EXTRA: int = int(os.environ.get("FEED_GLOBAL_TIMEOUT_EXTRA", "50"))
+MAX_ITEMS_PER_FEED: int = _env_int("MAX_ITEMS_PER_FEED", 3)
+MAX_ENTRY_AGE_HOURS: int = _env_int("MAX_ENTRY_AGE_HOURS", 24)
+FEED_TIMEOUT_SECONDS: int = _env_int("FEED_TIMEOUT_SECONDS", 10)
+FEED_GLOBAL_TIMEOUT_EXTRA: int = _env_int("FEED_GLOBAL_TIMEOUT_EXTRA", 50)
 
 # ---- Clustering ----
-CLUSTER_SIMILARITY_THRESHOLD: float = float(os.environ.get("CLUSTER_SIMILARITY_THRESHOLD", "0.45"))
-CLUSTER_TITLE_WEIGHT: float = float(os.environ.get("CLUSTER_TITLE_WEIGHT", "0.7"))
-CLUSTER_SUMMARY_WEIGHT: float = float(os.environ.get("CLUSTER_SUMMARY_WEIGHT", "0.3"))
-CONTENT_DEDUP_THRESHOLD: float = float(os.environ.get("CONTENT_DEDUP_THRESHOLD", "0.65"))
+CLUSTER_SIMILARITY_THRESHOLD: float = _env_float("CLUSTER_SIMILARITY_THRESHOLD", 0.45)
+CLUSTER_TITLE_WEIGHT: float = _env_float("CLUSTER_TITLE_WEIGHT", 0.7)
+CLUSTER_SUMMARY_WEIGHT: float = _env_float("CLUSTER_SUMMARY_WEIGHT", 0.3)
+CONTENT_DEDUP_THRESHOLD: float = _env_float("CONTENT_DEDUP_THRESHOLD", 0.65)
 SUMMARY_SIM_WORD_LIMIT: int = 100
 
 # ---- AI ----
-GROQ_MODEL: str = "llama-3.3-70b-versatile"
-GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
+# Model names live in the environment and are read directly by shared.ai_router
+# (GROQ_MODEL / OPENROUTER_MODEL / GEMINI_MODEL). No module-level constants here.
 GROQ_MAX_TOKENS: int = 2200
-AI_HTTP_TIMEOUT_SECONDS: float = float(os.environ.get("AI_HTTP_TIMEOUT_SECONDS", "30"))
-PREPARE_ENTRIES_TIMEOUT_SECONDS: float = float(
-    os.environ.get("PREPARE_ENTRIES_TIMEOUT_SECONDS", "300")
-)
+AI_HTTP_TIMEOUT_SECONDS: float = _env_float("AI_HTTP_TIMEOUT_SECONDS", 30)
+PREPARE_ENTRIES_TIMEOUT_SECONDS: float = _env_float("PREPARE_ENTRIES_TIMEOUT_SECONDS", 300)
 
 # ---- Spam filter ----
 SPAM_FILTER_ENABLED: bool = os.environ.get("SPAM_FILTER_ENABLED", "true").lower() in (
@@ -133,9 +156,7 @@ if NEWS_LANGUAGE not in ("en", "km"):
 TIMEZONE = ZoneInfo("Asia/Phnom_Penh")
 DIGEST_MIN_SOURCES: int = 2
 DIGEST_MAX_STORIES: int = 10
-DIGEST_SCHEDULE_HOUR_AM: int = int(os.environ.get("DIGEST_SCHEDULE_HOUR_AM", "5"))
-DIGEST_SCHEDULE_HOUR_PM: int = int(os.environ.get("DIGEST_SCHEDULE_HOUR_PM", "17"))
-DONATION_SCHEDULE_HOUR: int = int(os.environ.get("DONATION_SCHEDULE_HOUR", "22"))  # 10 PM
+DONATION_SCHEDULE_HOUR: int = _env_int("DONATION_SCHEDULE_HOUR", 22)  # 10 PM
 
 
 def _parse_donation_days(raw: str) -> tuple[int, ...]:
@@ -268,27 +289,48 @@ WEBSITE_BASE_URL: str = (
 )
 URGENT_CHECK_INTERVAL_SECONDS: int = 60 * 30  # every 30 minutes
 URGENT_FIRST_DELAY_SECONDS: int = 60
-POLL_INTERVAL_SECONDS: int = int(os.environ.get("POLL_INTERVAL_SECONDS", "7200"))
-# How often the digest re-checks for new stories during the 5am–5pm window.
-DIGEST_CHECK_INTERVAL_SECONDS: int = 60 * int(os.environ.get("DIGEST_CHECK_INTERVAL_MINUTES", "60"))
 
-# ---- Rate limiting ----
+# ---- Rate limiting / abuse control ----
 MAX_URGENT_POSTS_PER_RUN: int = 2
-FETCH_COOLDOWN_SECONDS: int = 300  # 5 minutes
+# Per-chat /fetch cooldown (in-memory) and a process-wide floor so a swarm of
+# accounts cannot each trigger a full feed+AI pipeline back to back.
+FETCH_COOLDOWN_SECONDS: int = _env_int("FETCH_COOLDOWN_SECONDS", 300)  # 5 minutes
+FETCH_GLOBAL_COOLDOWN_SECONDS: int = _env_int("FETCH_GLOBAL_COOLDOWN_SECONDS", 60)
+# Cap on /start subscribers to bound broadcast fan-out cost and spam growth.
+MAX_SUBSCRIBERS: int = _env_int("MAX_SUBSCRIBERS", 200_000)
+# How often the running instance renews its Redis single-instance lock so the
+# 15-minute TTL never expires under a long-lived poller (would let a second
+# replica start and double-post).
+INSTANCE_LOCK_HEARTBEAT_SECONDS: int = _env_int("INSTANCE_LOCK_HEARTBEAT_SECONDS", 300)
+
+
+def _parse_admin_chat_ids(raw: str) -> frozenset[int]:
+    ids: set[int] = set()
+    for part in (raw or "").split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            ids.add(int(part))
+        except ValueError:
+            logging.getLogger(__name__).warning("Ignoring non-integer FETCH_ADMIN_CHAT_IDS entry: %r", part)
+    return frozenset(ids)
+
+
+# When set, /fetch is restricted to these chat ids (admins). Empty = open (legacy).
+FETCH_ADMIN_CHAT_IDS: frozenset[int] = _parse_admin_chat_ids(
+    os.environ.get("FETCH_ADMIN_CHAT_IDS", "")
+)
 
 # ---- Link caps ----
 LINK_CAP_URGENT: int = 3
 LINK_CAP_NORMAL: int = 5
 
-# ---- Batching / pulse ----
+# ---- Batching ----
 BATCH_STORIES: bool = True
 BATCH_MAX_STORIES: int = 6
-BATCH_POLL_INTERVAL_MINUTES: int = 180
-URGENT_POST_IMMEDIATELY: bool = True
-# Brief-slot pulse: short important skim on Telegram; everything else stays on the website.
-PULSE_MAX_STORIES: int = int(os.environ.get("PULSE_MAX_STORIES", "6"))
 # Multi-source clusters are Telegram-worthy even without urgent keywords.
-IMPORTANT_MIN_SOURCES: int = int(os.environ.get("IMPORTANT_MIN_SOURCES", "2"))
+IMPORTANT_MIN_SOURCES: int = _env_int("IMPORTANT_MIN_SOURCES", 2)
 
 # ---- Feature toggles ----
 DISABLE_POSTING: bool = False
@@ -423,66 +465,3 @@ def validate_config() -> None:
         )
 
     _log.info("Telegram bot RSS feed budget: %d URLs (BOT_MAX_FEEDS=%d)", len(RSS_FEEDS), BOT_MAX_FEEDS)
-
-
-def create_groq_client():
-    """Create and return the OpenAI-compatible Groq client."""
-    from openai import OpenAI
-
-    return OpenAI(
-        api_key=os.environ["GROQ_API_KEY"],
-        base_url=GROQ_BASE_URL,
-    )
-
-
-GEMINI_MODEL: str = "gemini-2.0-flash"
-
-
-def create_gemini_client():
-    """Create and return the Gemini client, or None if GOOGLE_GEMINI_API_KEY is unset.
-
-    Unlike create_groq_client(), this never raises — Gemini is a fallback,
-    so a missing key should just mean "fallback unavailable", not a crash.
-    """
-    api_key = os.environ.get("GOOGLE_GEMINI_API_KEY", "").strip()
-    if not api_key:
-        return None
-    try:
-        from google import genai
-
-        return genai.Client(api_key=api_key)
-    except Exception:
-        import logging
-
-        logging.getLogger(__name__).exception("Failed to create Gemini client")
-        return None
-
-
-OPENROUTER_MODEL: str = os.environ.get(
-    "OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct:free"
-)
-# NOTE: OpenRouter's free-model lineup rotates — a specific model (e.g. DeepSeek)
-# can lose its :free tier with no notice. Check https://openrouter.ai/models
-# (filter: Price = Free) periodically and override via OPENROUTER_MODEL env var
-# if this default stops working.
-# Future: paid DeepSeek as additional tier — not wired.
-OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
-
-
-def create_openrouter_client():
-    """Create and return an OpenAI-compatible OpenRouter client, or None if
-    OPENROUTER_API_KEY is unset. Last-resort fallback (free-tier LLM),
-    so a missing key should mean "unavailable", not a crash.
-    """
-    api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
-    if not api_key:
-        return None
-    try:
-        from openai import OpenAI
-
-        return OpenAI(api_key=api_key, base_url=OPENROUTER_BASE_URL)
-    except Exception:
-        import logging
-
-        logging.getLogger(__name__).exception("Failed to create OpenRouter client")
-        return None

@@ -45,9 +45,7 @@ async function callGroq(prompt: string): Promise<string> {
       })
 
       if (res.status === 429) {
-        const retryAfter = res.headers.get("Retry-After")
-        const waitMs = retryAfter ? parseInt(retryAfter, 10) * 1000 : 2000
-        await new Promise((r) => setTimeout(r, waitMs))
+        // Do not sleep inside the serverless request — rotate keys immediately.
         lastError = new Error(`Rate limited on key ${attempt}`)
         continue
       }
@@ -116,7 +114,10 @@ Explain why this story matters specifically for Cambodia.`
 
     return NextResponse.json({ text, fallback: false })
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error"
-    return NextResponse.json({ error: message, fallback: true }, { status: 500 })
+    console.error("Local Lens error:", err)
+    return NextResponse.json(
+      { error: "Local Lens unavailable", fallback: true },
+      { status: 500 }
+    )
   }
 }

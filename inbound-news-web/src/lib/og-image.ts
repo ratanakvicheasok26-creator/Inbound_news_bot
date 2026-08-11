@@ -1,4 +1,4 @@
-import { isValidImageUrl, isSafeHost } from "@/lib/story-images"
+import { isValidImageUrl, isSafeHost, assertPublicUrl } from "@/lib/story-images"
 
 const OG_RE =
   /<meta\s+[^>]*(?:property|name)=["']og:image(?::secure_url)?["'][^>]*content=["']([^"']+)["']/i
@@ -20,17 +20,17 @@ function absolutize(base: string, candidate: string): string {
 const MAX_REDIRECTS = 4
 
 /**
- * Fetch a page while re-validating the host on every redirect hop.
+ * Fetch a page while re-validating the host (string + DNS) on every redirect hop.
  *
- * `fetch` with default redirect handling would follow a 30x to an internal
- * host (e.g. cloud metadata at 169.254.169.254) even though the original URL
- * passed `isSafeHost`. Following manually and re-checking each Location closes
- * that SSRF vector.
+ * Blocks:
+ * - Private IP literals
+ * - Hostnames that resolve to private/link-local/cloud-metadata ranges (DNS rebinding)
+ * - Redirect pivots onto internal hosts
  */
 async function safeFetchHtml(pageUrl: string): Promise<Response | null> {
   let url = pageUrl
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-    if (!isSafeHost(url)) return null
+    if (!(await assertPublicUrl(url))) return null
     const res = await fetch(url, {
       headers: {
         "User-Agent": "InboundReports/1.0 (+https://inboundreports.com; image discovery)",
@@ -57,6 +57,7 @@ async function safeFetchHtml(pageUrl: string): Promise<Response | null> {
  */
 export async function resolveOgImage(pageUrl: string): Promise<string | null> {
   if (!isValidImageUrl(pageUrl) || !isSafeHost(pageUrl)) return null
+  if (!(await assertPublicUrl(pageUrl))) return null
 
   try {
     const res = await safeFetchHtml(pageUrl)
@@ -66,7 +67,7 @@ export async function resolveOgImage(pageUrl: string): Promise<string | null> {
       const m = html.match(re)
       if (m?.[1]) {
         const candidate = absolutize(pageUrl, m[1].trim())
-        if (isValidImageUrl(candidate)) return candidate
+        if (isValidImageUrl(candidate) && isSafeHost(candidate)) return candidate
       }
     }
   } catch {

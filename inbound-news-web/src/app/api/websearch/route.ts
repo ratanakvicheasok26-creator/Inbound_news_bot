@@ -85,6 +85,13 @@ export async function GET(req: NextRequest) {
         const url = typeof item.url === "string" ? item.url : ""
         const title = typeof item.title === "string" ? item.title.trim() : ""
         if (!url || !title) return []
+        // Only return http(s) URLs — never javascript:/data: from upstream.
+        try {
+          const parsed = new URL(url)
+          if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return []
+        } catch {
+          return []
+        }
 
         const text = typeof item.text === "string" ? item.text : ""
         let publishedAt: string | null = null

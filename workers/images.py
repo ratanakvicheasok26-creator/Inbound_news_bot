@@ -26,14 +26,17 @@ _TWITTER_IMAGE_RE = re.compile(
 
 def _is_private_host(host: str) -> bool:
     """True for loopback, link-local, private, and IPv6 mapped ranges."""
-    lower = host.lower()
+    lower = host.lower().strip("[]")
     if lower == "localhost" or lower.endswith(".localhost"):
+        return True
+    if lower in ("metadata.google.internal", "metadata") or lower.endswith(".internal"):
         return True
     if lower.startswith("::ffff:"):
         lower = lower[len("::ffff:") :]
     if ":" in lower:
         return (
-            lower.startswith(("::1", "fe80:", "fc", "fd"))
+            lower == "::1"
+            or lower.startswith(("fe80:", "fc", "fd"))
             or _is_private_host(lower.split(":").pop())
         )
     return bool(
@@ -42,6 +45,28 @@ def _is_private_host(host: str) -> bool:
             lower,
         )
     )
+
+
+def resolves_to_private(host: str) -> bool:
+    """True if hostname is private, or any DNS A/AAAA record is private.
+
+    Fail-closed on DNS errors so a lookup failure cannot open an SSRF path.
+    """
+    import socket
+
+    if not host or _is_private_host(host):
+        return True
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except OSError:
+        return True
+    if not infos:
+        return True
+    for info in infos:
+        addr = info[4][0]
+        if _is_private_host(str(addr)):
+            return True
+    return False
 
 
 def is_valid_image_url(url: str | None) -> bool:
@@ -119,6 +144,9 @@ def fetch_og_image(page_url: str, timeout: float = 4.0) -> str | None:
             for _ in range(_MAX_REDIRECTS + 1):
                 if not is_valid_image_url(url):
                     return None
+                host = urlparse(url).hostname or ""
+                if resolves_to_private(host):
+                    return None
                 resp = client.get(
                     url,
                     headers={"User-Agent": "InboundNewsBot/1.0 (image discovery)"},
@@ -143,3 +171,4 @@ def fetch_og_image(page_url: str, timeout: float = 4.0) -> str | None:
     except Exception as exc:
         logger.debug("og:image fetch failed for %s: %s", page_url, exc)
     return None
+

@@ -18,6 +18,7 @@ __all__ = [
     "get_state",
     "reset_state",
     "acquire_instance_lock",
+    "refresh_instance_lock",
     "release_instance_lock",
 ]
 
@@ -346,6 +347,25 @@ def acquire_instance_lock() -> bool:
     except Exception:
         logger.exception("Failed to acquire Redis instance lock — starting anyway.")
         return True
+
+
+def refresh_instance_lock() -> None:
+    """Renew the single-instance lock TTL.
+
+    The poller runs indefinitely, so without renewal the 15-minute lock key
+    would expire and a second replica (e.g. an overlapping deploy) could start
+    and double-post. Called on a repeating schedule well inside the TTL.
+    """
+    redis_url = os.environ.get("REDIS_URL", "").strip()
+    if not redis_url:
+        return
+    try:
+        import redis
+
+        r = redis.Redis.from_url(redis_url, decode_responses=True)
+        r.set(_INSTANCE_LOCK_KEY, "1", ex=_INSTANCE_LOCK_TTL_SECONDS)
+    except Exception:
+        logger.warning("Failed to refresh Redis instance lock.", exc_info=True)
 
 
 def release_instance_lock() -> None:

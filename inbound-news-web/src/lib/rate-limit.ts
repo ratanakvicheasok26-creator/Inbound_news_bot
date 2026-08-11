@@ -3,10 +3,10 @@ import type { NextRequest } from "next/server"
 /**
  * Minimal in-memory fixed-window rate limiter.
  *
- * Protects paid upstream calls (Groq, Exa) from being looped by an anonymous
- * caller to drain the budget or exhaust rotated keys. It is per-process, so on
- * multi-instance/serverless hosting it caps abuse per instance rather than
- * globally — enough to blunt a single-source flood without adding Redis.
+ * Protects paid upstream calls (Groq, Exa) and expensive DB endpoints from
+ * anonymous floods. It is per-process, so on multi-instance/serverless hosting
+ * it caps abuse per instance rather than globally — enough to blunt a
+ * single-source flood without adding Redis.
  */
 
 type Bucket = { count: number; resetAt: number }
@@ -14,14 +14,27 @@ type Bucket = { count: number; resetAt: number }
 const store = new Map<string, Bucket>()
 const MAX_KEYS = 10_000
 
-/** Best-effort client IP from proxy headers; falls back to a shared bucket. */
+/**
+ * Best-effort client IP.
+ *
+ * Prefer platform-provided headers (Vercel/Railway) over the first hop of
+ * `x-forwarded-for`, which a caller can spoof when hitting the origin directly.
+ */
 export function getClientIp(req: NextRequest): string {
+  const vercel = req.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim()
+  if (vercel) return vercel
+  const realIp = req.headers.get("x-real-ip")?.trim()
+  if (realIp) return realIp
+  const cf = req.headers.get("cf-connecting-ip")?.trim()
+  if (cf) return cf
   const xff = req.headers.get("x-forwarded-for")
   if (xff) {
-    const first = xff.split(",")[0]?.trim()
-    if (first) return first
+    // Prefer the right-most hop (closest to our edge) when the platform has
+    // appended its own entry; fall back to the first hop otherwise.
+    const parts = xff.split(",").map((p) => p.trim()).filter(Boolean)
+    if (parts.length) return parts[parts.length - 1]
   }
-  return req.headers.get("x-real-ip")?.trim() || "unknown"
+  return "unknown"
 }
 
 export type RateLimitResult = { ok: boolean; retryAfter: number }

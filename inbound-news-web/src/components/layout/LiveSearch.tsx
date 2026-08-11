@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Search, X, CornerDownLeft } from "lucide-react"
 import { getCategoryLabel } from "@/lib/categories"
+import { fetchJson, safeExternalHref } from "@/lib/client-fetch"
 import type { Story, Article } from "@/lib/types"
 
 type Suggestion = { kind: "story"; item: Story } | { kind: "article"; item: Article }
 
-const DEBOUNCE_MS = 180
-const MIN_QUERY = 1
+const DEBOUNCE_MS = 320
+const MIN_QUERY = 2
 
 export function LiveSearch() {
   const router = useRouter()
@@ -24,7 +25,7 @@ export function LiveSearch() {
   const wrapRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const fetchIdRef = useRef(0)
+  const abortRef = useRef<AbortController | null>(null)
 
   const items = useMemo<Suggestion[]>(() => {
     const list: Suggestion[] = []
@@ -33,56 +34,67 @@ export function LiveSearch() {
     return list
   }, [stories, articles])
 
+  const clearResults = useCallback(() => {
+    setStories([])
+    setArticles([])
+    setActive(-1)
+    setLoading(false)
+  }, [])
+
   const fetchSuggestions = useCallback(async (term: string) => {
-    const id = ++fetchIdRef.current
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
     setLoading(true)
-    try {
-      const res = await fetch(`/api/suggest?q=${encodeURIComponent(term)}`)
-      const data = await res.json()
-      if (id !== fetchIdRef.current) return
-      setStories(data.stories ?? [])
-      setArticles(data.articles ?? [])
-      setActive(-1)
-    } catch {
-      if (id !== fetchIdRef.current) return
+    const result = await fetchJson<{ stories?: Story[]; articles?: Article[] }>(
+      `/api/suggest?q=${encodeURIComponent(term)}`,
+      controller.signal,
+    )
+    if (result.aborted) return
+    if (!result.ok || !result.data) {
       setStories([])
       setArticles([])
-    } finally {
-      if (id === fetchIdRef.current) setLoading(false)
+      setActive(-1)
+      setLoading(false)
+      return
     }
+    setStories(result.data.stories ?? [])
+    setArticles(result.data.articles ?? [])
+    setActive(-1)
+    setLoading(false)
   }, [])
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     const term = query.trim()
     if (term.length < MIN_QUERY) {
-      debounceRef.current = setTimeout(() => {
-        setStories([])
-        setArticles([])
-        setActive(-1)
-        setLoading(false)
-      }, 0)
-      return
+      abortRef.current?.abort()
+      debounceRef.current = setTimeout(clearResults, 0)
+      return () => {
+        if (debounceRef.current) clearTimeout(debounceRef.current)
+      }
     }
     debounceRef.current = setTimeout(() => {
       setOpen(true)
-      fetchSuggestions(term)
+      void fetchSuggestions(term)
     }, DEBOUNCE_MS)
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
-  }, [query, fetchSuggestions])
+  }, [query, fetchSuggestions, clearResults])
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         setOpen(false)
         setActive(-1)
+        abortRef.current?.abort()
       }
     }
     function onDown(e: MouseEvent) {
       if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
         setOpen(false)
+        abortRef.current?.abort()
       }
     }
     document.addEventListener("keydown", onKey)
@@ -90,6 +102,8 @@ export function LiveSearch() {
     return () => {
       document.removeEventListener("keydown", onKey)
       document.removeEventListener("mousedown", onDown)
+      abortRef.current?.abort()
+      if (debounceRef.current) clearTimeout(debounceRef.current)
     }
   }, [])
 
@@ -97,18 +111,20 @@ export function LiveSearch() {
     setOpen(true)
     inputRef.current?.focus()
     const term = query.trim()
-    if (term.length >= MIN_QUERY) fetchSuggestions(term)
+    if (term.length >= MIN_QUERY) void fetchSuggestions(term)
   }
 
   function goToItem(index: number) {
     const entry = items[index]
     if (!entry) return
     setOpen(false)
+    abortRef.current?.abort()
     if (entry.kind === "story") {
       router.push(`/story/${entry.item.id}`)
-    } else {
-      window.open(entry.item.url, "_blank", "noopener,noreferrer")
+      return
     }
+    const href = safeExternalHref(entry.item.url)
+    if (href) window.open(href, "_blank", "noopener,noreferrer")
   }
 
   function onKeyDown(e: React.KeyboardEvent) {
@@ -126,6 +142,7 @@ export function LiveSearch() {
         const term = query.trim()
         if (term.length >= MIN_QUERY) {
           setOpen(false)
+          abortRef.current?.abort()
           router.push(`/search?q=${encodeURIComponent(term)}`)
         }
       }
@@ -155,6 +172,7 @@ export function LiveSearch() {
               const term = query.trim()
               if (term.length >= MIN_QUERY) {
                 setOpen(false)
+                abortRef.current?.abort()
                 router.push(`/search?q=${encodeURIComponent(term)}`)
               }
             }}
@@ -184,6 +202,8 @@ export function LiveSearch() {
                   type="button"
                   onClick={() => {
                     setQuery("")
+                    clearResults()
+                    abortRef.current?.abort()
                     setOpen(false)
                   }}
                   className="flex items-center justify-center w-[40px] h-[40px] border-l border-[var(--text-primary)] text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-inverted transition-colors"
@@ -207,7 +227,10 @@ export function LiveSearch() {
                       key={s.id}
                       href={`/story/${s.id}`}
                       onMouseEnter={() => setActive(i)}
-                      onClick={() => setOpen(false)}
+                      onClick={() => {
+                        setOpen(false)
+                        abortRef.current?.abort()
+                      }}
                       className={`flex items-center gap-2 px-2 py-2 text-[13px] ${
                         active === i ? "bg-[var(--surface-alt)]" : ""
                       }`}
@@ -229,13 +252,18 @@ export function LiveSearch() {
                   </p>
                   {articles.map((a, i) => {
                     const idx = stories.length + i
+                    const href = safeExternalHref(a.url)
+                    if (!href) return null
                     return (
                       <a
                         key={a.id}
-                        href={a.url}
+                        href={href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        onClick={() => setOpen(false)}
+                        onClick={() => {
+                          setOpen(false)
+                          abortRef.current?.abort()
+                        }}
                         onMouseEnter={() => setActive(idx)}
                         className={`flex items-center gap-2 px-2 py-2 text-[13px] ${
                           active === idx ? "bg-[var(--surface-alt)]" : ""
@@ -258,6 +286,7 @@ export function LiveSearch() {
                   onClick={() => {
                     const term = query.trim()
                     setOpen(false)
+                    abortRef.current?.abort()
                     if (term.length >= MIN_QUERY) router.push(`/search?q=${encodeURIComponent(term)}`)
                   }}
                   className="w-full flex items-center justify-between px-2 py-2 text-[13px] text-[var(--accent)] hover:bg-[var(--surface-alt)] transition-colors"
@@ -277,7 +306,7 @@ export function LiveSearch() {
 
           {!query.trim() && (
             <p className="max-w-[960px] mx-auto px-4 md:px-10 pb-4 font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">
-              Type to search &middot; Enter for full results &middot; Esc to close
+              Type 2+ characters &middot; Enter for full results &middot; Esc to close
             </p>
           )}
         </div>

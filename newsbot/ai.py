@@ -10,8 +10,6 @@ import html
 import json
 import logging
 import re
-import time
-from typing import Any
 
 from newsbot.config import (
     DIGEST_MIN_SOURCES,
@@ -369,8 +367,13 @@ def _fetch_og_image(url: str) -> str | None:
 
 
 def pick_image_url(cluster: list[Entry]) -> str | None:
+    from workers.images import is_valid_image_url
+
     for entry in cluster:
-        if entry.image_url:
+        # Validate before handing the URL to Telegram (which fetches it
+        # server-side) or persisting it — blocks SSRF/private-host targets
+        # injected via a crafted RSS image_url.
+        if entry.image_url and is_valid_image_url(entry.image_url):
             return entry.image_url
     if cluster:
         return _fetch_og_image(cluster[0].link)

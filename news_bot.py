@@ -25,6 +25,7 @@ How people join:
 
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
 import logging
 import os
@@ -45,7 +46,11 @@ from newsbot.config import (
     DONATION_QR_IMAGE,
     DONATION_SCHEDULE_DAYS,
     DONATION_SCHEDULE_HOUR,
+    FETCH_ADMIN_CHAT_IDS,
     FETCH_COOLDOWN_SECONDS,
+    FETCH_GLOBAL_COOLDOWN_SECONDS,
+    INSTANCE_LOCK_HEARTBEAT_SECONDS,
+    MAX_SUBSCRIBERS,
     TIMEZONE,
     URGENT_CHECK_INTERVAL_SECONDS,
     URGENT_FIRST_DELAY_SECONDS,
@@ -56,7 +61,12 @@ from newsbot.config import (
 )
 from newsbot.health import start_health_server
 from newsbot.mirror import mirror_available
-from newsbot.state import acquire_instance_lock, get_state, release_instance_lock
+from newsbot.state import (
+    acquire_instance_lock,
+    get_state,
+    refresh_instance_lock,
+    release_instance_lock,
+)
 
 logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -70,12 +80,18 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 _fetch_last_run: dict[int, float] = {}
+_global_fetch_last_run: float = 0.0
 _fetch_cooldown_lock = threading.Lock()
 
 
 async def urgent_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Urgent check — keyword matches not already posted. Runs every URGENT_CHECK_INTERVAL_SECONDS."""
     await fetch_urgent_and_post(context)
+
+
+async def instance_lock_heartbeat_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Renew the Redis single-instance lock so its TTL never lapses mid-run."""
+    await asyncio.to_thread(refresh_instance_lock)
 
 
 async def donation_job(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -222,6 +238,18 @@ async def start_command(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
         )
 
     if chat_id not in subscribers:
+        if len(subscribers) >= MAX_SUBSCRIBERS:
+            logger.warning(
+                "[/start] subscriber cap %d reached — rejecting new chat_id=%s",
+                MAX_SUBSCRIBERS,
+                chat_id,
+            )
+            await _reply(
+                update,
+                "We've hit capacity for direct subscribers right now. "
+                "Follow the public channel to keep getting the news.",
+            )
+            return
         subscribers.add(chat_id)
         state.save_subscribers(subscribers)
         if in_topic:
@@ -272,6 +300,14 @@ async def fetch_command(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
         )
         return
 
+    # When an admin allowlist is configured, only those chats may trigger a
+    # manual fetch — otherwise anyone could burn AI quota and hammer feeds.
+    if FETCH_ADMIN_CHAT_IDS and chat_id not in FETCH_ADMIN_CHAT_IDS:
+        logger.info("[/fetch] rejected non-admin chat_id=%s", chat_id)
+        await _reply(update, "This command is limited to the channel operators.")
+        return
+
+    global _global_fetch_last_run
     with _fetch_cooldown_lock:
         now = time_mod.time()
         # Prune entries older than the cooldown window so the dict can't grow unbounded.
@@ -279,6 +315,15 @@ async def fetch_command(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
         stale = [cid for cid, ts in _fetch_last_run.items() if ts < cutoff]
         for cid in stale:
             del _fetch_last_run[cid]
+        # Process-wide floor: bounds total feed+AI spend no matter how many
+        # distinct chats issue /fetch.
+        global_remaining = FETCH_GLOBAL_COOLDOWN_SECONDS - (now - _global_fetch_last_run)
+        if global_remaining > 0:
+            await _reply(
+                update,
+                "The bot is already fetching for someone else — try again in a moment.",
+            )
+            return
         last_run = _fetch_last_run.get(chat_id, 0)
         remaining = FETCH_COOLDOWN_SECONDS - (now - last_run)
         if remaining > 0:
@@ -289,6 +334,7 @@ async def fetch_command(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
             )
             return
         _fetch_last_run[chat_id] = now
+        _global_fetch_last_run = now
 
     logger.info("[/fetch] from chat_id=%s", chat_id)
     await _reply(update, "Fetching latest tech news...")
@@ -338,6 +384,15 @@ def main() -> None:
 
     if app.job_queue is None:
         raise RuntimeError("job_queue must be available (install python-telegram-bot[job-queue])")
+
+    # Renew the single-instance Redis lock before its TTL expires so a second
+    # replica can never start and double-post during a long-lived poll.
+    app.job_queue.run_repeating(
+        instance_lock_heartbeat_job,
+        interval=INSTANCE_LOCK_HEARTBEAT_SECONDS,
+        first=INSTANCE_LOCK_HEARTBEAT_SECONDS,
+        name="instance_lock_heartbeat",
+    )
 
     # Urgent ASAP on English only. Khmer mirror mode skips its own feed
     # pipeline — it re-posts everything the English bot publishes.

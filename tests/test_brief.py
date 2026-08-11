@@ -71,11 +71,6 @@ def test_digest_header_strips_legacy_emoji_html(reload_config):
     assert cfg.DIGEST_HEADER_TEXT == "Inbound Reports"
 
 
-def test_pulse_max_stories_default(reload_config):
-    cfg = reload_config(PULSE_MAX_STORIES="6")
-    assert cfg.PULSE_MAX_STORIES == 6
-
-
 def test_compile_batch_message_format(monkeypatch):
     import newsbot.bot as bot_mod
 

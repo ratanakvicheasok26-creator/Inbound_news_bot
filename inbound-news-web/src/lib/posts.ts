@@ -25,25 +25,32 @@ function escapeOrValue(value: string): string {
 async function enrichStoriesWithMedia(stories: Story[]): Promise<Story[]> {
   if (stories.length === 0) return stories
 
-  const storyIds = stories.map((s) => s.id)
+  // Cap fan-out so a large homepage batch cannot pull unbounded joins.
+  const storyIds = stories.map((s) => s.id).slice(0, 100)
   const { data: links, error: linksError } = await supabase
     .from("story_sources")
     .select("story_id, article_id")
     .in("story_id", storyIds)
+    .limit(500)
 
   if (linksError || !links?.length) {
     if (linksError) console.error("enrich media links:", linksError)
     return stories
   }
 
-  const articleIds = [...new Set(links.map((l) => l.article_id).filter(Boolean))]
+  const articleIds = [...new Set(links.map((l) => l.article_id).filter(Boolean))].slice(
+    0,
+    300,
+  )
   if (articleIds.length === 0) return stories
 
+  // Prefer stored image_url; only pull raw_json when needed for fallbacks.
   const { data: articles, error: articlesError } = await supabase
     .from("articles")
-    .select("id, url, source_name, source_domain, raw_json, image_url")
+    .select("id, url, source_name, source_domain, image_url, raw_json")
     .in("id", articleIds)
     .order("published_at", { ascending: false })
+    .limit(300)
 
   if (articlesError || !articles?.length) {
     if (articlesError) console.error("enrich media articles:", articlesError)
@@ -240,12 +247,13 @@ export async function getStoryById(id: string): Promise<StoryWithArticles | null
       .from("story_sources")
       .select("article_id")
       .eq("story_id", id)
+      .limit(40)
 
     if (sourcesError) {
       console.error("Failed to fetch story_sources:", sourcesError)
     }
 
-    const articleIds = (storySources || []).map((s) => s.article_id).filter(Boolean)
+    const articleIds = (storySources || []).map((s) => s.article_id).filter(Boolean).slice(0, 40)
     let articles: Article[] = []
 
     if (articleIds.length > 0) {
@@ -254,6 +262,7 @@ export async function getStoryById(id: string): Promise<StoryWithArticles | null
         .select(`${ARTICLE_COLUMNS}, raw_json`)
         .in("id", articleIds)
         .order("published_at", { ascending: false })
+        .limit(40)
 
       if (articlesError) {
         console.error("Failed to fetch articles for story:", articlesError)
@@ -289,11 +298,13 @@ export async function getStoriesByIds(ids: string[]): Promise<Story[]> {
   if (!isSupabaseConfigured || ids.length === 0) return []
 
   try {
+    const capped = [...new Set(ids)].slice(0, 100)
     const { data, error } = await supabase
       .from("stories")
       .select(STORY_COLUMNS)
-      .in("id", ids)
+      .in("id", capped)
       .order("created_at", { ascending: false })
+      .limit(100)
 
     if (error) {
       console.error("Failed to fetch stories by ids:", error)
@@ -380,8 +391,8 @@ export async function getStoryStats(): Promise<{
   try {
     const [storyResult, sourceResult, catResult] = await Promise.all([
       supabase.from("stories").select("*", { count: "exact", head: true }),
-      supabase.from("articles").select("source_domain").limit(2000),
-      supabase.from("stories").select("category").limit(2000),
+      supabase.from("articles").select("source_domain").limit(500),
+      supabase.from("stories").select("category").limit(500),
     ])
 
     if (storyResult.error) console.error("Stats stories:", storyResult.error)

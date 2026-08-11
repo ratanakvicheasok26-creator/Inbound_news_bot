@@ -4,17 +4,16 @@ from __future__ import annotations
 
 import asyncio
 import html
-import json
 import logging
 import os
 import re
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import Any, Awaitable, Callable
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.error import BadRequest, Forbidden
+from telegram.error import BadRequest, Forbidden, NetworkError, RetryAfter, TimedOut
 from telegram.ext import ContextTypes
 
 from newsbot.ai import (
@@ -35,7 +34,6 @@ from newsbot.config import (
     MAX_URGENT_POSTS_PER_RUN,
     NEWS_LANGUAGE,
     PREPARE_ENTRIES_TIMEOUT_SECONDS,
-    PULSE_MAX_STORIES,
     TELEGRAM_CHANNEL_ID,
     TELEGRAM_THREAD_ID,
     TIMEZONE,
@@ -44,10 +42,10 @@ from newsbot.feeds import (
     Entry,
     cluster_entries,
     collect_new_entries,
-    looks_telegram_important,
     looks_urgent,
     normalize_title_key,
 )
+from workers.images import is_valid_image_url
 from newsbot.mirror import (
     build_batch_payload,
     build_story_payload,
@@ -68,13 +66,54 @@ __all__ = [
     "fetch_and_post",
     "fetch_individual_and_post",
     "fetch_urgent_and_post",
-    "fetch_pulse_and_post",
     "mirror_drain_job",
 ]
 
 logger = logging.getLogger(__name__)
 
 _pipeline_lock = asyncio.Lock()
+
+# Telegram enforces broadcast rate limits (~30 messages/second across chats,
+# ~1/second to a single chat). Space sends slightly and honor RetryAfter so a
+# large fan-out (urgent alerts, Khmer mirror) never silently drops posts or
+# trips an escalating flood wait.
+_SEND_THROTTLE_SECONDS: float = float(os.environ.get("SEND_THROTTLE_SECONDS", "0.05"))
+_SEND_MAX_RETRIES: int = 4
+
+
+async def _tg_send(method: Callable[..., Awaitable[Any]], **kwargs: Any) -> Any:
+    """Invoke a Telegram send with RetryAfter and transient-error handling.
+
+    ``Forbidden`` and ``BadRequest`` propagate to the caller (blocked chat /
+    bad photo handling); only rate limits and transient network errors are
+    retried here, with a short post-send throttle to stay under Telegram's
+    per-second broadcast ceiling.
+    """
+    for attempt in range(_SEND_MAX_RETRIES + 1):
+        try:
+            result = await method(**kwargs)
+            if _SEND_THROTTLE_SECONDS:
+                await asyncio.sleep(_SEND_THROTTLE_SECONDS)
+            return result
+        except RetryAfter as exc:
+            wait = float(getattr(exc, "retry_after", 3) or 3) + 0.5
+            if attempt == _SEND_MAX_RETRIES:
+                logger.error(
+                    "Telegram rate limit persisted after %d retries — dropping this send.",
+                    _SEND_MAX_RETRIES,
+                )
+                raise
+            logger.warning(
+                "Telegram RetryAfter — sleeping %.1fs (attempt %d/%d).",
+                wait,
+                attempt + 1,
+                _SEND_MAX_RETRIES,
+            )
+            await asyncio.sleep(wait)
+        except (TimedOut, NetworkError):
+            if attempt == _SEND_MAX_RETRIES:
+                raise
+            await asyncio.sleep(1.0 * (attempt + 1))
 
 _HTML_TAG_RE = re.compile(r"</?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*/?>")
 _VOID_TAGS = frozenset({"br", "hr", "img", "meta", "input", "link"})
@@ -275,7 +314,8 @@ async def broadcast_stories(
             try:
                 if post.image_url:
                     try:
-                        await context.bot.send_photo(
+                        await _tg_send(
+                            context.bot.send_photo,
                             photo=post.image_url,
                             caption=trim_for_caption(post.text),
                             **base,
@@ -286,20 +326,23 @@ async def broadcast_stories(
                         continue
                     except BadRequest:
                         logger.warning("Photo failed for %s (bad request) — falling back to text", chat_id)
-                        await context.bot.send_message(
+                        await _tg_send(
+                            context.bot.send_message,
                             text=post.text,
                             disable_web_page_preview=True,
                             **base,
                         )
                     except Exception:
                         logger.exception("Photo send failed for %s — falling back to text", chat_id)
-                        await context.bot.send_message(
+                        await _tg_send(
+                            context.bot.send_message,
                             text=post.text,
                             disable_web_page_preview=True,
                             **base,
                         )
                 else:
-                    await context.bot.send_message(
+                    await _tg_send(
+                        context.bot.send_message,
                         text=post.text,
                         disable_web_page_preview=True,
                         **base,
@@ -379,12 +422,6 @@ def _cluster_to_story(
     )
 
 
-def _source_line(links: list[tuple[str, str]], limit: int = 3) -> str:
-    """Deprecated path — kept for tests; prefer _attribution_line."""
-    names = [_html_escape(name) for _, name in links[:limit] if name]
-    return " · ".join(names)
-
-
 def _cluster_to_batched(
     cluster: list[Entry],
     *,
@@ -438,7 +475,7 @@ def _compile_batch_message(batched: list[BatchedStory]) -> str:
     )
     brief_footer = f'🌐 <a href="{brief}"><b>Open today\'s Brief on Inbound Reports →</b></a>'
     parts: list[str] = [
-        f"📰 <b>{DIGEST_HEADER_TEXT}</b> · <i>{now}</i>",
+        f"📰 <b>{_html_escape(DIGEST_HEADER_TEXT)}</b> · <i>{now}</i>",
         separator,
         tease_line,
     ]
@@ -526,7 +563,8 @@ async def broadcast_batched(
                 + "\nFull Brief + Local Lens on Inbound Reports"
             )
             try:
-                photo_msg = await context.bot.send_photo(
+                photo_msg = await _tg_send(
+                    context.bot.send_photo,
                     chat_id=channel_id,
                     photo=batch_image,
                     caption=caption,
@@ -555,7 +593,7 @@ async def broadcast_batched(
                     kwargs["reply_markup"] = brief_markup
                 elif i == len(segments) - 1 and photo_msg is not None:
                     kwargs["reply_markup"] = brief_markup
-                await context.bot.send_message(**kwargs)
+                await _tg_send(context.bot.send_message, **kwargs)
         else:
             segments = _truncate_batch(message)
             for i, seg in enumerate(segments):
@@ -569,7 +607,7 @@ async def broadcast_batched(
                     kwargs["message_thread_id"] = thread_id
                 if i == 0:
                     kwargs["reply_markup"] = brief_markup
-                await context.bot.send_message(**kwargs)
+                await _tg_send(context.bot.send_message, **kwargs)
 
         for s in batched:
             succeeded_ids.update(s.entry_ids)
@@ -769,82 +807,6 @@ async def fetch_urgent_and_post(context: ContextTypes.DEFAULT_TYPE) -> int:
     return await _run_pipeline(context, urgent=True)
 
 
-async def fetch_pulse_and_post(context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Brief-slot important skim for Telegram. EN only — KM receives via mirror.
-
-    Posts only clusters that look Telegram-important (multi-source, urgent, or
-    important keywords). Everything else stays on the website Brief.
-    """
-    if NEWS_LANGUAGE != "en":
-        return 0
-    return await _run_pulse_pipeline(context)
-
-
-async def _run_pulse_pipeline(context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Short important batch for Brief hours — capped, skim-friendly."""
-    async with _pipeline_lock:
-        state = get_state()
-        posted_ids = state.load_posted_ids()
-        posted_titles = state.load_posted_titles()
-        entries = collect_new_entries(posted_ids, posted_titles)
-        if not entries:
-            logger.info("No new entries for Brief pulse.")
-            return 0
-
-        worthy = [
-            c for c in cluster_entries(entries) if looks_telegram_important(c)
-        ]
-        clusters = _rank_clusters(worthy)[:PULSE_MAX_STORIES]
-        if not clusters:
-            logger.info("No Telegram-important clusters for Brief pulse.")
-            return 0
-
-        if len(clusters) == 1:
-            story = await asyncio.to_thread(
-                _cluster_to_story, clusters[0], urgent=looks_urgent(clusters[0])
-            )
-            if not story:
-                return 0
-            succeeded = await broadcast_stories(context, [story])
-            if succeeded:
-                _mark_posted([story], succeeded)
-                _publish_mirror_stories([story], succeeded)
-                logger.info("Sent Brief pulse (1 story).")
-                return 1
-            return 0
-
-        def _prepare_batched() -> list[BatchedStory]:
-            result: list[BatchedStory] = []
-            for cluster in clusters:
-                entry = _cluster_to_batched(cluster)
-                if entry:
-                    result.append(entry)
-            return result
-
-        try:
-            batched = await asyncio.wait_for(
-                asyncio.to_thread(_prepare_batched),
-                timeout=PREPARE_ENTRIES_TIMEOUT_SECONDS,
-            )
-        except asyncio.TimeoutError:
-            logger.error(
-                "Brief pulse rewrite timed out after %.0fs",
-                PREPARE_ENTRIES_TIMEOUT_SECONDS,
-            )
-            return 0
-
-        if not batched:
-            return 0
-
-        succeeded = await broadcast_batched(context, batched)
-        if succeeded:
-            _mark_posted_batched(batched, succeeded)
-            _publish_mirror_batched(batched)
-            logger.info("Sent Brief pulse with %d stor(y/ies).", len(batched))
-            return len(batched)
-        return 0
-
-
 def _publish_mirror_stories(stories: list[StoryPost], succeeded: set[str]) -> None:
     """English bot: enqueue sent stories for the Khmer mirror bot."""
     if NEWS_LANGUAGE != "en" or not mirror_available():
@@ -881,6 +843,13 @@ async def mirror_drain_job(context: ContextTypes.DEFAULT_TYPE) -> None:
             await asyncio.to_thread(requeue, payload)
 
 
+def _safe_link(url: object) -> str | None:
+    """Accept only well-formed public http(s) URLs from untrusted mirror payloads."""
+    if not isinstance(url, str):
+        return None
+    return url.strip() if is_valid_image_url(url) else None
+
+
 async def _mirror_story(context: ContextTypes.DEFAULT_TYPE, payload: dict) -> None:
     cluster = [payload_to_entry(d) for d in payload.get("cluster", [])]
     if not cluster:
@@ -888,7 +857,7 @@ async def _mirror_story(context: ContextTypes.DEFAULT_TYPE, payload: dict) -> No
     story = _cluster_to_story(
         cluster,
         urgent=bool(payload.get("urgent")),
-        website_url=payload.get("website_url"),
+        website_url=_safe_link(payload.get("website_url")),
     )
     if not story:
         return
@@ -907,7 +876,7 @@ async def _mirror_batch(context: ContextTypes.DEFAULT_TYPE, payload: dict) -> No
         cluster = [payload_to_entry(d) for d in item.get("cluster", [])]
         if not cluster:
             continue
-        story = _cluster_to_batched(cluster, website_url=item.get("website_url"))
+        story = _cluster_to_batched(cluster, website_url=_safe_link(item.get("website_url")))
         if story:
             batched.append(story)
     if not batched:

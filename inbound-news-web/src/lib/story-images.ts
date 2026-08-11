@@ -1,5 +1,8 @@
 /** Shared helpers for story / article image URLs. */
 
+import { lookup } from "node:dns/promises"
+import { isIP } from "node:net"
+
 function isHttpUrl(url: string): boolean {
   try {
     const u = new URL(url)
@@ -10,34 +13,70 @@ function isHttpUrl(url: string): boolean {
 }
 
 /** True when the host is an IP literal in a private/loopback/link-local range. */
-function isPrivateHost(hostname: string): boolean {
-  const ipv4 = hostname.match(
+export function isPrivateHost(hostname: string): boolean {
+  const host = hostname.replace(/^\[|\]$/g, "").toLowerCase()
+  const ipv4 = host.match(
     /^(?:10\.|127\.|169\.254\.|172\.(?:1[6-9]|2\d|3[01])\.|192\.168\.|0\.)/
   )
   if (ipv4) return true
-  if (hostname === "localhost" || hostname.endsWith(".localhost")) return true
-  if (hostname.includes(":")) {
-    // IPv6: block loopback, link-local, ULA, and mapped-v4 private ranges.
-    const lower = hostname.toLowerCase()
+  if (host === "localhost" || host.endsWith(".localhost")) return true
+  // Cloud metadata / link-local hostnames that resolve privately in practice.
+  if (
+    host === "metadata.google.internal" ||
+    host === "metadata" ||
+    host.endsWith(".internal")
+  ) {
+    return true
+  }
+  if (host.includes(":")) {
     if (
-      lower.startsWith("::1") ||
-      lower.startsWith("fe80:") ||
-      lower.startsWith("fc") ||
-      lower.startsWith("fd") ||
-      lower.startsWith("::ffff:")
+      host === "::1" ||
+      host.startsWith("fe80:") ||
+      host.startsWith("fc") ||
+      host.startsWith("fd") ||
+      host.startsWith("::ffff:")
     ) {
       return true
     }
-    const tail = lower.split(":").pop()
-    if (tail && isPrivateHost(tail)) return true
+    const mapped = host.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/)
+    if (mapped?.[1] && isPrivateHost(mapped[1])) return true
   }
   return false
 }
 
+/** Sync string-level host check (no DNS). Prefer `assertPublicUrl` before fetch. */
 export function isSafeHost(url: string): boolean {
   if (!isHttpUrl(url)) return false
   try {
     return !isPrivateHost(new URL(url).hostname)
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Resolve hostname and reject if any A/AAAA record is private.
+ * Fail-closed on DNS errors so a transient lookup failure cannot open SSRF.
+ */
+export async function resolvesToPublicHost(hostname: string): Promise<boolean> {
+  if (!hostname || isPrivateHost(hostname)) return false
+  // Literal IPs: already checked above.
+  if (isIP(hostname)) return !isPrivateHost(hostname)
+  try {
+    const results = await lookup(hostname, { all: true, verbatim: true })
+    if (!results.length) return false
+    return results.every((r) => !isPrivateHost(r.address))
+  } catch {
+    return false
+  }
+}
+
+/** Full SSRF gate: scheme + string host + DNS resolution. */
+export async function assertPublicUrl(url: string): Promise<boolean> {
+  if (!isSafeHost(url)) return false
+  try {
+    const hostname = new URL(url).hostname
+    return await resolvesToPublicHost(hostname)
   } catch {
     return false
   }

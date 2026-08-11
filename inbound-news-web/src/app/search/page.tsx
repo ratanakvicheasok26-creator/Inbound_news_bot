@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, Suspense, FormEvent } from "react"
+import { useState, useEffect, useCallback, useRef, Suspense, FormEvent } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { StoryRow } from "@/components/story/StoryRow"
@@ -8,9 +8,11 @@ import { CATEGORIES } from "@/lib/categories"
 import type { Story, Article, WebResult } from "@/lib/types"
 import { Search, Globe } from "lucide-react"
 import { formatDistanceToNow } from "@/lib/utils"
+import { fetchJson, safeExternalHref } from "@/lib/client-fetch"
 
-const DEBOUNCE_MS = 250
-const MIN_QUERY = 1
+const LOCAL_DEBOUNCE_MS = 280
+const WEB_DEBOUNCE_MS = 900
+const MIN_QUERY = 2
 
 function SearchResults() {
   const searchParams = useSearchParams()
@@ -26,56 +28,137 @@ function SearchResults() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const runSearch = useCallback(async (query: string) => {
-    if (!query.trim()) return
-    setLoading(true)
-    setWebLoading(true)
-    setError(null)
-    try {
-      const [res, webRes] = await Promise.all([
-        fetch(`/api/search?q=${encodeURIComponent(query)}`),
-        fetch(`/api/websearch?q=${encodeURIComponent(query)}`),
-      ])
-      const data = await res.json()
-      setStories(data.stories ?? [])
-      setArticles(data.articles ?? [])
-      if (data.error) setError(data.error)
+  const localAbortRef = useRef<AbortController | null>(null)
+  const webAbortRef = useRef<AbortController | null>(null)
+  const localTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const webTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Keep URL q and input in sync when navigating via router / back button.
+  const lastUrlQ = useRef(initialQ)
 
-      const webData = await webRes.json()
-      setWebResults(webData.results ?? [])
-      setWebAvailable(webData.available !== false)
-    } catch {
+  useEffect(() => {
+    const q = searchParams.get("q") || ""
+    if (q !== lastUrlQ.current) {
+      lastUrlQ.current = q
+      setInput(q)
+    }
+  }, [searchParams])
+
+  const runLocalSearch = useCallback(async (query: string) => {
+    localAbortRef.current?.abort()
+    const controller = new AbortController()
+    localAbortRef.current = controller
+    setLoading(true)
+    setError(null)
+
+    const result = await fetchJson<{
+      stories?: Story[]
+      articles?: Article[]
+      error?: string | null
+    }>(`/api/search?q=${encodeURIComponent(query)}`, controller.signal)
+
+    if (result.aborted) return
+    if (!result.ok || !result.data) {
       setStories([])
       setArticles([])
-      setWebResults([])
-      setError("Search failed. Try again.")
-    } finally {
+      setError(
+        !result.ok && result.status === 429
+          ? "Too many searches — wait a moment."
+          : "Search failed. Try again.",
+      )
       setLoading(false)
-      setWebLoading(false)
+      return
     }
+    setStories(result.data.stories ?? [])
+    setArticles(result.data.articles ?? [])
+    if (result.data.error) setError(result.data.error)
+    setLoading(false)
+  }, [])
+
+  const runWebSearch = useCallback(async (query: string) => {
+    webAbortRef.current?.abort()
+    const controller = new AbortController()
+    webAbortRef.current = controller
+    setWebLoading(true)
+
+    const result = await fetchJson<{
+      results?: WebResult[]
+      available?: boolean
+      error?: string | null
+    }>(`/api/websearch?q=${encodeURIComponent(query)}`, controller.signal)
+
+    if (result.aborted) return
+    if (!result.ok || !result.data) {
+      setWebResults([])
+      // 503 = not configured; keep available=false. Other errors keep available.
+      const status = result.ok ? undefined : result.status
+      setWebAvailable(status !== 503)
+      setWebLoading(false)
+      return
+    }
+    const safeResults = (result.data.results ?? []).filter(
+      (r) => Boolean(safeExternalHref(r.url)),
+    )
+    setWebResults(safeResults)
+    setWebAvailable(result.data.available !== false)
+    setWebLoading(false)
   }, [])
 
   useEffect(() => {
     const term = input.trim()
-    const t = setTimeout(() => {
-      if (term.length < MIN_QUERY) {
-        setStories([])
-        setArticles([])
-        setWebResults([])
-        setError(null)
-        return
+
+    if (localTimerRef.current) clearTimeout(localTimerRef.current)
+    if (webTimerRef.current) clearTimeout(webTimerRef.current)
+
+    if (term.length < MIN_QUERY) {
+      localAbortRef.current?.abort()
+      webAbortRef.current?.abort()
+      setStories([])
+      setArticles([])
+      setWebResults([])
+      setError(null)
+      setLoading(false)
+      setWebLoading(false)
+      return
+    }
+
+    localTimerRef.current = setTimeout(() => {
+      if (term !== lastUrlQ.current) {
+        lastUrlQ.current = term
+        router.replace(`/search?q=${encodeURIComponent(term)}`, { scroll: false })
       }
-      router.replace(`/search?q=${encodeURIComponent(term)}`, { scroll: false })
-      runSearch(term)
-    }, DEBOUNCE_MS)
-    return () => clearTimeout(t)
-  }, [input, router, runSearch])
+      void runLocalSearch(term)
+    }, LOCAL_DEBOUNCE_MS)
+
+    // Paid Exa websearch only after the query has settled longer — typing
+    // should not fire simultaneous paid requests on every keystroke.
+    webTimerRef.current = setTimeout(() => {
+      void runWebSearch(term)
+    }, WEB_DEBOUNCE_MS)
+
+    return () => {
+      if (localTimerRef.current) clearTimeout(localTimerRef.current)
+      if (webTimerRef.current) clearTimeout(webTimerRef.current)
+    }
+  }, [input, router, runLocalSearch, runWebSearch])
+
+  useEffect(() => {
+    return () => {
+      localAbortRef.current?.abort()
+      webAbortRef.current?.abort()
+    }
+  }, [])
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
     const trimmed = input.trim()
     if (trimmed.length < MIN_QUERY) return
-    router.push(`/search?q=${encodeURIComponent(trimmed)}`)
+    // Flush timers: search now instead of waiting for debounce.
+    if (localTimerRef.current) clearTimeout(localTimerRef.current)
+    if (webTimerRef.current) clearTimeout(webTimerRef.current)
+    lastUrlQ.current = trimmed
+    router.replace(`/search?q=${encodeURIComponent(trimmed)}`, { scroll: false })
+    void runLocalSearch(trimmed)
+    void runWebSearch(trimmed)
   }
 
   const searched = input.trim().length >= MIN_QUERY
@@ -111,13 +194,13 @@ function SearchResults() {
           </button>
         </div>
         <p className="mt-2 text-[12px] text-[var(--text-secondary)]">
-          Results appear as you type — even from a single letter.
+          Results update after 2+ characters. Live web results load once you pause typing.
         </p>
       </form>
 
       {!searched && (
         <p className="text-[var(--text-secondary)] py-8">
-          Type a keyword to search stories and source articles.
+          Type at least two characters to search stories and source articles.
         </p>
       )}
 
@@ -166,28 +249,32 @@ function SearchResults() {
             <span className="meta-text">{articles.length}</span>
           </div>
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] divide-y divide-[var(--border)]">
-            {articles.map((article) => (
-              <Link
-                key={article.id}
-                href={article.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block px-5 py-4 hover:bg-[var(--surface-alt)] transition-colors"
-              >
-                <p className="text-[15px] font-semibold leading-snug line-clamp-2">{article.title}</p>
-                {article.summary && (
-                  <p className="mt-1 text-[13px] text-[var(--text-secondary)] line-clamp-2">
-                    {article.summary}
-                  </p>
-                )}
-                <div className="mt-2 flex gap-3 meta-text">
-                  {article.source_name && <span>{article.source_name}</span>}
-                  {article.published_at && (
-                    <span>{formatDistanceToNow(article.published_at)}</span>
+            {articles.map((article) => {
+              const href = safeExternalHref(article.url)
+              if (!href) return null
+              return (
+                <a
+                  key={article.id}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block px-5 py-4 hover:bg-[var(--surface-alt)] transition-colors"
+                >
+                  <p className="text-[15px] font-semibold leading-snug line-clamp-2">{article.title}</p>
+                  {article.summary && (
+                    <p className="mt-1 text-[13px] text-[var(--text-secondary)] line-clamp-2">
+                      {article.summary}
+                    </p>
                   )}
-                </div>
-              </Link>
-            ))}
+                  <div className="mt-2 flex gap-3 meta-text">
+                    {article.source_name && <span>{article.source_name}</span>}
+                    {article.published_at && (
+                      <span>{formatDistanceToNow(article.published_at)}</span>
+                    )}
+                  </div>
+                </a>
+              )
+            })}
           </div>
         </section>
       )}
@@ -214,28 +301,32 @@ function SearchResults() {
             <span className="meta-text">{webResults.length}</span>
           </div>
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] divide-y divide-[var(--border)]">
-            {webResults.map((result) => (
-              <a
-                key={result.url}
-                href={result.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block px-5 py-4 hover:bg-[var(--surface-alt)] transition-colors"
-              >
-                <p className="text-[15px] font-semibold leading-snug line-clamp-2">{result.title}</p>
-                {result.summary && (
-                  <p className="mt-1 text-[13px] text-[var(--text-secondary)] line-clamp-2">
-                    {result.summary}
-                  </p>
-                )}
-                <div className="mt-2 flex gap-3 meta-text">
-                  <span>{result.source_name}</span>
-                  {result.published_at && (
-                    <span>{formatDistanceToNow(result.published_at)}</span>
+            {webResults.map((result) => {
+              const href = safeExternalHref(result.url)
+              if (!href) return null
+              return (
+                <a
+                  key={result.url}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block px-5 py-4 hover:bg-[var(--surface-alt)] transition-colors"
+                >
+                  <p className="text-[15px] font-semibold leading-snug line-clamp-2">{result.title}</p>
+                  {result.summary && (
+                    <p className="mt-1 text-[13px] text-[var(--text-secondary)] line-clamp-2">
+                      {result.summary}
+                    </p>
                   )}
-                </div>
-              </a>
-            ))}
+                  <div className="mt-2 flex gap-3 meta-text">
+                    <span>{result.source_name}</span>
+                    {result.published_at && (
+                      <span>{formatDistanceToNow(result.published_at)}</span>
+                    )}
+                  </div>
+                </a>
+              )
+            })}
           </div>
           <p className="mt-2 text-[12px] text-[var(--text-secondary)]">
             Fresh web results via live search — last 7 days.

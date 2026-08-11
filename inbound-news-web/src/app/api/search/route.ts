@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { escapeOrValue } from "@/lib/posts"
+import { getClientIp, rateLimit } from "@/lib/rate-limit"
 
 const STORY_SELECT =
   "id, title, summary_en, category, tags, created_at, image_url"
@@ -80,6 +81,14 @@ async function searchTable(
 
 export async function GET(req: NextRequest) {
   try {
+    const limit = rateLimit(`search:${getClientIp(req)}`, 40, 60_000)
+    if (!limit.ok) {
+      return NextResponse.json(
+        { stories: [], articles: [], error: "Too many requests" },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
+      )
+    }
+
     if (!isSupabaseConfigured) {
       return NextResponse.json(
         { stories: [], articles: [], error: "Search is unavailable" },

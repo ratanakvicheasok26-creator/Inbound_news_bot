@@ -99,20 +99,24 @@ export async function getRelatedOptionsFor(
       return { related: [], storyId: null, storyTitle: null }
     }
 
-    const storyIds = [...new Set(storyLinks.map((l) => l.story_id).filter(Boolean))] as string[]
+    const storyIds = [...new Set(storyLinks.map((l) => l.story_id).filter(Boolean))]
+      .slice(0, 20) as string[]
     const storyId = storyIds[0]
 
     const [{ data: stories }, { data: articleLinks }] = await Promise.all([
-      supabase.from("stories").select("id, title").in("id", storyIds),
+      supabase.from("stories").select("id, title").in("id", storyIds).limit(20),
       supabase
         .from("story_sources")
         .select("story_id, article_id")
-        .in("story_id", storyIds),
+        .in("story_id", storyIds)
+        .limit(80),
     ])
 
     const articleIds = [
       ...new Set((articleLinks || []).map((l) => l.article_id).filter(Boolean)),
-    ].filter((id) => id !== articleId)
+    ]
+      .filter((id) => id !== articleId)
+      .slice(0, 40)
 
     if (articleIds.length === 0) {
       return { related: [], storyId, storyTitle: stories?.[0]?.title || null }
@@ -123,6 +127,7 @@ export async function getRelatedOptionsFor(
       .select(`${COMPARE_ARTICLE_COLUMNS}, raw_json`)
       .in("id", articleIds)
       .order("published_at", { ascending: false })
+      .limit(40)
 
     const storyById = new Map((stories || []).map((s) => [s.id, s]))
     const storyOfArticle = new Map<string, string>()
@@ -159,6 +164,7 @@ export async function getRecentCompareOptions(limit = 12): Promise<CompareOption
       .from("story_sources")
       .select("story_id, article_id")
       .in("story_id", storyIds)
+      .limit(120)
 
     const articleIds = [
       ...new Set((articleLinks || []).map((l) => l.article_id).filter(Boolean)),
@@ -171,6 +177,7 @@ export async function getRecentCompareOptions(limit = 12): Promise<CompareOption
       .select(`${COMPARE_ARTICLE_COLUMNS}, raw_json`)
       .in("id", articleIds)
       .order("published_at", { ascending: false })
+      .limit(80)
 
     const storyById = new Map(stories.map((s) => [s.id, s]))
     const storyOfArticle = new Map<string, string>()
