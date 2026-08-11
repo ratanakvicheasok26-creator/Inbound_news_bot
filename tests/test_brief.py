@@ -43,20 +43,13 @@ def test_brief_hours_parse_custom(reload_config):
     assert cfg.BRIEF_SCHEDULE_HOURS == (6, 18)
 
 
-def test_brief_text_english(reload_config):
-    cfg = reload_config(NEWS_LANGUAGE="en", BRIEF_TEXT="", BRIEF_TEXT_KM="")
-    text = cfg.brief_text("https://example.com/brief/2026-08-08")
-    assert "Today's Brief" in text
-    assert "https://example.com/brief/2026-08-08" in text
+def test_brief_button_label_english(reload_config):
+    cfg = reload_config(NEWS_LANGUAGE="en")
     assert cfg.brief_button_label() == "Open today's Brief →"
 
 
-def test_brief_text_khmer(reload_config):
-    cfg = reload_config(NEWS_LANGUAGE="km", BRIEF_TEXT="", BRIEF_TEXT_KM="")
-    text = cfg.brief_text("https://example.com/brief/2026-08-08")
-    assert "សេចក្តីសង្ខេបថ្ងៃនេះ" in text
-    assert "https://example.com/brief/2026-08-08" in text
-    assert "Today's Brief" not in text
+def test_brief_button_label_khmer(reload_config):
+    cfg = reload_config(NEWS_LANGUAGE="km")
     assert "បើក Brief" in cfg.brief_button_label()
 
 

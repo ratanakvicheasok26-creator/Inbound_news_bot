@@ -41,7 +41,6 @@ __all__ = [
     "DONATION_TEXT",
     "donation_text",
     "BRIEF_SCHEDULE_HOURS",
-    "brief_text",
     "brief_button_label",
     "DIGEST_HEADER_TEXT",
     "URGENT_CHECK_INTERVAL_SECONDS",
@@ -235,29 +234,6 @@ def _parse_brief_hours(raw: str) -> tuple[int, ...]:
 BRIEF_SCHEDULE_HOURS: tuple[int, ...] = _parse_brief_hours(
     os.environ.get("BRIEF_SCHEDULE_HOURS", "6,12,18,22")
 )
-_DEFAULT_BRIEF_TEXT = (
-    "<b>Today's Brief</b>\n\n"
-    "Must-know tech hits this channel as it breaks. "
-    "Below (and on the site) is a short keep-up skim — "
-    "full sources and Local Lens on Inbound Reports.\n\n"
-    '<a href="{brief_url}">Open today\'s Brief →</a>'
-)
-_DEFAULT_BRIEF_TEXT_KM = (
-    "<b>សេចក្តីសង្ខេបថ្ងៃនេះ (Brief)</b>\n\n"
-    "ព័ត៌មានសំខាន់ៗផ្ញើមកកាន់ឆានែលនេះភ្លាមៗ។ "
-    "ខាងក្រោម (និងនៅលើគេហទំព័រ) ជាការត្រួតពិនិត្យរហ័ស — "
-    "មានប្រភពពេញលេញ និង Local Lens នៅលើ Inbound Reports។\n\n"
-    '<a href="{brief_url}">បើក Brief ថ្ងៃនេះ →</a>'
-)
-
-
-def brief_text(brief_url: str) -> str:
-    """Daily Brief reminder caption — language follows NEWS_LANGUAGE."""
-    if NEWS_LANGUAGE == "km":
-        template = os.environ.get("BRIEF_TEXT_KM", "").strip() or _DEFAULT_BRIEF_TEXT_KM
-    else:
-        template = os.environ.get("BRIEF_TEXT", "").strip() or _DEFAULT_BRIEF_TEXT
-    return template.replace("{brief_url}", brief_url)
 
 
 def brief_button_label() -> str:

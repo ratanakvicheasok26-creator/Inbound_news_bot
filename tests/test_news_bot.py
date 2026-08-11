@@ -243,23 +243,24 @@ class TestBriefJob:
         context = MagicMock()
         with patch("news_bot.config.NEWS_LANGUAGE", "en"), patch(
             "news_bot.fetch_and_post", new_callable=AsyncMock, return_value=4
-        ) as mock_fetch, patch(
-            "news_bot._send_brief_cta", new_callable=AsyncMock
-        ) as mock_cta:
+        ) as mock_fetch:
             import asyncio
 
             asyncio.run(brief_job(context))
         mock_fetch.assert_awaited_once_with(context)
-        mock_cta.assert_not_awaited()
 
-    def test_en_falls_back_to_cta_when_empty(self):
+    def test_en_skips_when_empty(self):
         from news_bot import brief_job
 
         context = MagicMock()
         with patch("news_bot.config.NEWS_LANGUAGE", "en"), patch(
             "news_bot.fetch_and_post", new_callable=AsyncMock, return_value=0
-        ), patch("news_bot._send_brief_cta", new_callable=AsyncMock) as mock_cta:
+        ) as mock_fetch:
             import asyncio
 
             asyncio.run(brief_job(context))
-        mock_cta.assert_awaited_once_with(context)
+        mock_fetch.assert_awaited_once_with(context)
+        # Empty batch must not send a CTA message.
+        context.bot.send_message.assert_not_called()
+        assert not hasattr(__import__("news_bot"), "_send_brief_cta")
+

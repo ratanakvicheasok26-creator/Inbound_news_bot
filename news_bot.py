@@ -54,8 +54,6 @@ from newsbot.config import (
     TIMEZONE,
     URGENT_CHECK_INTERVAL_SECONDS,
     URGENT_FIRST_DELAY_SECONDS,
-    brief_button_label,
-    brief_text,
     donation_text,
     validate_config,
 )
@@ -141,52 +139,12 @@ async def donation_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         )
 
 
-async def _send_brief_cta(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Fallback habit ping when the batched Brief has nothing new to post."""
-    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-
-    from newsbot.bot import _resolve_channel_target
-    from newsbot.website_links import brief_url
-
-    chat_id, thread_id = _resolve_channel_target()
-    if chat_id is None:
-        logger.warning(
-            "TELEGRAM_CHANNEL_ID not set (NEWS_LANGUAGE=%s) — skipping brief CTA.",
-            config.NEWS_LANGUAGE,
-        )
-        return
-
-    url = brief_url()
-    text = brief_text(url)
-    markup = InlineKeyboardMarkup(
-        [[InlineKeyboardButton(brief_button_label(), url=url)]]
-    )
-    kwargs: dict = {
-        "chat_id": chat_id,
-        "text": text,
-        "parse_mode": "HTML",
-        "disable_web_page_preview": False,
-        "reply_markup": markup,
-    }
-    if thread_id is not None:
-        kwargs["message_thread_id"] = thread_id
-
-    await context.bot.send_message(**kwargs)
-    logger.info(
-        "Brief CTA fallback sent to chat %s topic %s (lang=%s url=%s)",
-        chat_id,
-        thread_id,
-        config.NEWS_LANGUAGE,
-        url,
-    )
-
-
 async def brief_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Multi-story Daily Brief at BRIEF_SCHEDULE_HOURS (Phnom Penh).
 
     English bot builds a batched digest (up to BATCH_MAX_STORIES) and mirrors
     it to Redis. Khmer bot is a no-op here — it receives the batch via
-    mirror_drain_job. If EN has nothing new, fall back to the Brief CTA.
+    mirror_drain_job. If there is nothing new, skip silently (no CTA card).
     """
     if config.NEWS_LANGUAGE == "km":
         logger.debug("Khmer brief_job no-op — waiting for mirrored EN batch.")
@@ -196,9 +154,8 @@ async def brief_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         n = await fetch_and_post(context)
         if n:
             logger.info("Brief batch posted %d stor(y/ies).", n)
-            return
-        logger.info("Brief batch empty — sending CTA fallback.")
-        await _send_brief_cta(context)
+        else:
+            logger.info("Brief batch empty — nothing to send.")
     except Exception:
         logger.exception("Brief job failed")
 

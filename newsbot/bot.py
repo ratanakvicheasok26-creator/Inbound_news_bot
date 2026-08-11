@@ -191,9 +191,10 @@ def _source_keyboard(post: StoryPost) -> InlineKeyboardMarkup:
 
 def _brief_keyboard() -> InlineKeyboardMarkup:
     """Primary habit CTA for batched digests."""
-    label = "Open today's Brief →"
+    from newsbot.config import brief_button_label
+
     return InlineKeyboardMarkup(
-        [[InlineKeyboardButton(label, url=brief_url())]]
+        [[InlineKeyboardButton(brief_button_label(), url=brief_url())]]
     )
 
 
