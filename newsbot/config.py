@@ -196,8 +196,8 @@ def donation_text() -> str:
 
 DONATION_TEXT: str = os.environ.get("DONATION_TEXT", "").strip() or _DEFAULT_DONATION_TEXT
 
-# Dedicated Daily Brief reminders (Asia/Phnom_Penh). Both EN and KM bots post
-# to their own channel — complements ranked digests with a catch-up CTA.
+# Dedicated Daily Brief slots (Asia/Phnom_Penh). English bot posts a multi-story
+# batched digest; Khmer receives the same batch via Redis mirror.
 def _parse_brief_hours(raw: str) -> tuple[int, ...]:
     parts = [p.strip() for p in (raw or "").split(",") if p.strip()]
     hours: list[int] = []
@@ -245,10 +245,21 @@ def brief_button_label() -> str:
     return "Open today's Brief →"
 
 
-_DEFAULT_DIGEST_HEADER = "📰 <b>Inbound Reports</b>"
-DIGEST_HEADER_TEXT: str = os.environ.get(
-    "DIGEST_HEADER_TEXT", _DEFAULT_DIGEST_HEADER
-).strip() or _DEFAULT_DIGEST_HEADER
+_DEFAULT_DIGEST_HEADER = "Inbound Reports"
+
+
+def _normalize_digest_header(raw: str) -> str:
+    """Plain brand name — strip legacy emoji/HTML so the message compiler can wrap once."""
+    text = (raw or "").strip()
+    if text.startswith("📰"):
+        text = text[1:].strip()
+    text = text.replace("<b>", "").replace("</b>", "").strip()
+    return text or _DEFAULT_DIGEST_HEADER
+
+
+DIGEST_HEADER_TEXT: str = _normalize_digest_header(
+    os.environ.get("DIGEST_HEADER_TEXT", _DEFAULT_DIGEST_HEADER)
+)
 
 # Public website base URL — Telegram CTAs link here instead of raw sources.
 WEBSITE_BASE_URL: str = (
@@ -275,7 +286,7 @@ BATCH_MAX_STORIES: int = 6
 BATCH_POLL_INTERVAL_MINUTES: int = 180
 URGENT_POST_IMMEDIATELY: bool = True
 # Brief-slot pulse: short important skim on Telegram; everything else stays on the website.
-PULSE_MAX_STORIES: int = int(os.environ.get("PULSE_MAX_STORIES", "4"))
+PULSE_MAX_STORIES: int = int(os.environ.get("PULSE_MAX_STORIES", "6"))
 # Multi-source clusters are Telegram-worthy even without urgent keywords.
 IMPORTANT_MIN_SOURCES: int = int(os.environ.get("IMPORTANT_MIN_SOURCES", "2"))
 

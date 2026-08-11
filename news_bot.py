@@ -2,16 +2,14 @@
 
 Fetches tech RSS headlines from multiple trusted sources, clusters related
 stories, rewrites them with AI into a fixed Telegram format, and posts
-regular digest stories on a fixed schedule, with urgent stories checked
+multi-story Daily Briefs on a fixed schedule, with urgent stories checked
 separately and posted anytime.
 
 Schedule:
-  - 5am–5pm digests: new stories trickle out individually throughout the day
-    (hourly check + 5am morning catch-up) to the English channel, mirrored to Khmer
-  - Daily Brief reminders: BRIEF_SCHEDULE_HOURS (default 6am, 12pm, 6pm, 10pm)
-    on both English and Khmer channels
+  - Daily Brief batches: BRIEF_SCHEDULE_HOURS (default 6am, 12pm, 6pm, 10pm)
+    on the English channel (up to 6 summaries); Khmer mirrors via Redis
   - Urgent keyword check: every URGENT_CHECK_INTERVAL_SECONDS, posts immediately
-  - Use /fetch for on-demand full digests (subject to cooldown)
+  - Use /fetch for on-demand individual digests (subject to cooldown)
 
 Setup:
   pip install -e .
@@ -37,15 +35,13 @@ from telegram.ext import Application, CommandHandler, ContextTypes, filters
 
 from newsbot import config
 from newsbot.bot import (
+    fetch_and_post,
     fetch_individual_and_post,
     fetch_urgent_and_post,
     mirror_drain_job,
 )
 from newsbot.config import (
     BRIEF_SCHEDULE_HOURS,
-    DIGEST_CHECK_INTERVAL_SECONDS,
-    DIGEST_SCHEDULE_HOUR_AM,
-    DIGEST_SCHEDULE_HOUR_PM,
     DONATION_QR_IMAGE,
     DONATION_SCHEDULE_DAYS,
     DONATION_SCHEDULE_HOUR,
@@ -80,30 +76,6 @@ _fetch_cooldown_lock = threading.Lock()
 async def urgent_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Urgent check — keyword matches not already posted. Runs every URGENT_CHECK_INTERVAL_SECONDS."""
     await fetch_urgent_and_post(context)
-
-
-async def digest_job(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Trickle digest — post new stories individually as they appear.
-
-    Runs during the 5am–5pm Phnom Penh window on the English bot. Each run
-    posts the latest unposted stories one message each; the Khmer bot
-    receives the same stories via the Redis mirror.
-    """
-    now = dt.datetime.now(TIMEZONE)
-    if not (DIGEST_SCHEDULE_HOUR_AM <= now.hour < DIGEST_SCHEDULE_HOUR_PM):
-        logger.debug(
-            "Digest window closed (now %s, window %02d:00–%02d:00) — skipping.",
-            now.strftime("%H:%M"),
-            DIGEST_SCHEDULE_HOUR_AM,
-            DIGEST_SCHEDULE_HOUR_PM,
-        )
-        return
-    try:
-        n = await fetch_individual_and_post(context)
-        if n:
-            logger.info("Digest posted %d individual stor(y/ies).", n)
-    except Exception:
-        logger.exception("Digest failed")
 
 
 async def donation_job(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -153,13 +125,8 @@ async def donation_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         )
 
 
-async def brief_job(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Daily Brief CTA at the BRIEF_SCHEDULE_HOURS (Phnom Penh).
-
-    English and Khmer are separate deployments — each posts the Brief card to
-    its own TELEGRAM_CHANNEL_ID in its own language. Simple and guaranteed:
-    no dependence on the pulse pipeline or the Redis mirror.
-    """
+async def _send_brief_cta(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Fallback habit ping when the batched Brief has nothing new to post."""
     from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
     from newsbot.bot import _resolve_channel_target
@@ -168,7 +135,7 @@ async def brief_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id, thread_id = _resolve_channel_target()
     if chat_id is None:
         logger.warning(
-            "TELEGRAM_CHANNEL_ID not set (NEWS_LANGUAGE=%s) — skipping brief.",
+            "TELEGRAM_CHANNEL_ID not set (NEWS_LANGUAGE=%s) — skipping brief CTA.",
             config.NEWS_LANGUAGE,
         )
         return
@@ -188,21 +155,36 @@ async def brief_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     if thread_id is not None:
         kwargs["message_thread_id"] = thread_id
 
+    await context.bot.send_message(**kwargs)
+    logger.info(
+        "Brief CTA fallback sent to chat %s topic %s (lang=%s url=%s)",
+        chat_id,
+        thread_id,
+        config.NEWS_LANGUAGE,
+        url,
+    )
+
+
+async def brief_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Multi-story Daily Brief at BRIEF_SCHEDULE_HOURS (Phnom Penh).
+
+    English bot builds a batched digest (up to BATCH_MAX_STORIES) and mirrors
+    it to Redis. Khmer bot is a no-op here — it receives the batch via
+    mirror_drain_job. If EN has nothing new, fall back to the Brief CTA.
+    """
+    if config.NEWS_LANGUAGE == "km":
+        logger.debug("Khmer brief_job no-op — waiting for mirrored EN batch.")
+        return
+
     try:
-        await context.bot.send_message(**kwargs)
-        logger.info(
-            "Brief sent to chat %s topic %s (lang=%s url=%s)",
-            chat_id,
-            thread_id,
-            config.NEWS_LANGUAGE,
-            url,
-        )
+        n = await fetch_and_post(context)
+        if n:
+            logger.info("Brief batch posted %d stor(y/ies).", n)
+            return
+        logger.info("Brief batch empty — sending CTA fallback.")
+        await _send_brief_cta(context)
     except Exception:
-        logger.exception(
-            "Failed to send brief to %s (lang=%s)",
-            chat_id,
-            config.NEWS_LANGUAGE,
-        )
+        logger.exception("Brief job failed")
 
 
 async def _reply(update: object, text: str) -> None:
@@ -357,11 +339,10 @@ def main() -> None:
     if app.job_queue is None:
         raise RuntimeError("job_queue must be available (install python-telegram-bot[job-queue])")
 
-    # Scheduled 5am/5pm digests post the top stories individually on the
-    # English bot. Urgent stories keep a separate repeating check on the
-    # English bot. Khmer mirror mode skips its own feed pipeline — it
-    # re-posts everything the English bot publishes, so both channels stay
-    # in sync.
+    # Urgent ASAP on English only. Khmer mirror mode skips its own feed
+    # pipeline — it re-posts everything the English bot publishes.
+    # Multi-story Briefs at BRIEF_SCHEDULE_HOURS (EN builds + mirrors; KM drains).
+    # Hourly individual trickle is disabled so stories accumulate for Brief batches.
     is_km = config.NEWS_LANGUAGE == "km"
     if is_km:
         if not mirror_available():
@@ -382,29 +363,15 @@ def main() -> None:
             first=URGENT_FIRST_DELAY_SECONDS,
             name="urgent_check",
         )
-    # 5am morning catch-up + hourly trickle during the 5am–5pm window.
-    # English bot only, each story posted individually. The Khmer bot
-    # mirrors these automatically.
-    if not is_km:
-        app.job_queue.run_daily(
-            digest_job,
-            time=dt.time(hour=DIGEST_SCHEDULE_HOUR_AM, minute=0, tzinfo=TIMEZONE),
-            name="digest_am",
-        )
-        app.job_queue.run_repeating(
-            digest_job,
-            interval=DIGEST_CHECK_INTERVAL_SECONDS,
-            first=DIGEST_CHECK_INTERVAL_SECONDS,
-            name="digest_trickle",
-        )
-    # Both EN and KM deployments schedule this — each posts to its own channel.
+    # Both EN and KM deployments schedule donation — each posts to its own channel.
     app.job_queue.run_daily(
         donation_job,
         time=dt.time(hour=DONATION_SCHEDULE_HOUR, minute=0, tzinfo=TIMEZONE),
         days=DONATION_SCHEDULE_DAYS,  # Saturday
         name="donation",
     )
-    # Daily Brief catch-up reminders — both channels, every day.
+    # Daily Brief slots — EN posts multi-story batches; KM job is a no-op
+    # (mirrored batch arrives via mirror_drain).
     for hour in BRIEF_SCHEDULE_HOURS:
         app.job_queue.run_daily(
             brief_job,
@@ -415,24 +382,20 @@ def main() -> None:
 
     if is_km:
         logger.info(
-            "Bot running in Khmer mirror mode. Brief reminders at %s (%s). "
-            "Donation Sat at %02d:00. News posts mirror the English channel automatically.",
+            "Bot running in Khmer mirror mode. Brief batches mirror EN at %s (%s). "
+            "Donation Sat at %02d:00.",
             brief_hours_label,
             TIMEZONE,
             DONATION_SCHEDULE_HOUR,
         )
     else:
         logger.info(
-            "Bot running. Digest trickle %02d:00–%02d:00 (%s, every %d min). "
-            "ASAP urgent checks every %ds. Brief+important pulse at %s (%s). "
-            "Donation Sat at %02d:00. /fetch for manual digest.",
-            DIGEST_SCHEDULE_HOUR_AM,
-            DIGEST_SCHEDULE_HOUR_PM,
-            TIMEZONE,
-            DIGEST_CHECK_INTERVAL_SECONDS // 60,
-            URGENT_CHECK_INTERVAL_SECONDS,
+            "Bot running. Multi-story Briefs at %s (%s). "
+            "ASAP urgent checks every %ds. Donation Sat at %02d:00. "
+            "/fetch for manual individual digest.",
             brief_hours_label,
             TIMEZONE,
+            URGENT_CHECK_INTERVAL_SECONDS,
             DONATION_SCHEDULE_HOUR,
         )
 
