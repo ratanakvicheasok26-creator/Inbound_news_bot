@@ -325,9 +325,90 @@ def _add_command(app: Application, name: str, handler: object) -> None:
     app.add_handler(CommandHandler(name, handler, filters=filters.UpdateType.CHANNEL_POSTS))  # type: ignore[arg-type]
 
 
+def deploy_commit_sha(environ: dict[str, str] | None = None) -> str:
+    """Best-effort git SHA from common deploy platform env vars."""
+    env = environ if environ is not None else os.environ
+    for key in ("RAILWAY_GIT_COMMIT_SHA", "SOURCE_COMMIT", "GITHUB_SHA"):
+        value = (env.get(key) or "").strip()
+        if value:
+            return value
+    return "unknown"
+
+
+def reject_legacy_brief_cta_env(environ: dict[str, str] | None = None) -> None:
+    """Refuse to start if deleted CTA env vars are still set (forces clean KM env)."""
+    env = environ if environ is not None else os.environ
+    leftover = [
+        key
+        for key in ("BRIEF_TEXT", "BRIEF_TEXT_KM")
+        if (env.get(key) or "").strip()
+    ]
+    if leftover:
+        logger.error(
+            "Refusing to start: legacy Brief CTA env still set (%s). "
+            "Unset these variables — CTA cards were removed; KM receives Briefs "
+            "only via EN mirror.",
+            ", ".join(leftover),
+        )
+        raise SystemExit(
+            f"Unset legacy Brief CTA env vars: {', '.join(leftover)}"
+        )
+
+
+def schedule_language_jobs(job_queue: object, *, news_language: str) -> list[str]:
+    """Register language-specific recurring/daily jobs. Returns job names registered.
+
+    EN: urgent ASAP, mirror outbox flush, and Daily Brief slots.
+    KM: mirror_drain only (Brief batches arrive via Redis — never schedule brief_job).
+    """
+    names: list[str] = []
+    is_km = news_language == "km"
+    if is_km:
+        if not mirror_available():
+            logger.warning(
+                "Khmer mirror mode requires REDIS_URL shared with the English bot — "
+                "no mirroring will happen until it is set."
+            )
+        job_queue.run_repeating(  # type: ignore[attr-defined]
+            mirror_drain_job,
+            interval=10,
+            name="mirror_drain",
+        )
+        names.append("mirror_drain")
+        logger.info("Khmer mirror mode active — posting from the English bot's queue.")
+    else:
+        job_queue.run_repeating(  # type: ignore[attr-defined]
+            urgent_job,
+            interval=URGENT_CHECK_INTERVAL_SECONDS,
+            first=URGENT_FIRST_DELAY_SECONDS,
+            name="urgent_check",
+        )
+        names.append("urgent_check")
+        # Recover local outbox after Redis blips (EN is the publisher).
+        job_queue.run_repeating(  # type: ignore[attr-defined]
+            mirror_outbox_flush_job,
+            interval=60,
+            first=30,
+            name="mirror_outbox_flush",
+        )
+        names.append("mirror_outbox_flush")
+        # Daily Brief slots — EN only. KM must never register brief_* jobs
+        # (old builds used those slots to post the Khmer CTA card).
+        for hour in BRIEF_SCHEDULE_HOURS:
+            name = f"brief_{hour:02d}"
+            job_queue.run_daily(  # type: ignore[attr-defined]
+                brief_job,
+                time=dt.time(hour=hour, minute=0, tzinfo=TIMEZONE),
+                name=name,
+            )
+            names.append(name)
+    return names
+
+
 def main() -> None:
     """Entry point — initialize all subsystems and start the bot."""
     validate_config()
+    reject_legacy_brief_cta_env()
 
     if not acquire_instance_lock():
         raise SystemExit("Another bot instance holds the lock — refusing to start.")
@@ -361,37 +442,11 @@ def main() -> None:
         name="instance_lock_heartbeat",
     )
 
-    # Urgent ASAP on English only. Khmer mirror mode skips its own feed
-    # pipeline — it re-posts everything the English bot publishes.
-    # Multi-story Briefs at BRIEF_SCHEDULE_HOURS (EN builds + mirrors; KM drains).
+    # Urgent ASAP + Brief on English only. Khmer mirror mode skips its own feed
+    # pipeline — it re-posts everything the English bot publishes via mirror_drain.
     # Hourly individual trickle is disabled so stories accumulate for Brief batches.
     is_km = config.NEWS_LANGUAGE == "km"
-    if is_km:
-        if not mirror_available():
-            logger.warning(
-                "Khmer mirror mode requires REDIS_URL shared with the English bot — "
-                "no mirroring will happen until it is set."
-            )
-        app.job_queue.run_repeating(
-            mirror_drain_job,
-            interval=10,
-            name="mirror_drain",
-        )
-        logger.info("Khmer mirror mode active — posting from the English bot's queue.")
-    else:
-        app.job_queue.run_repeating(
-            urgent_job,
-            interval=URGENT_CHECK_INTERVAL_SECONDS,
-            first=URGENT_FIRST_DELAY_SECONDS,
-            name="urgent_check",
-        )
-        # Recover local outbox after Redis blips (EN is the publisher).
-        app.job_queue.run_repeating(
-            mirror_outbox_flush_job,
-            interval=60,
-            first=30,
-            name="mirror_outbox_flush",
-        )
+    schedule_language_jobs(app.job_queue, news_language=config.NEWS_LANGUAGE)
     # Both EN and KM deployments schedule donation — each posts to its own channel.
     app.job_queue.run_daily(
         donation_job,
@@ -399,21 +454,15 @@ def main() -> None:
         days=DONATION_SCHEDULE_DAYS,  # Saturday
         name="donation",
     )
-    # Daily Brief slots — EN posts multi-story batches; KM job is a no-op
-    # (mirrored batch arrives via mirror_drain).
-    for hour in BRIEF_SCHEDULE_HOURS:
-        app.job_queue.run_daily(
-            brief_job,
-            time=dt.time(hour=hour, minute=0, tzinfo=TIMEZONE),
-            name=f"brief_{hour:02d}",
-        )
     brief_hours_label = ", ".join(f"{h:02d}:00" for h in BRIEF_SCHEDULE_HOURS)
     redis_configured = bool(os.environ.get("REDIS_URL", "").strip())
+    commit_sha = deploy_commit_sha()
     # Canary: proves this build has no Brief CTA fallback (removed on main).
     assert not hasattr(__import__("news_bot"), "_send_brief_cta")
     logger.info(
-        "brief_mode=multi_story_only NEWS_LANGUAGE=%s BRIEF_SCHEDULE_HOURS=%s "
-        "redis_configured=%s timezone=%s",
+        "brief_mode=multi_story_only deploy_sha=%s NEWS_LANGUAGE=%s "
+        "BRIEF_SCHEDULE_HOURS=%s redis_configured=%s timezone=%s",
+        commit_sha,
         config.NEWS_LANGUAGE,
         brief_hours_label,
         redis_configured,
@@ -422,8 +471,8 @@ def main() -> None:
 
     if is_km:
         logger.info(
-            "Bot running in Khmer mirror mode. Brief batches mirror EN at %s (%s). "
-            "Donation Sat at %02d:00.",
+            "Bot running in Khmer mirror mode. Brief batches mirror EN at %s (%s); "
+            "no local brief_job scheduled. Donation Sat at %02d:00.",
             brief_hours_label,
             TIMEZONE,
             DONATION_SCHEDULE_HOUR,

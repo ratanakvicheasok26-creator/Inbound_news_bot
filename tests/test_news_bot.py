@@ -2,6 +2,8 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 from news_bot import start_command, stop_command, fetch_command, _reply
 
 
@@ -282,4 +284,69 @@ class TestBriefJob:
         # Empty batch must not send a CTA message.
         context.bot.send_message.assert_not_called()
         assert not hasattr(__import__("news_bot"), "_send_brief_cta")
+
+
+class TestScheduleLanguageJobs:
+    def test_km_registers_mirror_drain_only(self):
+        from news_bot import schedule_language_jobs
+
+        job_queue = MagicMock()
+        with patch("news_bot.mirror_available", return_value=True):
+            names = schedule_language_jobs(job_queue, news_language="km")
+
+        assert names == ["mirror_drain"]
+        job_queue.run_repeating.assert_called_once()
+        assert job_queue.run_repeating.call_args.kwargs["name"] == "mirror_drain"
+        job_queue.run_daily.assert_not_called()
+        assert not any(n.startswith("brief_") for n in names)
+
+    def test_en_registers_brief_jobs(self):
+        from news_bot import BRIEF_SCHEDULE_HOURS, schedule_language_jobs
+
+        job_queue = MagicMock()
+        names = schedule_language_jobs(job_queue, news_language="en")
+
+        expected_briefs = [f"brief_{h:02d}" for h in BRIEF_SCHEDULE_HOURS]
+        assert "urgent_check" in names
+        assert "mirror_outbox_flush" in names
+        for brief_name in expected_briefs:
+            assert brief_name in names
+        daily_names = [
+            c.kwargs["name"] for c in job_queue.run_daily.call_args_list
+        ]
+        assert daily_names == expected_briefs
+
+
+class TestLegacyBriefCtaEnv:
+    def test_reject_brief_text_km(self):
+        from news_bot import reject_legacy_brief_cta_env
+
+        with pytest.raises(SystemExit, match="BRIEF_TEXT_KM"):
+            reject_legacy_brief_cta_env({"BRIEF_TEXT_KM": "old CTA"})
+
+    def test_reject_brief_text(self):
+        from news_bot import reject_legacy_brief_cta_env
+
+        with pytest.raises(SystemExit, match="BRIEF_TEXT"):
+            reject_legacy_brief_cta_env({"BRIEF_TEXT": "old CTA"})
+
+    def test_clean_env_ok(self):
+        from news_bot import reject_legacy_brief_cta_env
+
+        reject_legacy_brief_cta_env({})
+        reject_legacy_brief_cta_env({"BRIEF_TEXT_KM": "  "})
+
+    def test_deploy_commit_sha_prefers_railway(self):
+        from news_bot import deploy_commit_sha
+
+        assert (
+            deploy_commit_sha(
+                {
+                    "RAILWAY_GIT_COMMIT_SHA": "abc123",
+                    "GITHUB_SHA": "ignored",
+                }
+            )
+            == "abc123"
+        )
+        assert deploy_commit_sha({}) == "unknown"
 
