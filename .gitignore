@@ -8,6 +8,7 @@ posted_ids.json
 posted_titles.json
 posted_ids_titles.json
 bot.log
+data/mirror_outbox.jsonl
 .opencode/
 rsshub/
 .vercel

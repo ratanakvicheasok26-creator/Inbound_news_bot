@@ -18,6 +18,7 @@ from telegram.ext import ContextTypes
 
 from newsbot.ai import (
     KhmerTranslationFailed,
+    MirrorRewriteFailed,
     collect_links,
     pick_image_url,
     rewrite_compact,
@@ -50,10 +51,11 @@ from newsbot.mirror import (
     build_batch_payload,
     build_story_payload,
     drain,
+    flush_outbox,
     mirror_available,
     payload_to_entry,
     publish,
-    requeue,
+    settle,
 )
 from newsbot.state import get_state
 from newsbot.website_links import brief_url, publish_cluster_story, reader_url
@@ -67,11 +69,13 @@ __all__ = [
     "fetch_individual_and_post",
     "fetch_urgent_and_post",
     "mirror_drain_job",
+    "mirror_outbox_flush_job",
 ]
 
 logger = logging.getLogger(__name__)
 
 _pipeline_lock = asyncio.Lock()
+_mirror_drain_lock = asyncio.Lock()
 
 # Telegram enforces broadcast rate limits (~30 messages/second across chats,
 # ~1/second to a single chat). Space sends slightly and honor RetryAfter so a
@@ -386,13 +390,17 @@ def _cluster_to_story(
     except KhmerTranslationFailed:
         # Propagate so the mirror job can requeue instead of posting English.
         raise
-    except Exception:
+    except Exception as exc:
         title = cluster[0].title if cluster else "?"
         logger.exception("Failed to generate post for '%s'", title)
+        if NEWS_LANGUAGE == "km":
+            raise MirrorRewriteFailed(f"story rewrite failed: {title}") from exc
         return None
 
     links = collect_links(cluster, urgent=urgent)
     if not links:
+        if NEWS_LANGUAGE == "km":
+            raise MirrorRewriteFailed("story missing links after rewrite")
         return None
 
     primary_source = links[0][1]
@@ -436,13 +444,17 @@ def _cluster_to_batched(
             summary = rewrite_compact(cluster)
     except KhmerTranslationFailed:
         raise
-    except Exception:
+    except Exception as exc:
         title = cluster[0].title if cluster else "?"
         logger.exception("Failed to generate compact summary for '%s'", title)
+        if NEWS_LANGUAGE == "km":
+            raise MirrorRewriteFailed(f"batch rewrite failed: {title}") from exc
         return None
 
     links = collect_links(cluster)
     if not links:
+        if NEWS_LANGUAGE == "km":
+            raise MirrorRewriteFailed("batch story missing links after rewrite")
         return None
 
     website = website_url or _website_url_for_cluster(cluster, title=title, summary=summary)
@@ -810,38 +822,74 @@ async def fetch_urgent_and_post(context: ContextTypes.DEFAULT_TYPE) -> int:
 
 def _publish_mirror_stories(stories: list[StoryPost], succeeded: set[str]) -> None:
     """English bot: enqueue sent stories for the Khmer mirror bot."""
-    if NEWS_LANGUAGE != "en" or not mirror_available():
+    if NEWS_LANGUAGE != "en":
         return
     for s in stories:
-        if s.entry_ids & succeeded and s.entries:
-            publish(build_story_payload(s))
+        if not (s.entry_ids & succeeded and s.entries):
+            continue
+        if not publish(build_story_payload(s)):
+            logger.error(
+                "Mirror: EN post public but live enqueue failed for story ids=%s "
+                "(deadletter/outbox hold a copy)",
+                sorted(s.entry_ids),
+            )
 
 
 def _publish_mirror_batched(batched: list[BatchedStory]) -> None:
     """English bot: enqueue a sent batch digest for the Khmer mirror bot."""
-    if NEWS_LANGUAGE != "en" or not mirror_available():
+    if NEWS_LANGUAGE != "en":
         return
-    if batched and any(s.entries for s in batched):
-        publish(build_batch_payload(batched))
+    if not (batched and any(s.entries for s in batched)):
+        return
+    if not publish(build_batch_payload(batched)):
+        ids = sorted({eid for s in batched for eid in s.entry_ids})
+        logger.error(
+            "Mirror: EN batch public but live enqueue failed for story ids=%s "
+            "(deadletter/outbox hold a copy)",
+            ids,
+        )
+
+
+async def mirror_outbox_flush_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """EN: push local outbox payloads into Redis after transient outages."""
+    if NEWS_LANGUAGE != "en":
+        return
+    n = await asyncio.to_thread(flush_outbox)
+    if n:
+        logger.info("Mirror: outbox flush job recovered %d payload(s).", n)
 
 
 async def mirror_drain_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     """km mode: re-post whatever the English bot published, in Khmer."""
     if NEWS_LANGUAGE != "km" or not mirror_available():
         return
-    payloads = await asyncio.to_thread(drain)
-    for payload in payloads:
-        try:
-            if payload.get("kind") == "batch":
-                await _mirror_batch(context, payload)
-            else:
-                await _mirror_story(context, payload)
-        except KhmerTranslationFailed as exc:
-            logger.warning("Mirror: Khmer translation failed — %s", exc)
-            await asyncio.to_thread(requeue, payload)
-        except Exception:
-            logger.exception("Mirror: failed to process %s", payload.get("kind"))
-            await asyncio.to_thread(requeue, payload)
+    if _mirror_drain_lock.locked():
+        logger.info("Mirror: drain already running — skipping overlapping tick.")
+        return
+    async with _mirror_drain_lock:
+        items = await asyncio.to_thread(drain)
+        for item in items:
+            payload = item.payload
+            raw = item.raw
+            success = False
+            poison = False
+            try:
+                if payload.get("kind") == "batch":
+                    success, poison = await _mirror_batch(context, payload)
+                else:
+                    success, poison = await _mirror_story(context, payload)
+            except (KhmerTranslationFailed, MirrorRewriteFailed) as exc:
+                logger.warning("Mirror: rewrite failed — %s", exc)
+            except Exception:
+                logger.exception("Mirror: failed to process %s", payload.get("kind"))
+            settled = await asyncio.to_thread(
+                settle, payload, raw, success=success, poison=poison
+            )
+            if not settled and not success:
+                logger.error(
+                    "Mirror: settle failed for %s — item left in processing",
+                    payload.get("kind"),
+                )
 
 
 def _safe_link(url: object) -> str | None:
@@ -851,41 +899,98 @@ def _safe_link(url: object) -> str | None:
     return url.strip() if is_valid_image_url(url) else None
 
 
-async def _mirror_story(context: ContextTypes.DEFAULT_TYPE, payload: dict) -> None:
+def _mirror_already_posted(entry_ids: set[str]) -> bool:
+    """True when every id was already marked posted on this (KM) bot."""
+    ids = {i for i in entry_ids if i}
+    if not ids:
+        return False
+    posted = get_state().load_posted_ids()
+    return ids <= posted
+
+
+def _entry_ids_from_batch_payload(stories_in: list) -> set[str]:
+    ids: set[str] = set()
+    for item in stories_in:
+        if not isinstance(item, dict):
+            continue
+        for d in item.get("cluster", []) or []:
+            if not isinstance(d, dict):
+                continue
+            eid = str(d.get("id") or "")
+            if eid:
+                ids.add(eid)
+    return ids
+
+
+async def _mirror_story(
+    context: ContextTypes.DEFAULT_TYPE, payload: dict
+) -> tuple[bool, bool]:
+    """Returns ``(success, poison)``. Poison → deadletter; else failure → requeue."""
     cluster = [payload_to_entry(d) for d in payload.get("cluster", [])]
     if not cluster:
-        return
+        logger.warning("Mirror: empty story cluster — deadletter (poison)")
+        return False, True
+
+    entry_ids = {e.id for e in cluster if e.id}
+    if _mirror_already_posted(entry_ids):
+        logger.info("Mirror: story already posted on KM — treating as success (idempotent)")
+        return True, False
+
     story = _cluster_to_story(
         cluster,
         urgent=bool(payload.get("urgent")),
         website_url=_safe_link(payload.get("website_url")),
     )
     if not story:
-        return
+        logger.warning("Mirror: story rewrite returned None — will requeue")
+        return False, False
     succeeded = await broadcast_stories(context, [story])
     if succeeded:
         _mark_posted([story], succeeded)
         logger.info("Mirror: posted Khmer story (%d entries).", len(cluster))
-    else:
-        logger.warning("Mirror: Telegram send failed for story — requeueing")
-        await asyncio.to_thread(requeue, payload)
+        return True, False
+    logger.warning("Mirror: Telegram send failed for story — will requeue")
+    return False, False
 
 
-async def _mirror_batch(context: ContextTypes.DEFAULT_TYPE, payload: dict) -> None:
+async def _mirror_batch(
+    context: ContextTypes.DEFAULT_TYPE, payload: dict
+) -> tuple[bool, bool]:
+    """Returns ``(success, poison)``. Same contract as ``_mirror_story``."""
+    stories_in = payload.get("stories") or []
+    if not stories_in:
+        logger.warning("Mirror: empty batch payload — deadletter (poison)")
+        return False, True
+
+    all_ids = _entry_ids_from_batch_payload(stories_in)
+    if all_ids and _mirror_already_posted(all_ids):
+        logger.info("Mirror: batch already posted on KM — treating as success (idempotent)")
+        return True, False
+
     batched: list[BatchedStory] = []
-    for item in payload.get("stories", []):
+    for item in stories_in:
         cluster = [payload_to_entry(d) for d in item.get("cluster", [])]
         if not cluster:
-            continue
+            logger.warning("Mirror: batch story missing cluster — will requeue whole batch")
+            return False, False
         story = _cluster_to_batched(cluster, website_url=_safe_link(item.get("website_url")))
-        if story:
-            batched.append(story)
-    if not batched:
-        return
+        if not story:
+            logger.warning("Mirror: partial batch rewrite — will requeue whole batch")
+            return False, False
+        batched.append(story)
+
+    if len(batched) != len(stories_in):
+        logger.warning(
+            "Mirror: incomplete batch (%d/%d) — will requeue",
+            len(batched),
+            len(stories_in),
+        )
+        return False, False
+
     succeeded = await broadcast_batched(context, batched)
     if succeeded:
         _mark_posted_batched(batched, succeeded)
         logger.info("Mirror: posted Khmer batch digest (%d stories).", len(batched))
-    else:
-        logger.warning("Mirror: Telegram send failed for batch — requeueing")
-        await asyncio.to_thread(requeue, payload)
+        return True, False
+    logger.warning("Mirror: Telegram send failed for batch — will requeue")
+    return False, False

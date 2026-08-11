@@ -40,6 +40,7 @@ from newsbot.bot import (
     fetch_individual_and_post,
     fetch_urgent_and_post,
     mirror_drain_job,
+    mirror_outbox_flush_job,
 )
 from newsbot.config import (
     BRIEF_SCHEDULE_HOURS,
@@ -374,6 +375,13 @@ def main() -> None:
             interval=URGENT_CHECK_INTERVAL_SECONDS,
             first=URGENT_FIRST_DELAY_SECONDS,
             name="urgent_check",
+        )
+        # Recover local outbox after Redis blips (EN is the publisher).
+        app.job_queue.run_repeating(
+            mirror_outbox_flush_job,
+            interval=60,
+            first=30,
+            name="mirror_outbox_flush",
         )
     # Both EN and KM deployments schedule donation — each posts to its own channel.
     app.job_queue.run_daily(

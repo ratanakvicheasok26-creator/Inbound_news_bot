@@ -52,6 +52,10 @@ class KhmerTranslationFailed(Exception):
     """Raised when km mode cannot produce Khmer body text (avoid posting English)."""
 
 
+class MirrorRewriteFailed(Exception):
+    """Raised when a KM mirror rewrite fails in a requeueable way (not silent drop)."""
+
+
 def _contains_khmer(text: str) -> bool:
     return bool(text and _KHMER_RE.search(text))
 
