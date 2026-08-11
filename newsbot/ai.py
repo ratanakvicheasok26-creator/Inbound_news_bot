@@ -79,25 +79,34 @@ def _html_escape(text: str) -> str:
 
 def _parse_ai_json(raw: str) -> dict:
     try:
-        return json.loads(raw)
+        parsed = json.loads(raw)
+        if isinstance(parsed, dict):
+            return parsed
     except json.JSONDecodeError:
         pass
 
     match = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", raw, re.DOTALL)
     if match:
         try:
-            return json.loads(match.group(1))
+            parsed = json.loads(match.group(1))
+            if isinstance(parsed, dict):
+                return parsed
         except json.JSONDecodeError:
             pass
 
     match = re.search(r"\{.*?\}", raw, re.DOTALL)
     if match:
         try:
-            return json.loads(match.group(0))
+            parsed = json.loads(match.group(0))
+            if isinstance(parsed, dict):
+                return parsed
         except json.JSONDecodeError:
             pass
 
-    raise ValueError("Could not parse AI output as JSON")
+    # Covers valid-but-wrong JSON too (e.g. the literal "null" or a bare
+    # list/number) — those parse fine but aren't the object we need, so
+    # callers must fall back the same way they do for malformed JSON.
+    raise ValueError("Could not parse AI output as JSON object")
 
 
 def _validate_ai_data(data: dict) -> tuple[bool, str | None]:
