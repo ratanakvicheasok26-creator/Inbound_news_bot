@@ -715,42 +715,64 @@ async def _run_pipeline(
 
 
 async def _run_batched_pipeline(context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Multi-story Daily Brief path.
+
+    Selection uses ``briefed_ids`` (not ``posted_ids``) so ASAP urgents that
+    already hit the channel can still appear once in the next Brief digest.
+    """
     async with _pipeline_lock:
         state = get_state()
+        briefed_ids = state.load_briefed_ids()
         posted_ids = state.load_posted_ids()
-        posted_titles = state.load_posted_titles()
-        entries = collect_new_entries(posted_ids, posted_titles)
+        # Do not pass posted_titles — ASAP-posted stories must stay Brief-eligible.
+        entries = collect_new_entries(briefed_ids, set())
         if not entries:
-            logger.info("No new entries for batched digest.")
+            logger.info(
+                "Brief: no eligible entries (briefed=%d posted=%d).",
+                len(briefed_ids),
+                len(posted_ids),
+            )
             return 0
+
+        already_posted = sum(1 for e in entries if e.id in posted_ids)
+        logger.info(
+            "Brief: feed_eligible=%d already_posted_asap=%d briefed_skip_set=%d",
+            len(entries),
+            already_posted,
+            len(briefed_ids),
+        )
 
         all_clusters = _rank_clusters(cluster_entries(entries))
         if not all_clusters:
+            logger.info("Brief: clustering produced no clusters.")
             return 0
 
         # 1 story → individual path (full rewrite + keyboard)
         if len(all_clusters) == 1:
+            cluster = all_clusters[0]
             try:
-                stories = await asyncio.wait_for(
-                    asyncio.to_thread(_prepare_entries, urgent=False),
+                story = await asyncio.wait_for(
+                    asyncio.to_thread(_cluster_to_story, cluster, urgent=False),
                     timeout=PREPARE_ENTRIES_TIMEOUT_SECONDS,
                 )
             except asyncio.TimeoutError:
                 logger.error(
-                    "_prepare_entries timed out after %.0fs (batched single-story)",
+                    "_cluster_to_story timed out after %.0fs (batched single-story)",
                     PREPARE_ENTRIES_TIMEOUT_SECONDS,
                 )
                 return 0
-            if not stories:
+            if not story:
+                logger.warning("Brief: single cluster rewrite failed — nothing to send.")
                 return 0
-            succeeded = await broadcast_stories(context, stories)
+            succeeded = await broadcast_stories(context, [story])
             if succeeded:
-                _mark_posted(stories, succeeded)
-                _publish_mirror_stories(stories, succeeded)
+                _mark_posted([story], succeeded)
+                _mark_briefed([story], succeeded)
+                _publish_mirror_stories([story], succeeded)
+                logger.info("Brief: sent single-story digest (1).")
                 return 1
             return 0
 
-        # 2-4 stories → batch path
         clusters = all_clusters[:BATCH_MAX_STORIES]
 
         def _prepare_batched() -> list[BatchedStory]:
@@ -780,9 +802,14 @@ async def _run_batched_pipeline(context: ContextTypes.DEFAULT_TYPE) -> int:
         succeeded = await broadcast_batched(context, batched)
         if succeeded:
             _mark_posted_batched(batched, succeeded)
+            _mark_briefed_batched(batched, succeeded)
             _publish_mirror_batched(batched)
             count = len(batched)
-            logger.info("Sent batched digest with %d stor(y/ies).", count)
+            logger.info(
+                "Brief: sent batched digest with %d stor(y/ies) (clusters_considered=%d).",
+                count,
+                len(clusters),
+            )
             return count
 
         return 0
@@ -796,6 +823,18 @@ def _mark_posted_batched(batched: list[BatchedStory], succeeded: set[str]) -> No
         if s.entry_ids & succeeded:
             titles.update(normalize_title_key(t) for t in s.entry_titles)
     state.add_posted_titles(titles)
+
+
+def _mark_briefed(stories: list[StoryPost], succeeded: set[str]) -> None:
+    ids = {eid for s in stories for eid in s.entry_ids if eid in succeeded}
+    if ids:
+        get_state().add_briefed_ids(ids)
+
+
+def _mark_briefed_batched(batched: list[BatchedStory], succeeded: set[str]) -> None:
+    ids = {eid for s in batched for eid in s.entry_ids if eid in succeeded}
+    if ids:
+        get_state().add_briefed_ids(ids)
 
 
 async def fetch_and_post(context: ContextTypes.DEFAULT_TYPE) -> int:

@@ -399,6 +399,17 @@ def main() -> None:
             name=f"brief_{hour:02d}",
         )
     brief_hours_label = ", ".join(f"{h:02d}:00" for h in BRIEF_SCHEDULE_HOURS)
+    redis_configured = bool(os.environ.get("REDIS_URL", "").strip())
+    # Canary: proves this build has no Brief CTA fallback (removed on main).
+    assert not hasattr(__import__("news_bot"), "_send_brief_cta")
+    logger.info(
+        "brief_mode=multi_story_only NEWS_LANGUAGE=%s BRIEF_SCHEDULE_HOURS=%s "
+        "redis_configured=%s timezone=%s",
+        config.NEWS_LANGUAGE,
+        brief_hours_label,
+        redis_configured,
+        TIMEZONE,
+    )
 
     if is_km:
         logger.info(

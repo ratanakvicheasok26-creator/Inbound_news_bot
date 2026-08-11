@@ -7,6 +7,8 @@ subscribers.json
 posted_ids.json
 posted_titles.json
 posted_ids_titles.json
+briefed_ids.json
+briefed_ids_km.json
 bot.log
 data/mirror_outbox.jsonl
 .opencode/

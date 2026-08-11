@@ -21,6 +21,9 @@ class TestFileState:
         titles_path = self._posted_path.replace(".json", "_titles.json")
         if os.path.exists(titles_path):
             os.remove(titles_path)
+        briefed_path = self._posted_path.replace("posted_ids", "briefed_ids")
+        if os.path.exists(briefed_path):
+            os.remove(briefed_path)
         group_threads_path = self._sub_path.replace("subscribers", "group_threads")
         if os.path.exists(group_threads_path):
             os.remove(group_threads_path)
@@ -126,6 +129,15 @@ class TestFileState:
         self.state.add_posted_titles({"b", "c"})
         assert self.state.load_posted_titles() == {"a", "b", "c"}
 
+    def test_briefed_ids_roundtrip(self):
+        assert self.state.load_briefed_ids() == set()
+        self.state.add_briefed_ids({"b1", "b2"})
+        assert self.state.load_briefed_ids() == {"b1", "b2"}
+        self.state.add_briefed_ids({"b2", "b3"})
+        assert self.state.load_briefed_ids() == {"b1", "b2", "b3"}
+        self.state.save_briefed_ids({"only"})
+        assert self.state.load_briefed_ids() == {"only"}
+
 
 class TestFileStateThreadSafety:
     def setup_method(self):
@@ -141,6 +153,9 @@ class TestFileStateThreadSafety:
         titles_path = self._posted_path.replace(".json", "_titles.json")
         if os.path.exists(titles_path):
             os.remove(titles_path)
+        briefed_path = self._posted_path.replace("posted_ids", "briefed_ids")
+        if os.path.exists(briefed_path):
+            os.remove(briefed_path)
         os.rmdir(self._tmp)
         reset_state()
 

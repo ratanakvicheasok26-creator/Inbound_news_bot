@@ -37,6 +37,7 @@ _SUBSCRIBERS_KEY = f"newsbot:{_LANG_PREFIX}subscribers"
 _GROUP_THREADS_KEY = f"newsbot:{_LANG_PREFIX}group_threads"
 _POSTED_ID_PREFIX = f"newsbot:{_LANG_PREFIX}posted:"
 _POSTED_TITLE_PREFIX = f"newsbot:{_LANG_PREFIX}posted_title:"
+_BRIEFED_ID_PREFIX = f"newsbot:{_LANG_PREFIX}briefed:"
 
 
 class StateBackend(ABC):
@@ -71,6 +72,15 @@ class StateBackend(ABC):
 
     @abstractmethod
     def add_posted_titles(self, titles: set[str]) -> None: ...
+
+    @abstractmethod
+    def load_briefed_ids(self) -> set[str]: ...
+
+    @abstractmethod
+    def save_briefed_ids(self, ids: set[str]) -> None: ...
+
+    @abstractmethod
+    def add_briefed_ids(self, ids: set[str]) -> None: ...
 
 
 class RedisState(StateBackend):
@@ -171,6 +181,15 @@ class RedisState(StateBackend):
 
     def add_posted_titles(self, titles: set[str]) -> None:
         self._add_redis_set(_POSTED_TITLE_PREFIX, titles)
+
+    def load_briefed_ids(self) -> set[str]:
+        return self._load_redis_set(_BRIEFED_ID_PREFIX)
+
+    def save_briefed_ids(self, ids: set[str]) -> None:
+        self._save_redis_set(_BRIEFED_ID_PREFIX, ids)
+
+    def add_briefed_ids(self, ids: set[str]) -> None:
+        self._add_redis_set(_BRIEFED_ID_PREFIX, ids)
 
 
 class FileState(StateBackend):
@@ -276,6 +295,23 @@ class FileState(StateBackend):
             if len(existing) > self._posted_title_cap:
                 existing = set(list(existing)[-self._posted_title_cap :])
             self.save_posted_titles(existing)
+
+    def _briefed_ids_path(self) -> str:
+        return self._posted_path.replace("posted_ids", "briefed_ids")
+
+    def load_briefed_ids(self) -> set[str]:
+        return self._load_json_set(self._briefed_ids_path())
+
+    def save_briefed_ids(self, ids: set[str]) -> None:
+        self._save_json_set(self._briefed_ids_path(), ids)
+
+    def add_briefed_ids(self, ids: set[str]) -> None:
+        with self._lock:
+            existing = self.load_briefed_ids()
+            existing.update(ids)
+            if len(existing) > self._posted_id_cap:
+                existing = set(list(existing)[-self._posted_id_cap :])
+            self.save_briefed_ids(existing)
 
 
 _state: StateBackend | None = None
