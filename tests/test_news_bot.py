@@ -2,8 +2,6 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
 from news_bot import start_command, stop_command, fetch_command, _reply
 
 
@@ -318,23 +316,13 @@ class TestScheduleLanguageJobs:
 
 
 class TestLegacyBriefCtaEnv:
-    def test_reject_brief_text_km(self):
-        from news_bot import reject_legacy_brief_cta_env
+    def test_leftover_brief_text_is_ignored_not_fatal(self):
+        from newsbot.brief_cta import warn_legacy_brief_cta_env
 
-        with pytest.raises(SystemExit, match="BRIEF_TEXT_KM"):
-            reject_legacy_brief_cta_env({"BRIEF_TEXT_KM": "old CTA"})
-
-    def test_reject_brief_text(self):
-        from news_bot import reject_legacy_brief_cta_env
-
-        with pytest.raises(SystemExit, match="BRIEF_TEXT"):
-            reject_legacy_brief_cta_env({"BRIEF_TEXT": "old CTA"})
-
-    def test_clean_env_ok(self):
-        from news_bot import reject_legacy_brief_cta_env
-
-        reject_legacy_brief_cta_env({})
-        reject_legacy_brief_cta_env({"BRIEF_TEXT_KM": "  "})
+        assert warn_legacy_brief_cta_env({"BRIEF_TEXT_KM": "old CTA"}) == ["BRIEF_TEXT_KM"]
+        assert warn_legacy_brief_cta_env({"BRIEF_TEXT": "old CTA"}) == ["BRIEF_TEXT"]
+        assert warn_legacy_brief_cta_env({}) == []
+        assert warn_legacy_brief_cta_env({"BRIEF_TEXT_KM": "  "}) == []
 
     def test_deploy_commit_sha_prefers_railway(self):
         from news_bot import deploy_commit_sha

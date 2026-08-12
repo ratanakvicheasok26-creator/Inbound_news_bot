@@ -247,11 +247,15 @@ _DEFAULT_DIGEST_HEADER = "Inbound Reports"
 
 def _normalize_digest_header(raw: str) -> str:
     """Plain brand name — strip legacy emoji/HTML so the message compiler can wrap once."""
+    from newsbot.brief_cta import is_legacy_cta_header
+
     text = (raw or "").strip()
     if text.startswith("📰"):
         text = text[1:].strip()
     text = text.replace("<b>", "").replace("</b>", "").strip()
-    return text or _DEFAULT_DIGEST_HEADER
+    if not text or is_legacy_cta_header(text):
+        return _DEFAULT_DIGEST_HEADER
+    return text
 
 
 DIGEST_HEADER_TEXT: str = _normalize_digest_header(

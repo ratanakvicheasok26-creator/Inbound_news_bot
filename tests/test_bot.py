@@ -237,6 +237,29 @@ class TestTgSend:
             asyncio.run(_tg_send(blocked))
         assert calls["n"] == 1
 
+    def test_blocks_legacy_empty_slot_cta(self, monkeypatch):
+        from newsbot.bot import _tg_send
+        from newsbot.brief_cta import LegacyBriefCtaBlocked
+
+        monkeypatch.setattr("newsbot.bot._SEND_THROTTLE_SECONDS", 0.0)
+        calls = {"n": 0}
+
+        async def sender(**kwargs):
+            calls["n"] += 1
+            return "sent"
+
+        with pytest.raises(LegacyBriefCtaBlocked):
+            asyncio.run(
+                _tg_send(
+                    sender,
+                    text=(
+                        "<b>សេចក្តីសង្ខេបថ្ងៃនេះ (Brief)</b>\n\n"
+                        "ព័ត៌មានសំខាន់ៗផ្ញើមកកាន់ឆានែលនេះភ្លាមៗ។"
+                    ),
+                )
+            )
+        assert calls["n"] == 0
+
 
 class TestSafeLink:
     def test_accepts_public_https(self):

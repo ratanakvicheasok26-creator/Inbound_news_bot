@@ -36,12 +36,14 @@ from telegram.ext import Application, CommandHandler, ContextTypes, filters
 
 from newsbot import config
 from newsbot.bot import (
+    _tg_send,
     fetch_and_post,
     fetch_individual_and_post,
     fetch_urgent_and_post,
     mirror_drain_job,
     mirror_outbox_flush_job,
 )
+from newsbot.brief_cta import raise_if_legacy_brief_cta, warn_legacy_brief_cta_env
 from newsbot.config import (
     BRIEF_SCHEDULE_HOURS,
     DONATION_QR_IMAGE,
@@ -110,6 +112,7 @@ async def donation_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     text = donation_text()
+    raise_if_legacy_brief_cta(text, field="donation")
     qr_path = DONATION_QR_IMAGE
     kwargs: dict = {"chat_id": chat_id, "parse_mode": "HTML"}
     if thread_id is not None:
@@ -118,10 +121,11 @@ async def donation_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         if os.path.isfile(qr_path):
             with open(qr_path, "rb") as f:
-                await context.bot.send_photo(photo=f, caption=text, **kwargs)
+                await _tg_send(context.bot.send_photo, photo=f, caption=text, **kwargs)
         else:
             logger.warning("Donation QR image not found at %s — sending text-only.", qr_path)
-            await context.bot.send_message(
+            await _tg_send(
+                context.bot.send_message,
                 text=text,
                 disable_web_page_preview=True,
                 **kwargs,
@@ -335,26 +339,6 @@ def deploy_commit_sha(environ: dict[str, str] | None = None) -> str:
     return "unknown"
 
 
-def reject_legacy_brief_cta_env(environ: dict[str, str] | None = None) -> None:
-    """Refuse to start if deleted CTA env vars are still set (forces clean KM env)."""
-    env = environ if environ is not None else os.environ
-    leftover = [
-        key
-        for key in ("BRIEF_TEXT", "BRIEF_TEXT_KM")
-        if (env.get(key) or "").strip()
-    ]
-    if leftover:
-        logger.error(
-            "Refusing to start: legacy Brief CTA env still set (%s). "
-            "Unset these variables — CTA cards were removed; KM receives Briefs "
-            "only via EN mirror.",
-            ", ".join(leftover),
-        )
-        raise SystemExit(
-            f"Unset legacy Brief CTA env vars: {', '.join(leftover)}"
-        )
-
-
 def schedule_language_jobs(job_queue: object, *, news_language: str) -> list[str]:
     """Register language-specific recurring/daily jobs. Returns job names registered.
 
@@ -408,7 +392,7 @@ def schedule_language_jobs(job_queue: object, *, news_language: str) -> list[str
 def main() -> None:
     """Entry point — initialize all subsystems and start the bot."""
     validate_config()
-    reject_legacy_brief_cta_env()
+    warn_legacy_brief_cta_env()
 
     if not acquire_instance_lock():
         raise SystemExit("Another bot instance holds the lock — refusing to start.")

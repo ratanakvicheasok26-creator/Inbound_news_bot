@@ -27,6 +27,7 @@ from newsbot.ai import (
     trim_for_caption,
 )
 from newsbot import config
+from newsbot.brief_cta import raise_if_legacy_brief_cta
 from newsbot.config import (
     BATCH_MAX_STORIES,
     BATCH_STORIES,
@@ -91,8 +92,10 @@ async def _tg_send(method: Callable[..., Awaitable[Any]], **kwargs: Any) -> Any:
     ``Forbidden`` and ``BadRequest`` propagate to the caller (blocked chat /
     bad photo handling); only rate limits and transient network errors are
     retried here, with a short post-send throttle to stay under Telegram's
-    per-second broadcast ceiling.
+    per-second broadcast ceiling. The deleted empty-slot Brief CTA is refused.
     """
+    raise_if_legacy_brief_cta(kwargs.get("text"), field="text")
+    raise_if_legacy_brief_cta(kwargs.get("caption"), field="caption")
     for attempt in range(_SEND_MAX_RETRIES + 1):
         try:
             result = await method(**kwargs)

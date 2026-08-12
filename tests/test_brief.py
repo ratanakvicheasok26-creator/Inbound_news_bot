@@ -64,6 +64,13 @@ def test_digest_header_strips_legacy_emoji_html(reload_config):
     assert cfg.DIGEST_HEADER_TEXT == "Inbound Reports"
 
 
+def test_digest_header_rejects_legacy_cta_title(reload_config):
+    cfg = reload_config(DIGEST_HEADER_TEXT="សេចក្តីសង្ខេបថ្ងៃនេះ (Brief)")
+    assert cfg.DIGEST_HEADER_TEXT == "Inbound Reports"
+    cfg = reload_config(DIGEST_HEADER_TEXT="Today's Brief")
+    assert cfg.DIGEST_HEADER_TEXT == "Inbound Reports"
+
+
 def test_compile_batch_message_format(monkeypatch):
     import newsbot.bot as bot_mod
 
@@ -92,6 +99,9 @@ def test_compile_batch_message_format(monkeypatch):
     assert "Story Two" in msg
     assert "Open today's Brief on Inbound Reports" in msg
     assert "/brief/" in msg
+    from newsbot.brief_cta import is_legacy_brief_cta
+
+    assert not is_legacy_brief_cta(msg)
 
 
 def test_batched_brief_uses_briefed_not_posted():
@@ -170,3 +180,38 @@ def test_batched_brief_skips_already_briefed():
 
     assert n == 0
     mock_collect.assert_called_once_with({"a", "b", "c"}, set())
+
+
+_KM_EMPTY_SLOT_CTA = (
+    "<b>សេចក្តីសង្ខេបថ្ងៃនេះ (Brief)</b>\n\n"
+    "ព័ត៌មានសំខាន់ៗផ្ញើមកកាន់ឆានែលនេះភ្លាមៗ។ "
+    "ខាងក្រោម (និងនៅលើគេហទំព័រ) ជាការត្រួតពិនិត្យរហ័ស — "
+    "មានប្រភពពេញលេញ និង Local Lens នៅលើ Inbound Reports។\n\n"
+    '<a href="https://inbound-news-web.vercel.app/brief/2026-08-11">បើក Brief ថ្ងៃនេះ →</a>'
+)
+
+_EN_EMPTY_SLOT_CTA = (
+    "<b>Today's Brief</b>\n\n"
+    "Must-know tech hits this channel as it breaks. "
+    "Below (and on the site) is a short keep-up skim — "
+    "full sources and Local Lens on Inbound Reports.\n\n"
+    '<a href="https://inbound-news-web.vercel.app/brief/2026-08-11">Open today\'s Brief →</a>'
+)
+
+
+def test_legacy_cta_detector_matches_empty_slot_card_only():
+    from newsbot.brief_cta import is_legacy_brief_cta
+
+    assert is_legacy_brief_cta(_KM_EMPTY_SLOT_CTA)
+    assert is_legacy_brief_cta(_EN_EMPTY_SLOT_CTA)
+    assert not is_legacy_brief_cta("Inbound Reports · Aug 12")
+    assert not is_legacy_brief_cta("បើក Brief ថ្ងៃនេះ →")  # button label alone is fine
+
+
+def test_raise_if_legacy_brief_cta():
+    from newsbot.brief_cta import LegacyBriefCtaBlocked, raise_if_legacy_brief_cta
+
+    raise_if_legacy_brief_cta(None)
+    raise_if_legacy_brief_cta("normal digest")
+    with pytest.raises(LegacyBriefCtaBlocked):
+        raise_if_legacy_brief_cta(_KM_EMPTY_SLOT_CTA)
