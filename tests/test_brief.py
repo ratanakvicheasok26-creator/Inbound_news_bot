@@ -148,6 +148,7 @@ def test_batched_brief_uses_briefed_not_posted():
     ]
 
     with patch("newsbot.bot.get_state", return_value=state), \
+         patch("newsbot.bot.load_site_brief_stories", return_value=[]), \
          patch("newsbot.bot.collect_new_entries", return_value=[e1, e2]) as mock_collect, \
          patch("newsbot.bot.cluster_entries", return_value=[[e1], [e2]]), \
          patch("newsbot.bot._rank_clusters", side_effect=lambda c: c), \
@@ -175,11 +176,104 @@ def test_batched_brief_skips_already_briefed():
     state.load_posted_ids.return_value = {"a", "b", "c"}
 
     with patch("newsbot.bot.get_state", return_value=state), \
+         patch("newsbot.bot.load_site_brief_stories", return_value=[]), \
          patch("newsbot.bot.collect_new_entries", return_value=[]) as mock_collect:
         n = asyncio.run(_run_batched_pipeline(MagicMock()))
 
     assert n == 0
     mock_collect.assert_called_once_with({"a", "b", "c"}, set())
+
+
+def test_batched_brief_prefers_supabase_skips_rss():
+    import asyncio
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    from newsbot.bot import _run_batched_pipeline
+    from newsbot.brief_inventory import SiteBriefStory
+    from newsbot.feeds import Entry
+    from newsbot.mirror import build_batch_payload
+
+    e1 = Entry(id="a1", title="Alpha", summary="A", link="https://a.example", source_name="SrcA")
+    e2 = Entry(id="a2", title="Beta", summary="B", link="https://b.example", source_name="SrcB")
+    site = [
+        SiteBriefStory(story_id="s1", title="Alpha", summary="A", entries=[e1]),
+        SiteBriefStory(story_id="s2", title="Beta", summary="B", entries=[e2]),
+    ]
+    state = MagicMock()
+    state.load_briefed_ids.return_value = set()
+    state.load_posted_ids.return_value = set()
+
+    with patch("newsbot.bot.get_state", return_value=state), \
+         patch("newsbot.bot.load_site_brief_stories", return_value=site) as mock_site, \
+         patch("newsbot.bot.collect_new_entries") as mock_collect, \
+         patch("newsbot.bot.broadcast_batched", new=AsyncMock(return_value={"story:s1", "a1", "story:s2", "a2"})) as mock_broadcast, \
+         patch("newsbot.bot._publish_mirror_batched") as mock_mirror:
+        n = asyncio.run(_run_batched_pipeline(MagicMock()))
+
+    assert n == 2
+    mock_site.assert_called_once()
+    mock_collect.assert_not_called()
+    mock_broadcast.assert_awaited_once()
+    batched = mock_broadcast.await_args.args[1]
+    payload = build_batch_payload(batched)
+    assert payload["stories"][0]["cluster"]
+    assert payload["stories"][1]["cluster"]
+    mock_mirror.assert_called_once()
+    briefed = state.add_briefed_ids.call_args[0][0]
+    assert "story:s1" in briefed
+    assert "story:s2" in briefed
+
+
+def test_batched_brief_rss_fallback_when_supabase_empty():
+    import asyncio
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    from newsbot.bot import BatchedStory, _run_batched_pipeline
+    from newsbot.feeds import Entry
+
+    e1 = Entry(id="r1", title="Rss One Story", summary="s", link="http://r/1", source_name="R")
+    e2 = Entry(id="r2", title="Rss Two Story", summary="s", link="http://r/2", source_name="R")
+    state = MagicMock()
+    state.load_briefed_ids.return_value = set()
+    state.load_posted_ids.return_value = set()
+    rss_batched = [
+        BatchedStory(title="Rss One", summary="s", source_line="R", website_url="http://u/1",
+                     entries=[e1], entry_ids={"r1"}, entry_titles={"Rss One Story"}),
+        BatchedStory(title="Rss Two", summary="s", source_line="R", website_url="http://u/2",
+                     entries=[e2], entry_ids={"r2"}, entry_titles={"Rss Two Story"}),
+    ]
+
+    with patch("newsbot.bot.get_state", return_value=state), \
+         patch("newsbot.bot.load_site_brief_stories", return_value=[]), \
+         patch("newsbot.bot.collect_new_entries", return_value=[e1, e2]) as mock_collect, \
+         patch("newsbot.bot.cluster_entries", return_value=[[e1], [e2]]), \
+         patch("newsbot.bot._rank_clusters", side_effect=lambda c: c), \
+         patch("newsbot.bot._cluster_to_batched", side_effect=rss_batched), \
+         patch("newsbot.bot.broadcast_batched", new=AsyncMock(return_value={"r1", "r2"})), \
+         patch("newsbot.bot._publish_mirror_batched"):
+        n = asyncio.run(_run_batched_pipeline(MagicMock()))
+
+    assert n == 2
+    mock_collect.assert_called_once_with(set(), set())
+
+
+def test_batched_brief_rss_fallback_when_supabase_errors():
+    import asyncio
+    from unittest.mock import MagicMock, patch
+
+    from newsbot.bot import _run_batched_pipeline
+
+    state = MagicMock()
+    state.load_briefed_ids.return_value = set()
+    state.load_posted_ids.return_value = set()
+
+    with patch("newsbot.bot.get_state", return_value=state), \
+         patch("newsbot.bot.load_site_brief_stories", side_effect=RuntimeError("db down")), \
+         patch("newsbot.bot.collect_new_entries", return_value=[]) as mock_collect:
+        n = asyncio.run(_run_batched_pipeline(MagicMock()))
+
+    assert n == 0
+    mock_collect.assert_called_once()
 
 
 _KM_EMPTY_SLOT_CTA = (

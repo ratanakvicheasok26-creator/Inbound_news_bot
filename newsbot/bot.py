@@ -28,9 +28,11 @@ from newsbot.ai import (
 )
 from newsbot import config
 from newsbot.brief_cta import raise_if_legacy_brief_cta
+from newsbot.brief_inventory import SiteBriefStory, load_site_brief_stories
 from newsbot.config import (
     BATCH_MAX_STORIES,
     BATCH_STORIES,
+    BRIEF_SCHEDULE_HOURS,
     DIGEST_HEADER_TEXT,
     DIGEST_MAX_STORIES,
     MAX_URGENT_POSTS_PER_RUN,
@@ -59,7 +61,7 @@ from newsbot.mirror import (
     settle,
 )
 from newsbot.state import get_state
-from newsbot.website_links import brief_url, publish_cluster_story, reader_url
+from newsbot.website_links import brief_url, publish_cluster_story, reader_url, story_url
 
 __all__ = [
     "StoryPost",
@@ -474,6 +476,26 @@ def _cluster_to_batched(
     )
 
 
+def _site_stories_to_batched(stories: list[SiteBriefStory]) -> list[BatchedStory]:
+    """Turn website stories into digest rows (site copy, no second EN rewrite)."""
+    batched: list[BatchedStory] = []
+    for story in stories:
+        links = [(e.link, e.source_name) for e in story.entries if e.link]
+        batched.append(
+            BatchedStory(
+                title=story.title,
+                summary=story.summary,
+                source_line=_attribution_line(links),
+                website_url=story_url(story.story_id),
+                image_url=story.image_url,
+                entry_ids=story.entry_ids,
+                entry_titles=story.entry_titles,
+                entries=list(story.entries),
+            )
+        )
+    return batched
+
+
 def _pick_batch_image(batched: list[BatchedStory]) -> str | None:
     for s in batched:
         if s.image_url:
@@ -720,18 +742,63 @@ async def _run_pipeline(
 async def _run_batched_pipeline(context: ContextTypes.DEFAULT_TYPE) -> int:
     """Multi-story Daily Brief path.
 
-    Selection uses ``briefed_ids`` (not ``posted_ids``) so ASAP urgents that
-    already hit the channel can still appear once in the next Brief digest.
+    Prefer unbriefed Supabase stories (same pool as the website Brief). RSS is
+    fallback when that pool is empty or Supabase is unset/down.
+
+    ``briefed_ids`` (not ``posted_ids``) gates repeats so ASAP urgents can
+    still appear once in a Brief.
     """
     async with _pipeline_lock:
         state = get_state()
         briefed_ids = state.load_briefed_ids()
         posted_ids = state.load_posted_ids()
-        # Do not pass posted_titles — ASAP-posted stories must stay Brief-eligible.
+
+        site_stories: list[SiteBriefStory] = []
+        try:
+            site_stories = await asyncio.wait_for(
+                asyncio.to_thread(
+                    load_site_brief_stories,
+                    briefed_ids=briefed_ids,
+                    hours=BRIEF_SCHEDULE_HOURS,
+                    tz=TIMEZONE,
+                ),
+                timeout=PREPARE_ENTRIES_TIMEOUT_SECONDS,
+            )
+        except asyncio.TimeoutError:
+            logger.error(
+                "Brief: Supabase inventory timed out after %.0fs — RSS fallback.",
+                PREPARE_ENTRIES_TIMEOUT_SECONDS,
+            )
+        except Exception:
+            logger.exception("Brief: Supabase inventory failed — RSS fallback.")
+
+        if site_stories:
+            batched = _site_stories_to_batched(site_stories)[:BATCH_MAX_STORIES]
+            logger.info(
+                "Brief: supabase_eligible=%d rss_fallback=0 briefed_skip=%d",
+                len(batched),
+                len(briefed_ids),
+            )
+            if not batched:
+                return 0
+            succeeded = await broadcast_batched(context, batched)
+            if succeeded:
+                _mark_posted_batched(batched, succeeded)
+                _mark_briefed_batched(batched, succeeded)
+                _publish_mirror_batched(batched)
+                logger.info(
+                    "Brief: sent batched digest with %d stor(y/ies) (source=supabase).",
+                    len(batched),
+                )
+                return len(batched)
+            return 0
+
+        # RSS fallback — do not pass posted_titles; ASAP-posted stay Brief-eligible.
         entries = collect_new_entries(briefed_ids, set())
         if not entries:
             logger.info(
-                "Brief: no eligible entries (briefed=%d posted=%d).",
+                "Brief: supabase_eligible=0 rss_fallback=0 no eligible entries "
+                "(briefed=%d posted=%d).",
                 len(briefed_ids),
                 len(posted_ids),
             )
@@ -739,7 +806,8 @@ async def _run_batched_pipeline(context: ContextTypes.DEFAULT_TYPE) -> int:
 
         already_posted = sum(1 for e in entries if e.id in posted_ids)
         logger.info(
-            "Brief: feed_eligible=%d already_posted_asap=%d briefed_skip_set=%d",
+            "Brief: supabase_eligible=0 rss_fallback=%d already_posted_asap=%d "
+            "briefed_skip_set=%d",
             len(entries),
             already_posted,
             len(briefed_ids),
