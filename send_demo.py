@@ -14,6 +14,7 @@ import os
 from telegram import Bot
 
 from newsbot.config import (
+    NEWS_LANGUAGE,
     TELEGRAM_BOT_TOKEN,
     TELEGRAM_CHANNEL_ID,
     TELEGRAM_THREAD_ID,
@@ -24,7 +25,7 @@ from newsbot.config import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-DEMO_MESSAGE = """📰 <b>Inbound Reports</b> · <i>Aug 08, 2026 · 06:00 PM</i>
+DEMO_MESSAGE_EN = """📰 <b>Inbound Reports</b> · <i>Aug 08, 2026 · 06:00 PM</i>
 ─────────────────────────────
 💡 <i>Tease only — full coverage + <b>Local Lens (Cambodia)</b> on the <a href="https://inbound-news-web.vercel.app">daily Brief</a>.</i>
 
@@ -42,6 +43,21 @@ A buffer overflow in libopenssl 3.x (CVE-2026-4418) allows remote code execution
 
 ─────────────────────────────
 🌐 <a href="https://inbound-news-web.vercel.app"><b>Open today's Brief on Inbound Reports →</b></a>"""
+
+DEMO_MESSAGE_KM = """📰 <b>របាយការណ៍ព័ត៌មាន Inbound</b> · <i>Aug 08, 2026 · 06:00 PM</i>
+─────────────────────────────
+💡 <i>ព័ត៌មានសង្ខេបបច្ចេកវិទ្យាប្រចាំថ្ងៃ (ខ្មែរ)</i>
+
+🔹 <b>Apple ប្រកាសចេញបន្ទះឈីប M4 ជំនាន់ថ្មី</b>
+បន្ទះឈីប M4 របស់ Apple ភ្ជាប់មកជាមួយនូវ Neural Engine 16-core និងសមត្ថភាព AI ខ្ពស់ ផ្តល់នូវល្បឿនដំណើរការលឿនជាងមុន 40% សម្រាប់ជំនួយដល់ការងារបច្ចេកវិទ្យា។
+<i><a href="https://www.macrumors.com">MacRumors</a> · <a href="https://9to5mac.com">9to5Mac</a></i>
+
+🔹 <b>Google ប្រកាសចេញម៉ូឌែល Gemini 3.0</b>
+Gemini 3.0 ណែនាំនូវសមត្ថភាពយល់ដឹងវីដេអូ Real-time និង Context Window រហូតដល់ 2M tokens ដែលជួយសម្រួលដល់ការវិភាគទិន្នន័យយ៉ាងរហ័ស។
+<i><a href="https://www.theverge.com">The Verge</a> · <a href="https://techcrunch.com">TechCrunch</a></i>
+
+─────────────────────────────
+🌐 <a href="https://inbound-news-web.vercel.app"><b>បើកមើលរបាយការណ៍ព័ត៌មានពេញលេញ →</b></a>"""
 
 
 async def main() -> None:
@@ -70,12 +86,15 @@ async def main() -> None:
 
     bot = Bot(token=token)
 
+    demo_text = DEMO_MESSAGE_KM if NEWS_LANGUAGE == "km" else DEMO_MESSAGE_EN
+
     kwargs = {
         "chat_id": channel_id,
-        "text": DEMO_MESSAGE,
+        "text": demo_text,
         "parse_mode": "HTML",
         "disable_web_page_preview": False,
     }
+
     if thread_id is not None:
         kwargs["message_thread_id"] = thread_id
 

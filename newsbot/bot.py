@@ -707,6 +707,12 @@ async def _run_pipeline(
     urgent: bool = False,
 ) -> int:
     """Shared pipeline: prepare → broadcast → mark posted (individual path)."""
+    if NEWS_LANGUAGE == "km":
+        logger.warning(
+            "Khmer bot (NEWS_LANGUAGE=km) must not run direct RSS ingestion. "
+            "All Khmer posts originate from the English bot's mirror queue."
+        )
+        return 0
     async with _pipeline_lock:
         try:
             stories = await asyncio.wait_for(
@@ -748,6 +754,12 @@ async def _run_batched_pipeline(context: ContextTypes.DEFAULT_TYPE) -> int:
     ``briefed_ids`` (not ``posted_ids``) gates repeats so ASAP urgents can
     still appear once in a Brief.
     """
+    if NEWS_LANGUAGE == "km":
+        logger.warning(
+            "Khmer bot (NEWS_LANGUAGE=km) must not run direct RSS ingestion. "
+            "All Khmer posts originate from the English bot's mirror queue."
+        )
+        return 0
     async with _pipeline_lock:
         state = get_state()
         briefed_ids = state.load_briefed_ids()

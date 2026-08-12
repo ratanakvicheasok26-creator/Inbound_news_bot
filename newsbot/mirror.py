@@ -121,6 +121,11 @@ def build_story_payload(post) -> dict:
         "website_url": post.primary_url,
         "image_url": post.image_url,
         "cluster": [entry_to_payload(e) for e in post.entries],
+        "en_source": {
+            "source_type": "telegram_en",
+            "primary_url": post.primary_url,
+            "created_at": time.time(),
+        },
     }
 
 
@@ -136,6 +141,10 @@ def build_batch_payload(batched: list) -> dict:
             }
             for story in batched
         ],
+        "en_source": {
+            "source_type": "telegram_en",
+            "created_at": time.time(),
+        },
     }
 
 

@@ -306,3 +306,21 @@ class TestPickImageUrl:
             image_url="https://cdn.example.com/a.jpg",
         )
         assert pick_image_url([entry]) == "https://cdn.example.com/a.jpg"
+
+
+class TestKhmerPipelineGuards:
+    def test_run_pipeline_returns_zero_in_khmer_mode(self, monkeypatch):
+        from newsbot.bot import _run_pipeline
+
+        monkeypatch.setattr("newsbot.bot.NEWS_LANGUAGE", "km")
+        context = MagicMock()
+        res = asyncio.run(_run_pipeline(context))
+        assert res == 0
+
+    def test_run_batched_pipeline_returns_zero_in_khmer_mode(self, monkeypatch):
+        from newsbot.bot import _run_batched_pipeline
+
+        monkeypatch.setattr("newsbot.bot.NEWS_LANGUAGE", "km")
+        context = MagicMock()
+        res = asyncio.run(_run_batched_pipeline(context))
+        assert res == 0
