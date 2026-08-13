@@ -1082,8 +1082,6 @@ async def _mirror_story(
                 entries=cluster,
                 urgent=bool(payload.get("urgent")),
             )
-        except KhmerTranslationFailed:
-            raise
         except Exception as exc:
             logger.warning("Mirror: direct post translation failed (%s) — falling back to cluster rewrite", exc)
             story = None
@@ -1149,8 +1147,6 @@ async def _mirror_batch(
                     entry_titles={e.title for e in cluster},
                     entries=cluster,
                 )
-            except KhmerTranslationFailed:
-                raise
             except Exception as exc:
                 logger.warning("Mirror: direct compact translation failed (%s) — falling back to cluster rewrite", exc)
                 story = None
