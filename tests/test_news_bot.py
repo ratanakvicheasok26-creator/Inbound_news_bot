@@ -298,23 +298,25 @@ class TestScheduleLanguageJobs:
         job_queue.run_daily.assert_not_called()
         assert not any(n.startswith("brief_") for n in names)
 
-    def test_en_registers_continuous_poll(self):
-        from news_bot import POLL_INTERVAL_SECONDS, schedule_language_jobs
+    def test_en_registers_daily_brief_slots(self):
+        from news_bot import BRIEF_SCHEDULE_HOURS, schedule_language_jobs
 
         job_queue = MagicMock()
         names = schedule_language_jobs(job_queue, news_language="en")
 
         assert "urgent_check" in names
         assert "mirror_outbox_flush" in names
-        assert "news_poll" in names
-        poll_calls = [
-            c for c in job_queue.run_repeating.call_args_list
-            if c.kwargs["name"] == "news_poll"
+        expected = [f"brief_{h:02d}" for h in BRIEF_SCHEDULE_HOURS]
+        assert expected == [n for n in names if n.startswith("brief_")]
+        daily_calls = [
+            c for c in job_queue.run_daily.call_args_list
+            if c.kwargs["name"].startswith("brief_")
         ]
-        assert len(poll_calls) == 1
-        assert poll_calls[0].kwargs["interval"] == POLL_INTERVAL_SECONDS
-        job_queue.run_daily.assert_not_called()
-        assert not any(n.startswith("brief_") for n in names)
+        assert len(daily_calls) == len(BRIEF_SCHEDULE_HOURS)
+        daily_hours = sorted(c.kwargs["time"].hour for c in daily_calls)
+        assert daily_hours == sorted(BRIEF_SCHEDULE_HOURS)
+        job_queue.run_daily.assert_called()
+        assert not any(n == "news_poll" for n in names)
 
 
 class TestLegacyBriefCtaEnv:
