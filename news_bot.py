@@ -408,11 +408,12 @@ def schedule_language_jobs(job_queue: object, *, news_language: str) -> list[str
         names.append("mirror_outbox_flush")
         # Latest-news trickle — EN only. Post new stories individually as they
         # appear around the clock, so the channel stays current between Brief
-        # slots. The Khmer bot mirrors them via Redis.
+        # slots. The Khmer bot mirrors them via Redis. First run is near-immediate
+        # so posts appear within a minute of (re)deploy, then every interval.
         job_queue.run_repeating(  # type: ignore[attr-defined]
             digest_job,
             interval=DIGEST_CHECK_INTERVAL_SECONDS,
-            first=DIGEST_CHECK_INTERVAL_SECONDS,
+            first=60,
             name="digest_trickle",
         )
         names.append("digest_trickle")
