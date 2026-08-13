@@ -2,7 +2,7 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from news_bot import start_command, stop_command, fetch_command, _reply
+from news_bot import _reply, fetch_command, start_command, stop_command
 
 
 class TestReply:
@@ -298,7 +298,7 @@ class TestScheduleLanguageJobs:
         job_queue.run_daily.assert_not_called()
         assert not any(n.startswith("brief_") for n in names)
 
-    def test_en_registers_daily_brief_slots(self):
+    def test_en_registers_daily_brief_slots_and_trickle(self):
         from news_bot import BRIEF_SCHEDULE_HOURS, schedule_language_jobs
 
         job_queue = MagicMock()
@@ -306,6 +306,13 @@ class TestScheduleLanguageJobs:
 
         assert "urgent_check" in names
         assert "mirror_outbox_flush" in names
+        assert "digest_trickle" in names
+        trickle_calls = [
+            c for c in job_queue.run_repeating.call_args_list
+            if c.kwargs["name"] == "digest_trickle"
+        ]
+        assert len(trickle_calls) == 1
+        assert "interval" in trickle_calls[0].kwargs
         expected = [f"brief_{h:02d}" for h in BRIEF_SCHEDULE_HOURS]
         assert expected == [n for n in names if n.startswith("brief_")]
         daily_calls = [

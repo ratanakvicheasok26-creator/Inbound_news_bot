@@ -112,6 +112,7 @@ Redeploy/restart after rotating.
 
 **Scheduling / tuning** (optional — defaults in `newsbot/config.py`)
 - `BRIEF_SCHEDULE_HOURS` (default `6,12,18,22` local time = daily Brief slots), `URGENT_CHECK_INTERVAL_SECONDS`
+- `DIGEST_SCHEDULE_HOUR_AM` (default 5), `DIGEST_SCHEDULE_HOUR_PM` (default 17), `DIGEST_CHECK_INTERVAL_MINUTES` (default 60) — latest-news trickle window
 - `BOT_MAX_FEEDS`, `MAX_ITEMS_PER_FEED`, `MAX_ENTRY_AGE_HOURS`, `FEED_TIMEOUT_SECONDS`
 - `CLUSTER_SIMILARITY_THRESHOLD`, `PREPARE_ENTRIES_TIMEOUT_SECONDS`, `AI_HTTP_TIMEOUT_SECONDS`
 - `SPAM_FILTER_ENABLED`, `DONATION_TEXT`, `DIGEST_HEADER_TEXT`, …

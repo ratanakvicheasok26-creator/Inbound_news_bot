@@ -6,6 +6,8 @@ multi-story Brief whenever new stories appear, with urgent stories checked
 separately and posted anytime.
 
 Schedule:
+  - Latest-news trickle: new stories are posted individually as they appear
+    during 5am–5pm local time (DIGEST_CHECK_INTERVAL_SECONDS, default hourly)
   - Daily Brief slots (default 6/12/18/22 local): the batched Brief pipeline
     posts new tech news since the previous slot (up to 6 summaries) on the
     English channel; Khmer mirrors via Redis
@@ -47,6 +49,9 @@ from newsbot.bot import (
 from newsbot.brief_cta import raise_if_legacy_brief_cta, warn_legacy_brief_cta_env
 from newsbot.config import (
     BRIEF_SCHEDULE_HOURS,
+    DIGEST_CHECK_INTERVAL_SECONDS,
+    DIGEST_SCHEDULE_HOUR_AM,
+    DIGEST_SCHEDULE_HOUR_PM,
     DONATION_QR_IMAGE,
     DONATION_SCHEDULE_DAYS,
     DONATION_SCHEDULE_HOUR,
@@ -55,7 +60,6 @@ from newsbot.config import (
     FETCH_GLOBAL_COOLDOWN_SECONDS,
     INSTANCE_LOCK_HEARTBEAT_SECONDS,
     MAX_SUBSCRIBERS,
-    NEWS_LANGUAGE,
     TIMEZONE,
     URGENT_CHECK_INTERVAL_SECONDS,
     URGENT_FIRST_DELAY_SECONDS,
@@ -90,6 +94,30 @@ _fetch_cooldown_lock = threading.Lock()
 async def urgent_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Urgent check — keyword matches not already posted. Runs every URGENT_CHECK_INTERVAL_SECONDS."""
     await fetch_urgent_and_post(context)
+
+
+async def digest_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Trickle digest — post new stories individually as they appear.
+
+    Runs during the DIGEST_SCHEDULE_HOUR_AM–PM window (default 5am–5pm) on
+    the English bot. Each run posts the latest unposted stories one message
+    each; the Khmer bot receives the same stories via the Redis mirror.
+    """
+    now = dt.datetime.now(TIMEZONE)
+    if not (DIGEST_SCHEDULE_HOUR_AM <= now.hour < DIGEST_SCHEDULE_HOUR_PM):
+        logger.debug(
+            "Digest window closed (now %s, window %02d:00–%02d:00) — skipping.",
+            now.strftime("%H:%M"),
+            DIGEST_SCHEDULE_HOUR_AM,
+            DIGEST_SCHEDULE_HOUR_PM,
+        )
+        return
+    try:
+        n = await fetch_individual_and_post(context)
+        if n:
+            logger.info("Digest trickle posted %d individual stor(y/ies).", n)
+    except Exception:
+        logger.exception("Digest trickle failed")
 
 
 async def instance_lock_heartbeat_job(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -378,6 +406,16 @@ def schedule_language_jobs(job_queue: object, *, news_language: str) -> list[str
             name="mirror_outbox_flush",
         )
         names.append("mirror_outbox_flush")
+        # Latest-news trickle — EN only. Post new stories individually as they
+        # appear during the 5am–5pm window, so the channel stays current between
+        # Brief slots. The Khmer bot mirrors them via Redis.
+        job_queue.run_repeating(  # type: ignore[attr-defined]
+            digest_job,
+            interval=DIGEST_CHECK_INTERVAL_SECONDS,
+            first=DIGEST_CHECK_INTERVAL_SECONDS,
+            name="digest_trickle",
+        )
+        names.append("digest_trickle")
         # Daily Brief slots — EN only. Posts a multi-story Brief from the
         # Supabase site pool at each BRIEF_SCHEDULE_HOURS slot and mirrors it
         # to Redis for the Khmer bot. KM must never register brief_* jobs
@@ -448,10 +486,14 @@ def main() -> None:
     assert not hasattr(__import__("news_bot"), "_send_brief_cta")
     logger.info(
         "brief_mode=slots deploy_sha=%s NEWS_LANGUAGE=%s "
-        "brief_hours=%s redis_configured=%s timezone=%s",
+        "brief_hours=%s trickle=%02d:%02d-%02d:%02d redis_configured=%s timezone=%s",
         commit_sha,
         config.NEWS_LANGUAGE,
         ",".join(str(h) for h in BRIEF_SCHEDULE_HOURS),
+        DIGEST_SCHEDULE_HOUR_AM,
+        0,
+        DIGEST_SCHEDULE_HOUR_PM,
+        0,
         redis_configured,
         TIMEZONE,
     )
@@ -465,11 +507,14 @@ def main() -> None:
         )
     else:
         logger.info(
-            "Bot running. Daily Brief slots at %s (%s). "
-            "ASAP urgent checks every %ds. Donation Sat at %02d:00. "
-            "/fetch for manual individual digest.",
-            ",".join(str(h) for h in BRIEF_SCHEDULE_HOURS),
+            "Bot running. Latest-news trickle %02d:00–%02d:00 (%s, every %d min). "
+            "Daily Brief slots at %s. ASAP urgent checks every %ds. "
+            "Donation Sat at %02d:00. /fetch for manual individual digest.",
+            DIGEST_SCHEDULE_HOUR_AM,
+            DIGEST_SCHEDULE_HOUR_PM,
             TIMEZONE,
+            DIGEST_CHECK_INTERVAL_SECONDS // 60,
+            ",".join(str(h) for h in BRIEF_SCHEDULE_HOURS),
             URGENT_CHECK_INTERVAL_SECONDS,
             DONATION_SCHEDULE_HOUR,
         )
