@@ -161,7 +161,7 @@ if NEWS_LANGUAGE not in ("en", "km"):
 # ---- Scheduling ----
 TIMEZONE = ZoneInfo("Asia/Phnom_Penh")
 DIGEST_MIN_SOURCES: int = 2
-DIGEST_MAX_STORIES: int = 10
+DIGEST_MAX_STORIES: int = _env_int("DIGEST_MAX_STORIES", 5)
 DIGEST_SCHEDULE_HOUR_AM: int = _env_int("DIGEST_SCHEDULE_HOUR_AM", 0)  # 24h trickle
 DIGEST_SCHEDULE_HOUR_PM: int = _env_int("DIGEST_SCHEDULE_HOUR_PM", 24)  # 24h trickle
 DIGEST_CHECK_INTERVAL_SECONDS: int = _env_int(
