@@ -88,11 +88,14 @@ async def main() -> None:
 
     demo_text = DEMO_MESSAGE_KM if NEWS_LANGUAGE == "km" else DEMO_MESSAGE_EN
 
+    from newsbot.bot import _brief_keyboard
+
     kwargs = {
         "chat_id": channel_id,
         "text": demo_text,
         "parse_mode": "HTML",
-        "disable_web_page_preview": False,
+        "disable_web_page_preview": True,
+        "reply_markup": _brief_keyboard(),
     }
 
     if thread_id is not None:
