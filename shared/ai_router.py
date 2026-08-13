@@ -120,7 +120,7 @@ class AIRouter:
             providers.append(_ProviderConfig(
                 name="openrouter",
                 env_var="OPENROUTER_API_KEY",
-                model=os.environ.get("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct:free"),
+                model=os.environ.get("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct"),
                 base_url="https://openrouter.ai/api/v1",
                 keys=[_KeyState(key=k) for k in openrouter_keys],
             ))
@@ -131,7 +131,7 @@ class AIRouter:
             providers.append(_ProviderConfig(
                 name="gemini",
                 env_var="GOOGLE_GEMINI_API_KEY",
-                model=os.environ.get("GEMINI_MODEL", "gemini-2.0-flash"),
+                model=os.environ.get("GEMINI_MODEL", "gemini-flash-latest"),
                 import_path="google.genai",
                 keys=[_KeyState(key=k) for k in gemini_keys],
             ))
@@ -325,10 +325,19 @@ class AIRouter:
         404 (model/route doesn't exist) and 400 (bad request) won't resolve
         by retrying the same key/model — e.g. OpenRouter returning 404 when
         a ``:free`` model's shared pool is saturated and suggesting the
-        paid slug instead. Retrying these 3x just burns time and quota.
+        paid slug instead. A 403 with "access denied" is a regional/network
+        block (e.g. Groq refusing the deployment's egress region) and is
+        also permanent — retrying it 3x just burns seconds on every tick.
         """
         msg = str(exc).lower()
-        return "404" in msg or "not found" in msg or "400" in msg or "bad request" in msg
+        return (
+            "404" in msg
+            or "not found" in msg
+            or "400" in msg
+            or "bad request" in msg
+            or "403" in msg
+            or "access denied" in msg
+        )
 
     @staticmethod
     def _extract_retry_after(exc: Exception) -> float | None:
