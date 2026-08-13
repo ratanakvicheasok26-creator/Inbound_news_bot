@@ -6,8 +6,8 @@ multi-story Brief whenever new stories appear, with urgent stories checked
 separately and posted anytime.
 
 Schedule:
-  - Latest-news trickle: new stories are posted individually as they appear
-    during 5am–5pm local time (DIGEST_CHECK_INTERVAL_SECONDS, default hourly)
+  - Latest-news trickle: new stories are posted individually as they appear,
+    around the clock (DIGEST_CHECK_INTERVAL_SECONDS, default hourly)
   - Daily Brief slots (default 6/12/18/22 local): the batched Brief pipeline
     posts new tech news since the previous slot (up to 6 summaries) on the
     English channel; Khmer mirrors via Redis
@@ -99,8 +99,8 @@ async def urgent_job(context: ContextTypes.DEFAULT_TYPE) -> None:
 async def digest_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Trickle digest — post new stories individually as they appear.
 
-    Runs during the DIGEST_SCHEDULE_HOUR_AM–PM window (default 5am–5pm) on
-    the English bot. Each run posts the latest unposted stories one message
+    Runs hourly around the clock (default DIGEST_SCHEDULE_HOUR_AM=0 to PM=24)
+    on the English bot. Each run posts the latest unposted stories one message
     each; the Khmer bot receives the same stories via the Redis mirror.
     """
     now = dt.datetime.now(TIMEZONE)
@@ -407,8 +407,8 @@ def schedule_language_jobs(job_queue: object, *, news_language: str) -> list[str
         )
         names.append("mirror_outbox_flush")
         # Latest-news trickle — EN only. Post new stories individually as they
-        # appear during the 5am–5pm window, so the channel stays current between
-        # Brief slots. The Khmer bot mirrors them via Redis.
+        # appear around the clock, so the channel stays current between Brief
+        # slots. The Khmer bot mirrors them via Redis.
         job_queue.run_repeating(  # type: ignore[attr-defined]
             digest_job,
             interval=DIGEST_CHECK_INTERVAL_SECONDS,
