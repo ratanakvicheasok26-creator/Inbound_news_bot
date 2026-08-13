@@ -387,6 +387,11 @@ def acquire_instance_lock() -> bool:
 
         r = redis.Redis.from_url(redis_url, decode_responses=True)
         r.ping()
+        # If operator requested to clear stale locks on boot:
+        if os.environ.get("CLEAR_INSTANCE_LOCK", "").lower() in ("1", "true", "yes", "on", "force"):
+            r.delete(_INSTANCE_LOCK_KEY)
+            logger.info("Cleared stale instance lock (%s) via CLEAR_INSTANCE_LOCK env var.", _INSTANCE_LOCK_KEY)
+
         acquired = r.set(
             _INSTANCE_LOCK_KEY,
             _INSTANCE_LOCK_TOKEN,
@@ -396,7 +401,7 @@ def acquire_instance_lock() -> bool:
         if not acquired:
             logger.error(
                 "Another bot instance holds the lock (%s) — refusing to start to "
-                "prevent duplicate posts. Release it with the TTL or by removing the key.",
+                "prevent duplicate posts. Release it with the TTL or by setting CLEAR_INSTANCE_LOCK=true.",
                 _INSTANCE_LOCK_KEY,
             )
             return False
