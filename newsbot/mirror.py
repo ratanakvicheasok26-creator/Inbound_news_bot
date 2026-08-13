@@ -120,6 +120,7 @@ def build_story_payload(post) -> dict:
         "urgent": bool(getattr(post, "urgent", False)),
         "website_url": post.primary_url,
         "image_url": post.image_url,
+        "en_text": getattr(post, "text", ""),
         "cluster": [entry_to_payload(e) for e in post.entries],
         "en_source": {
             "source_type": "telegram_en",
@@ -135,6 +136,8 @@ def build_batch_payload(batched: list) -> dict:
         "kind": "batch",
         "stories": [
             {
+                "title": getattr(story, "title", ""),
+                "summary": getattr(story, "summary", ""),
                 "cluster": [entry_to_payload(e) for e in story.entries],
                 "website_url": story.website_url,
                 "image_url": story.image_url,

@@ -24,6 +24,8 @@ from newsbot.ai import (
     rewrite_compact,
     rewrite_compact_khmer,
     rewrite_with_ai,
+    translate_compact_to_km,
+    translate_en_post_to_km,
     trim_for_caption,
 )
 from newsbot import config
@@ -1058,14 +1060,45 @@ async def _mirror_story(
         logger.info("Mirror: story already posted on KM — treating as success (idempotent)")
         return True, False
 
-    story = _cluster_to_story(
-        cluster,
-        urgent=bool(payload.get("urgent")),
-        website_url=_safe_link(payload.get("website_url")),
-    )
+    story: StoryPost | None = None
+    en_text = (payload.get("en_text") or "").strip()
+    if en_text:
+        try:
+            km_text = translate_en_post_to_km(en_text)
+            links = collect_links(cluster, urgent=bool(payload.get("urgent")))
+            primary_source = links[0][1] if links else "Inbound Reports"
+            website = _safe_link(payload.get("website_url")) or _website_url_for_cluster(
+                cluster, title=cluster[0].title if cluster else "Untitled", summary=""
+            )
+            story = StoryPost(
+                text=km_text,
+                primary_url=website,
+                primary_source=primary_source or "Inbound Reports",
+                extra_urls=[],
+                extra_sources=[],
+                image_url=pick_image_url(cluster),
+                entry_ids={e.id for e in cluster},
+                entry_titles={e.title for e in cluster},
+                entries=cluster,
+                urgent=bool(payload.get("urgent")),
+            )
+        except KhmerTranslationFailed:
+            raise
+        except Exception as exc:
+            logger.warning("Mirror: direct post translation failed (%s) — falling back to cluster rewrite", exc)
+            story = None
+
+    if not story:
+        story = _cluster_to_story(
+            cluster,
+            urgent=bool(payload.get("urgent")),
+            website_url=_safe_link(payload.get("website_url")),
+        )
+
     if not story:
         logger.warning("Mirror: story rewrite returned None — will requeue")
         return False, False
+
     succeeded = await broadcast_stories(context, [story])
     if succeeded:
         _mark_posted([story], succeeded)
@@ -1095,7 +1128,36 @@ async def _mirror_batch(
         if not cluster:
             logger.warning("Mirror: batch story missing cluster — will requeue whole batch")
             return False, False
-        story = _cluster_to_batched(cluster, website_url=_safe_link(item.get("website_url")))
+
+        en_title = str(item.get("title") or "").strip()
+        en_summary = str(item.get("summary") or "").strip()
+        story: BatchedStory | None = None
+        if en_title and en_summary:
+            try:
+                km_title, km_summary = translate_compact_to_km(en_title, en_summary)
+                links = collect_links(cluster)
+                website = _safe_link(item.get("website_url")) or _website_url_for_cluster(
+                    cluster, title=km_title, summary=km_summary
+                )
+                story = BatchedStory(
+                    title=km_title,
+                    summary=km_summary,
+                    source_line=_attribution_line(links),
+                    website_url=website,
+                    image_url=pick_image_url(cluster),
+                    entry_ids={e.id for e in cluster},
+                    entry_titles={e.title for e in cluster},
+                    entries=cluster,
+                )
+            except KhmerTranslationFailed:
+                raise
+            except Exception as exc:
+                logger.warning("Mirror: direct compact translation failed (%s) — falling back to cluster rewrite", exc)
+                story = None
+
+        if not story:
+            story = _cluster_to_batched(cluster, website_url=_safe_link(item.get("website_url")))
+
         if not story:
             logger.warning("Mirror: partial batch rewrite — will requeue whole batch")
             return False, False

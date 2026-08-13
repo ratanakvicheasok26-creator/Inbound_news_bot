@@ -29,6 +29,8 @@ __all__ = [
     "collect_links",
     "pick_image_url",
     "rewrite_with_ai",
+    "translate_en_post_to_km",
+    "translate_compact_to_km",
     "KhmerTranslationFailed",
     "ContentRejected",
 ]
@@ -344,6 +346,84 @@ def rewrite_compact_khmer(cluster: list[Entry]) -> tuple[str, str]:
         raise KhmerTranslationFailed(
             f"Compact Khmer translation failed for '{en_title[:80]}'"
         )
+    return title, summary
+
+
+def translate_en_post_to_km(en_text: str) -> str:
+    """Translate an English Telegram HTML post directly into Khmer.
+
+    Preserves HTML formatting tags (<b>, <a>, etc.) and bullet points,
+    producing an exact structural copy of the English post in Khmer.
+    """
+    if not en_text or not en_text.strip():
+        raise KhmerTranslationFailed("English post text is empty")
+
+    router = get_router()
+    prompt = f"""You are a professional tech news translator.
+Translate the following Telegram HTML tech news post into natural, fluent Khmer (ភាសាខ្មែរ).
+
+Rules:
+1. Preserve all HTML tags (<b>, </b>, <i>, </i>, <a>, </a>, etc.) and bullet/badge symbols (▸, 🔹, 📰, etc.) EXACTLY as they appear in the original post.
+2. Keep brand names, company names, product names, people's names, and technical acronyms in their original English form (e.g. SpaceX, ChatGPT, AI, GPU, Apple, Google, Microsoft, NVIDIA, OpenAI).
+3. Write numbers as digits (e.g. 500, 7%).
+4. Maintain the exact same paragraph structure, line breaks, and list formatting.
+5. If a technical term has no common Khmer equivalent, keep it in English inside the Khmer sentence.
+6. Output ONLY the translated HTML text — no markdown code fences (no ```html), no commentary.
+
+English Telegram Post:
+{en_text}"""
+
+    raw_output, provider = router.call(prompt, max_tokens=GROQ_MAX_TOKENS)
+    if not raw_output or not raw_output.strip():
+        raise KhmerTranslationFailed("AI translation returned empty output")
+
+    output = raw_output.strip()
+    if output.startswith("```"):
+        output = re.sub(r"^```(?:html)?\s*\n?", "", output)
+        output = re.sub(r"\n?```$", "", output).strip()
+
+    if not _contains_khmer(output):
+        raise KhmerTranslationFailed("Direct EN->KM post translation output lacked Khmer script")
+
+    logger.info("Direct EN->KM post translated via %s", provider)
+    return output
+
+
+def translate_compact_to_km(en_title: str, en_summary: str) -> tuple[str, str]:
+    """Translate English title and summary directly to Khmer for batch digests."""
+    router = get_router()
+    prompt = f"""Translate this English tech news title and summary into natural Khmer (ភាសាខ្មែរ).
+
+Rules:
+- Keep brand names, company names, product names, people's names, and acronyms in English
+- Write numbers as digits (e.g. 500, 7%)
+- Plain text only — no HTML, no markdown, no bold
+- Return ONLY valid JSON, no preamble, no code fences:
+{{"title": "...", "summary": "..."}}
+
+English Title: {en_title}
+English Summary: {en_summary}"""
+
+    raw_output, provider = router.call(prompt, max_tokens=GROQ_MAX_TOKENS)
+    title = ""
+    summary = ""
+    if raw_output:
+        try:
+            data = _parse_ai_json(raw_output)
+            title = _strip_html(str(data.get("title", "") or "")).strip()
+            summary = _strip_html(str(data.get("summary", "") or "")).strip()
+        except Exception:
+            logger.debug("Direct compact translation parse failed", exc_info=True)
+
+    if not title or not _contains_khmer(title):
+        title = _translate_to_khmer(en_title, router)
+    if not summary or not _contains_khmer(summary):
+        summary = _translate_to_khmer(en_summary, router)
+
+    if not _khmer_body_ok(title, summary):
+        raise KhmerTranslationFailed(f"Direct compact translation failed for '{en_title[:80]}'")
+
+    logger.info("Direct compact EN->KM translated via %s", provider)
     return title, summary
 
 
