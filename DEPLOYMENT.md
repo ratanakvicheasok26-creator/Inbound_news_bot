@@ -115,6 +115,9 @@ Redeploy/restart after rotating.
 - `BOT_MAX_FEEDS`, `MAX_ITEMS_PER_FEED`, `MAX_ENTRY_AGE_HOURS`, `FEED_TIMEOUT_SECONDS`
 - `CLUSTER_SIMILARITY_THRESHOLD`, `PREPARE_ENTRIES_TIMEOUT_SECONDS`, `AI_HTTP_TIMEOUT_SECONDS`
 - `SPAM_FILTER_ENABLED`, `DONATION_TEXT`, `DIGEST_HEADER_TEXT`, …
+- `TECH_ONLY` (default true) — post only tech news matching the website's
+  categories (Supabase `stories.category` + RSS keyword classifier); set false
+  to allow general news
 - Do **not** set `BRIEF_TEXT` / `BRIEF_TEXT_KM` (removed empty-slot CTA). Leftovers are ignored.
 
 ---

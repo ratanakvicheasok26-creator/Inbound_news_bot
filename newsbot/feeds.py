@@ -35,7 +35,9 @@ from newsbot.config import (
     SPAM_BLOCK_NON_LATIN_SCRIPTS,
     SPAM_FILTER_ENABLED,
     SUMMARY_SIM_WORD_LIMIT,
+    TECH_ONLY,
     URGENT_KEYWORDS,
+    is_tech_text,
 )
 
 __all__ = [
@@ -433,6 +435,9 @@ def collect_new_entries(posted_ids: set[str], posted_titles: set[str] | None = N
                     logger.warning("Skipping suspected spam entry: %s", title[:100])
                     continue
                 raw_summary = _strip_html(entry.get("summary", "") or "")[:500]
+                if TECH_ONLY and not is_tech_text(f"{title} {raw_summary}"):
+                    logger.debug("Skipping non-tech entry: %s", title[:120])
+                    continue
                 entries.append(Entry(
                     id=entry_id,
                     title=title,

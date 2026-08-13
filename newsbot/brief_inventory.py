@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from newsbot.config import NEWS_CATEGORIES_SET, TECH_ONLY
 from newsbot.feeds import Entry
 
 logger = logging.getLogger(__name__)
@@ -248,15 +249,17 @@ def load_site_brief_stories(
 
 
 def _fetch_story_rows(client: Any, since: datetime, limit: int) -> list[dict[str, Any]]:
-    result = (
+    query = (
         client.table("stories")
         .select("id, title, summary_en, source_count, category, tags, created_at, image_url")
         .gte("created_at", since.isoformat())
-        .order("source_count", desc=True)
-        .order("created_at", desc=True)
-        .limit(limit)
-        .execute()
     )
+    if TECH_ONLY:
+        # Match the website topic pages: only stories mapped to one of the 15
+        # tech site slugs. Uncategorized/general stories never post to Telegram.
+        query = query.in_("category", sorted(NEWS_CATEGORIES_SET))
+    query = query.order("source_count", desc=True).order("created_at", desc=True).limit(limit)
+    result = query.execute()
     return list(result.data or [])
 
 

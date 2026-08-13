@@ -66,6 +66,9 @@ __all__ = [
     "AI_HTTP_TIMEOUT_SECONDS",
     "SPAM_FILTER_ENABLED",
     "SPAM_BLOCK_NON_LATIN_SCRIPTS",
+    "TECH_ONLY",
+    "TECH_KEYWORDS",
+    "is_tech_text",
     "TELEGRAM_BOT_TOKEN",
     "PORT",
     "TELEGRAM_CHANNEL_ID",
@@ -379,6 +382,75 @@ NEWS_CATEGORIES: tuple[str, ...] = (
     "telecom", "mobile", "regional",
 )
 NEWS_CATEGORIES_SET: frozenset[str] = frozenset(NEWS_CATEGORIES)
+
+# ---- Tech-only gate (mirror of the website's topic-page categories) ----
+# When enabled, the bot posts only news that classifies as tech — matching the
+# website flow (workers.categories maps every story to one of the 15 site slugs
+# or drops it). The keyword list below mirrors workers/categories._KEYWORDS and
+# is copied here to keep the newsbot <-> workers dependency one-way.
+TECH_ONLY: bool = os.environ.get("TECH_ONLY", "true").lower() in (
+    "1", "true", "yes", "on",
+)
+
+TECH_KEYWORDS: tuple[str, ...] = (
+    # cybersecurity
+    "security", "hack", "breach", "vulnerability", "ransomware",
+    "cyber", "malware", "zero-day", "exploit", "phishing",
+    # defi
+    "defi", "crypto", "bitcoin", "ethereum", "blockchain",
+    "token", "web3", "nft", "solana", "stablecoin",
+    # science
+    "research", "study", "scientist", "discovery",
+    "lab", "experiment", "physics", "biology",
+    # regulation
+    "regulat", "ban", "law", "policy", "congress",
+    "eu", "government", "compliance", "antitrust",
+    # cloud
+    "cloud", "aws", "azure", "devops", "kubernetes",
+    "docker", "saas", "infrastructure",
+    # opensource
+    "open source", "open-source", "github", "linux",
+    "foss", "git",
+    # gaming
+    "game", "gaming", "playstation", "xbox", "nintendo",
+    "esports", "steam",
+    # climate
+    "climate", "renewable", "solar", "carbon",
+    "sustainability", "green energy", "ev ",
+    # telecom
+    "satellite", "5g", "6g", "telecom", "starlink",
+    "broadband", "isp",
+    # hardware
+    "chip", "processor", "gpu", "cpu", "device",
+    "hardware", "semiconductor", "robotics",
+    "nvidia", "amd", "intel",
+    # big_tech
+    "google", "apple", "microsoft", "amazon", "meta",
+    "alphabet", "tesla",
+    # mobile
+    "android", "ios", "app store",
+    "mobile", "smartphone",
+    # ai
+    "artificial intelligence", "machine learning", "llm",
+    "gpt", "openai", "anthropic", "deepmind", "chatbot",
+    "neural", "deep learning",
+    # startups
+    "startup", "startups", "funding", "fundraise", "venture capital",
+    "seed round", "series a", "series b", "series c", "ipo",
+    "acquisition", "acquired", "unicorn", "y combinator", "valuation",
+    # regional
+    "cambodia", "phnom penh", "khmer", "asean", "se asia",
+    "southeast asia", "singapore", "vietnam", "vietnamese",
+    "thailand", "indonesia", "malaysia", "philippines", "myanmar",
+    "laos", "brunei", "jakarta", "bangkok", "manila", "ho chi minh",
+)
+
+
+def is_tech_text(text: str) -> bool:
+    """Return True when the text carries a tech signal (site topic categories)."""
+    lowered = (text or "").lower()
+    return any(kw in lowered for kw in TECH_KEYWORDS)
+
 
 # ---- File paths ----
 # Non-English bots use suffixed files so a Khmer and English bot sharing a

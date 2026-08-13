@@ -1,5 +1,7 @@
 """Tests for feeds.py — normalization, clustering, urgency detection."""
 
+import pytest
+
 from newsbot.feeds import (
     Entry,
     _normalize_title,
@@ -10,6 +12,90 @@ from newsbot.feeds import (
     looks_telegram_important,
     looks_urgent,
 )
+
+
+class TestIsTechText:
+    def test_tech_keyword_matches(self):
+        from newsbot.config import is_tech_text
+
+        assert is_tech_text("OpenAI releases a new ChatGPT model")
+        assert is_tech_text("Ransomware attack hits hospital")
+        assert is_tech_text("Cambodia startup raises Series A funding")
+
+    def test_general_news_does_not_match(self):
+        from newsbot.config import is_tech_text
+
+        assert not is_tech_text("Football team wins the championship")
+        assert not is_tech_text("Local weather forecast for the weekend")
+        assert not is_tech_text("")
+
+    def _feed_entries(self, *items):
+        from types import SimpleNamespace
+
+        out = []
+        for item in items:
+            fields = dict(item)
+            fields["get"] = lambda key, default=None, _f=dict(fields): _f.get(key, default)
+            out.append(SimpleNamespace(**fields))
+        return out
+
+    def test_collect_new_entries_filters_non_tech_when_tech_only(self, monkeypatch):
+        from types import SimpleNamespace
+
+        import newsbot.feeds as feeds_mod
+
+        monkeypatch.setattr(feeds_mod, "TECH_ONLY", True)
+
+        tech = {
+            "id": "t1",
+            "link": "http://a.com/t1",
+            "title": "AI chip startup raises funding",
+            "summary": "machine learning hardware",
+        }
+        general = {
+            "id": "g1",
+            "link": "http://a.com/g1",
+            "title": "City council approves budget",
+            "summary": "local municipal spending plan",
+        }
+        raw = SimpleNamespace(
+            feed={"title": "Test Feed"},
+            entries=self._feed_entries(tech, general),
+            bozo=False,
+        )
+
+        monkeypatch.setattr(feeds_mod, "_fetch_feed", lambda url: raw)
+        monkeypatch.setattr(feeds_mod, "RSS_FEEDS", ["http://a.com/feed"])
+        monkeypatch.setattr(feeds_mod.random, "sample", lambda seq, k: list(seq))
+
+        entries = feeds_mod.collect_new_entries(set())
+        assert [e.title for e in entries] == ["AI chip startup raises funding"]
+
+    def test_collect_new_entries_keeps_all_when_tech_only_disabled(self, monkeypatch):
+        from types import SimpleNamespace
+
+        import newsbot.feeds as feeds_mod
+
+        monkeypatch.setattr(feeds_mod, "TECH_ONLY", False)
+
+        general = {
+            "id": "g1",
+            "link": "http://a.com/g1",
+            "title": "City council approves budget",
+            "summary": "local municipal spending plan",
+        }
+        raw = SimpleNamespace(
+            feed={"title": "Test Feed"},
+            entries=self._feed_entries(general),
+            bozo=False,
+        )
+
+        monkeypatch.setattr(feeds_mod, "_fetch_feed", lambda url: raw)
+        monkeypatch.setattr(feeds_mod, "RSS_FEEDS", ["http://a.com/feed"])
+        monkeypatch.setattr(feeds_mod.random, "sample", lambda seq, k: list(seq))
+
+        entries = feeds_mod.collect_new_entries(set())
+        assert [e.title for e in entries] == ["City council approves budget"]
 
 
 class TestNormalizeTitle:

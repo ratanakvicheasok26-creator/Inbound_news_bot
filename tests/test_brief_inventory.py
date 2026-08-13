@@ -179,6 +179,79 @@ def test_load_returns_empty_without_supabase(monkeypatch):
     assert load_site_brief_stories(briefed_ids=set()) == []
 
 
+def test_fetch_story_rows_filters_to_tech_categories_when_tech_only(monkeypatch):
+    from newsbot import brief_inventory
+
+    calls: list[str] = []
+
+    class _Query:
+        def select(self, *_a, **_k):
+            return self
+
+        def gte(self, *_a, **_k):
+            return self
+
+        def in_(self, col, values):
+            calls.append(("in_", col, sorted(values)))
+            return self
+
+        def order(self, *_a, **_k):
+            return self
+
+        def limit(self, *_a, **_k):
+            return self
+
+        def execute(self):
+            return type("R", (), {"data": []})()
+
+    class _Client:
+        def table(self, name):
+            return _Query()
+
+    monkeypatch.setattr(brief_inventory, "TECH_ONLY", True)
+    brief_inventory._fetch_story_rows(_Client(), datetime(2026, 8, 12, tzinfo=TZ), 10)
+    assert calls, "expected category filter to be applied"
+    col, values = calls[0][1], calls[0][2]
+    assert col == "category"
+    assert "ai" in values
+    assert "cybersecurity" in values
+    assert all(v in brief_inventory.NEWS_CATEGORIES_SET for v in values)
+
+
+def test_fetch_story_rows_skips_category_filter_when_tech_only_disabled(monkeypatch):
+    from newsbot import brief_inventory
+
+    applied = []
+
+    class _Query:
+        def select(self, *_a, **_k):
+            return self
+
+        def gte(self, *_a, **_k):
+            return self
+
+        def in_(self, col, values):
+            applied.append((col, values))
+            return self
+
+        def order(self, *_a, **_k):
+            return self
+
+        def limit(self, *_a, **_k):
+            return self
+
+        def execute(self):
+            return type("R", (), {"data": []})()
+
+    class _Client:
+        def table(self, name):
+            return _Query()
+
+    monkeypatch.setattr(brief_inventory, "TECH_ONLY", False)
+    brief_inventory._fetch_story_rows(_Client(), datetime(2026, 8, 12, tzinfo=TZ), 10)
+    assert applied == []
+
+
 def test_mirror_payload_includes_clusters_from_site_story():
     story = SiteBriefStory(
         story_id="s1",
