@@ -193,13 +193,16 @@ def load_site_brief_stories(
     briefed_ids: set[str],
     now: datetime | None = None,
     hours: tuple[int, ...] | None = None,
+    window_seconds: int | None = None,
     tz: ZoneInfo | None = None,
     limit: int = _STORY_FETCH_LIMIT,
     client: Any | None = None,
 ) -> list[SiteBriefStory]:
     """Fetch unbriefed Supabase stories since the previous Brief slot.
 
-    Returns [] when Supabase is unset, errors, or the window is empty.
+    ``window_seconds`` overrides the slot-based window with a rolling window
+    (used by the continuous news poll). Returns [] when Supabase is unset,
+    errors, or the window is empty.
     """
     if client is None and not supabase_ready():
         logger.warning(
@@ -210,7 +213,10 @@ def load_site_brief_stories(
 
     zone = tz or _DEFAULT_TZ
     when = now or datetime.now(zone)
-    since = previous_brief_slot_start(when, hours=hours, tz=zone)
+    if window_seconds is not None:
+        since = when - timedelta(seconds=window_seconds)
+    else:
+        since = previous_brief_slot_start(when, hours=hours, tz=zone)
 
     try:
         sb = client

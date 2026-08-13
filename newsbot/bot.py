@@ -32,11 +32,11 @@ from newsbot.brief_inventory import SiteBriefStory, load_site_brief_stories
 from newsbot.config import (
     BATCH_MAX_STORIES,
     BATCH_STORIES,
-    BRIEF_SCHEDULE_HOURS,
     DIGEST_HEADER_TEXT,
     DIGEST_MAX_STORIES,
     MAX_URGENT_POSTS_PER_RUN,
     NEWS_LANGUAGE,
+    POLL_INTERVAL_SECONDS,
     PREPARE_ENTRIES_TIMEOUT_SECONDS,
     TELEGRAM_CHANNEL_ID,
     TELEGRAM_THREAD_ID,
@@ -771,7 +771,7 @@ async def _run_batched_pipeline(context: ContextTypes.DEFAULT_TYPE) -> int:
                 asyncio.to_thread(
                     load_site_brief_stories,
                     briefed_ids=briefed_ids,
-                    hours=BRIEF_SCHEDULE_HOURS,
+                    window_seconds=POLL_INTERVAL_SECONDS,
                     tz=TIMEZONE,
                 ),
                 timeout=PREPARE_ENTRIES_TIMEOUT_SECONDS,

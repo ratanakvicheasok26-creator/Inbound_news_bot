@@ -1,13 +1,14 @@
 """Telegram Tech News Bot - v4
 
 Fetches tech RSS headlines from multiple trusted sources, clusters related
-stories, rewrites them with AI into a fixed Telegram format, and posts
-multi-story Daily Briefs on a fixed schedule, with urgent stories checked
+stories, rewrites them with AI into a fixed Telegram format, and posts a
+multi-story Brief whenever new stories appear, with urgent stories checked
 separately and posted anytime.
 
 Schedule:
-  - Daily Brief batches: BRIEF_SCHEDULE_HOURS (default 6am, 12pm, 6pm, 10pm)
-    on the English channel (up to 6 summaries); Khmer mirrors via Redis
+  - Continuous news poll: every POLL_INTERVAL_SECONDS (default 30 min) the
+    batched Brief pipeline posts whatever is new since the last run on the
+    English channel (up to 6 summaries); Khmer mirrors via Redis
   - Urgent keyword check: every URGENT_CHECK_INTERVAL_SECONDS, posts immediately
   - Use /fetch for on-demand individual digests (subject to cooldown)
 
@@ -45,7 +46,6 @@ from newsbot.bot import (
 )
 from newsbot.brief_cta import raise_if_legacy_brief_cta, warn_legacy_brief_cta_env
 from newsbot.config import (
-    BRIEF_SCHEDULE_HOURS,
     DONATION_QR_IMAGE,
     DONATION_SCHEDULE_DAYS,
     DONATION_SCHEDULE_HOUR,
@@ -54,6 +54,8 @@ from newsbot.config import (
     FETCH_GLOBAL_COOLDOWN_SECONDS,
     INSTANCE_LOCK_HEARTBEAT_SECONDS,
     MAX_SUBSCRIBERS,
+    NEWS_LANGUAGE,
+    POLL_INTERVAL_SECONDS,
     TIMEZONE,
     URGENT_CHECK_INTERVAL_SECONDS,
     URGENT_FIRST_DELAY_SECONDS,
@@ -145,10 +147,10 @@ async def donation_job(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def brief_job(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Multi-story Daily Brief at BRIEF_SCHEDULE_HOURS (Phnom Penh).
+    """Continuous news poll: post a multi-story Brief whenever new stories appear.
 
-    English bot builds a batched digest (up to BATCH_MAX_STORIES) and mirrors
-    it to Redis. Khmer bot is a no-op here — it receives the batch via
+    Runs on the English bot every POLL_INTERVAL_SECONDS and mirrors the batch to
+    Redis. Khmer bot is a no-op here — it receives the batch via
     mirror_drain_job. If there is nothing new, skip silently (no CTA card).
     """
     if config.NEWS_LANGUAGE == "km":
@@ -340,9 +342,9 @@ def deploy_commit_sha(environ: dict[str, str] | None = None) -> str:
 
 
 def schedule_language_jobs(job_queue: object, *, news_language: str) -> list[str]:
-    """Register language-specific recurring/daily jobs. Returns job names registered.
+    """Register language-specific recurring jobs. Returns job names registered.
 
-    EN: urgent ASAP, mirror outbox flush, and Daily Brief slots.
+    EN: urgent ASAP, mirror outbox flush, and continuous news poll.
     KM: mirror_drain only (Brief batches arrive via Redis — never schedule brief_job).
     """
     names: list[str] = []
@@ -376,16 +378,17 @@ def schedule_language_jobs(job_queue: object, *, news_language: str) -> list[str
             name="mirror_outbox_flush",
         )
         names.append("mirror_outbox_flush")
-        # Daily Brief slots — EN only. KM must never register brief_* jobs
-        # (old builds used those slots to post the Khmer CTA card).
-        for hour in BRIEF_SCHEDULE_HOURS:
-            name = f"brief_{hour:02d}"
-            job_queue.run_daily(  # type: ignore[attr-defined]
-                brief_job,
-                time=dt.time(hour=hour, minute=0, tzinfo=TIMEZONE),
-                name=name,
-            )
-            names.append(name)
+        # Continuous news posting — EN only. Every POLL_INTERVAL_SECONDS the
+        # batched brief pipeline posts whatever is new since the last run and
+        # mirrors it to Redis for the Khmer bot. Skips silently when nothing
+        # is new. KM must never register poll/brief jobs (it drains instead).
+        job_queue.run_repeating(  # type: ignore[attr-defined]
+            brief_job,
+            interval=POLL_INTERVAL_SECONDS,
+            first=POLL_INTERVAL_SECONDS,
+            name="news_poll",
+        )
+        names.append("news_poll")
     return names
 
 
@@ -426,9 +429,9 @@ def main() -> None:
         name="instance_lock_heartbeat",
     )
 
-    # Urgent ASAP + Brief on English only. Khmer mirror mode skips its own feed
-    # pipeline — it re-posts everything the English bot publishes via mirror_drain.
-    # Hourly individual trickle is disabled so stories accumulate for Brief batches.
+    # Urgent ASAP + continuous news poll on English only. Khmer mirror mode
+    # skips its own feed pipeline — it re-posts everything the English bot
+    # publishes via mirror_drain.
     is_km = config.NEWS_LANGUAGE == "km"
     schedule_language_jobs(app.job_queue, news_language=config.NEWS_LANGUAGE)
     # Both EN and KM deployments schedule donation — each posts to its own channel.
@@ -438,36 +441,33 @@ def main() -> None:
         days=DONATION_SCHEDULE_DAYS,  # Saturday
         name="donation",
     )
-    brief_hours_label = ", ".join(f"{h:02d}:00" for h in BRIEF_SCHEDULE_HOURS)
     redis_configured = bool(os.environ.get("REDIS_URL", "").strip())
     commit_sha = deploy_commit_sha()
     # Canary: proves this build has no Brief CTA fallback (removed on main).
     assert not hasattr(__import__("news_bot"), "_send_brief_cta")
     logger.info(
-        "brief_mode=multi_story_only deploy_sha=%s NEWS_LANGUAGE=%s "
-        "BRIEF_SCHEDULE_HOURS=%s redis_configured=%s timezone=%s",
+        "brief_mode=continuous deploy_sha=%s NEWS_LANGUAGE=%s "
+        "poll_interval=%ds redis_configured=%s timezone=%s",
         commit_sha,
         config.NEWS_LANGUAGE,
-        brief_hours_label,
+        POLL_INTERVAL_SECONDS,
         redis_configured,
         TIMEZONE,
     )
 
     if is_km:
         logger.info(
-            "Bot running in Khmer mirror mode. Brief batches mirror EN at %s (%s); "
-            "no local brief_job scheduled. Donation Sat at %02d:00.",
-            brief_hours_label,
+            "Bot running in Khmer mirror mode — re-posts every English bot "
+            "publication as it appears (%s). Donation Sat at %02d:00.",
             TIMEZONE,
             DONATION_SCHEDULE_HOUR,
         )
     else:
         logger.info(
-            "Bot running. Multi-story Briefs at %s (%s). "
+            "Bot running. Posts new news every %ds (as it appears). "
             "ASAP urgent checks every %ds. Donation Sat at %02d:00. "
             "/fetch for manual individual digest.",
-            brief_hours_label,
-            TIMEZONE,
+            POLL_INTERVAL_SECONDS,
             URGENT_CHECK_INTERVAL_SECONDS,
             DONATION_SCHEDULE_HOUR,
         )

@@ -298,21 +298,23 @@ class TestScheduleLanguageJobs:
         job_queue.run_daily.assert_not_called()
         assert not any(n.startswith("brief_") for n in names)
 
-    def test_en_registers_brief_jobs(self):
-        from news_bot import BRIEF_SCHEDULE_HOURS, schedule_language_jobs
+    def test_en_registers_continuous_poll(self):
+        from news_bot import POLL_INTERVAL_SECONDS, schedule_language_jobs
 
         job_queue = MagicMock()
         names = schedule_language_jobs(job_queue, news_language="en")
 
-        expected_briefs = [f"brief_{h:02d}" for h in BRIEF_SCHEDULE_HOURS]
         assert "urgent_check" in names
         assert "mirror_outbox_flush" in names
-        for brief_name in expected_briefs:
-            assert brief_name in names
-        daily_names = [
-            c.kwargs["name"] for c in job_queue.run_daily.call_args_list
+        assert "news_poll" in names
+        poll_calls = [
+            c for c in job_queue.run_repeating.call_args_list
+            if c.kwargs["name"] == "news_poll"
         ]
-        assert daily_names == expected_briefs
+        assert len(poll_calls) == 1
+        assert poll_calls[0].kwargs["interval"] == POLL_INTERVAL_SECONDS
+        job_queue.run_daily.assert_not_called()
+        assert not any(n.startswith("brief_") for n in names)
 
 
 class TestLegacyBriefCtaEnv:

@@ -45,6 +45,7 @@ __all__ = [
     "DIGEST_HEADER_TEXT",
     "URGENT_CHECK_INTERVAL_SECONDS",
     "URGENT_FIRST_DELAY_SECONDS",
+    "POLL_INTERVAL_SECONDS",
     "MAX_URGENT_POSTS_PER_RUN",
     "URGENT_KEYWORDS",
     "IMPORTANT_KEYWORDS",
@@ -269,6 +270,10 @@ WEBSITE_BASE_URL: str = (
 )
 URGENT_CHECK_INTERVAL_SECONDS: int = 60 * 30  # every 30 minutes
 URGENT_FIRST_DELAY_SECONDS: int = 60
+
+# How often the EN bot polls feeds and posts any new stories (continuous
+# news posting). Mirrored to Khmer automatically. Skips silently when empty.
+POLL_INTERVAL_SECONDS: int = _env_int("POLL_INTERVAL_SECONDS", 60 * 30)  # 30 min
 
 # ---- Rate limiting / abuse control ----
 MAX_URGENT_POSTS_PER_RUN: int = 2

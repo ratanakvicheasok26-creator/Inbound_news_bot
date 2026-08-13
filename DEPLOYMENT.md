@@ -111,7 +111,7 @@ Redeploy/restart after rotating.
 - `GOOGLE_GEMINI_API_KEY`, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`
 
 **Scheduling / tuning** (optional — defaults in `newsbot/config.py`)
-- `POLL_INTERVAL_SECONDS`, `DIGEST_SCHEDULE_HOUR_AM` / `DIGEST_SCHEDULE_HOUR_PM`
+- `POLL_INTERVAL_SECONDS` (default 1800 = posts new news every 30 min), `URGENT_CHECK_INTERVAL_SECONDS`
 - `BOT_MAX_FEEDS`, `MAX_ITEMS_PER_FEED`, `MAX_ENTRY_AGE_HOURS`, `FEED_TIMEOUT_SECONDS`
 - `CLUSTER_SIMILARITY_THRESHOLD`, `PREPARE_ENTRIES_TIMEOUT_SECONDS`, `AI_HTTP_TIMEOUT_SECONDS`
 - `SPAM_FILTER_ENABLED`, `DONATION_TEXT`, `DIGEST_HEADER_TEXT`, …
@@ -124,7 +124,7 @@ Redeploy/restart after rotating.
 1. [railway.app](https://railway.app) → **New Project → Deploy from GitHub** → `sothunly-alt/Inbound_news_bot`
 2. Prefer Procfile worker; else set start command to `python news_bot.py`
 3. Add Variables (at least `TELEGRAM_BOT_TOKEN`, `GROQ_API_KEY`)
-4. Deploy; logs should mention the 5 AM / 5 PM Phnom Penh digest schedule
+4. Deploy; logs should mention the continuous news poll
 5. Test `/fetch` on Telegram
 
 ## Option B: Render
