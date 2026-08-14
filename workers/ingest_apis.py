@@ -78,7 +78,7 @@ from workers.mastodon import fetch_all_mastodon
 from workers.openlibrary import fetch_all_openlibrary
 from workers.stackexchange import fetch_all_stackexchange
 from workers.whats_trending import fetch_all_whats_trending
-from workers.jina import extract_content as _jina_extract_content
+from workers.jina import extract_batch as _jina_extract_batch
 
 # --- Optional sources (graceful skip if no API key) ---
 try:
@@ -159,6 +159,11 @@ def _backfill_thin_summaries(articles: list[dict[str, Any]]) -> int:
     quality pipeline. Capped via JINA_BACKFILL_LIMIT (default 30) since Jina
     fetches full pages and can be slow; only worth it for a bounded batch.
 
+    Fetches concurrently (JINA_BACKFILL_CONCURRENCY, default 5) via
+    workers.jina.extract_batch — sequential single-URL fetches measured
+    ~4 minutes for 30 articles in production; concurrent fetching cuts
+    that to roughly the slowest individual request instead of the sum.
+
     Returns the number of summaries backfilled.
     """
     try:
@@ -168,18 +173,36 @@ def _backfill_thin_summaries(articles: list[dict[str, Any]]) -> int:
     if limit <= 0:
         return 0
 
-    backfilled = 0
+    try:
+        concurrency = int(os.environ.get("JINA_BACKFILL_CONCURRENCY", "5"))
+    except ValueError:
+        concurrency = 5
+
+    candidates: list[dict[str, Any]] = []
     for article in articles:
-        if backfilled >= limit:
+        if len(candidates) >= limit:
             break
         summary = article.get("summary", "") or ""
         url = article.get("url", "")
-        if len(summary) >= 50 or not url:
-            continue
-        try:
-            result = _jina_extract_content(url)
-        except Exception:
-            logger.exception("Jina backfill failed for %s", url)
+        if len(summary) < 50 and url:
+            candidates.append(article)
+
+    if not candidates:
+        return 0
+
+    urls = [a["url"] for a in candidates]
+    try:
+        results = _jina_extract_batch(urls, max_concurrent=concurrency)
+    except Exception:
+        logger.exception("Jina batch backfill failed")
+        return 0
+
+    by_url = {r.get("url"): r for r in results if r.get("url")}
+
+    backfilled = 0
+    for article in candidates:
+        result = by_url.get(article["url"])
+        if not result:
             continue
         content = result.get("description") or result.get("content", "")
         if content and len(content) >= 50:
