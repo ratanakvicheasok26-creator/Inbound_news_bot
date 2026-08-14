@@ -291,7 +291,16 @@ async def broadcast_stories(
     targets: dict[int, int | None] = {}
     channel_id, thread_id_for_channel = _resolve_channel_target()
     if channel_id is not None:
-        targets[channel_id] = group_threads.get(channel_id, thread_id_for_channel)
+        # Env-configured TELEGRAM_THREAD_ID always wins for the primary channel.
+        # Auto-learned group_threads (from /start in a topic) is only a fallback
+        # for when no thread is explicitly configured — otherwise a stray /start
+        # in the wrong topic silently hijacks routing forever (see incident:
+        # group_threads auto-learn overriding configured thread IDs).
+        targets[channel_id] = (
+            thread_id_for_channel
+            if thread_id_for_channel is not None
+            else group_threads.get(channel_id)
+        )
 
     for chat_id in state.load_subscribers():
         chat_id = int(chat_id)
