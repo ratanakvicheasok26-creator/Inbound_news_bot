@@ -55,7 +55,7 @@ export function LegalPageLayout({
         <div className="lg:hidden mb-8">
           <button
             onClick={() => setMobileTocOpen(!mobileTocOpen)}
-            className="w-full flex items-center justify-between border border-[var(--border)] rounded-lg px-4 py-3 bg-[var(--surface)] text-sm font-medium text-[var(--text-primary)] hover:border-[var(--text-secondary)] transition-colors"
+            className="w-full flex items-center justify-between border border-[var(--border)] rounded-[var(--radius)] px-4 py-3 bg-[var(--surface)] text-sm font-medium text-[var(--text-primary)] hover:border-[var(--text-secondary)] transition-colors"
           >
             <span className="flex items-center gap-2">
               <Menu className="h-4 w-4" />
@@ -64,7 +64,7 @@ export function LegalPageLayout({
             <ChevronDown className={`h-4 w-4 transition-transform ${mobileTocOpen ? "rotate-180" : ""}`} />
           </button>
           {mobileTocOpen && (
-            <nav className="mt-2 border border-[var(--border)] rounded-lg bg-[var(--surface)] overflow-hidden">
+            <nav className="mt-2 border border-[var(--border)] rounded-[var(--radius)] bg-[var(--surface)] overflow-hidden">
               {sections.map((s) => (
                 <a
                   key={s.id}

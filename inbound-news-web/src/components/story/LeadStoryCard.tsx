@@ -13,14 +13,14 @@ export function LeadStoryCard({ story }: { story: Story }) {
   return (
     <article className="animate-[riseIn_400ms_ease-out]">
       <div className="grid gap-6 md:grid-cols-[1.2fr_1fr] md:gap-8 lg:grid-cols-[1.35fr_1fr] lg:gap-12 lg:items-center">
-        <div className="relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface-alt)] shadow-[0_1px_2px_rgba(18,20,26,0.05),0_12px_32px_-20px_rgba(18,20,26,0.3)]">
+        <div className="relative overflow-hidden rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-alt)]">
           <StoryImage
             imageUrl={story.image_url}
             pageUrl={story.primary_url}
             alt={story.title}
             variant="lead"
             priority
-            className="rounded-none transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+            className="rounded-none"
           />
         </div>
 

@@ -22,7 +22,7 @@ type Step = "qr" | "done"
 /**
  * QR-code payment dialog for a single membership plan. The price is derived
  * from the plan metadata and can't be edited. After paying by QR, the user taps
- * "I've paid" and immediately sees the verification-pending message. A site
+ * I've paid and immediately sees the verification-pending message. A site
  * admin verifies the payment in their bank app and approves it on /admin/qr
  * before the membership activates.
  */
@@ -75,30 +75,35 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[400] bg-[rgba(0,0,0,0.5)] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[400] bg-[rgba(0,0,0,0.5)] flex items-end sm:items-center justify-center p-0 sm:p-4"
+      style={{ paddingBottom: "var(--mobile-nav-offset)" }}
       onClick={close}
       role="dialog"
       aria-modal="true"
       aria-label={`Pay for ${meta.name} plan`}
     >
       <div
-        className="w-full max-w-[440px] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6 md:p-8 text-center shadow-[0_24px_64px_-24px_rgba(0,0,0,0.4)] max-h-[92vh] overflow-y-auto"
-        style={{ animation: "riseIn 220ms ease-out" }}
+        className="w-full sm:max-w-[440px] bg-[var(--surface)] border border-[var(--border)] sm:rounded-[var(--radius)] rounded-t-[var(--radius)] p-6 md:p-8 text-left shadow-[0_24px_64px_-24px_rgba(0,0,0,0.4)] overflow-y-auto"
+        style={{
+          animation: "riseIn 220ms ease-out",
+          maxHeight: "calc(100dvh - var(--mobile-nav-offset) - 24px)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-1 text-left">
-          <h2 className="font-display text-[18px] font-semibold">{meta.name} Plan</h2>
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="min-w-0">
+            <h2 className="font-display text-[18px] font-semibold leading-tight">{meta.name} Plan</h2>
+            <p className="text-[28px] font-semibold leading-none mt-2">{price}</p>
+          </div>
           <button
             type="button"
             onClick={close}
-            className="w-9 h-9 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
+            className="w-9 h-9 shrink-0 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
             aria-label="Close payment dialog"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
-
-        <p className="text-[28px] font-semibold leading-none mb-6">{price}</p>
 
         {step === "qr" && (
           <>
@@ -122,15 +127,17 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
               />
             </a>
 
-            <p className="text-[14px] text-[var(--text-secondary)] mb-1">
-              Scan with any KHQR-compatible app
-            </p>
-            <p className="text-[13px] text-[var(--text-secondary)]">
-              ABA Bank · Inbound Crew
-            </p>
-            <p className="text-[13px] text-[var(--text-secondary)] mt-2">
-              Pay <span className="font-semibold text-[var(--text-primary)]">exactly ${meta.price.toFixed(2)}</span>
-            </p>
+            <div className="text-center">
+              <p className="text-[14px] text-[var(--text-secondary)] mb-1">
+                Scan with any KHQR-compatible app
+              </p>
+              <p className="text-[13px] text-[var(--text-secondary)]">
+                ABA Bank · Inbound Crew
+              </p>
+              <p className="text-[13px] text-[var(--text-secondary)] mt-2">
+                Pay <span className="font-semibold text-[var(--text-primary)]">exactly ${meta.price.toFixed(2)}</span>
+              </p>
+            </div>
 
             {error && (
               <p
@@ -147,7 +154,7 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
               disabled={busy}
               className="btn-primary w-full h-11 mt-5 disabled:opacity-50"
             >
-              {busy ? "Confirming…" : "Verification"}
+              {busy ? "Confirming…" : "I've paid"}
             </button>
           </>
         )}
@@ -158,11 +165,11 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
               <ShieldCheck className="h-7 w-7 text-[var(--accent)]" />
             </div>
 
-            <div className="text-[12px] font-semibold uppercase tracking-wide text-[var(--accent)] mb-3">
+            <div className="text-center text-[12px] font-semibold uppercase tracking-wide text-[var(--accent)] mb-3">
               Payment received — verification pending
             </div>
 
-            <p className="text-[14px] text-[var(--text-secondary)] mb-2 max-w-[52ch] mx-auto">
+            <p className="text-center text-[14px] text-[var(--text-secondary)] mb-2 max-w-[52ch] mx-auto">
               Your payment of{" "}
               <span className="font-semibold text-[var(--text-primary)]">
                 ${meta.price.toFixed(2)}
@@ -184,7 +191,7 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
               </ul>
             </div>
 
-            <p className="text-[13px] text-[var(--text-secondary)] mb-5 max-w-[52ch] mx-auto">
+            <p className="text-center text-[13px] text-[var(--text-secondary)] mb-5 max-w-[52ch] mx-auto">
               No email? Check back any time — approval typically takes a few hours.
             </p>
             <div className="flex items-center gap-2">

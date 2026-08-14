@@ -53,7 +53,7 @@ export function PricingCards() {
 
   return (
     <div>
-      <div className="grid gap-6 md:grid-cols-3 items-stretch">
+      <div className="grid gap-6 lg:grid-cols-3 items-stretch">
         {/* Free */}
         <div className="flex flex-col bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6">
           <h3 className="font-display text-[18px] font-semibold mb-1">Free</h3>
@@ -76,7 +76,7 @@ export function PricingCards() {
               <button
                 type="button"
                 disabled
-                className="w-full btn-primary text-[14px] h-10 disabled:opacity-50"
+                className="w-full btn-primary text-[14px] disabled:opacity-50"
               >
                 Free confirmed
               </button>
@@ -84,7 +84,7 @@ export function PricingCards() {
               <button
                 type="button"
                 disabled
-                className="w-full btn-ghost text-[14px] h-10 disabled:opacity-50"
+                className="w-full btn-ghost text-[14px] disabled:opacity-50"
               >
                 Current plan
               </button>
@@ -92,7 +92,7 @@ export function PricingCards() {
               <button
                 type="button"
                 onClick={() => setFreeChosen(true)}
-                className="w-full btn-ghost text-[14px] h-10"
+                className="w-full btn-ghost text-[14px]"
               >
                 Choose Free
               </button>
@@ -137,13 +137,13 @@ export function PricingCards() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-auto">
+              <div className="mt-auto space-y-2">
                 {current ? (
                   <button
                     type="button"
                     onClick={handlePortal}
                     disabled={busy !== null}
-                    className="w-full btn-ghost text-[14px] h-10"
+                    className="w-full btn-ghost text-[14px]"
                   >
                     Manage billing
                   </button>
@@ -152,22 +152,32 @@ export function PricingCards() {
                     type="button"
                     onClick={() => handleSubscribe(plan)}
                     disabled={busy !== null}
-                    className={`w-full text-[14px] h-10 ${
+                    className={`w-full text-[14px] ${
                       idx === 0 ? "btn-primary" : "btn-ghost"
                     } disabled:opacity-60`}
                   >
                     {busy === plan ? "Opening checkout…" : "Switch plan"}
                   </button>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => setQrPlan(plan)}
-                    className={`w-full text-[14px] h-10 ${
-                      idx === 0 ? "btn-primary" : "btn-ghost"
-                    }`}
-                  >
-                    Choose {meta.name}
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setQrPlan(plan)}
+                      className={`w-full text-[14px] ${
+                        idx === 0 ? "btn-primary" : "btn-ghost"
+                      }`}
+                    >
+                      Pay by QR — {meta.name}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSubscribe(plan)}
+                      disabled={busy !== null}
+                      className="w-full text-[13px] font-semibold text-[var(--text-secondary)] hover:text-[var(--accent)] disabled:opacity-60"
+                    >
+                      {busy === plan ? "Opening checkout…" : "Pay with card"}
+                    </button>
+                  </>
                 )}
               </div>
             </div>

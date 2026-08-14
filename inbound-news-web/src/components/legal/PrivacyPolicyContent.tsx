@@ -46,9 +46,9 @@ interface CardItemProps {
 
 function CardItem({ icon, title, children }: CardItemProps) {
   return (
-    <div className="group border border-[var(--border)] rounded-xl p-5 md:p-6 bg-[var(--surface)] transition-all duration-200 hover:shadow-lg hover:border-[var(--text-secondary)] hover:-translate-y-0.5">
+    <div className="group border border-[var(--border)] rounded-[var(--radius)] p-5 md:p-6 bg-[var(--surface)] transition-all duration-200 hover:shadow-lg hover:border-[var(--text-secondary)] hover:-translate-y-0.5">
       <div className="flex items-start gap-4">
-        <div className="shrink-0 w-10 h-10 rounded-lg bg-[var(--surface-alt)] flex items-center justify-center text-[var(--accent)] group-hover:bg-[var(--accent)] group-hover:text-white transition-colors duration-200">
+        <div className="shrink-0 w-10 h-10 rounded-[var(--radius)] bg-[var(--surface-alt)] flex items-center justify-center text-[var(--accent)] group-hover:bg-[var(--accent)] group-hover:text-[var(--accent-contrast)] transition-colors duration-200">
           {icon}
         </div>
         <div className="min-w-0">
@@ -111,7 +111,7 @@ export function PrivacyPolicyContent() {
         <div className="lg:hidden mb-8">
           <button
             onClick={() => setMobileTocOpen(!mobileTocOpen)}
-            className="w-full flex items-center justify-between border border-[var(--border)] rounded-lg px-4 py-3 bg-[var(--surface)] text-sm font-medium text-[var(--text-primary)] hover:border-[var(--text-secondary)] transition-colors"
+            className="w-full flex items-center justify-between border border-[var(--border)] rounded-[var(--radius)] px-4 py-3 bg-[var(--surface)] text-sm font-medium text-[var(--text-primary)] hover:border-[var(--text-secondary)] transition-colors"
           >
             <span className="flex items-center gap-2">
               <Menu className="h-4 w-4" />
@@ -120,7 +120,7 @@ export function PrivacyPolicyContent() {
             <ChevronDown className={`h-4 w-4 transition-transform ${mobileTocOpen ? "rotate-180" : ""}`} />
           </button>
           {mobileTocOpen && (
-            <nav className="mt-2 border border-[var(--border)] rounded-lg bg-[var(--surface)] overflow-hidden">
+            <nav className="mt-2 border border-[var(--border)] rounded-[var(--radius)] bg-[var(--surface)] overflow-hidden">
               {SECTIONS.map((s) => (
                 <a
                   key={s.id}
@@ -384,9 +384,9 @@ export function PrivacyPolicyContent() {
                 <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--text-primary)] border-b border-[var(--text-primary)] pb-2 mt-2 mb-6">
                   11. Contact
                 </h2>
-                <div className="p-5 md:p-6 border border-[var(--border)] rounded-xl bg-[var(--surface)]">
+                <div className="p-5 md:p-6 border border-[var(--border)] rounded-[var(--radius)] bg-[var(--surface)]">
                   <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-[var(--surface-alt)] flex items-center justify-center text-[var(--accent)] shrink-0">
+                    <div className="w-10 h-10 rounded-[var(--radius)] bg-[var(--surface-alt)] flex items-center justify-center text-[var(--accent)] shrink-0">
                       <Mail className="h-5 w-5" />
                     </div>
                     <div>

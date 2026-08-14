@@ -53,11 +53,11 @@ export function MobileBottomNav() {
         <button
           type="button"
           onClick={openTopicsDrawer}
-          aria-label="Open topics"
+          aria-label="Open menu"
           className="flex flex-col items-center justify-center gap-0.5 w-full h-full transition-colors text-[var(--text-secondary)]"
         >
           <LayoutGrid className="h-4 w-4" />
-          <span className="text-[10px] font-semibold uppercase tracking-wide">Topics</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide">Menu</span>
         </button>
       </div>
     </nav>

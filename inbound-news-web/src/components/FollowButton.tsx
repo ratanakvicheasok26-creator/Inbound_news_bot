@@ -36,7 +36,7 @@ export function FollowButton({
       onClick={handleClick}
       className={`inline-flex h-9 items-center gap-1.5 px-3 text-[13px] font-medium rounded-[var(--radius-sm)] border transition-colors ${
         followed
-          ? "border-[var(--accent)] bg-[var(--accent)] text-white"
+          ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]"
           : "border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] hover:border-[var(--text-secondary)]"
       }`}
       aria-pressed={followed}

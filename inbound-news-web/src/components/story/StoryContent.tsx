@@ -199,15 +199,15 @@ export function StoryContent({
           className="mb-6 rounded-[var(--radius)]"
         />
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4 mb-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="meta-text text-[var(--accent)]">{categoryLabel}</span>
-            <span className="meta-text">
-              {story.source_count} source{story.source_count !== 1 ? "s" : ""}
-            </span>
-            <span className="meta-text">{formatDistanceToNow(story.created_at)}</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col gap-3 mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="meta-text text-[var(--accent)]">{categoryLabel}</span>
+              <span className="meta-text">
+                {story.source_count} source{story.source_count !== 1 ? "s" : ""}
+              </span>
+              <span className="meta-text">{formatDistanceToNow(story.created_at)}</span>
+            </div>
             <button
               type="button"
               onClick={() => setSaved(toggleSavedStory(story.id))}
@@ -221,10 +221,12 @@ export function StoryContent({
               {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
               {saved ? "Saved" : "Save"}
             </button>
-            {showTierToggle && (
-              <ReadingTierToggle active={activeTier} onChange={handleTierChange} />
-            )}
           </div>
+          {showTierToggle && (
+            <div className="w-full sm:w-auto sm:self-end">
+              <ReadingTierToggle active={activeTier} onChange={handleTierChange} />
+            </div>
+          )}
         </div>
 
         <h1 className="font-display text-[clamp(28px,4.5vw,44px)] font-semibold leading-[1.12] tracking-[-0.025em]">

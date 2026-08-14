@@ -16,14 +16,14 @@ export function StoryCard({ story }: { story: Story }) {
   const categoryLabel = getCategoryLabel(story.category || "") || "News"
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[0_1px_2px_rgba(18,20,26,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--text-secondary)] hover:shadow-[0_16px_40px_-16px_rgba(18,20,26,0.22)]">
+    <article className="group flex h-full flex-col overflow-hidden rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] transition-colors duration-200 hover:border-[var(--text-secondary)]">
       <Link href={`/story/${story.id}`} className="block shrink-0">
         <StoryImage
           imageUrl={story.image_url}
           pageUrl={story.primary_url}
           alt={story.title}
           variant="card"
-          className="rounded-none transition-transform duration-500 ease-out group-hover:scale-[1.05]"
+          className="rounded-none"
         />
       </Link>
 

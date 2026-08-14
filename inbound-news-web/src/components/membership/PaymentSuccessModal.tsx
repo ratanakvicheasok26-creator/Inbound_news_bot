@@ -37,25 +37,29 @@ export function PaymentSuccessModal({ plan, onClose }: PaymentSuccessModalProps)
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[400] bg-[rgba(0,0,0,0.5)] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[400] bg-[rgba(0,0,0,0.5)] flex items-end sm:items-center justify-center p-0 sm:p-4"
+      style={{ paddingBottom: "var(--mobile-nav-offset)" }}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={`${meta.name} membership confirmed`}
     >
       <div
-        className="w-full max-w-[440px] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6 md:p-8 text-center shadow-[0_24px_64px_-24px_rgba(0,0,0,0.4)] max-h-[92vh] overflow-y-auto"
-        style={{ animation: "riseIn 220ms ease-out" }}
+        className="w-full sm:max-w-[440px] bg-[var(--surface)] border border-[var(--border)] sm:rounded-[var(--radius)] rounded-t-[var(--radius)] p-6 md:p-8 text-center shadow-[0_24px_64px_-24px_rgba(0,0,0,0.4)] overflow-y-auto"
+        style={{
+          animation: "riseIn 220ms ease-out",
+          maxHeight: "calc(100dvh - var(--mobile-nav-offset) - 24px)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-2 text-left">
           <span className="text-[12px] font-semibold uppercase tracking-wide text-[var(--accent)]">
             Payment verified
           </span>
           <button
             type="button"
             onClick={onClose}
-            className="w-9 h-9 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
+            className="w-9 h-9 shrink-0 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
             aria-label="Close confirmation"
           >
             <X className="h-5 w-5" />

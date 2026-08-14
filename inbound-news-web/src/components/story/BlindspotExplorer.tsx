@@ -84,7 +84,7 @@ export function BlindspotExplorer({
               onClick={() => setLens(chip.id)}
               className={`h-9 px-3 text-[12px] font-medium rounded-[var(--radius-sm)] border transition-colors ${
                 lens === chip.id
-                  ? "border-[var(--accent)] bg-[var(--accent)] text-white"
+                  ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]"
                   : "border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:border-[var(--text-secondary)]"
               }`}
             >

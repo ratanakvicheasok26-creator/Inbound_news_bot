@@ -156,16 +156,15 @@ export function LiveSearch() {
       <button
         type="button"
         onClick={openSearch}
-        className="inline-flex btn-ghost"
+        className="header-icon-btn"
         aria-label="Search"
         aria-expanded={open}
       >
         <Search className="h-4 w-4" />
-        <span className="hidden xl:inline">Search</span>
       </button>
 
       {open && (
-        <div className="fixed inset-x-0 top-[var(--header-height,64px)] z-[120] bg-[var(--bg)] border-b border-[var(--border)] shadow-md">
+        <div className="fixed inset-x-0 top-[var(--header-h)] z-[120] bg-[var(--bg)] border-b border-[var(--border)] shadow-md">
           <form
             onSubmit={(e) => {
               e.preventDefault()
@@ -176,7 +175,7 @@ export function LiveSearch() {
                 router.push(`/search?q=${encodeURIComponent(term)}`)
               }
             }}
-            className="max-w-[960px] mx-auto px-4 md:px-10 py-4"
+            className="max-w-[var(--container-max)] mx-auto px-4 md:px-6 py-4"
           >
             <div className="flex items-center border border-[var(--text-primary)]">
               <span className="flex items-center justify-center w-[40px] h-[40px] border-r border-[var(--text-primary)] text-[var(--text-secondary)]">
@@ -216,7 +215,7 @@ export function LiveSearch() {
           </form>
 
           {total > 0 ? (
-            <div className="max-w-[960px] mx-auto px-4 md:px-10 pb-4 max-h-[60vh] overflow-y-auto">
+            <div className="max-w-[var(--container-max)] mx-auto px-4 md:px-6 pb-4 max-h-[60vh] overflow-y-auto">
               {stories.length > 0 && (
                 <div className="mb-1">
                   <p className="meta-text px-1 py-1.5 text-[10px] uppercase tracking-[0.08em]">
@@ -297,7 +296,7 @@ export function LiveSearch() {
               </div>
             </div>
           ) : query.trim().length >= MIN_QUERY && !loading ? (
-            <div className="max-w-[960px] mx-auto px-4 md:px-10 pb-4">
+            <div className="max-w-[var(--container-max)] mx-auto px-4 md:px-6 pb-4">
               <p className="px-2 py-2 text-[13px] text-[var(--text-secondary)]">
                 No matches yet — press Enter to search all fields.
               </p>
@@ -305,7 +304,7 @@ export function LiveSearch() {
           ) : null}
 
           {!query.trim() && (
-            <p className="max-w-[960px] mx-auto px-4 md:px-10 pb-4 font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">
+            <p className="max-w-[var(--container-max)] mx-auto px-4 md:px-6 pb-4 font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--text-secondary)]">
               Type 2+ characters &middot; Enter for full results &middot; Esc to close
             </p>
           )}

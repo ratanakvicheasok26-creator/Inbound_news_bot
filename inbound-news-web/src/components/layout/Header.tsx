@@ -8,7 +8,7 @@ import { createPortal } from "react-dom"
 import { CATEGORIES } from "@/lib/categories"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { LiveSearch } from "@/components/layout/LiveSearch"
-import { Menu, X, ChevronDown, Search } from "lucide-react"
+import { Menu, X, ChevronDown, Search, UserRound } from "lucide-react"
 import { supabase, signOut } from "@/lib/auth"
 import type { User } from "@supabase/supabase-js"
 
@@ -26,10 +26,12 @@ export function Header() {
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [topicsOpen, setTopicsOpen] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [mounted, setMounted] = useState(false)
   const topicsRef = useRef<HTMLDivElement>(null)
+  const accountRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const closeBtnRef = useRef<HTMLButtonElement>(null)
 
@@ -52,6 +54,9 @@ export function Header() {
       if (topicsRef.current && !topicsRef.current.contains(e.target as Node)) {
         setTopicsOpen(false)
       }
+      if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
+        setAccountOpen(false)
+      }
     }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
@@ -61,12 +66,14 @@ export function Header() {
   useEffect(() => {
     setMobileOpen(false)
     setTopicsOpen(false)
+    setAccountOpen(false)
   }, [pathname])
   /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     function onOpenFromBottomNav() {
       setTopicsOpen(false)
+      setAccountOpen(false)
       setMobileOpen(true)
     }
     window.addEventListener("inbound:open-mobile-menu", onOpenFromBottomNav)
@@ -87,7 +94,6 @@ export function Header() {
     const prev = document.body.style.overflow
     document.body.style.overflow = "hidden"
 
-    // Focus close button (not search) — autofocusing search opens the keyboard and breaks iOS drawers
     const t = setTimeout(() => closeBtnRef.current?.focus(), 50)
 
     function onKey(e: KeyboardEvent) {
@@ -118,6 +124,7 @@ export function Header() {
 
   function openMobileMenu() {
     setTopicsOpen(false)
+    setAccountOpen(false)
     setMobileOpen(true)
   }
 
@@ -172,43 +179,56 @@ export function Header() {
               </div>
             </form>
 
-            <nav className="px-3 pb-4" aria-label="Mobile">
-              <Link
-                href="/search"
-                onClick={closeMobileMenu}
-                className="block px-3 py-3.5 text-[15px] font-medium border-b border-[var(--border)] text-[var(--text-primary)]"
-              >
-                Search
-              </Link>
-              <Link
-                href={user ? "/account" : "/login"}
-                onClick={closeMobileMenu}
-                className="block px-3 py-3.5 text-[15px] font-medium border-b border-[var(--border)] text-[var(--text-primary)]"
-              >
-                {user ? "Account" : "Sign in"}
-              </Link>
-              {!user && (
+            <div className="px-5 pb-4">
+              {user ? (
                 <Link
-                  href="/signup"
+                  href="/account"
                   onClick={closeMobileMenu}
+                  className="btn-ghost w-full h-11"
+                >
+                  Account
+                </Link>
+              ) : (
+                <div className="border border-[var(--border)] rounded-[var(--radius-sm)] overflow-hidden">
+                  <p className="px-3 py-2 meta-text border-b border-[var(--border)] bg-[var(--surface-alt)]">
+                    Account
+                  </p>
+                  <Link
+                    href="/login"
+                    onClick={closeMobileMenu}
+                    className="block px-3 py-3 text-[15px] font-medium text-[var(--text-primary)] border-b border-[var(--border)]"
+                  >
+                    Sign in
+                  </Link>
+                  <Link
+                    href="/signup"
+                    onClick={closeMobileMenu}
+                    className="block px-3 py-3 text-[15px] font-semibold text-[var(--accent)]"
+                  >
+                    Create account
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            <nav className="px-3 pb-4" aria-label="Mobile">
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={closeMobileMenu}
+                  aria-current={pathname === link.href ? "page" : undefined}
                   className="block px-3 py-3.5 text-[15px] font-medium border-b border-[var(--border)] text-[var(--text-primary)]"
                 >
-                  Create account
+                  {link.label}
                 </Link>
-              )}
+              ))}
               <Link
                 href="/donate"
                 onClick={closeMobileMenu}
                 className="block px-3 py-3.5 text-[15px] font-medium border-b border-[var(--border)] text-[var(--text-primary)]"
               >
                 Donation
-              </Link>
-              <Link
-                href="/pricing"
-                onClick={closeMobileMenu}
-                className="block px-3 py-3.5 text-[15px] font-medium border-b border-[var(--border)] text-[var(--text-primary)]"
-              >
-                Membership
               </Link>
             </nav>
 
@@ -249,7 +269,7 @@ export function Header() {
     <>
       <header className="site-header">
         <div className="site-header-inner">
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="site-header-brand">
             <button
               type="button"
               className="hamburger-btn"
@@ -304,7 +324,7 @@ export function Header() {
                 <ChevronDown className={`h-3.5 w-3.5 transition-transform ${topicsOpen ? "rotate-180" : ""}`} />
               </button>
               {topicsOpen && (
-                <div className="absolute top-full left-0 mt-1 w-[320px] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] shadow-md z-50 p-2 grid grid-cols-2 gap-0.5">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[320px] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] shadow-md z-50 p-2 grid grid-cols-2 gap-0.5">
                   {CATEGORIES.map((cat) => (
                     <Link
                       key={cat.slug}
@@ -320,33 +340,73 @@ export function Header() {
             </div>
           </nav>
 
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <div className="site-header-actions">
             <LiveSearch />
             <ThemeToggle />
-            {user ? (
-              <>
+            <div className="relative hidden sm:block" ref={accountRef}>
+              {user ? (
                 <Link
                   href="/account"
-                  className="btn-ghost hidden sm:inline-flex"
+                  className="btn-ghost"
                   aria-label="Account"
                 >
-                  {(user.email?.[0] || "A").toUpperCase()}
+                  <UserRound className="h-4 w-4" />
+                  Account
                 </Link>
-                <button type="button" onClick={handleSignOut} className="btn-ghost hidden md:inline-flex">
-                  Sign out
-                </button>
-              </>
-            ) : (
-              <>
-                <Link href="/login" className="btn-ghost hidden sm:inline-flex">
-                  Sign in
-                </Link>
-                <Link href="/signup" className="btn-primary hidden md:inline-flex">
-                  Create Account
-                </Link>
-              </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTopicsOpen(false)
+                      setAccountOpen((o) => !o)
+                    }}
+                    aria-expanded={accountOpen}
+                    aria-haspopup="menu"
+                    className="btn-ghost inline-flex items-center gap-1"
+                  >
+                    <UserRound className="h-4 w-4" />
+                    Account
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 transition-transform ${accountOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                  {accountOpen && (
+                    <div
+                      role="menu"
+                      className="absolute top-full right-0 mt-1 w-[200px] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] shadow-md z-50 p-1"
+                    >
+                      <Link
+                        href="/login"
+                        role="menuitem"
+                        onClick={() => setAccountOpen(false)}
+                        className="block px-3 py-2.5 text-[13px] font-medium rounded-[var(--radius-sm)] text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
+                      >
+                        Sign in
+                      </Link>
+                      <Link
+                        href="/signup"
+                        role="menuitem"
+                        onClick={() => setAccountOpen(false)}
+                        className="block px-3 py-2.5 text-[13px] font-semibold rounded-[var(--radius-sm)] text-[var(--accent)] hover:bg-[var(--red-subtle-bg)]"
+                      >
+                        Create account
+                      </Link>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            {user && (
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="btn-ghost hidden lg:inline-flex"
+              >
+                Sign out
+              </button>
             )}
-            <Link href="/donate" className="btn-primary hidden lg:inline-flex">
+            <Link href="/donate" className="btn-outline hidden lg:inline-flex">
               Donation
             </Link>
           </div>

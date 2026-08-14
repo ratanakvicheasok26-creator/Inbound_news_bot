@@ -177,13 +177,19 @@ export default function AccountPage() {
         <PaymentSuccessModal plan={paidModal} onClose={() => setPaidModal(null)} />
       )}
 
-      <div className="tier-toggle tier-toggle--full mb-8 max-w-md">
+      <div
+        className="account-tabs mb-8"
+        role="tablist"
+        aria-label="Account sections"
+      >
         {tabs.map((tab) => (
           <button
             key={tab.id}
             type="button"
+            role="tab"
+            aria-selected={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 ${activeTab === tab.id ? "active" : ""}`}
+            className={`account-tab ${activeTab === tab.id ? "active" : ""}`}
           >
             {tab.label}
           </button>

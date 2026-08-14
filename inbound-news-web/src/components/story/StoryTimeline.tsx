@@ -104,17 +104,19 @@ export function StoryTimeline({ nodes }: { nodes: TimelineNode[] }) {
       <div className="section-header">
         <h2 className="section-title">Story timeline</h2>
       </div>
-      <div className="relative bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] px-4 py-5">
-        <div className="absolute top-[26px] left-6 right-6 h-px bg-[var(--border)]" />
-        <div className="relative flex justify-between gap-2 overflow-x-auto">
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] px-4 py-5 overflow-x-auto">
+        <div className="relative flex justify-between gap-4 min-w-0">
+          <div
+            className="absolute top-[5px] left-0 right-0 h-px bg-[var(--border)] pointer-events-none"
+            aria-hidden="true"
+          />
           {nodes.map((node, i) => (
             <div
               key={`${node.label}-${i}`}
-              className="flex flex-col items-center text-center min-w-[110px] shrink-0"
-              style={{ width: `${100 / nodes.length}%` }}
+              className="relative z-[1] flex flex-1 flex-col items-center text-center min-w-[100px]"
             >
               <div
-                className="w-3 h-3 rounded-full border-2 mb-3 relative z-10 bg-[var(--surface)]"
+                className="w-3 h-3 rounded-full border-2 mb-3 bg-[var(--surface)]"
                 style={{
                   borderColor: phaseColors[node.phase],
                   backgroundColor: i === 0 ? phaseColors[node.phase] : "var(--surface)",

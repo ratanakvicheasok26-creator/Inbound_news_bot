@@ -36,7 +36,7 @@ export function PremiumLock({ teaser }: { teaser?: string | null }) {
   }
 
   return (
-    <div className="border border-[var(--border)] rounded-[var(--radius)] bg-[var(--surface)] p-6 sm:p-8">
+    <div>
       <div className="flex items-center gap-2 mb-3">
         <Lock className="h-4 w-4 text-[var(--accent)]" />
         <span className="meta-text font-semibold text-[var(--accent)]">Pro members only</span>
@@ -58,22 +58,26 @@ export function PremiumLock({ teaser }: { teaser?: string | null }) {
         <button
           type="button"
           onClick={() => setQrOpen(true)}
-          className="btn-primary text-[14px] h-10 px-5"
+          className="btn-primary text-[14px] px-5"
         >
           Pay by QR — $7.99/mo
         </button>
+        <Link href="/pricing" className="btn-ghost text-[14px] px-5">
+          View plans
+        </Link>
+      </div>
+
+      <p className="mt-3 text-[13px] text-[var(--text-secondary)]">
+        Prefer card?{" "}
         <button
           type="button"
           onClick={handleJoin}
           disabled={busy}
-          className="btn-ghost text-[14px] h-10 px-5 disabled:opacity-60"
+          className="font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)] disabled:opacity-60"
         >
-          {busy ? "Opening checkout…" : "Pay by card"}
+          {busy ? "Opening checkout…" : "Pay with Stripe"}
         </button>
-        <Link href="/pricing" className="btn-ghost text-[14px] h-10 px-5">
-          View plans
-        </Link>
-      </div>
+      </p>
 
       {error && (
         <p

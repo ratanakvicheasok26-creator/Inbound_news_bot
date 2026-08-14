@@ -10,7 +10,7 @@ export const metadata = {
 
 export default function PricingPage() {
   return (
-    <div className="container container-sm py-10 md:py-14">
+    <div className="container py-10 md:py-14">
       <h1 className="page-title mb-3">Membership</h1>
       <p className="text-[16px] text-[var(--text-secondary)] leading-[1.7] mb-8 max-w-[65ch]">
         Inbound Reports clusters technology coverage so you can read one clear breakdown
@@ -25,10 +25,10 @@ export default function PricingPage() {
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6">
           <h2 className="font-display text-[16px] font-semibold mb-3">Good to know</h2>
           <ul className="space-y-2 text-[14px] text-[var(--text-secondary)]">
-            <li>• Cancel anytime from Stripe’s billing portal — no emails needed.</li>
-            <li>• Payments are handled securely by Stripe. We never see your card.</li>
+            <li>• Pay by KHQR, then tap I’ve paid — we confirm in the bank app and unlock access.</li>
+            <li>• Prefer card? Use Pay with card on a plan — Stripe handles checkout; we never see your card.</li>
             <li>• Already a member? Sign in to read premium stories instantly.</li>
-            <li>• Discounts for students and teams are on the roadmap.</li>
+            <li>• Cancel anytime from your account billing portal.</li>
           </ul>
         </div>
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6">

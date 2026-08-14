@@ -102,7 +102,7 @@ export function MembershipTab() {
                 You’re on the free plan. Premium stories are for Pro and Premium members.
               </p>
             </div>
-            <Link href="/pricing" className="btn-primary text-[14px] h-10 px-5">
+            <Link href="/pricing" className="btn-primary text-[14px] px-5">
               See plans
             </Link>
           </div>
@@ -112,7 +112,7 @@ export function MembershipTab() {
           <ul className="space-y-1.5 text-[14px] text-[var(--text-secondary)]">
             <li>• Full access to premium stories, right when they’re published.</li>
             <li>• Funds independent coverage and the Telegram digest from Phnom Penh.</li>
-            <li>• Cancel anytime from the billing portal.</li>
+            <li>• Cancel anytime from your account — QR plans end at period close; card plans use the billing portal.</li>
           </ul>
         </div>
 
@@ -150,7 +150,7 @@ export function MembershipTab() {
             type="button"
             onClick={handlePortal}
             disabled={busy}
-            className="btn-ghost text-[14px] h-10 px-5 disabled:opacity-60"
+            className="btn-ghost text-[14px] px-5 disabled:opacity-60"
           >
             {busy ? "Opening…" : "Manage billing"}
           </button>
@@ -226,11 +226,11 @@ function QrSubmissionsSection({
       <div className="mt-6 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6">
         <h3 className="font-display text-[16px] font-semibold mb-2">QR payments</h3>
         <p className="text-[14px] text-[var(--text-secondary)]">
-          Paid by QR? Tap “I&apos;ve paid” on{" "}
+          Paid by QR? Tap I’ve paid on{" "}
           <Link href="/pricing" className="font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)]">
             the pricing page
           </Link>{" "}
-          and it will show up here for verification.
+          after you pay — it will show up here until we approve it.
         </p>
       </div>
     )
