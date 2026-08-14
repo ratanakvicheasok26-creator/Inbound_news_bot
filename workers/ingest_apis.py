@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import sys
 import time
 from typing import Any
@@ -77,6 +78,7 @@ from workers.mastodon import fetch_all_mastodon
 from workers.openlibrary import fetch_all_openlibrary
 from workers.stackexchange import fetch_all_stackexchange
 from workers.whats_trending import fetch_all_whats_trending
+from workers.jina import extract_content as _jina_extract_content
 
 # --- Optional sources (graceful skip if no API key) ---
 try:
@@ -146,6 +148,45 @@ def _upsert_articles(articles: list[dict[str, Any]]) -> int:
             logger.exception("Failed to upsert batch %d–%d", i, i + batch_size)
 
     return inserted
+
+
+def _backfill_thin_summaries(articles: list[dict[str, Any]]) -> int:
+    """Use Jina Reader to fetch real content for articles whose source gave a
+    too-thin summary (<50 chars) to pass ai_rewrite.rewrite_batch's threshold.
+
+    Without this, those articles ship with an empty/near-empty summary and
+    never get an AI rewrite pass at all — they're silently dropped from the
+    quality pipeline. Capped via JINA_BACKFILL_LIMIT (default 30) since Jina
+    fetches full pages and can be slow; only worth it for a bounded batch.
+
+    Returns the number of summaries backfilled.
+    """
+    try:
+        limit = int(os.environ.get("JINA_BACKFILL_LIMIT", "30"))
+    except ValueError:
+        limit = 30
+    if limit <= 0:
+        return 0
+
+    backfilled = 0
+    for article in articles:
+        if backfilled >= limit:
+            break
+        summary = article.get("summary", "") or ""
+        url = article.get("url", "")
+        if len(summary) >= 50 or not url:
+            continue
+        try:
+            result = _jina_extract_content(url)
+        except Exception:
+            logger.exception("Jina backfill failed for %s", url)
+            continue
+        content = result.get("description") or result.get("content", "")
+        if content and len(content) >= 50:
+            article["summary"] = content
+            backfilled += 1
+
+    return backfilled
 
 
 def run() -> None:
@@ -361,6 +402,16 @@ def run() -> None:
             unique_articles.append(a)
 
     logger.info("Total unique articles: %d (from %d sources)", len(unique_articles), len(all_sources))
+
+    # --- Backfill thin summaries via Jina Reader before AI rewrite ---
+    # (rewrite_batch skips anything under 50 chars — this gives those
+    # articles a real shot instead of shipping with an empty summary)
+    try:
+        n_backfilled = _backfill_thin_summaries(unique_articles)
+        if n_backfilled:
+            logger.info("Jina: backfilled %d thin summaries", n_backfilled)
+    except Exception:
+        logger.exception("Jina backfill step failed — continuing without it")
 
     # --- AI rewrite summaries (optional, skips if GROQ_API_KEY not set) ---
     try:
