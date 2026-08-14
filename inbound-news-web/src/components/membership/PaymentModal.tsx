@@ -147,7 +147,7 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
               disabled={busy}
               className="btn-primary w-full h-11 mt-5 disabled:opacity-50"
             >
-              {busy ? "Confirming…" : "I&apos;ve paid"}
+              {busy ? "Confirming…" : "Verification"}
             </button>
           </>
         )}
