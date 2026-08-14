@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 import os
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -99,7 +99,7 @@ def fetch_newsdata(
         if pub_date:
             try:
                 published_at = datetime.strptime(pub_date, "%Y-%m-%d %H:%M:%S").replace(
-                    tzinfo=timezone.utc
+                    tzinfo=UTC
                 )
             except (ValueError, TypeError):
                 pass

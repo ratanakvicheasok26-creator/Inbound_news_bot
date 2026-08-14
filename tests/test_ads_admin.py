@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from newsbot.ads_admin import _PIPE_SPLIT, _DEFAULT_PLACEMENTS
+from newsbot.ads_admin import _DEFAULT_PLACEMENTS, _PIPE_SPLIT
 
 
 def test_pipe_split_fields():

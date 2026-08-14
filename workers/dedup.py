@@ -24,11 +24,12 @@ import time
 from typing import Any
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 from workers.categories import is_site_slug, normalize_category
 from workers.db import get_supabase
-from workers.images import extract_image_url, fetch_og_image, is_valid_image_url
+from workers.images import extract_image_url, fetch_og_image
 
 logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",

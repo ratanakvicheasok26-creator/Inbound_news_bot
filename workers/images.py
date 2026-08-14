@@ -16,13 +16,13 @@ logger = logging.getLogger(__name__)
 _OG_IMAGE_RE = re.compile(
     r'<meta\s+[^>]*(?:property|name)=["\']og:image["\'][^>]*content=["\']([^"\']+)["\']'
     r"|<meta\s+[^>]*content=[\"']([^\"']+)[\"'][^>]*(?:property|name)=[\"']og:image[\"']",
-    re.I,
+    re.IGNORECASE,
 )
 
 _TWITTER_IMAGE_RE = re.compile(
     r'<meta\s+[^>]*(?:property|name)=["\']twitter:image["\'][^>]*content=["\']([^"\']+)["\']'
     r"|<meta\s+[^>]*content=[\"']([^\"']+)[\"'][^>]*(?:property|name)=[\"']twitter:image[\"']",
-    re.I,
+    re.IGNORECASE,
 )
 
 _MAX_REDIRECTS = 4

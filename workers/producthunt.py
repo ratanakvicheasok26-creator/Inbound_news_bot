@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -122,7 +122,7 @@ def fetch_top_products() -> list[dict[str, Any]]:
             "source_name": "Product Hunt",
             "source_domain": "producthunt.com",
             "summary": " | ".join(summary_parts),
-            "published_at": published_at or datetime.now(timezone.utc).isoformat(),
+            "published_at": published_at or datetime.now(UTC).isoformat(),
             "language": "en",
             "category": "startups",
             "raw_json": node,

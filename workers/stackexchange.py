@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -90,7 +90,7 @@ def fetch_trending_questions(
         creation_date = item.get("creation_date")
         if creation_date:
             try:
-                published_at = datetime.fromtimestamp(creation_date, tz=timezone.utc).isoformat()
+                published_at = datetime.fromtimestamp(creation_date, tz=UTC).isoformat()
             except (ValueError, TypeError, OSError):
                 pass
 

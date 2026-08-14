@@ -18,7 +18,7 @@ def reload_config(monkeypatch):
             else:
                 monkeypatch.setenv(key, value)
         import newsbot.config as cfg
-        import newsbot.feeds as feeds
+        from newsbot import feeds
 
         cfg = importlib.reload(cfg)
         importlib.reload(feeds)
@@ -27,7 +27,7 @@ def reload_config(monkeypatch):
     yield _reload
     monkeypatch.setenv("NEWS_LANGUAGE", "en")
     import newsbot.config as cfg
-    import newsbot.feeds as feeds
+    from newsbot import feeds
 
     importlib.reload(cfg)
     importlib.reload(feeds)

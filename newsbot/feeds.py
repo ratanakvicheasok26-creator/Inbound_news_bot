@@ -12,13 +12,11 @@ import threading
 import time
 from calendar import timegm
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import feedparser
 import httpx
-
-from workers.images import is_valid_image_url, resolves_to_private
 
 from newsbot.config import (
     CLUSTER_SIMILARITY_THRESHOLD,
@@ -39,15 +37,16 @@ from newsbot.config import (
     URGENT_KEYWORDS,
     is_tech_text,
 )
+from workers.images import is_valid_image_url, resolves_to_private
 
 __all__ = [
     "Entry",
-    "extract_image_url",
-    "normalize_title_key",
-    "collect_new_entries",
     "cluster_entries",
-    "looks_urgent",
+    "collect_new_entries",
+    "extract_image_url",
     "looks_telegram_important",
+    "looks_urgent",
+    "normalize_title_key",
 ]
 
 logger = logging.getLogger(__name__)
@@ -112,7 +111,7 @@ def _format_entry_date(raw_entry: Any) -> str | None:
     if parsed is None:
         return None
     try:
-        dt = datetime.fromtimestamp(timegm(parsed), tz=timezone.utc)
+        dt = datetime.fromtimestamp(timegm(parsed), tz=UTC)
         return dt.strftime("%b %d, %Y")
     except (TypeError, ValueError):
         return None

@@ -7,6 +7,7 @@ Usage:
 """
 
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv(".env.en")
@@ -51,10 +52,10 @@ else:
 # Set the correct mapping
 r.hset(key, str(CHANNEL_ID), str(THREAD_ID))
 print(f"\n✅ Fixed: group_threads[{CHANNEL_ID}] = {THREAD_ID}")
-print("The English bot will now send to the News topic (thread #{}).".format(THREAD_ID))
+print(f"The English bot will now send to the News topic (thread #{THREAD_ID}).")
 
 # Verify
 updated = r.hgetall(key)
-print(f"\nUpdated group_threads:")
+print("\nUpdated group_threads:")
 for k, v in updated.items():
     print(f"  chat_id={k}  thread_id={v}")

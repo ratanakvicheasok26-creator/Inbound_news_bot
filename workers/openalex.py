@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -116,7 +116,7 @@ def fetch_openalex_works(
         published_at = None
         if pub_date:
             try:
-                published_at = datetime.fromisoformat(pub_date).replace(tzinfo=timezone.utc).isoformat()
+                published_at = datetime.fromisoformat(pub_date).replace(tzinfo=UTC).isoformat()
             except (ValueError, TypeError):
                 pass
 

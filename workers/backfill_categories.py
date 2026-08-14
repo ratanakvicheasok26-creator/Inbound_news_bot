@@ -25,6 +25,7 @@ import logging
 import sys
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 from workers.categories import SITE_SLUGS, normalize_category

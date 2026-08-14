@@ -7,9 +7,9 @@ import pytest
 
 from newsbot.bot import (
     StoryPost,
+    _prepare_entries,
     _rank_clusters,
     _source_keyboard,
-    _prepare_entries,
     broadcast_stories,
 )
 from newsbot.config import DIGEST_MAX_STORIES

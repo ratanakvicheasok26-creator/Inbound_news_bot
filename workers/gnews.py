@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 import os
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -107,7 +107,7 @@ def fetch_search(
             "source_name": f"GNews ({source_name})" if source_name else "GNews",
             "source_domain": _extract_domain(url),
             "summary": summary,
-            "published_at": published_at or datetime.now(timezone.utc).isoformat(),
+            "published_at": published_at or datetime.now(UTC).isoformat(),
             "language": lang,
             "category": "tech",
             "raw_json": item,
@@ -171,7 +171,7 @@ def fetch_top_headlines(
             "source_name": f"GNews ({source_name})" if source_name else "GNews",
             "source_domain": _extract_domain(url),
             "summary": f"{description[:300]}" if description else "",
-            "published_at": published_at or datetime.now(timezone.utc).isoformat(),
+            "published_at": published_at or datetime.now(UTC).isoformat(),
             "language": lang,
             "category": "tech",
             "raw_json": item,

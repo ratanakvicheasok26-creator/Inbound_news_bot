@@ -17,12 +17,10 @@ import concurrent.futures
 import html
 import json
 import logging
-import os
 import re
-import sys
 import time
 from calendar import timegm
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -31,10 +29,10 @@ import feedparser
 import httpx
 import yaml
 
+from newsbot.feeds import _MAX_FEED_BYTES, _MAX_FEED_REDIRECTS, _feed_url_allowed
 from workers.categories import normalize_category
 from workers.db import get_supabase
 from workers.images import extract_image_url, resolves_to_private
-from newsbot.feeds import _feed_url_allowed, _MAX_FEED_REDIRECTS, _MAX_FEED_BYTES
 
 logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -203,7 +201,7 @@ def _fetch_one(url: str) -> list[dict[str, Any]]:
                 age_hours = (time.time() - entry_ts) / 3600
                 if age_hours > _MAX_ENTRY_AGE_HOURS:
                     continue
-                dt = datetime.fromtimestamp(entry_ts, tz=timezone.utc)
+                dt = datetime.fromtimestamp(entry_ts, tz=UTC)
                 published_at = dt.isoformat()
             except (TypeError, ValueError):
                 pass

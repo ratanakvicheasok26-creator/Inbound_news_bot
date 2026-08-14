@@ -5,6 +5,7 @@ in a restart loop on Railway due to stale locks.
 """
 
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv(".env.km")

@@ -8,14 +8,16 @@ import logging
 import os
 import re
 import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Awaitable, Callable
+from typing import Any
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.error import BadRequest, Forbidden, NetworkError, RetryAfter, TimedOut
 from telegram.ext import ContextTypes
 
+from newsbot import config
 from newsbot.ai import (
     KhmerTranslationFailed,
     MirrorRewriteFailed,
@@ -28,7 +30,6 @@ from newsbot.ai import (
     translate_en_post_to_km,
     trim_for_caption,
 )
-from newsbot import config
 from newsbot.brief_cta import raise_if_legacy_brief_cta
 from newsbot.brief_inventory import SiteBriefStory, load_site_brief_stories
 from newsbot.config import (
@@ -51,7 +52,6 @@ from newsbot.feeds import (
     looks_urgent,
     normalize_title_key,
 )
-from workers.images import is_valid_image_url
 from newsbot.mirror import (
     build_batch_payload,
     build_story_payload,
@@ -63,13 +63,19 @@ from newsbot.mirror import (
     settle,
 )
 from newsbot.state import get_state
-from newsbot.website_links import brief_url, publish_cluster_story, reader_url, story_url
+from newsbot.website_links import (
+    brief_url,
+    publish_cluster_story,
+    reader_url,
+    story_url,
+)
+from workers.images import is_valid_image_url
 
 __all__ = [
-    "StoryPost",
     "BatchedStory",
-    "broadcast_stories",
+    "StoryPost",
     "broadcast_batched",
+    "broadcast_stories",
     "fetch_and_post",
     "fetch_individual_and_post",
     "fetch_urgent_and_post",
@@ -638,9 +644,7 @@ async def broadcast_batched(
                 if i == 0 and photo_msg is not None:
                     kwargs["reply_to_message_id"] = photo_msg.message_id
                 # Put the habit CTA on the first text segment when there is no photo button
-                if i == 0 and photo_msg is None:
-                    kwargs["reply_markup"] = brief_markup
-                elif i == len(segments) - 1 and photo_msg is not None:
+                if i == 0 and photo_msg is None or i == len(segments) - 1 and photo_msg is not None:
                     kwargs["reply_markup"] = brief_markup
                 await _tg_send(context.bot.send_message, **kwargs)
         else:
@@ -730,7 +734,7 @@ async def _run_pipeline(
                 asyncio.to_thread(_prepare_entries, urgent=urgent),
                 timeout=PREPARE_ENTRIES_TIMEOUT_SECONDS,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             label = "urgent" if urgent else "digest"
             logger.error(
                 "_prepare_entries timed out after %.0fs (%s run)",
@@ -787,7 +791,7 @@ async def _run_batched_pipeline(context: ContextTypes.DEFAULT_TYPE) -> int:
                 ),
                 timeout=PREPARE_ENTRIES_TIMEOUT_SECONDS,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error(
                 "Brief: Supabase inventory timed out after %.0fs — RSS fallback.",
                 PREPARE_ENTRIES_TIMEOUT_SECONDS,
@@ -849,7 +853,7 @@ async def _run_batched_pipeline(context: ContextTypes.DEFAULT_TYPE) -> int:
                     asyncio.to_thread(_cluster_to_story, cluster, urgent=False),
                     timeout=PREPARE_ENTRIES_TIMEOUT_SECONDS,
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.error(
                     "_cluster_to_story timed out after %.0fs (batched single-story)",
                     PREPARE_ENTRIES_TIMEOUT_SECONDS,
@@ -882,7 +886,7 @@ async def _run_batched_pipeline(context: ContextTypes.DEFAULT_TYPE) -> int:
                 asyncio.to_thread(_prepare_batched),
                 timeout=PREPARE_ENTRIES_TIMEOUT_SECONDS,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error(
                 "Batched compact rewrite timed out after %.0fs",
                 PREPARE_ENTRIES_TIMEOUT_SECONDS,

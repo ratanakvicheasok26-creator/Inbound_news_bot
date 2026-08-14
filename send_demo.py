@@ -18,7 +18,6 @@ from newsbot.config import (
     TELEGRAM_BOT_TOKEN,
     TELEGRAM_CHANNEL_ID,
     TELEGRAM_THREAD_ID,
-    TIMEZONE,
     validate_config,
 )
 

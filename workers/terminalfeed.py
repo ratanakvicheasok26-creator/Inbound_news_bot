@@ -8,7 +8,7 @@ earthquakes, and more.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -52,7 +52,7 @@ def _wrap(title: str, url: str, summary: str, category: str, raw: Any) -> dict[s
         "source_name": "TerminalFeed",
         "source_domain": "terminalfeed.io",
         "summary": summary[:500],
-        "published_at": datetime.now(timezone.utc).isoformat(),
+        "published_at": datetime.now(UTC).isoformat(),
         "language": "en",
         "category": category,
         "raw_json": raw,

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -87,7 +87,7 @@ def fetch_articles(
             "source_name": f"finlight ({source})" if source else "finlight",
             "source_domain": _extract_domain(url),
             "summary": " | ".join(summary_parts),
-            "published_at": published_at or datetime.now(timezone.utc).isoformat(),
+            "published_at": published_at or datetime.now(UTC).isoformat(),
             "language": "en",
             "category": "finance_news",
             "raw_json": item,

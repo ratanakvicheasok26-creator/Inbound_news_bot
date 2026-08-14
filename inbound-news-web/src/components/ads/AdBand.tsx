@@ -108,9 +108,11 @@ export function AdBand({
 
   const [index, setIndex] = useState(startIndex)
 
-  useEffect(() => {
+  const [prevStartIndex, setPrevStartIndex] = useState(startIndex)
+  if (prevStartIndex !== startIndex) {
+    setPrevStartIndex(startIndex)
     setIndex(startIndex)
-  }, [startIndex])
+  }
 
   useEffect(() => {
     if (pool.length < 2) return

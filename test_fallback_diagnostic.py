@@ -23,14 +23,14 @@ logger = logging.getLogger("diagnostic")
 # Ensure repo root is on path when run as a script
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from newsbot.ai import (  # noqa: E402
+from newsbot.ai import (
     _fallback_data,
     _guess_category,
     rewrite_compact,
     rewrite_with_ai,
 )
-from newsbot.feeds import Entry  # noqa: E402
-from shared.ai_router import AIRouter  # noqa: E402
+from newsbot.feeds import Entry
+from shared.ai_router import AIRouter
 
 
 def _make_entry(title, summary="Test summary", source="TestSource", **kw):

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -76,7 +76,7 @@ def search_books(
         author_names = doc.get("author_name", [])
         author_str = ", ".join(author_names[:3])
         if len(author_names) > 3:
-            author_str += f" et al."
+            author_str += " et al."
 
         # Get publication info
         first_publish = doc.get("first_publish_year", "")
@@ -115,7 +115,7 @@ def search_books(
         published_at = None
         if first_publish:
             try:
-                published_at = datetime(int(first_publish), 1, 1, tzinfo=timezone.utc).isoformat()
+                published_at = datetime(int(first_publish), 1, 1, tzinfo=UTC).isoformat()
             except (ValueError, TypeError):
                 pass
 

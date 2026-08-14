@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from urllib.parse import unquote, urlparse
 
@@ -49,7 +49,7 @@ def fetch_top_articles(
         List of dicts with standardized article schema.
     """
     if date is None:
-        yesterday = datetime.now(timezone.utc) - timedelta(days=1)
+        yesterday = datetime.now(UTC) - timedelta(days=1)
         date = yesterday.strftime("%Y/%m/%d")
 
     url = f"{_API_BASE}/pageviews/top/en.wikipedia/all-access/{date}"
@@ -107,7 +107,7 @@ def fetch_top_articles(
                 f"with {views:,} views (rank #{rank}). "
                 f"This may indicate an emerging news story."
             ),
-            "published_at": datetime.now(timezone.utc).isoformat(),
+            "published_at": datetime.now(UTC).isoformat(),
             "language": "en",
             "category": "science",
             "raw_json": item,
@@ -133,7 +133,7 @@ def fetch_pageviews_for_article(
         Single-element list with a standardized article dict containing
         the trend data in summary, or empty list on error.
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     start = (now - timedelta(days=min(days, 30))).strftime("%Y%m%d")
     end = now.strftime("%Y%m%d")
     article = article_title.replace(" ", "_")

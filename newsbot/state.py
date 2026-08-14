@@ -16,11 +16,11 @@ from abc import ABC, abstractmethod
 
 __all__ = [
     "StateBackend",
-    "get_state",
-    "reset_state",
     "acquire_instance_lock",
+    "get_state",
     "refresh_instance_lock",
     "release_instance_lock",
+    "reset_state",
 ]
 
 logger = logging.getLogger(__name__)

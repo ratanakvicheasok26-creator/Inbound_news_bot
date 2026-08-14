@@ -44,41 +44,41 @@ import json
 import logging
 import os
 import sys
-import time
 from typing import Any
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 from workers.ai_rewrite import rewrite_batch
+from workers.arxiv import fetch_all_arxiv
+from workers.crossref import fetch_all_crossref
+from workers.currents import fetch_all_currents
 from workers.db import get_supabase
-from workers.images import extract_image_url
+from workers.devto import fetch_all_devto
 
 # --- All source imports ---
 from workers.gdelt import fetch_all_gdelt
-from workers.newsdata import fetch_all_newsdata
-from workers.currents import fetch_all_currents
-from workers.lobsters import fetch_all_lobsters
-from workers.hackernews import fetch_all_hackernews
-from workers.arxiv import fetch_all_arxiv
-from workers.semantic_scholar import fetch_all_semantic_scholar
-from workers.openalex import fetch_all_openalex
+from workers.github_api import fetch_all_github_api
 from workers.github_trending import fetch_all_github_trending
+from workers.guardian import fetch_all_guardian
+from workers.hackernews import fetch_all_hackernews
 from workers.huggingface import fetch_all_huggingface
+from workers.images import extract_image_url
+from workers.jina import extract_batch as _jina_extract_batch
+from workers.lobsters import fetch_all_lobsters
+from workers.mastodon import fetch_all_mastodon
+from workers.newsdata import fetch_all_newsdata
 from workers.nvd import fetch_all_nvd
+from workers.openalex import fetch_all_openalex
+from workers.openlibrary import fetch_all_openlibrary
+from workers.semantic_scholar import fetch_all_semantic_scholar
+from workers.stackexchange import fetch_all_stackexchange
 from workers.terminalfeed import fetch_all_terminalfeed
+from workers.whats_trending import fetch_all_whats_trending
 
 # --- Free, no-key sources (previously built but never wired in) ---
 from workers.wikipedia import fetch_all_wikipedia
-from workers.github_api import fetch_all_github_api
-from workers.guardian import fetch_all_guardian
-from workers.crossref import fetch_all_crossref
-from workers.devto import fetch_all_devto
-from workers.mastodon import fetch_all_mastodon
-from workers.openlibrary import fetch_all_openlibrary
-from workers.stackexchange import fetch_all_stackexchange
-from workers.whats_trending import fetch_all_whats_trending
-from workers.jina import extract_batch as _jina_extract_batch
 
 # --- Optional sources (graceful skip if no API key) ---
 try:

@@ -7,7 +7,7 @@ and trending AI topics.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -82,7 +82,7 @@ def fetch_ai_news(limit: int = 20) -> list[dict[str, Any]]:
             "source_name": "WhatsTrending",
             "source_domain": _extract_domain(url) or "whatstrending.ai",
             "summary": summary,
-            "published_at": published_at or datetime.now(timezone.utc).isoformat(),
+            "published_at": published_at or datetime.now(UTC).isoformat(),
             "language": "en",
             "category": "ai",
             "raw_json": item,
@@ -131,7 +131,7 @@ def fetch_model_rankings() -> list[dict[str, Any]]:
             "source_name": "WhatsTrending",
             "source_domain": "whatstrending.ai",
             "summary": summary,
-            "published_at": datetime.now(timezone.utc).isoformat(),
+            "published_at": datetime.now(UTC).isoformat(),
             "language": "en",
             "category": "ai",
             "raw_json": item,

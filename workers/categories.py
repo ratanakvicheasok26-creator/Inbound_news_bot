@@ -18,8 +18,6 @@ by the bot but are copied here to keep the dependency one-way.
 
 from __future__ import annotations
 
-from typing import Any
-
 # Must stay in sync with inbound-news-web/src/lib/categories.ts.
 SITE_SLUGS: tuple[str, ...] = (
     "ai",

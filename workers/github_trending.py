@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from urllib.parse import urlparse
 
@@ -117,7 +117,7 @@ def _fetch_via_search(language: str = "", since: str = "weekly") -> list[dict[st
     # Calculate date threshold
     days_map = {"daily": 1, "weekly": 7, "monthly": 30}
     days = days_map.get(since, 7)
-    date_threshold = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d")
+    date_threshold = (datetime.now(UTC) - timedelta(days=days)).strftime("%Y-%m-%d")
 
     query_parts = [f"created:>{date_threshold}", "stars:>50"]
     if language:

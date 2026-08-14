@@ -66,7 +66,7 @@ class _FakeQuery:
 
 def test_fetch_unprocessed_paginates_linked_ids_and_filters(monkeypatch):
     """linked_ids must come from *all* story_sources pages, not a single limit."""
-    import workers.dedup as dedup
+    from workers import dedup
 
     monkeypatch.setattr(dedup, "_FETCH_PAGE_SIZE", 2)
 

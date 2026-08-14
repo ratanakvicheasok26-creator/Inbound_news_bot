@@ -1,7 +1,13 @@
 """Tests for Telegram → website link helpers."""
 
 from newsbot.feeds import Entry
-from newsbot.website_links import brief_url, reader_url, search_url, story_url, website_base_url
+from newsbot.website_links import (
+    brief_url,
+    reader_url,
+    search_url,
+    story_url,
+    website_base_url,
+)
 
 
 def test_website_base_default(monkeypatch):

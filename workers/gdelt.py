@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -115,7 +115,7 @@ def fetch_gdelt(
         if seendate:
             try:
                 published_at = datetime.strptime(seendate, "%Y%m%dT%H%M%SZ").replace(
-                    tzinfo=timezone.utc
+                    tzinfo=UTC
                 )
             except (ValueError, TypeError):
                 pass

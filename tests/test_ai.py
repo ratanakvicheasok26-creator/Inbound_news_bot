@@ -6,20 +6,19 @@ import pytest
 
 from newsbot.ai import (
     KhmerTranslationFailed,
-    _parse_ai_json,
-    _validate_ai_data,
     _fallback_data,
     _guess_category,
-    render_template,
-    trim_for_caption,
+    _parse_ai_json,
+    _validate_ai_data,
     collect_links,
     pick_image_url,
-    rewrite_with_ai,
+    render_template,
     rewrite_compact,
     rewrite_compact_khmer,
+    rewrite_with_ai,
+    trim_for_caption,
 )
 from newsbot.feeds import Entry
-
 
 # --- JSON Parsing ---
 

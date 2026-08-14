@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from urllib.parse import urlparse
 
@@ -95,7 +95,7 @@ def fetch_apod(
         if date_str:
             try:
                 published_at = datetime.strptime(date_str, "%Y-%m-%d").replace(
-                    tzinfo=timezone.utc
+                    tzinfo=UTC
                 ).isoformat()
             except ValueError:
                 pass
@@ -106,7 +106,7 @@ def fetch_apod(
             "source_name": "NASA APOD",
             "source_domain": "apod.nasa.gov",
             "summary": summary,
-            "published_at": published_at or datetime.now(timezone.utc).isoformat(),
+            "published_at": published_at or datetime.now(UTC).isoformat(),
             "language": "en",
             "category": "science",
             "raw_json": item,
@@ -119,8 +119,8 @@ def fetch_apod(
 def fetch_neows() -> list[dict[str, Any]]:
     """Fetch near-Earth objects approaching in the next 7 days."""
     api_key = _get_api_key()
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    end_date = (datetime.now(timezone.utc) + timedelta(days=7)).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
+    end_date = (datetime.now(UTC) + timedelta(days=7)).strftime("%Y-%m-%d")
 
     try:
         resp = httpx.get(
@@ -164,7 +164,7 @@ def fetch_neows() -> list[dict[str, Any]]:
                 "source_name": "NASA NeoWs",
                 "source_domain": "neo.jpl.nasa.gov",
                 "summary": summary,
-                "published_at": datetime.now(timezone.utc).isoformat(),
+                "published_at": datetime.now(UTC).isoformat(),
                 "language": "en",
                 "category": "science",
                 "raw_json": obj,
@@ -215,7 +215,7 @@ def fetch_epic(count: int = 5) -> list[dict[str, Any]]:
             "source_name": "NASA EPIC",
             "source_domain": "epic.gsfc.nasa.gov",
             "summary": f"{caption}. Coordinates: {lat:.2f}°N, {lon:.2f}°E" if lat and lon else caption,
-            "published_at": published_at or datetime.now(timezone.utc).isoformat(),
+            "published_at": published_at or datetime.now(UTC).isoformat(),
             "language": "en",
             "category": "science",
             "raw_json": item,

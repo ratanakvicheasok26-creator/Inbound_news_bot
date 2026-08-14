@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -36,11 +36,11 @@ def _format_date(date_parts: list | None) -> str | None:
     parts = date_parts[0]
     try:
         if len(parts) >= 3:
-            return datetime(parts[0], parts[1], parts[2], tzinfo=timezone.utc).isoformat()
+            return datetime(parts[0], parts[1], parts[2], tzinfo=UTC).isoformat()
         if len(parts) == 2:
-            return datetime(parts[0], parts[1], 1, tzinfo=timezone.utc).isoformat()
+            return datetime(parts[0], parts[1], 1, tzinfo=UTC).isoformat()
         if len(parts) == 1:
-            return datetime(parts[0], 1, 1, tzinfo=timezone.utc).isoformat()
+            return datetime(parts[0], 1, 1, tzinfo=UTC).isoformat()
     except (ValueError, TypeError):
         pass
     return None

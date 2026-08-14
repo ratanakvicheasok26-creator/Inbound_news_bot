@@ -1,6 +1,5 @@
 """Tests for feeds.py — normalization, clustering, urgency detection."""
 
-import pytest
 
 from newsbot.feeds import (
     Entry,
@@ -290,7 +289,11 @@ class TestLooksTelegramImportant:
 
 class TestSsrfGuards:
     def test_private_hosts_blocked(self):
-        from workers.images import _is_private_host, is_valid_image_url, resolves_to_private
+        from workers.images import (
+            _is_private_host,
+            is_valid_image_url,
+            resolves_to_private,
+        )
 
         assert _is_private_host("127.0.0.1")
         assert _is_private_host("10.1.2.3")

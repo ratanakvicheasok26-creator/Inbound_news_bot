@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -47,7 +47,7 @@ def fetch_recent_cves(
     headers = {"User-Agent": _USER_AGENT}
 
     # Calculate date range
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
     from datetime import timedelta
     start_date = start_date - timedelta(days=days_back)
@@ -133,7 +133,7 @@ def fetch_recent_cves(
             "source_name": "NVD",
             "source_domain": "nvd.nist.gov",
             "summary": " | ".join(summary_parts),
-            "published_at": published_at or datetime.now(timezone.utc).isoformat(),
+            "published_at": published_at or datetime.now(UTC).isoformat(),
             "language": "en",
             "category": "cybersecurity",
             "raw_json": {k: v for k, v in cve.items() if k != "descriptions"},

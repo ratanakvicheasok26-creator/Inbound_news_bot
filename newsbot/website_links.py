@@ -64,8 +64,7 @@ def reader_url(*, title: str, story_id: str | None = None) -> str:
 def _domain(url: str) -> str | None:
     try:
         host = urlparse(url).netloc.lower()
-        if host.startswith("www."):
-            host = host[4:]
+        host = host.removeprefix("www.")
         return host or None
     except Exception:
         return None
