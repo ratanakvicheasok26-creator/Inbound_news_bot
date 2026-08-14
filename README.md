@@ -16,7 +16,7 @@
 ```
 
 - **Feed budget**: ~130 curated URLs (`BOT_MAX_FEEDS`, default 130) from `sources.yaml` via `get_bot_rss_feeds`
-- **Schedule**: 5 AM & 5 PM Asia/Phnom_Penh (UTC+7); `/fetch` for on-demand (5-minute cooldown)
+- **Schedule**: continuous latest-news trickle (posts as new stories appear, checked hourly by default via `DIGEST_CHECK_INTERVAL_MINUTES`) + multi-story Daily Brief slots at `BRIEF_SCHEDULE_HOURS` (default `6,12,18,22` Asia/Phnom_Penh); urgent/ASAP keyword matches post immediately; `/fetch` for on-demand (5-minute cooldown)
 - **AI chain**: Groq → OpenRouter → Gemini (paid DeepSeek planned later — not implemented)
 - **Deploy bot**: see [DEPLOYMENT.md](DEPLOYMENT.md) (Railway / Render). Website ingest can also run on a schedule (e.g. GitHub Actions).
 

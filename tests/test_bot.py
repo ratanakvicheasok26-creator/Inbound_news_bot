@@ -202,6 +202,40 @@ def test_broadcast_routes_subscribed_group_to_recorded_topic():
     assert kwargs["message_thread_id"] == 42
 
 
+def test_broadcast_prefers_configured_thread_over_stale_autolearned_one():
+    """Regression: a stray /start in the wrong topic used to overwrite the
+    channel's routing in Redis forever, silently winning over the correctly
+    configured TELEGRAM_THREAD_ID env var. Explicit config must always win
+    for the primary channel."""
+    post = StoryPost(
+        text="<b>One</b>",
+        primary_url="https://inbound-news-web.vercel.app/story/1",
+        primary_source="Source A",
+        entry_ids={"1"},
+    )
+
+    mock_bot = MagicMock()
+    mock_bot.send_message = AsyncMock()
+    context = MagicMock()
+    context.bot = mock_bot
+
+    async def _run():
+        with patch("newsbot.bot.TELEGRAM_CHANNEL_ID", -100), patch(
+            "newsbot.bot.TELEGRAM_THREAD_ID", 7
+        ), patch("newsbot.bot.get_state") as mock_state:
+            mock_state.return_value.load_subscribers.return_value = set()
+            # Stale/wrong auto-learned thread for the same chat_id.
+            mock_state.return_value.load_group_threads.return_value = {-100: 999}
+            return await broadcast_stories(context, [post])
+
+    ids = asyncio.run(_run())
+
+    assert ids == {"1"}
+    kwargs = mock_bot.send_message.await_args.kwargs
+    assert kwargs["chat_id"] == -100
+    assert kwargs["message_thread_id"] == 7
+
+
 class TestTgSend:
     def test_retries_on_retry_after_then_succeeds(self, monkeypatch):
         from telegram.error import RetryAfter
