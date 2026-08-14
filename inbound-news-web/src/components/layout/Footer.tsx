@@ -47,6 +47,7 @@ const HELP_LINKS = [
   { href: "/compare", label: "Compare" },
   { href: "/glossary", label: "Glossary" },
   { href: "/search", label: "Search" },
+  { href: "/pricing", label: "Membership" },
   { href: "mailto:inboundcrew82@gmail.com", label: "Contact" },
 ]
 

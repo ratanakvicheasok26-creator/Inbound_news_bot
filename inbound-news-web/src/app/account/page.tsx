@@ -5,13 +5,20 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { supabase, signOut } from "@/lib/auth"
 import { getProfile, loadPreferencesFromSupabase } from "@/lib/profile"
+import { ProfileTab } from "@/components/account/ProfileTab"
 import { DashboardTab } from "@/components/account/DashboardTab"
 import { LibraryTab } from "@/components/account/LibraryTab"
 import { SettingsTab } from "@/components/account/SettingsTab"
+import { MembershipTab } from "@/components/account/MembershipTab"
 import { SyncSavesPrompt } from "@/components/account/SyncSavesPrompt"
+import { PaymentSuccessModal } from "@/components/membership/PaymentSuccessModal"
+import { getMembership, isActiveMembership } from "@/lib/membership"
+import type { MembershipPlan } from "@/lib/plans"
 import type { User } from "@supabase/supabase-js"
 
 const tabs = [
+  { id: "profile" as const, label: "Profile" },
+  { id: "membership" as const, label: "Membership" },
   { id: "dashboard" as const, label: "Dashboard" },
   { id: "library" as const, label: "Library" },
   { id: "settings" as const, label: "Settings" },
@@ -19,9 +26,13 @@ const tabs = [
 
 export default function AccountPage() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<"dashboard" | "library" | "settings">("dashboard")
+  const [activeTab, setActiveTab] = useState<
+    "profile" | "membership" | "dashboard" | "library" | "settings"
+  >("profile")
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [paidModal, setPaidModal] = useState<MembershipPlan | null>(null)
+  const [paidNotice, setPaidNotice] = useState(false)
   const [profileTick, setProfileTick] = useState(0)
   const profile = getProfile()
   const stealthOn = profile.preferences.stealthMode
@@ -30,13 +41,19 @@ export default function AccountPage() {
   useEffect(() => {
     let mounted = true
     async function check() {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get("tab") === "membership") setActiveTab("membership")
       const {
         data: { user: u },
       } = await supabase.auth.getUser()
       if (!mounted) return
       setUser(u)
       setLoading(false)
-      if (u) await loadPreferencesFromSupabase()
+      if (u) {
+        await loadPreferencesFromSupabase()
+      } else {
+        router.replace("/login")
+      }
       setProfileTick((t) => t + 1)
     }
     check()
@@ -46,13 +63,46 @@ export default function AccountPage() {
       setUser(session?.user ?? null)
       if (session?.user) {
         loadPreferencesFromSupabase().then(() => setProfileTick((t) => t + 1))
+      } else {
+        router.replace("/login")
       }
     })
     return () => {
       mounted = false
       subscription.unsubscribe()
     }
-  }, [])
+  }, [router])
+
+  // Stripe checkout redirects here with ?paid=1. Poll until the webhook marks
+  // the membership active — that's the proof of payment — then pop a
+  // confirmation with the benefits just unlocked.
+  useEffect(() => {
+    if (!user) return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("paid") !== "1") return
+    const url = new URL(window.location.href)
+    url.searchParams.delete("paid")
+    window.history.replaceState({}, "", url.toString())
+
+    let cancelled = false
+    let attempts = 0
+    const timer = setInterval(async () => {
+      attempts += 1
+      const membership = await getMembership()
+      if (cancelled) return
+      if (membership && isActiveMembership(membership)) {
+        clearInterval(timer)
+        setPaidModal(membership.plan)
+      } else if (attempts >= 15) {
+        clearInterval(timer)
+        setPaidNotice(true)
+      }
+    }, 2000)
+    return () => {
+      cancelled = true
+      clearInterval(timer)
+    }
+  }, [user])
 
   async function handleSignOut() {
     await signOut()
@@ -66,6 +116,10 @@ export default function AccountPage() {
         Loading…
       </div>
     )
+  }
+
+  if (!user) {
+    return null
   }
 
   const displayName = user?.email?.split("@")[0] || "Guest Reader"
@@ -101,7 +155,7 @@ export default function AccountPage() {
               Sign out
             </button>
           ) : (
-            <Link href="/auth" className="btn-primary text-[13px] h-9 px-4">
+            <Link href="/login" className="btn-primary text-[13px] h-9 px-4">
               Sign in
             </Link>
           )}
@@ -110,6 +164,17 @@ export default function AccountPage() {
 
       {!user && hasSaves && (
         <SyncSavesPrompt variant="banner" force />
+      )}
+
+      {paidNotice && (
+        <div className="mb-6 max-w-md p-3 rounded-[var(--radius-sm)] bg-[var(--surface-alt)] border border-[var(--border)] text-[13px] text-[var(--text-primary)]">
+          Payment successful — you’re now a Pro/Premium member. Premium stories unlock as
+          soon as Stripe confirms your subscription.
+        </div>
+      )}
+
+      {paidModal && (
+        <PaymentSuccessModal plan={paidModal} onClose={() => setPaidModal(null)} />
       )}
 
       <div className="tier-toggle tier-toggle--full mb-8 max-w-md">
@@ -125,6 +190,8 @@ export default function AccountPage() {
         ))}
       </div>
 
+      {activeTab === "profile" && user && <ProfileTab user={user} />}
+      {activeTab === "membership" && <MembershipTab />}
       {activeTab === "dashboard" && <DashboardTab />}
       {activeTab === "library" && <LibraryTab />}
       {activeTab === "settings" && (

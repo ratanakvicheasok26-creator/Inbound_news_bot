@@ -17,6 +17,8 @@ export type Story = {
   primary_url?: string | null
   primary_source?: string | null
   primary_source_domain?: string | null
+  /** Full body is gated behind an active membership when true. */
+  premium?: boolean
   /** Unique outlets from linked articles (client enrich). */
   coverage_outlets?: CoverageOutlet[]
 }

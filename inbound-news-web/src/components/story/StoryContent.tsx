@@ -26,12 +26,18 @@ import Link from "next/link"
 import { summarizeCoverage } from "@/lib/outlet-roles"
 import { SyncSavesPrompt } from "@/components/account/SyncSavesPrompt"
 import { AdBand } from "@/components/ads/AdBand"
+import { PremiumLock } from "@/components/membership/PremiumLock"
+import { getAccessToken } from "@/lib/membership"
 import type { SponsorCreative } from "@/lib/sponsors"
+import type { Article } from "@/lib/types"
 
 interface StoryContentProps {
   story: StoryWithArticles
   sponsorCreative?: SponsorCreative | null
   sponsors?: SponsorCreative[]
+  /** Story body is gated behind membership; only the teaser ships in SSR HTML. */
+  premiumLocked?: boolean
+  premiumTeaser?: string | null
 }
 
 const KNOWN_CONCEPT_SLUGS: Record<string, { label: string; slug: string }> = {
@@ -90,9 +96,18 @@ function initialTier(): "eli5" | "standard" | "deep" {
   return "standard"
 }
 
-export function StoryContent({ story, sponsorCreative, sponsors }: StoryContentProps) {
+export function StoryContent({
+  story,
+  sponsorCreative,
+  sponsors,
+  premiumLocked = false,
+  premiumTeaser = null,
+}: StoryContentProps) {
   const [activeTier, setActiveTier] = useState<"eli5" | "standard" | "deep">(initialTier)
   const [saved, setSaved] = useState(() => isStorySaved(story.id))
+  const [premiumFull, setPremiumFull] = useState<{ body: string; articles: Article[] } | null>(
+    null,
+  )
 
   // Re-sync saved state when navigating between stories without a remount
   // (render-time adjustment instead of a setState-in-effect cascade).
@@ -111,6 +126,30 @@ export function StoryContent({ story, sponsorCreative, sponsors }: StoryContentP
     })
   }, [story.id, story.title, story.category, story.coverage_outlets])
 
+  // Members-only unlock: the SSR payload carries only a teaser, so pull the full
+  // body from the JWT-checked endpoint. Non-members get 403 and stay locked.
+  useEffect(() => {
+    if (!premiumLocked) return
+    let mounted = true
+    getAccessToken()
+      .then((token) => {
+        if (!token) return null
+        return fetch(`/api/story/${story.id}/full`, {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        })
+      })
+      .then((res) => (res && res.ok ? res.json() : null))
+      .then((data) => {
+        if (!mounted || !data || typeof data.body !== "string") return
+        setPremiumFull({ body: data.body, articles: data.articles || [] })
+      })
+      .catch(() => {})
+    return () => {
+      mounted = false
+    }
+  }, [premiumLocked, story.id])
+
   const handleTierChange = useCallback((tier: "eli5" | "standard" | "deep") => {
     setActiveTier((prev) => {
       if (prev !== tier) recordTierSwitch()
@@ -119,11 +158,12 @@ export function StoryContent({ story, sponsorCreative, sponsors }: StoryContentP
   }, [])
 
   const categoryLabel = getCategoryLabel(story.category || "") || "News"
-  const articles = story.articles || []
+  const articles = premiumFull ? premiumFull.articles : story.articles || []
   const tags = story.tags || []
-  const body = resolveStoryBody(story)
+  const body = premiumFull ? premiumFull.body : resolveStoryBody(story)
   const tierTexts = buildTierTexts(body, articles)
-  const showTierToggle = tiersHaveDistinctContent(tierTexts)
+  const lockedOut = premiumLocked && !premiumFull
+  const showTierToggle = !lockedOut && tiersHaveDistinctContent(tierTexts)
   const relatedConcepts = deriveRelatedConcepts(tags, story.title, body)
 
   const timelineNodes = deriveTimelineNodes(articles)
@@ -215,22 +255,28 @@ export function StoryContent({ story, sponsorCreative, sponsors }: StoryContentP
       <section className="py-8">
         <div className="grid gap-6 md:gap-8 lg:grid-cols-[1.5fr_0.85fr]">
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-4 sm:p-6 md:p-8">
-            {showTierToggle && activeTier !== "standard" && (
-              <p className="meta-text text-[var(--accent)] mb-3">
-                {activeTier === "eli5" ? "Simplified" : "Deep coverage"}
-              </p>
+            {lockedOut ? (
+              <PremiumLock teaser={premiumTeaser} />
+            ) : (
+              <>
+                {showTierToggle && activeTier !== "standard" && (
+                  <p className="meta-text text-[var(--accent)] mb-3">
+                    {activeTier === "eli5" ? "Simplified" : "Deep coverage"}
+                  </p>
+                )}
+                <JargonText
+                  text={displaySummary}
+                  className="text-[17px] sm:text-[18px] leading-[1.65] text-[var(--text-primary)] max-w-[65ch]"
+                  onJargonTap={recordJargonTap}
+                />
+              </>
             )}
-            <JargonText
-              text={displaySummary}
-              className="text-[17px] sm:text-[18px] leading-[1.65] text-[var(--text-primary)] max-w-[65ch]"
-              onJargonTap={recordJargonTap}
-            />
           </div>
           <div className="min-w-0">
             <LocalLensBox
               category={story.category || ""}
               storyTitle={story.title}
-              storySummary={body}
+              storySummary={lockedOut ? premiumTeaser || "" : body}
             />
           </div>
         </div>
@@ -258,7 +304,7 @@ export function StoryContent({ story, sponsorCreative, sponsors }: StoryContentP
               <Newspaper className="mr-2 inline h-3.5 w-3.5" />
               Source coverage ({articles.length})
             </h2>
-            {compareBothHref && (
+            {compareBothHref && !lockedOut && (
               <Link
                 href={compareBothHref}
                 className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)]"
@@ -273,7 +319,7 @@ export function StoryContent({ story, sponsorCreative, sponsors }: StoryContentP
           </p>
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] px-5 md:px-6">
             {articles.map((article) => (
-              <SourceComparisonRow key={article.id} article={article} />
+              <SourceComparisonRow key={article.id} article={article} locked={lockedOut} />
             ))}
           </div>
         </section>

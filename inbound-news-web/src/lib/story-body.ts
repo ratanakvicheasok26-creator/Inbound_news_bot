@@ -207,3 +207,22 @@ export function resolveStoryDek(
   if (t.length <= maxLen) return t
   return t.slice(0, maxLen - 1).trimEnd() + "…"
 }
+
+/**
+ * Strip the full body from a premium story before it reaches the client.
+ * Only a short teaser is exposed; the rest is fetched via `/api/story/[id]/full`
+ * by members (JWT-checked server-side).
+ */
+export function redactPremiumStory(
+  story: StoryWithArticles
+): { content: StoryWithArticles; teaser: string | null } {
+  const teaser = resolveStoryDek(resolveStoryBody(story), 170)
+  return {
+    content: {
+      ...story,
+      summary_en: null,
+      articles: (story.articles || []).map((a) => ({ ...a, summary: null, raw_json: null })),
+    },
+    teaser,
+  }
+}

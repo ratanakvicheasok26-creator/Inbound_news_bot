@@ -20,9 +20,33 @@ export type StoriesResult = {
 
 /** Explicit column lists — never select `embedding`/`raw_json` for public payloads. */
 const STORY_COLUMNS =
+  "id, title, summary_en, source_count, category, tags, created_at, image_url, premium"
+const STORY_COLUMNS_NO_PREMIUM =
   "id, title, summary_en, source_count, category, tags, created_at, image_url"
 const ARTICLE_COLUMNS =
   "id, title, summary, url, source_name, source_domain, category, language, published_at, ingested_at, image_url"
+
+/**
+ * Run a `stories` select. Retries without the `premium` column when migration
+ * 009 hasn't been applied yet, so a premature deploy degrades gracefully
+ * (premium stories simply aren't gated) instead of breaking the feed.
+ */
+async function selectStoriesAware<T>(
+  run: (columns: string) => unknown,
+): Promise<{ data: T; error: { code?: string; message: string } | null }> {
+  const first = (await run(STORY_COLUMNS)) as {
+    data: T
+    error: { code?: string; message: string } | null
+  }
+  if (first.error?.code === "42703") {
+    console.warn("stories.premium missing — retrying without it (run migration 009_memberships.sql)")
+    return (await run(STORY_COLUMNS_NO_PREMIUM)) as {
+      data: T
+      error: { code?: string; message: string } | null
+    }
+  }
+  return first
+}
 
 /**
  * Escape a value for safe use inside a PostgREST `.or()` filter string.
@@ -125,11 +149,13 @@ export async function getAllStoriesSafe(limit = 60): Promise<StoriesResult> {
   }
 
   try {
-    const { data, error } = await supabase
-      .from("stories")
-      .select(STORY_COLUMNS)
-      .order("created_at", { ascending: false })
-      .limit(limit)
+    const { data, error } = await selectStoriesAware<Story[]>((cols) =>
+      supabase
+        .from("stories")
+        .select(cols)
+        .order("created_at", { ascending: false })
+        .limit(limit),
+    )
 
     if (error) {
       console.error("Failed to fetch stories:", error)
@@ -160,12 +186,14 @@ export async function getStoriesByCategorySafe(
   }
 
   try {
-    const { data, error } = await supabase
-      .from("stories")
-      .select(STORY_COLUMNS)
-      .eq("category", category)
-      .order("created_at", { ascending: false })
-      .limit(60)
+    const { data, error } = await selectStoriesAware<Story[]>((cols) =>
+      supabase
+        .from("stories")
+        .select(cols)
+        .eq("category", category)
+        .order("created_at", { ascending: false })
+        .limit(60),
+    )
 
     if (error) {
       console.error("Failed to fetch stories by category:", error)
@@ -219,13 +247,15 @@ export async function getStoriesForBrief(
   }
 
   try {
-    const { data, error } = await supabase
-      .from("stories")
-      .select(STORY_COLUMNS)
-      .gte("created_at", bounds.start)
-      .lt("created_at", bounds.end)
-      .order("created_at", { ascending: false })
-      .limit(limit)
+    const { data, error } = await selectStoriesAware<Story[]>((cols) =>
+      supabase
+        .from("stories")
+        .select(cols)
+        .gte("created_at", bounds.start)
+        .lt("created_at", bounds.end)
+        .order("created_at", { ascending: false })
+        .limit(limit),
+    )
 
     if (error) {
       console.error("Failed to fetch brief stories:", error)
@@ -258,11 +288,13 @@ export async function getStoryById(id: string): Promise<StoryWithArticles | null
   if (!isSupabaseConfigured) return null
 
   try {
-    const { data: story, error: storyError } = await supabase
-      .from("stories")
-      .select(STORY_COLUMNS)
-      .eq("id", id)
-      .single()
+    const { data: story, error: storyError } = await selectStoriesAware<Story>((cols) =>
+      supabase
+        .from("stories")
+        .select(cols)
+        .eq("id", id)
+        .single(),
+    )
 
     if (storyError || !story) {
       console.error("Failed to fetch story:", storyError)
@@ -328,12 +360,14 @@ export async function getStoriesByIds(ids: string[]): Promise<Story[]> {
 
   try {
     const capped = [...new Set(ids)].slice(0, 100)
-    const { data, error } = await supabase
-      .from("stories")
-      .select(STORY_COLUMNS)
-      .in("id", capped)
-      .order("created_at", { ascending: false })
-      .limit(100)
+    const { data, error } = await selectStoriesAware<Story[]>((cols) =>
+      supabase
+        .from("stories")
+        .select(cols)
+        .in("id", capped)
+        .order("created_at", { ascending: false })
+        .limit(100),
+    )
 
     if (error) {
       console.error("Failed to fetch stories by ids:", error)
@@ -394,12 +428,14 @@ export async function getStoriesBySourceDomain(domain: string): Promise<Story[]>
     const storyIds = [...new Set((storySources || []).map((s) => s.story_id).filter(Boolean))]
     if (storyIds.length === 0) return []
 
-    const { data: stories, error: storiesError } = await supabase
-      .from("stories")
-      .select(STORY_COLUMNS)
-      .in("id", storyIds)
-      .order("created_at", { ascending: false })
-      .limit(60)
+    const { data: stories, error: storiesError } = await selectStoriesAware<Story[]>((cols) =>
+      supabase
+        .from("stories")
+        .select(cols)
+        .in("id", storyIds)
+        .order("created_at", { ascending: false })
+        .limit(60),
+    )
 
     if (storiesError) {
       console.error("Failed to fetch stories by source domain:", storiesError)

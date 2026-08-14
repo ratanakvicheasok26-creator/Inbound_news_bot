@@ -29,6 +29,7 @@ const MOCK_BUNDLES: MockBundle[] = [
       source_count: 5,
       category: "ai",
       tags: ["openai", "asean", "llm", "enterprise"],
+      premium: true,
       created_at: hoursAgo(3),
       image_url: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&q=80",
       primary_url: "https://techcrunch.com/example/openai-bangkok",

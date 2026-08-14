@@ -18,6 +18,7 @@ const NAV_LINKS = [
   { href: "/compare", label: "Compare" },
   { href: "/blindspot", label: "Blindspot" },
   { href: "/glossary", label: "Glossary" },
+  { href: "/pricing", label: "Membership" },
 ]
 
 export function Header() {
@@ -180,18 +181,34 @@ export function Header() {
                 Search
               </Link>
               <Link
-                href="/account"
+                href={user ? "/account" : "/login"}
                 onClick={closeMobileMenu}
                 className="block px-3 py-3.5 text-[15px] font-medium border-b border-[var(--border)] text-[var(--text-primary)]"
               >
                 {user ? "Account" : "Sign in"}
               </Link>
+              {!user && (
+                <Link
+                  href="/signup"
+                  onClick={closeMobileMenu}
+                  className="block px-3 py-3.5 text-[15px] font-medium border-b border-[var(--border)] text-[var(--text-primary)]"
+                >
+                  Create account
+                </Link>
+              )}
               <Link
                 href="/donate"
                 onClick={closeMobileMenu}
                 className="block px-3 py-3.5 text-[15px] font-medium border-b border-[var(--border)] text-[var(--text-primary)]"
               >
                 Donation
+              </Link>
+              <Link
+                href="/pricing"
+                onClick={closeMobileMenu}
+                className="block px-3 py-3.5 text-[15px] font-medium border-b border-[var(--border)] text-[var(--text-primary)]"
+              >
+                Membership
               </Link>
             </nav>
 
@@ -306,9 +323,29 @@ export function Header() {
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <LiveSearch />
             <ThemeToggle />
-            <Link href="/account" className="btn-ghost hidden sm:inline-flex">
-              {user ? (user.email?.[0] || "A").toUpperCase() : "Sign in"}
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  href="/account"
+                  className="btn-ghost hidden sm:inline-flex"
+                  aria-label="Account"
+                >
+                  {(user.email?.[0] || "A").toUpperCase()}
+                </Link>
+                <button type="button" onClick={handleSignOut} className="btn-ghost hidden md:inline-flex">
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="btn-ghost hidden sm:inline-flex">
+                  Sign in
+                </Link>
+                <Link href="/signup" className="btn-primary hidden md:inline-flex">
+                  Create Account
+                </Link>
+              </>
+            )}
             <Link href="/donate" className="btn-primary hidden lg:inline-flex">
               Donation
             </Link>

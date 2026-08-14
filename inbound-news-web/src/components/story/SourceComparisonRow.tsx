@@ -9,6 +9,8 @@ import { safeExternalHref } from "@/lib/client-fetch"
 interface SourceComparisonRowProps {
   article: Article
   framing?: string
+  /** Story body is member-gated; hide source-synopsis compare links. */
+  locked?: boolean
 }
 
 const SOURCE_DOMAIN_SLUGS: Record<string, string> = {
@@ -27,7 +29,7 @@ function sourcePageSlug(domain: string): string | null {
   return null
 }
 
-export function SourceComparisonRow({ article, framing }: SourceComparisonRowProps) {
+export function SourceComparisonRow({ article, framing, locked = false }: SourceComparisonRowProps) {
   const domain = article.source_domain || ""
   const sourceSlug = domain ? sourcePageSlug(domain) : null
   const role = roleForOutlet({
@@ -90,13 +92,15 @@ export function SourceComparisonRow({ article, framing }: SourceComparisonRowPro
         ) : null}
       </div>
 
-      <Link
-        href={`/compare?a=${article.id}`}
-        className="mt-2 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
-      >
-        <GitCompareArrows className="h-3.5 w-3.5" />
-        Compare
-      </Link>
+      {!locked && (
+        <Link
+          href={`/compare?a=${article.id}`}
+          className="mt-2 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+        >
+          <GitCompareArrows className="h-3.5 w-3.5" />
+          Compare
+        </Link>
+      )}
     </div>
   )
 }

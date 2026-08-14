@@ -135,7 +135,7 @@ export function SettingsTab({ user, onSignOut }: SettingsTabProps) {
               Optional — sign in to sync reading preferences across devices. Library and score stay
               on this browser for now.
             </p>
-            <Link href="/auth" className="btn-primary text-[13px] h-9 px-4 inline-flex items-center">
+            <Link href="/login" className="btn-primary text-[13px] h-9 px-4 inline-flex items-center">
               Sign in / Sign up
             </Link>
           </div>

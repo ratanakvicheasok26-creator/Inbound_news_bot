@@ -65,10 +65,12 @@ ON CONFLICT (id) DO UPDATE SET
   file_size_limit = EXCLUDED.file_size_limit,
   allowed_mime_types = EXCLUDED.allowed_mime_types;
 
+DROP POLICY IF EXISTS "Public read sponsor creatives" ON storage.objects;
 CREATE POLICY "Public read sponsor creatives"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'sponsor-creatives');
 
+DROP POLICY IF EXISTS "Service role manage sponsor creatives" ON storage.objects;
 CREATE POLICY "Service role manage sponsor creatives"
   ON storage.objects FOR ALL
   USING (bucket_id = 'sponsor-creatives' AND auth.role() = 'service_role')

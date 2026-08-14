@@ -52,7 +52,7 @@ export function SyncSavesPrompt({
         browsers — full library sync comes later.
       </p>
       <div className="flex flex-wrap items-center gap-3">
-        <Link href="/auth" className="btn-primary text-[13px] h-9 px-4">
+        <Link href="/login" className="btn-primary text-[13px] h-9 px-4">
           Sign in
         </Link>
         <button
