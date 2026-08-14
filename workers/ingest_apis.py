@@ -23,6 +23,17 @@ Sources:
     - OpenAlex (free, no key)
     - GitHub Trending (free, no key)
     - Hugging Face (free, no key)
+    - NVD / NIST CVEs (free, no key)
+    - TerminalFeed (free, no key)
+    - Wikipedia Pageviews (free, no key) — trend/spike detection
+    - GitHub API search (free, no key) — rising repos before they trend
+    - The Guardian (free, no key for basic use)
+    - Crossref (free, no key) — academic papers
+    - dev.to (free, no key)
+    - Mastodon public timelines (free, no key)
+    - Open Library (free, no key)
+    - Stack Exchange (free, no key)
+    - WhatsTrending (free, no key) — AI news + model rankings
     - Exa.ai (optional, $10/mo free)
     - Firecrawl (optional, 500 free/mo)
 """
@@ -55,6 +66,17 @@ from workers.github_trending import fetch_all_github_trending
 from workers.huggingface import fetch_all_huggingface
 from workers.nvd import fetch_all_nvd
 from workers.terminalfeed import fetch_all_terminalfeed
+
+# --- Free, no-key sources (previously built but never wired in) ---
+from workers.wikipedia import fetch_all_wikipedia
+from workers.github_api import fetch_all_github_api
+from workers.guardian import fetch_all_guardian
+from workers.crossref import fetch_all_crossref
+from workers.devto import fetch_all_devto
+from workers.mastodon import fetch_all_mastodon
+from workers.openlibrary import fetch_all_openlibrary
+from workers.stackexchange import fetch_all_stackexchange
+from workers.whats_trending import fetch_all_whats_trending
 
 # --- Optional sources (graceful skip if no API key) ---
 try:
@@ -231,6 +253,80 @@ def run() -> None:
         logger.info("TerminalFeed: %d items", len(terminal))
     except Exception:
         logger.exception("TerminalFeed failed")
+
+    # --- Free, no-key sources (previously built but never wired in) ---
+
+    # 13. Wikipedia Pageviews — trending topic / spike detection
+    try:
+        wiki = fetch_all_wikipedia()
+        all_sources.extend(wiki)
+        logger.info("Wikipedia: %d items", len(wiki))
+    except Exception:
+        logger.exception("Wikipedia failed")
+
+    # 14. GitHub API search — catches new/rising repos before they trend
+    try:
+        gh_api = fetch_all_github_api()
+        all_sources.extend(gh_api)
+        logger.info("GitHub API: %d repos", len(gh_api))
+    except Exception:
+        logger.exception("GitHub API failed")
+
+    # 15. The Guardian — quality tech journalism
+    try:
+        guardian = fetch_all_guardian()
+        all_sources.extend(guardian)
+        logger.info("Guardian: %d articles", len(guardian))
+    except Exception:
+        logger.exception("Guardian failed")
+
+    # 16. Crossref — academic papers / research
+    try:
+        crossref = fetch_all_crossref()
+        all_sources.extend(crossref)
+        logger.info("Crossref: %d papers", len(crossref))
+    except Exception:
+        logger.exception("Crossref failed")
+
+    # 17. dev.to — developer articles
+    try:
+        devto = fetch_all_devto()
+        all_sources.extend(devto)
+        logger.info("dev.to: %d articles", len(devto))
+    except Exception:
+        logger.exception("dev.to failed")
+
+    # 18. Mastodon — open-source / tech community timelines
+    try:
+        mastodon = fetch_all_mastodon()
+        all_sources.extend(mastodon)
+        logger.info("Mastodon: %d posts", len(mastodon))
+    except Exception:
+        logger.exception("Mastodon failed")
+
+    # 19. Open Library — tech book trends
+    try:
+        openlibrary = fetch_all_openlibrary()
+        all_sources.extend(openlibrary)
+        logger.info("Open Library: %d books", len(openlibrary))
+    except Exception:
+        logger.exception("Open Library failed")
+
+    # 20. Stack Exchange — trending developer questions
+    try:
+        stackexchange = fetch_all_stackexchange()
+        all_sources.extend(stackexchange)
+        logger.info("Stack Exchange: %d questions", len(stackexchange))
+    except Exception:
+        logger.exception("Stack Exchange failed")
+
+    # 21. WhatsTrending — AI news + model rankings
+    try:
+        whats_trending = fetch_all_whats_trending()
+        all_sources.extend(whats_trending)
+        logger.info("WhatsTrending: %d items", len(whats_trending))
+    except Exception:
+        logger.exception("WhatsTrending failed")
 
     # --- Optional sources (graceful skip) ---
 
