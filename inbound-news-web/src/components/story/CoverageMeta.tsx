@@ -4,6 +4,7 @@ import {
   OUTLET_ROLE_LABELS,
   roleForOutlet,
   type CoverageOutlet,
+  type OutletRole,
 } from "@/lib/outlet-roles"
 import { HypeRealityBar } from "@/components/story/HypeRealityBar"
 
@@ -24,19 +25,30 @@ function outletsFor(story: Story): CoverageOutlet[] {
   return []
 }
 
+function roleMix(outlets: CoverageOutlet[]): [OutletRole, number][] {
+  const counts: Partial<Record<OutletRole, number>> = {}
+  for (const o of outlets) {
+    counts[o.role] = (counts[o.role] || 0) + 1
+  }
+  return (Object.entries(counts) as [OutletRole, number][]).sort((a, b) => b[1] - a[1])
+}
+
 export function CoverageMeta({
   story,
   showBar = true,
   maxNames = 3,
+  compact = false,
 }: {
   story: Story
   showBar?: boolean
   maxNames?: number
+  /** Hide role mix chips (cards). */
+  compact?: boolean
 }) {
   const outlets = outletsFor(story)
   const uniqueCount = Math.max(outlets.length, story.source_count || 0)
   const names = outlets.slice(0, maxNames)
-  const firstRole = names[0]?.role
+  const mix = roleMix(outlets)
   const showCoverageBar = showBar && uniqueCount >= 2
 
   return (
@@ -45,9 +57,20 @@ export function CoverageMeta({
         <span className="meta-text tabular-nums">
           {uniqueCount} outlet{uniqueCount !== 1 ? "s" : ""}
         </span>
-        {firstRole && (
+        {!compact &&
+          mix.slice(0, 3).map(([role, n]) => (
+            <span
+              key={role}
+              className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-secondary)] bg-[var(--surface-alt)] px-1.5 py-0.5 rounded-[var(--radius-sm)]"
+              title={`${OUTLET_ROLE_LABELS[role]} outlets covering this story`}
+            >
+              {OUTLET_ROLE_LABELS[role]}
+              {n > 1 ? ` ×${n}` : ""}
+            </span>
+          ))}
+        {compact && mix[0] && (
           <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-secondary)] bg-[var(--surface-alt)] px-1.5 py-0.5 rounded-[var(--radius-sm)]">
-            {OUTLET_ROLE_LABELS[firstRole]}
+            {OUTLET_ROLE_LABELS[mix[0][0]]}
           </span>
         )}
       </div>
@@ -60,7 +83,8 @@ export function CoverageMeta({
       {showCoverageBar && (
         <div className="pt-0.5">
           <div className="flex items-center justify-between gap-2 mb-1">
-            <span className="meta-text">Coverage</span>
+            <span className="meta-text">Coverage intensity</span>
+            <span className="meta-text tabular-nums">{uniqueCount}</span>
           </div>
           <HypeRealityBar score={coverageScore(uniqueCount)} size="sm" />
         </div>

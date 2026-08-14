@@ -99,8 +99,13 @@ export function StoryContent({ story }: StoryContentProps) {
   }
 
   useEffect(() => {
-    trackStoryRead({ id: story.id, title: story.title, category: story.category || "" })
-  }, [story.id, story.title, story.category])
+    trackStoryRead({
+      id: story.id,
+      title: story.title,
+      category: story.category || "",
+      outletRole: story.coverage_outlets?.[0]?.role,
+    })
+  }, [story.id, story.title, story.category, story.coverage_outlets])
 
   const handleTierChange = useCallback((tier: "eli5" | "standard" | "deep") => {
     setActiveTier((prev) => {

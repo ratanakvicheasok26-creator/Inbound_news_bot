@@ -327,18 +327,18 @@ export function CompareView({
           )}
 
           {analysisError && (
-            <p className="mb-4 text-[13px] text-[var(--text-secondary)]">
-              Live analysis unavailable — showing a local, content-only comparison based on the
-              two articles&apos; summaries.
+            <p className="mb-4 text-[13px] text-[var(--text-secondary)] rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface-alt)] px-3 py-2">
+              Live AI compare unavailable (rate limit or missing Groq key) — showing a free local
+              comparison from the two summaries. Try again later for a deeper framing analysis.
             </p>
           )}
 
           <AnalysisView result={result} loading={analysisLoading} a={articleA} b={articleB} />
 
           <p className="mt-6 text-[12px] leading-relaxed text-[var(--text-secondary)]">
-            Analysis is generated only from the two articles&apos; titles and summaries. Claims are
-            attributed to their source. Where the sources conflict, both sides are shown. The
-            original articles remain authoritative.
+            Analysis uses only the two articles&apos; titles and summaries. Claims are attributed
+            to their source. Where sources conflict, both sides are shown. Original articles remain
+            authoritative.
           </p>
         </>
       ) : (

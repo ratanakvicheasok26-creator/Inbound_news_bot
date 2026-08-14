@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Bookmark, X } from "lucide-react"
-import { getProfile, toggleSavedStory, toggleFollowedConcept } from "@/lib/profile"
+import { getProfile, toggleSavedStory, toggleFollowedConcept, toggleFollowedTopic } from "@/lib/profile"
 import { getCategoryLabel } from "@/lib/categories"
 import { formatDistanceToNow } from "@/lib/utils"
 import { SyncSavesPrompt } from "@/components/account/SyncSavesPrompt"
@@ -13,6 +13,7 @@ import type { Story } from "@/lib/types"
 export function LibraryTab() {
   const [savedIds, setSavedIds] = useState<string[]>(() => getProfile().savedStoryIds)
   const [concepts, setConcepts] = useState<string[]>(() => getProfile().followedConcepts)
+  const [topics, setTopics] = useState<string[]>(() => getProfile().followedTopics || [])
   const [stories, setStories] = useState<Record<string, Story>>({})
   const [loading, setLoading] = useState(false)
   const [isGuest, setIsGuest] = useState(true)
@@ -51,6 +52,11 @@ export function LibraryTab() {
   function handleUnfollow(slug: string) {
     toggleFollowedConcept(slug)
     setConcepts((prev) => prev.filter((c) => c !== slug))
+  }
+
+  function handleUnfollowTopic(slug: string) {
+    toggleFollowedTopic(slug)
+    setTopics((prev) => prev.filter((t) => t !== slug))
   }
 
   return (
@@ -125,31 +131,63 @@ export function LibraryTab() {
         )}
       </div>
 
-      {concepts.length > 0 && (
-        <div>
-          <div className="section-header">
-            <h2 className="section-title">Followed concepts</h2>
-            <span className="meta-text">{concepts.length}</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {concepts.map((slug) => (
-              <div
-                key={slug}
-                className="group flex items-center gap-1.5 border border-[var(--border)] px-3 py-1.5 text-[12px] font-medium text-[var(--text-primary)]"
-              >
-                <Link href={`/concept/${slug}`} className="hover:text-[var(--accent)] transition-colors">
-                  {slug}
-                </Link>
-                <button
-                  onClick={() => handleUnfollow(slug)}
-                  className="text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors ml-1"
-                  aria-label={`Unfollow ${slug}`}
-                >
-                  <X className="h-3 w-3" />
-                </button>
+      {(topics.length > 0 || concepts.length > 0) && (
+        <div className="space-y-8">
+          {topics.length > 0 && (
+            <div>
+              <div className="section-header">
+                <h2 className="section-title">Followed desks</h2>
+                <span className="meta-text">{topics.length}</span>
               </div>
-            ))}
-          </div>
+              <div className="flex flex-wrap gap-2">
+                {topics.map((slug) => (
+                  <div
+                    key={slug}
+                    className="group flex items-center gap-1.5 border border-[var(--border)] px-3 py-1.5 text-[12px] font-medium text-[var(--text-primary)]"
+                  >
+                    <Link href={`/topic/${slug}`} className="hover:text-[var(--accent)] transition-colors">
+                      {getCategoryLabel(slug)}
+                    </Link>
+                    <button
+                      onClick={() => handleUnfollowTopic(slug)}
+                      className="text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors ml-1"
+                      aria-label={`Unfollow ${slug}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {concepts.length > 0 && (
+            <div>
+              <div className="section-header">
+                <h2 className="section-title">Followed concepts</h2>
+                <span className="meta-text">{concepts.length}</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {concepts.map((slug) => (
+                  <div
+                    key={slug}
+                    className="group flex items-center gap-1.5 border border-[var(--border)] px-3 py-1.5 text-[12px] font-medium text-[var(--text-primary)]"
+                  >
+                    <Link href={`/concept/${slug}`} className="hover:text-[var(--accent)] transition-colors">
+                      {slug}
+                    </Link>
+                    <button
+                      onClick={() => handleUnfollow(slug)}
+                      className="text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors ml-1"
+                      aria-label={`Unfollow ${slug}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

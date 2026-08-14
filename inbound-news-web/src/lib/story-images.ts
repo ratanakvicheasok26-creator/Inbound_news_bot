@@ -1,7 +1,4 @@
-/** Shared helpers for story / article image URLs. */
-
-import { lookup } from "node:dns/promises"
-import { isIP } from "node:net"
+/** Shared helpers for story / article image URLs. Safe for Client Components. */
 
 function isHttpUrl(url: string): boolean {
   try {
@@ -20,7 +17,6 @@ export function isPrivateHost(hostname: string): boolean {
   )
   if (ipv4) return true
   if (host === "localhost" || host.endsWith(".localhost")) return true
-  // Cloud metadata / link-local hostnames that resolve privately in practice.
   if (
     host === "metadata.google.internal" ||
     host === "metadata" ||
@@ -44,39 +40,11 @@ export function isPrivateHost(hostname: string): boolean {
   return false
 }
 
-/** Sync string-level host check (no DNS). Prefer `assertPublicUrl` before fetch. */
+/** Sync string-level host check (no DNS). Prefer `assertPublicUrl` (server) before fetch. */
 export function isSafeHost(url: string): boolean {
   if (!isHttpUrl(url)) return false
   try {
     return !isPrivateHost(new URL(url).hostname)
-  } catch {
-    return false
-  }
-}
-
-/**
- * Resolve hostname and reject if any A/AAAA record is private.
- * Fail-closed on DNS errors so a transient lookup failure cannot open SSRF.
- */
-export async function resolvesToPublicHost(hostname: string): Promise<boolean> {
-  if (!hostname || isPrivateHost(hostname)) return false
-  // Literal IPs: already checked above.
-  if (isIP(hostname)) return !isPrivateHost(hostname)
-  try {
-    const results = await lookup(hostname, { all: true, verbatim: true })
-    if (!results.length) return false
-    return results.every((r) => !isPrivateHost(r.address))
-  } catch {
-    return false
-  }
-}
-
-/** Full SSRF gate: scheme + string host + DNS resolution. */
-export async function assertPublicUrl(url: string): Promise<boolean> {
-  if (!isSafeHost(url)) return false
-  try {
-    const hostname = new URL(url).hostname
-    return await resolvesToPublicHost(hostname)
   } catch {
     return false
   }

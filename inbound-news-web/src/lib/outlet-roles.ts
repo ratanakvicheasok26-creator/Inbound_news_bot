@@ -297,3 +297,74 @@ export function blindspotScore(story: {
 
   return score
 }
+
+type BlindspotStory = {
+  source_count?: number | null
+  summary_en?: string | null
+  category?: string | null
+  created_at?: string
+  primary_source?: string | null
+  primary_source_domain?: string | null
+  coverage_outlets?: CoverageOutlet[]
+}
+
+/** True singleton gap — Blindspot's primary admission rule. */
+export function isUndercovered(story: BlindspotStory): boolean {
+  return (story.source_count ?? 0) === 1
+}
+
+const HYPE_ROLES: OutletRole[] = ["booster", "corporate"]
+const FORUM_ROLES: OutletRole[] = ["community"]
+
+/**
+ * Two outlets only, and both lean the same way (hype pair or forum pair).
+ * Separate from true blindspots — "thin / skewed", not a Topics dump.
+ */
+export function isThinSkewed(story: BlindspotStory): boolean {
+  if ((story.source_count ?? 0) !== 2) return false
+  const outlets = story.coverage_outlets || []
+  if (outlets.length < 2) {
+    // Without outlet roles we cannot prove skew — exclude from thin section.
+    return false
+  }
+  const roles = outlets.slice(0, 2).map((o) => o.role)
+  const allHype = roles.every((r) => HYPE_ROLES.includes(r))
+  const allForum = roles.every((r) => FORUM_ROLES.includes(r))
+  return allHype || allForum
+}
+
+function formatAgeShort(createdAt?: string): string | null {
+  const t = Date.parse(createdAt || "")
+  if (Number.isNaN(t)) return null
+  const ageH = (Date.now() - t) / 3_600_000
+  if (ageH < 1) return "just now"
+  if (ageH < 24) return `${Math.max(1, Math.round(ageH))}h ago`
+  const days = Math.round(ageH / 24)
+  return `${days}d ago`
+}
+
+/**
+ * Short professional "why this is a gap" line for cards.
+ * Example: "1 outlet · Research · 12h ago"
+ */
+export function blindspotWhy(story: BlindspotStory): string {
+  const count = Math.max(1, story.source_count ?? 1)
+  const parts: string[] = [
+    `${count} outlet${count !== 1 ? "s" : ""}`,
+  ]
+  const role = story.coverage_outlets?.[0]?.role
+  if (role) parts.push(OUTLET_ROLE_LABELS[role])
+  const age = formatAgeShort(story.created_at)
+  if (age) parts.push(age)
+  const name =
+    story.coverage_outlets?.[0]?.name ||
+    story.primary_source ||
+    null
+  if (name && parts.length < 4) parts.push(name)
+  return parts.join(" · ")
+}
+
+export function primaryOutletRole(story: BlindspotStory): OutletRole | null {
+  return story.coverage_outlets?.[0]?.role ?? null
+}
+

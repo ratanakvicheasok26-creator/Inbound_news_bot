@@ -1,27 +1,18 @@
 import { getAllStoriesSafe } from "@/lib/posts"
-import { StoryRow } from "@/components/story/StoryRow"
-import { BlindspotCard } from "@/components/story/BlindspotCard"
-import { blindspotScore } from "@/lib/outlet-roles"
+import { BlindspotExplorer } from "@/components/story/BlindspotExplorer"
 import { filterTechStories } from "@/lib/tech-scope"
 import { Eye } from "lucide-react"
+import Link from "next/link"
 
 export const metadata = {
   title: "Blindspot — Inbound Reports",
   description:
-    "Undercovered technology stories in our cluster graph — single-outlet tech coverage worth noticing.",
+    "Coverage gaps in technology news — single-outlet and thinly skewed clusters the wider press has not picked up.",
 }
 
 export default async function BlindspotPage() {
   const { stories: raw, error } = await getAllStoriesSafe(80)
   const stories = filterTechStories(raw)
-  const underreported = [...stories]
-    .filter((s) => (s.source_count ?? 0) === 1)
-    .sort(
-      (a, b) =>
-        blindspotScore(b) - blindspotScore(a) ||
-        Date.parse(b.created_at || "") - Date.parse(a.created_at || "")
-    )
-  const featured = underreported.slice(0, 4)
 
   return (
     <div className="container">
@@ -33,60 +24,21 @@ export default async function BlindspotPage() {
           </div>
         </div>
 
-        <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed max-w-[640px] mb-8">
-          Undercovered technology stories in our cluster graph — single-outlet tech coverage
-          ranked for signal (useful summary, non-forum sources, security/AI/policy). Not every
-          singleton; the ones worth a look.
+        <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[640px] mb-8">
+          Stories the wider press has barely covered — one outlet, or two that lean the same way.
+          Pick a <strong className="font-semibold text-[var(--text-primary)]">coverage lens</strong>{" "}
+          below. Full desks live under{" "}
+          <Link href="/topic/ai" className="text-[var(--accent)] hover:underline">
+            Topics
+          </Link>
+          ; today&apos;s digest under{" "}
+          <Link href="/brief" className="text-[var(--accent)] hover:underline">
+            Brief
+          </Link>
+          .
         </p>
 
-        {error ? (
-          <div className="empty-state py-8 mb-10">
-            <p className="page-title mb-2">Could not load blindspots</p>
-            <p>{error}</p>
-          </div>
-        ) : featured.length === 0 ? (
-          <p className="font-mono text-[12px] text-[var(--text-secondary)] mb-10">
-            No underreported clusters yet.
-          </p>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 mb-10">
-            {featured.map((story) => (
-              <BlindspotCard
-                key={story.id}
-                title={story.title}
-                summary={story.summary_en || undefined}
-                sourceCount={story.source_count ?? 0}
-                sourceNames={
-                  story.coverage_outlets?.map((o) => o.name) ||
-                  (story.primary_source ? [story.primary_source] : undefined)
-                }
-                href={`/story/${story.id}`}
-              />
-            ))}
-          </div>
-        )}
-
-        {!error && (
-          <>
-            <div className="section-header">
-              <h2 className="section-title">All underreported stories</h2>
-              <span className="font-mono text-[10px] text-[var(--text-secondary)]">
-                {underreported.length} stories
-              </span>
-            </div>
-            {underreported.length === 0 ? (
-              <div className="empty-state py-8">
-                <p>No underreported clusters yet.</p>
-              </div>
-            ) : (
-              <div>
-                {underreported.map((story) => (
-                  <StoryRow key={story.id} story={story} />
-                ))}
-              </div>
-            )}
-          </>
-        )}
+        <BlindspotExplorer stories={stories} error={error} />
       </section>
     </div>
   )

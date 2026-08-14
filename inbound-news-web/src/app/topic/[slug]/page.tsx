@@ -3,6 +3,7 @@ import { getStoriesByCategorySafe } from "@/lib/posts"
 import { prioritizeStoriesWithImages } from "@/lib/story-priority"
 import { CATEGORIES, getCategoryLabel } from "@/lib/categories"
 import { StoryRow } from "@/components/story/StoryRow"
+import { FollowButton } from "@/components/FollowButton"
 
 export const revalidate = 60
 
@@ -27,10 +28,18 @@ export default async function TopicPage({
   return (
     <div className="container py-10 md:py-14">
       <div className="section-header">
-        <h1 className="page-title">{label}</h1>
-        <span className="meta-text">
-          {stories.length} stor{stories.length !== 1 ? "ies" : "y"}
-        </span>
+        <div>
+          <h1 className="page-title">{label}</h1>
+          <p className="mt-2 text-[13px] text-[var(--text-secondary)] max-w-[48ch]">
+            Follow this desk to track it in your account diet. Ranking stays chronological for now.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <FollowButton kind="topic" slug={slug} label={`Follow ${label}`} />
+          <span className="meta-text">
+            {stories.length} stor{stories.length !== 1 ? "ies" : "y"}
+          </span>
+        </div>
       </div>
 
       {error ? (

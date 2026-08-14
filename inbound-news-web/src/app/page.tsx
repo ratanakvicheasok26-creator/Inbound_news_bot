@@ -2,6 +2,7 @@ import { getAllStoriesSafe } from "@/lib/posts"
 import { prioritizeStoriesWithImages, selectFeedStories } from "@/lib/story-priority"
 import { LeadStoryCard } from "@/components/story/LeadStoryCard"
 import { StoryCard } from "@/components/story/StoryCard"
+import { isMockStoriesEnabled } from "@/lib/mock-stories"
 import Link from "next/link"
 
 export const revalidate = 60
@@ -19,6 +20,7 @@ export default async function HomePage() {
 
   const leadStory = feed[0] || null
   const latestStories = feed.slice(1)
+  const demoMode = isMockStoriesEnabled()
 
   if (!leadStory) {
     return (
@@ -37,6 +39,16 @@ export default async function HomePage() {
 
   return (
     <div>
+      {demoMode && (
+        <div className="border-b border-[var(--border)] bg-[var(--surface-alt)]">
+          <div className="container py-2.5 text-[12px] text-[var(--text-secondary)]">
+            <strong className="text-[var(--text-primary)]">Demo data</strong>
+            {" — "}
+            Supabase is not configured locally. Showing mock stories so you can review coverage,
+            Blindspot, Compare, and Local Lens. Real ingest replaces this later.
+          </div>
+        </div>
+      )}
       {/* Hero — brand positioning + lead story */}
       <section className="border-b border-[var(--border)] bg-[var(--surface)]">
         <div className="container pt-8 pb-10 md:pt-12 md:pb-14">

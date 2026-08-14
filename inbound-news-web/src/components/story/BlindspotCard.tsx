@@ -5,29 +5,49 @@ interface BlindspotCardProps {
   summary?: string
   sourceCount: number
   sourceNames?: string[]
+  /** e.g. "1 outlet · Research · 12h ago" */
+  why?: string
+  /** true blindspot vs thin/skewed */
+  variant?: "blindspot" | "thin"
   href?: string
 }
 
-export function BlindspotCard({ title, summary, sourceCount, sourceNames = [], href }: BlindspotCardProps) {
+export function BlindspotCard({
+  title,
+  summary,
+  sourceCount,
+  sourceNames = [],
+  why,
+  variant = "blindspot",
+  href,
+}: BlindspotCardProps) {
+  const isThin = variant === "thin"
   const body = (
     <>
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
         <span className="dna-tag dna-tag-hype">
-          &#9888; Blindspot
+          {isThin ? "Thin coverage" : "Blindspot"}
         </span>
         <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--red-subtle-text)] font-bold">
-          Underreported
+          {isThin ? "Skewed" : "Underreported"}
         </span>
       </div>
-      <h3 className="story-title">
-        {title}
-      </h3>
-      {(summary || sourceCount > 0) && (
+      <h3 className="story-title">{title}</h3>
+      {why ? (
+        <p className="mt-1.5 font-mono text-[11px] text-[var(--text-secondary)] tracking-wide">
+          {why}
+        </p>
+      ) : (
         <p className="mt-1 text-[13px] text-[var(--text-secondary)] line-clamp-2">
           Only {sourceCount} source{sourceCount !== 1 ? "s" : ""} covering this
           {sourceNames.length > 0 && (
-            <span className="text-[var(--text-secondary)]"> &mdash; {sourceNames.join(", ")}</span>
+            <span> — {sourceNames.join(", ")}</span>
           )}
+        </p>
+      )}
+      {summary && (
+        <p className="mt-2 text-[13px] text-[var(--text-secondary)] line-clamp-2 leading-relaxed">
+          {summary}
         </p>
       )}
     </>
@@ -35,7 +55,10 @@ export function BlindspotCard({ title, summary, sourceCount, sourceNames = [], h
 
   if (href) {
     return (
-      <Link href={href} className="blindspot-card block hover:border-[var(--accent)] transition-colors">
+      <Link
+        href={href}
+        className="blindspot-card block hover:border-[var(--accent)] transition-colors"
+      >
         {body}
       </Link>
     )

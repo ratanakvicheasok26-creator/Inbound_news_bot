@@ -40,7 +40,7 @@ export function StoryCard({ story }: { story: Story }) {
         </Link>
 
         <div className="mt-3">
-          <CoverageMeta story={story} maxNames={2} />
+          <CoverageMeta story={story} maxNames={2} compact />
         </div>
 
         <div className="mt-4 flex items-center justify-between gap-2 border-t border-[var(--border)] pt-3">

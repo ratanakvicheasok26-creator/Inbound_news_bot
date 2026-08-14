@@ -121,7 +121,13 @@ export function LocalLensBox({ category, storyTitle, storySummary }: LocalLensBo
       )}
       {isFallback && !loading && (
         <p className="mt-2 text-[11px] text-[var(--text-secondary)] opacity-70">
-          Category context — story-specific lens unavailable
+          Showing category context — live Local Lens needs a Groq key or the API was busy. Try again
+          later for a story-specific take.
+        </p>
+      )}
+      {!isFallback && !loading && text && (
+        <p className="mt-2 text-[11px] text-[var(--text-secondary)] opacity-60">
+          AI-assisted · Cambodia framing
         </p>
       )}
     </aside>

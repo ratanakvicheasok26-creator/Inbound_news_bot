@@ -2,6 +2,16 @@ import { supabase, isSupabaseConfigured } from "./supabase"
 import { pickArticleImage, isValidImageUrl } from "./story-images"
 import { uniqueOutlets } from "./outlet-roles"
 import type { Story, Article, StoryWithArticles } from "./types"
+import {
+  getMockStories,
+  getMockStoriesByCategory,
+  getMockStoryById,
+  getMockStoriesByIds,
+  getMockStoriesForBrief,
+  getMockStoriesBySourceDomain,
+  getMockStats,
+  isMockStoriesEnabled,
+} from "./mock-stories"
 
 export type StoriesResult = {
   stories: Story[]
@@ -106,6 +116,10 @@ export async function getAllStories(limit = 60): Promise<Story[]> {
 }
 
 export async function getAllStoriesSafe(limit = 60): Promise<StoriesResult> {
+  if (isMockStoriesEnabled()) {
+    return { stories: getMockStories(limit), error: null }
+  }
+
   if (!isSupabaseConfigured) {
     return { stories: [], error: "Supabase is not configured" }
   }
@@ -137,6 +151,10 @@ export async function getStoriesByCategory(category: string): Promise<Story[]> {
 export async function getStoriesByCategorySafe(
   category: string
 ): Promise<StoriesResult> {
+  if (isMockStoriesEnabled()) {
+    return { stories: getMockStoriesByCategory(category), error: null }
+  }
+
   if (!isSupabaseConfigured) {
     return { stories: [], error: "Supabase is not configured" }
   }
@@ -187,6 +205,10 @@ export async function getStoriesForBrief(
   dateYmd: string,
   limit = 24
 ): Promise<StoriesResult> {
+  if (isMockStoriesEnabled()) {
+    return { stories: getMockStoriesForBrief(dateYmd, limit), error: null }
+  }
+
   if (!isSupabaseConfigured) {
     return { stories: [], error: "Supabase is not configured" }
   }
@@ -229,6 +251,10 @@ export async function getStoriesForBrief(
  * the segment is the story id.
  */
 export async function getStoryById(id: string): Promise<StoryWithArticles | null> {
+  if (isMockStoriesEnabled()) {
+    return getMockStoryById(id)
+  }
+
   if (!isSupabaseConfigured) return null
 
   try {
@@ -295,7 +321,10 @@ export async function getStoryById(id: string): Promise<StoryWithArticles | null
 
 /** Fetch specific stories by id (for saved library). Light select — no raw_json. */
 export async function getStoriesByIds(ids: string[]): Promise<Story[]> {
-  if (!isSupabaseConfigured || ids.length === 0) return []
+  if (ids.length === 0) return []
+  if (isMockStoriesEnabled()) return getMockStoriesByIds(ids)
+
+  if (!isSupabaseConfigured) return []
 
   try {
     const capped = [...new Set(ids)].slice(0, 100)
@@ -323,6 +352,10 @@ export async function getStoriesByIds(ids: string[]): Promise<Story[]> {
  * (via story_sources join), newest first.
  */
 export async function getStoriesBySourceDomain(domain: string): Promise<Story[]> {
+  if (isMockStoriesEnabled()) {
+    return getMockStoriesBySourceDomain(domain)
+  }
+
   if (!isSupabaseConfigured) return []
 
   try {
@@ -384,6 +417,10 @@ export async function getStoryStats(): Promise<{
   sourceCount: number
   categoryCount: number
 }> {
+  if (isMockStoriesEnabled()) {
+    return getMockStats()
+  }
+
   if (!isSupabaseConfigured) {
     return { storyCount: 0, sourceCount: 0, categoryCount: 0 }
   }

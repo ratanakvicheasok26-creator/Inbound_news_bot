@@ -1,6 +1,12 @@
 import { supabase, isSupabaseConfigured } from "./supabase"
 import { isUsefulSummary, summaryFromArticleRaw } from "./story-body"
 import type { Article } from "./types"
+import {
+  getMockArticlesForCompare,
+  getMockStoryById,
+  findMockStoryByArticleId,
+  isMockStoriesEnabled,
+} from "./mock-stories"
 
 /**
  * News Comparison data helpers.
@@ -64,7 +70,16 @@ function toOption(
 }
 
 export async function getArticleOptionById(id: string): Promise<CompareOption | null> {
-  if (!isSupabaseConfigured || !isUuid(id)) return null
+  if (!isUuid(id)) return null
+
+  if (isMockStoriesEnabled()) {
+    for (const article of getMockArticlesForCompare(200)) {
+      if (article.id === id) return toOption(article)
+    }
+    return null
+  }
+
+  if (!isSupabaseConfigured) return null
   try {
     const { data, error } = await supabase
       .from("articles")
@@ -85,7 +100,20 @@ export async function getArticleOptionById(id: string): Promise<CompareOption | 
 export async function getRelatedOptionsFor(
   articleId: string,
 ): Promise<{ related: CompareOption[]; storyId: string | null; storyTitle: string | null }> {
-  if (!isSupabaseConfigured || !isUuid(articleId)) {
+  if (!isUuid(articleId)) {
+    return { related: [], storyId: null, storyTitle: null }
+  }
+
+  if (isMockStoriesEnabled()) {
+    const story = findMockStoryByArticleId(articleId)
+    if (!story) return { related: [], storyId: null, storyTitle: null }
+    const related = story.articles
+      .filter((a) => a.id !== articleId)
+      .map((a) => toOption(a, story.id, story.title))
+    return { related, storyId: story.id, storyTitle: story.title }
+  }
+
+  if (!isSupabaseConfigured) {
     return { related: [], storyId: null, storyTitle: null }
   }
 
@@ -148,6 +176,25 @@ export async function getRelatedOptionsFor(
 
 /** Recent articles (grouped via their stories) for picking a comparison from scratch. */
 export async function getRecentCompareOptions(limit = 12): Promise<CompareOption[]> {
+  if (isMockStoriesEnabled()) {
+    const options: CompareOption[] = []
+    const storyIds = [
+      "11111111-1111-4111-8111-111111111101",
+      "11111111-1111-4111-8111-111111111102",
+      "11111111-1111-4111-8111-111111111103",
+      "11111111-1111-4111-8111-111111111104",
+      "11111111-1111-4111-8111-111111111109",
+    ]
+    for (const sid of storyIds.slice(0, limit)) {
+      const story = getMockStoryById(sid)
+      if (!story) continue
+      for (const a of story.articles) {
+        options.push(toOption(a, story.id, story.title))
+      }
+    }
+    return options
+  }
+
   if (!isSupabaseConfigured) return []
 
   try {

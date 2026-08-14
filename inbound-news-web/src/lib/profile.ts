@@ -8,6 +8,8 @@ export interface ReadEntry {
   title: string
   category: string
   readAt: string
+  /** Optional outlet role from coverage when tracked. */
+  outletRole?: string
 }
 
 export interface UserProfile {
@@ -16,6 +18,7 @@ export interface UserProfile {
   recentlyRead: ReadEntry[]
   savedStoryIds: string[]
   followedConcepts: string[]
+  followedTopics: string[]
   preferences: {
     defaultTier: "eli5" | "standard" | "deep"
     defaultLang: "en" | "km"
@@ -30,6 +33,7 @@ const DEFAULTS: UserProfile = {
   recentlyRead: [],
   savedStoryIds: [],
   followedConcepts: [],
+  followedTopics: [],
   preferences: {
     defaultTier: "standard",
     defaultLang: "en",
@@ -39,13 +43,20 @@ const DEFAULTS: UserProfile = {
 }
 
 export function getProfile(): UserProfile {
-  if (typeof window === "undefined") return { ...DEFAULTS }
+  if (typeof window === "undefined") return { ...DEFAULTS, preferences: { ...DEFAULTS.preferences } }
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { ...DEFAULTS }
-    return { ...DEFAULTS, ...JSON.parse(raw) }
+    if (!raw) return { ...DEFAULTS, preferences: { ...DEFAULTS.preferences } }
+    const parsed = JSON.parse(raw) as Partial<UserProfile>
+    return {
+      ...DEFAULTS,
+      ...parsed,
+      followedTopics: parsed.followedTopics ?? [],
+      followedConcepts: parsed.followedConcepts ?? [],
+      preferences: { ...DEFAULTS.preferences, ...parsed.preferences },
+    }
   } catch {
-    return { ...DEFAULTS }
+    return { ...DEFAULTS, preferences: { ...DEFAULTS.preferences } }
   }
 }
 
@@ -76,7 +87,12 @@ export function addPoints(pts: number): void {
   })
 }
 
-export function trackStoryRead(story: { id: string; title: string; category: string }): void {
+export function trackStoryRead(story: {
+  id: string
+  title: string
+  category: string
+  outletRole?: string
+}): void {
   if (typeof window === "undefined") return
   const profile = getProfile()
   if (profile.preferences.stealthMode) return
@@ -126,6 +142,24 @@ export function toggleFollowedConcept(slug: string): boolean {
     : [...profile.followedConcepts, slug]
   saveProfile({ followedConcepts: next })
   return !followed
+}
+
+export function isConceptFollowed(slug: string): boolean {
+  return getProfile().followedConcepts.includes(slug)
+}
+
+export function toggleFollowedTopic(slug: string): boolean {
+  const profile = getProfile()
+  const followed = profile.followedTopics.includes(slug)
+  const next = followed
+    ? profile.followedTopics.filter((t) => t !== slug)
+    : [...profile.followedTopics, slug]
+  saveProfile({ followedTopics: next })
+  return !followed
+}
+
+export function isTopicFollowed(slug: string): boolean {
+  return getProfile().followedTopics.includes(slug)
 }
 
 export function updatePreferences(prefs: Partial<UserProfile["preferences"]>): void {

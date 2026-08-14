@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { resolveOgImage } from "@/lib/og-image"
-import { isValidImageUrl, isSafeHost, assertPublicUrl } from "@/lib/story-images"
+import { isValidImageUrl, isSafeHost } from "@/lib/story-images"
+import { assertPublicUrl } from "@/lib/story-images-ssrf"
 import { getClientIp, rateLimit } from "@/lib/rate-limit"
 
 export async function GET(req: NextRequest) {

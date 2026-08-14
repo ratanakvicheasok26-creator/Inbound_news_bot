@@ -46,7 +46,7 @@ export function StoryRow({ story }: { story: Story }) {
         )}
 
         <div className="mt-2">
-          <CoverageMeta story={story} showBar={false} maxNames={3} />
+          <CoverageMeta story={story} showBar={false} maxNames={3} compact />
         </div>
       </div>
 

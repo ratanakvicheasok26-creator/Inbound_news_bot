@@ -70,9 +70,12 @@ export default async function SourcePage({ params }: { params: Promise<{ slug: s
       </div>
 
       <section className="py-8 border-b-2 border-[var(--text-primary)]">
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
           <Shield className="h-4 w-4 text-[var(--accent)]" />
           <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--accent)]">Source Profile</span>
+          <span className="font-mono text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-[var(--radius-sm)] bg-[var(--surface-alt)] text-[var(--text-secondary)]">
+            Beta · 4 outlets
+          </span>
         </div>
         <h1 className="page-title">
           {source.name}

@@ -112,12 +112,14 @@ function SearchResults() {
     if (term.length < MIN_QUERY) {
       localAbortRef.current?.abort()
       webAbortRef.current?.abort()
+      /* eslint-disable react-hooks/set-state-in-effect -- reset results when query cleared */
       setStories([])
       setArticles([])
       setWebResults([])
       setError(null)
       setLoading(false)
       setWebLoading(false)
+      /* eslint-enable react-hooks/set-state-in-effect */
       return
     }
 

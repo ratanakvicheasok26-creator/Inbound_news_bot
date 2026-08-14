@@ -3,6 +3,7 @@ import Link from "next/link"
 import { getAllStoriesSafe } from "@/lib/posts"
 import { filterTechStories } from "@/lib/tech-scope"
 import { StoryRow } from "@/components/story/StoryRow"
+import { FollowButton } from "@/components/FollowButton"
 import { ArrowLeft, TrendingUp } from "lucide-react"
 
 type ConceptEntry = {
@@ -88,13 +89,17 @@ export default async function ConceptPage({ params }: { params: Promise<{ slug: 
       </div>
 
       <section className="py-8 border-b-2 border-[var(--text-primary)]">
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
           <TrendingUp className="h-4 w-4 text-[var(--accent)]" />
           <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--accent)]">Concept</span>
+          <span className="font-mono text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-[var(--radius-sm)] bg-[var(--surface-alt)] text-[var(--text-secondary)]">
+            Beta · curated set
+          </span>
         </div>
-        <h1 className="page-title">
-          {concept.name}
-        </h1>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <h1 className="page-title">{concept.name}</h1>
+          <FollowButton kind="concept" slug={canonicalSlug} />
+        </div>
         <p className="mt-3 text-[16px] text-[var(--text-secondary)] leading-[1.7] max-w-[720px]">
           {concept.definition}
         </p>

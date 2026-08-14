@@ -1,4 +1,5 @@
-import { isValidImageUrl, isSafeHost, assertPublicUrl } from "@/lib/story-images"
+import { isValidImageUrl, isSafeHost } from "@/lib/story-images"
+import { assertPublicUrl } from "@/lib/story-images-ssrf"
 
 const OG_RE =
   /<meta\s+[^>]*(?:property|name)=["']og:image(?::secure_url)?["'][^>]*content=["']([^"']+)["']/i
