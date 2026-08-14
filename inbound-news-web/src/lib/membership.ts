@@ -86,35 +86,14 @@ export type QrSubmission = {
   plan: MembershipPlan
   amount: number
   currency?: string | null
-  aba_transaction_id: string
+  aba_transaction_id: string | null
   payment_proof_url?: string | null
   status: QrSubmissionStatus
   created_at: string
   reviewed_at: string | null
 }
 
-export async function uploadPaymentProof(
-  file: File,
-): Promise<{ key?: string; error?: string; status?: number }> {
-  const token = await getAccessToken()
-  if (!token) return { error: "auth" }
-  try {
-    const form = new FormData()
-    form.append("file", file)
-    const res = await fetch("/api/membership/upload-proof", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: form,
-    })
-    const data = (await res.json().catch(() => ({}))) as { key?: string; error?: string }
-    if (!res.ok) return { error: data.error || "failed", status: res.status }
-    return { key: data.key }
-  } catch {
-    return { error: "failed" }
-  }
-}
-
-/** Short-lived signed URL for the caller's own payment screenshot. */
+/** Short-lived signed URL for the caller's own payment screenshot (legacy rows only). */
 export async function getProofUrl(key: string): Promise<string | null> {
   const token = await getAccessToken()
   if (!token) return null
@@ -133,8 +112,6 @@ export async function getProofUrl(key: string): Promise<string | null> {
 
 export async function submitQrPayment(
   plan: MembershipPlan,
-  abaTransactionId: string,
-  paymentProofKey?: string | null,
 ): Promise<{ submission?: QrSubmission; error?: string; status?: number }> {
   const token = await getAccessToken()
   if (!token) return { error: "auth" }
@@ -145,11 +122,7 @@ export async function submitQrPayment(
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        plan,
-        aba_transaction_id: abaTransactionId,
-        payment_proof_url: paymentProofKey ?? null,
-      }),
+      body: JSON.stringify({ plan }),
     })
     const data = (await res.json().catch(() => ({}))) as {
       submission?: QrSubmission

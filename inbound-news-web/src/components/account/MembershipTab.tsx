@@ -226,7 +226,7 @@ function QrSubmissionsSection({
       <div className="mt-6 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6">
         <h3 className="font-display text-[16px] font-semibold mb-2">QR payments</h3>
         <p className="text-[14px] text-[var(--text-secondary)]">
-          Paid by QR? Submit your ABA transaction ID from{" "}
+          Paid by QR? Tap “I&apos;ve paid” on{" "}
           <Link href="/pricing" className="font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)]">
             the pricing page
           </Link>{" "}
@@ -250,7 +250,8 @@ function QrSubmissionsSection({
                 {meta?.name} · {Number(s.amount).toFixed(2)} {s.currency || "USD"}
               </p>
               <p className="text-[13px] text-[var(--text-secondary)]">
-                Txn {s.aba_transaction_id} · {formatDate(s.created_at)}
+                {s.aba_transaction_id ? `Txn ${s.aba_transaction_id} · ` : ""}
+                {formatDate(s.created_at)}
               </p>
             </div>
             <div className="flex items-center gap-2">

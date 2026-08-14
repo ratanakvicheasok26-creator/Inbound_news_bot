@@ -90,7 +90,7 @@ export default function AdminQrReviewPage() {
     <div className="container container-lg py-10 md:py-14">
       <h1 className="page-title mb-2">QR payment review</h1>
       <p className="text-[14px] text-[var(--text-secondary)] mb-8">
-        Verify ABA transaction IDs before approving memberships. Admin only.
+        Approve QR payments after verifying them in your bank app. Admin only.
       </p>
 
       {error && (
@@ -181,8 +181,9 @@ function SubmissionRow({
           {sub.user_email || "Unknown email"}
         </p>
         <p className="text-[13px] text-[var(--text-secondary)]">
-          {meta?.name} · {Number(sub.amount).toFixed(2)} {sub.currency || "USD"} · Txn{" "}
-          {sub.aba_transaction_id} · {formatDate(sub.created_at)}
+          {meta?.name} · {Number(sub.amount).toFixed(2)} {sub.currency || "USD"}
+          {sub.aba_transaction_id ? ` · Txn ${sub.aba_transaction_id}` : ""} ·{" "}
+          {formatDate(sub.created_at)}
         </p>
         <p className="text-[12px] text-[var(--text-secondary)]">
           {STATUS_LABELS[sub.status]}

@@ -4,7 +4,12 @@ import { createUserClient, supabaseAdmin } from "@/lib/supabase-server"
 import { PLANS } from "@/lib/plans"
 import type { MembershipPlan } from "@/lib/plans"
 
-/** User confirms their QR (ABA) payment by submitting the ABA transaction ID. */
+/**
+ * Honor-system QR (ABA) payment confirmation. The user pays by scanning the
+ * plan's QR, then taps "I've paid" — no transaction ID or screenshot needed.
+ * The admin verifies the payment in their own bank app and approves it from
+ * /admin/qr.
+ */
 export async function POST(req: NextRequest) {
   const auth = await authenticateRequest(req)
   if (!auth) {
@@ -14,7 +19,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "not_configured" }, { status: 503 })
   }
 
-  let body: { plan?: string; aba_transaction_id?: string; payment_proof_url?: string }
+  let body: { plan?: string }
   try {
     body = await req.json()
   } catch {
@@ -24,19 +29,6 @@ export async function POST(req: NextRequest) {
   const plan = body.plan as MembershipPlan
   if (!PLANS[plan]) {
     return NextResponse.json({ error: "invalid_plan" }, { status: 400 })
-  }
-
-  const txnId = String(body.aba_transaction_id || "").trim()
-  if (!txnId || txnId.length < 4 || txnId.length > 64) {
-    return NextResponse.json(
-      { error: "Enter the ABA transaction ID from your payment." },
-      { status: 400 },
-    )
-  }
-
-  const proofKey = String(body.payment_proof_url || "").trim()
-  if (!proofKey || !proofKey.startsWith(`${auth.user.id}/`)) {
-    return NextResponse.json({ error: "missing_proof" }, { status: 400 })
   }
 
   const supabase = createUserClient(`Bearer ${auth.token}`)
@@ -51,6 +43,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "already_member" }, { status: 409 })
   }
 
+  const { data: pending } = await supabaseAdmin
+    .from("payment_submissions")
+    .select("id, plan, amount, currency, aba_transaction_id, payment_proof_url, status, created_at, reviewed_at")
+    .eq("user_id", auth.user.id)
+    .eq("status", "pending")
+    .maybeSingle()
+
+  if (pending) {
+    return NextResponse.json({ submission: pending }, { status: 200 })
+  }
+
   const amount = PLANS[plan].price
   const { data, error } = await supabaseAdmin
     .from("payment_submissions")
@@ -60,20 +63,14 @@ export async function POST(req: NextRequest) {
       plan,
       amount,
       currency: "USD",
-      aba_transaction_id: txnId,
-      payment_proof_url: proofKey,
+      aba_transaction_id: null,
+      payment_proof_url: null,
       status: "pending",
     })
     .select()
     .single()
 
   if (error) {
-    if (error.code === "23505") {
-      return NextResponse.json(
-        { error: "This transaction ID was already submitted." },
-        { status: 409 },
-      )
-    }
     console.error("qr-submit error:", error)
     return NextResponse.json({ error: "failed" }, { status: 500 })
   }
