@@ -230,7 +230,10 @@ export function PrivacyPolicyContent() {
                 </ul>
                 <InfoBox>
                   We do not sell, rent, or share your personal information with third parties for
-                  their own use. We do not serve advertisements.
+                  their own use. We may show labeled third-party advertisements (for example via
+                  Google AdSense) to support the Service. Ad partners may use cookies or similar
+                  technologies as described in their policies; you can control ads personalization
+                  through your browser and Google&apos;s ad settings.
                 </InfoBox>
               </section>
             </FadeIn>

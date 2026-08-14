@@ -4,6 +4,7 @@ import { prioritizeStoriesWithImages } from "@/lib/story-priority"
 import { CATEGORIES, getCategoryLabel } from "@/lib/categories"
 import { StoryRow } from "@/components/story/StoryRow"
 import { FollowButton } from "@/components/FollowButton"
+import { isMockStoriesEnabled } from "@/lib/mock-stories"
 
 export const revalidate = 60
 
@@ -20,7 +21,7 @@ export default async function TopicPage({
 
   const { stories: raw, error } = await getStoriesByCategorySafe(slug)
   const stories = await prioritizeStoriesWithImages(raw, {
-    resolveLimit: 4,
+    resolveLimit: isMockStoriesEnabled() ? 0 : 4,
     concurrency: 2,
   })
   const label = getCategoryLabel(slug)

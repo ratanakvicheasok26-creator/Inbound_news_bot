@@ -40,6 +40,9 @@ __all__ = [
     "DONATION_TEXT",
     "FEED_TIMEOUT_SECONDS",
     "FETCH_ADMIN_CHAT_IDS",
+    "ADS_ADMIN_CHAT_IDS",
+    "SUPABASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
     "FETCH_COOLDOWN_SECONDS",
     "FETCH_GLOBAL_COOLDOWN_SECONDS",
     "GROQ_MAX_TOKENS",
@@ -318,6 +321,15 @@ def _parse_admin_chat_ids(raw: str) -> frozenset[int]:
 FETCH_ADMIN_CHAT_IDS: frozenset[int] = _parse_admin_chat_ids(
     os.environ.get("FETCH_ADMIN_CHAT_IDS", "")
 )
+
+# Ads admin Telegram commands (/ad_*). Empty → fall back to FETCH_ADMIN_CHAT_IDS.
+ADS_ADMIN_CHAT_IDS: frozenset[int] = _parse_admin_chat_ids(
+    os.environ.get("ADS_ADMIN_CHAT_IDS", "")
+)
+
+# Supabase (optional for Telegram; required for /ad_* sponsor writes + Brief pool).
+SUPABASE_URL: str = (os.environ.get("SUPABASE_URL") or "").strip()
+SUPABASE_SERVICE_ROLE_KEY: str = (os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or "").strip()
 
 # ---- Link caps ----
 LINK_CAP_URGENT: int = 3

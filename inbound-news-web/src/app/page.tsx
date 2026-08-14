@@ -2,7 +2,10 @@ import { getAllStoriesSafe } from "@/lib/posts"
 import { prioritizeStoriesWithImages, selectFeedStories } from "@/lib/story-priority"
 import { LeadStoryCard } from "@/components/story/LeadStoryCard"
 import { StoryCard } from "@/components/story/StoryCard"
+import { AdBand } from "@/components/ads/AdBand"
 import { isMockStoriesEnabled } from "@/lib/mock-stories"
+import { pickSponsorFrom } from "@/lib/sponsors"
+import { getActiveSponsors } from "@/lib/sponsors-server"
 import Link from "next/link"
 
 export const revalidate = 60
@@ -10,17 +13,22 @@ export const revalidate = 60
 export default async function HomePage() {
   // Over-fetch then rank so multi-source / imaged stories win the lead slot
   // even when noisier forum items are newer in the raw ingest order.
+  const demoMode = isMockStoriesEnabled()
   const { stories, error } = await getAllStoriesSafe(72)
-  // Prefer stored images; only resolve a few missing OGs so home stays fast.
+  // Mock data already has images — skip outbound OG fetches (lag + flicker on localhost).
   const prioritized = await prioritizeStoriesWithImages(stories, {
-    resolveLimit: 6,
+    resolveLimit: demoMode ? 0 : 6,
     concurrency: 3,
   })
   const feed = selectFeedStories(prioritized, 13)
+  const { sponsors } = await getActiveSponsors()
+  const homeAd = pickSponsorFrom("home", sponsors)
+  const feedAd = pickSponsorFrom("homeFeed", sponsors)
 
   const leadStory = feed[0] || null
   const latestStories = feed.slice(1)
-  const demoMode = isMockStoriesEnabled()
+  const feedTop = latestStories.slice(0, 6)
+  const feedRest = latestStories.slice(6)
 
   if (!leadStory) {
     return (
@@ -52,7 +60,7 @@ export default async function HomePage() {
       {/* Hero — brand positioning + lead story */}
       <section className="border-b border-[var(--border)] bg-[var(--surface)]">
         <div className="container pt-8 pb-10 md:pt-12 md:pb-14">
-          <div className="mb-8 md:mb-10 animate-[riseIn_350ms_ease-out]">
+          <div className="mb-8 md:mb-10">
             <p className="chip mb-4">
               <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
               Inbound Reports
@@ -70,6 +78,8 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {homeAd && <AdBand placement="home" creative={homeAd} sponsors={sponsors} />}
+
       {/* Latest stories — equal 3-column grid */}
       <section className="container pt-14 pb-12 md:pt-20 md:pb-16">
         <div className="section-header">
@@ -86,28 +96,19 @@ export default async function HomePage() {
         </div>
 
         <div className="grid gap-5 gap-y-8 sm:grid-cols-2 sm:gap-6 sm:gap-y-10 lg:grid-cols-3">
-          {latestStories.map((story) => (
+          {feedTop.map((story) => (
             <StoryCard key={story.id} story={story} />
           ))}
-        </div>
-      </section>
-
-      {/* Literacy tools */}
-      <section className="border-t border-[var(--border)]">
-        <div className="container py-8 md:py-10 flex flex-wrap gap-x-6 gap-y-2 text-[14px] text-[var(--text-secondary)]">
-          <Link href="/brief" className="hover:text-[var(--accent)] transition-colors">
-            Daily Brief
-          </Link>
-          <Link href="/glossary" className="hover:text-[var(--accent)] transition-colors">
-            Glossary
-          </Link>
-          <Link href="/legal/methodology" className="hover:text-[var(--accent)] transition-colors">
-            Methodology
-          </Link>
-          <Link href="/about" className="hover:text-[var(--accent)] transition-colors">
-            About
-          </Link>
-          <span>Coverage map · Compare · Blindspot · ELI5 / Standard / Deep</span>
+          {feedRest.length > 0 && (
+            <div className="col-span-full min-w-0">
+              {feedAd && (
+                <AdBand placement="homeFeed" flush creative={feedAd} sponsors={sponsors} />
+              )}
+            </div>
+          )}
+          {feedRest.map((story) => (
+            <StoryCard key={story.id} story={story} />
+          ))}
         </div>
       </section>
     </div>

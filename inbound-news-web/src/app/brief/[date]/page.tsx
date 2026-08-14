@@ -3,6 +3,10 @@ import { notFound } from "next/navigation"
 import { getStoriesForBrief, phnomPenhDayBounds, todayPhnomPenhYmd } from "@/lib/posts"
 import { prioritizeStoriesWithImages, selectFeedStories } from "@/lib/story-priority"
 import { StoryRow } from "@/components/story/StoryRow"
+import { AdBand } from "@/components/ads/AdBand"
+import { isMockStoriesEnabled } from "@/lib/mock-stories"
+import { pickSponsorFrom } from "@/lib/sponsors"
+import { getActiveSponsors } from "@/lib/sponsors-server"
 
 export const revalidate = 60
 
@@ -41,10 +45,12 @@ export default async function BriefDatePage({
   const today = todayPhnomPenhYmd()
   const { stories, error } = await getStoriesForBrief(date)
   const prioritized = await prioritizeStoriesWithImages(stories, {
-    resolveLimit: 6,
+    resolveLimit: isMockStoriesEnabled() ? 0 : 6,
     concurrency: 3,
   })
   const ranked = selectFeedStories(prioritized, 24)
+  const { sponsors } = await getActiveSponsors()
+  const briefAd = pickSponsorFrom("brief", sponsors)
   const isToday = date === today
   const prev = shiftYmd(date, -1)
   const next = shiftYmd(date, 1)
@@ -80,6 +86,10 @@ export default async function BriefDatePage({
           )}
         </div>
       </header>
+
+      {briefAd && (
+        <AdBand placement="brief" flush creative={briefAd} sponsors={sponsors} />
+      )}
 
       {error && ranked.length === 0 ? (
         <div className="empty-state max-w-lg mx-auto mt-12">

@@ -25,9 +25,13 @@ import { ArrowLeft, Bookmark, BookmarkCheck, ExternalLink, GitCompareArrows, New
 import Link from "next/link"
 import { summarizeCoverage } from "@/lib/outlet-roles"
 import { SyncSavesPrompt } from "@/components/account/SyncSavesPrompt"
+import { AdBand } from "@/components/ads/AdBand"
+import type { SponsorCreative } from "@/lib/sponsors"
 
 interface StoryContentProps {
   story: StoryWithArticles
+  sponsorCreative?: SponsorCreative | null
+  sponsors?: SponsorCreative[]
 }
 
 const KNOWN_CONCEPT_SLUGS: Record<string, { label: string; slug: string }> = {
@@ -86,7 +90,7 @@ function initialTier(): "eli5" | "standard" | "deep" {
   return "standard"
 }
 
-export function StoryContent({ story }: StoryContentProps) {
+export function StoryContent({ story, sponsorCreative, sponsors }: StoryContentProps) {
   const [activeTier, setActiveTier] = useState<"eli5" | "standard" | "deep">(initialTier)
   const [saved, setSaved] = useState(() => isStorySaved(story.id))
 
@@ -231,6 +235,15 @@ export function StoryContent({ story }: StoryContentProps) {
           </div>
         </div>
       </section>
+
+      {sponsorCreative && (
+        <AdBand
+          placement="story"
+          flush
+          creative={sponsorCreative}
+          sponsors={sponsors}
+        />
+      )}
 
       {relatedConcepts.length > 0 && (
         <section className="pb-6">

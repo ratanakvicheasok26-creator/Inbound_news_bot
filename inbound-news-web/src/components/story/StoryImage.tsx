@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { proxiedImageUrl, isValidImageUrl } from "@/lib/story-images"
+import { displayImageUrl, isValidImageUrl, shouldLoadImageDirect } from "@/lib/story-images"
 import { resolveImageCached } from "@/lib/client-fetch"
 
 type StoryImageProps = {
@@ -17,14 +17,18 @@ type StoryImageProps = {
 function proxySize(variant: StoryImageProps["variant"]): { w: number; h: number } {
   switch (variant) {
     case "lead":
-      return { w: 1200, h: 750 } // 16:10 hero
+      return { w: 1200, h: 750 }
     case "card":
-      return { w: 720, h: 450 } // 16:10 grid tile
+      return { w: 720, h: 450 }
     case "story":
-      return { w: 1200, h: 600 } // 2:1 story page
+      return { w: 1200, h: 600 }
     default:
-      return { w: 320, h: 240 } // 4:3 list thumb
+      return { w: 320, h: 240 }
   }
+}
+
+function srcFor(url: string, w: number, h: number): string {
+  return displayImageUrl(url, w, h)
 }
 
 export function StoryImage({
@@ -36,32 +40,24 @@ export function StoryImage({
   variant = "thumb",
 }: StoryImageProps) {
   const { w, h } = proxySize(variant)
-  const [raw, setRaw] = useState<string | null>(isValidImageUrl(imageUrl) ? imageUrl : null)
-  const [useDirect, setUseDirect] = useState(false)
-  const [src, setSrc] = useState<string | null>(
-    raw ? (useDirect ? raw : proxiedImageUrl(raw, w, h)) : null
-  )
+  const given = isValidImageUrl(imageUrl) ? imageUrl : null
+  const [resolved, setResolved] = useState<string | null>(null)
   const [failed, setFailed] = useState(false)
+  const [usedDirectFallback, setUsedDirectFallback] = useState(false)
 
-  /* eslint-disable react-hooks/set-state-in-effect -- sync raw/src/failed when imageUrl props change */
+  const raw = given || resolved
+  const src = raw ? srcFor(raw, w, h) : null
+
   useEffect(() => {
-    if (isValidImageUrl(imageUrl)) {
-      setRaw(imageUrl)
-      setUseDirect(false)
-      setSrc(proxiedImageUrl(imageUrl, w, h))
-      setFailed(false)
-      return
-    }
+    if (given) return
     if (!pageUrl || !isValidImageUrl(pageUrl)) return
 
     const controller = new AbortController()
     resolveImageCached(pageUrl, controller.signal)
-      .then((resolved) => {
+      .then((next) => {
         if (controller.signal.aborted) return
-        if (isValidImageUrl(resolved)) {
-          setRaw(resolved)
-          setUseDirect(false)
-          setSrc(proxiedImageUrl(resolved, w, h))
+        if (isValidImageUrl(next)) {
+          setResolved(next)
           setFailed(false)
         }
       })
@@ -72,17 +68,23 @@ export function StoryImage({
     return () => {
       controller.abort()
     }
-  }, [imageUrl, pageUrl, w, h])
-  /* eslint-enable react-hooks/set-state-in-effect */
+  }, [given, pageUrl])
 
   function handleError() {
-    if (!useDirect && raw) {
-      setUseDirect(true)
-      setSrc(raw)
+    if (!raw) {
+      setFailed(true)
+      return
+    }
+    // Proxied URL failed — try the original once, without swapping back and forth.
+    if (!usedDirectFallback && !shouldLoadImageDirect(raw)) {
+      setUsedDirectFallback(true)
       return
     }
     setFailed(true)
   }
+
+  const displaySrc =
+    usedDirectFallback && raw ? raw : src
 
   const frame =
     variant === "lead"
@@ -93,7 +95,7 @@ export function StoryImage({
           ? "relative w-full aspect-[21/9] sm:aspect-[2/1] overflow-hidden bg-[var(--surface-alt)]"
           : "relative w-16 h-12 sm:w-[88px] sm:h-[66px] md:w-[112px] md:h-[84px] shrink-0 overflow-hidden bg-[var(--surface-alt)] rounded-[var(--radius-sm)]"
 
-  if (failed || !src) {
+  if (failed || !displaySrc) {
     return (
       <div
         className={`${frame} ${className} flex items-center justify-center`}
@@ -118,7 +120,7 @@ export function StoryImage({
     <div className={`${frame} ${className}`}>
       {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary news domains via weserv proxy */}
       <img
-        src={src}
+        src={displaySrc}
         alt={alt}
         loading={priority ? "eager" : "lazy"}
         decoding="async"

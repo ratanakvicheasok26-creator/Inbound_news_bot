@@ -1,7 +1,13 @@
 import Image from "next/image"
 import { Heart } from "lucide-react"
+import { AdBand } from "@/components/ads/AdBand"
+import { pickSponsorFrom } from "@/lib/sponsors"
+import { getActiveSponsors } from "@/lib/sponsors-server"
 
-export default function DonatePage() {
+export default async function DonatePage() {
+  const { sponsors } = await getActiveSponsors()
+  const donateAd = pickSponsorFrom("donate", sponsors)
+
   return (
     <div className="container container-sm py-10 md:py-14">
       <h1 className="page-title mb-4">Donation</h1>
@@ -37,6 +43,15 @@ export default function DonatePage() {
         </p>
         <p className="text-[13px] text-[var(--text-secondary)]">ABA Bank · Inbound Crew</p>
       </div>
+
+      {donateAd && (
+        <AdBand
+          placement="donate"
+          flush
+          creative={donateAd}
+          sponsors={sponsors}
+        />
+      )}
 
       <div className="mt-8">
         <div className="section-header">

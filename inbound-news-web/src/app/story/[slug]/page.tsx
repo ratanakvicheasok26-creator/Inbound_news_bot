@@ -3,6 +3,8 @@ import { notFound } from "next/navigation"
 import { getStoryById } from "@/lib/posts"
 import { StoryContent } from "@/components/story/StoryContent"
 import { isUsefulSummary, resolveStoryBody, resolveStoryDek } from "@/lib/story-body"
+import { pickSponsorFrom } from "@/lib/sponsors"
+import { getActiveSponsors } from "@/lib/sponsors-server"
 
 export const revalidate = 300
 
@@ -50,5 +52,10 @@ export default async function StoryPage({ params }: StoryPageProps) {
     notFound()
   }
 
-  return <StoryContent story={story} />
+  const { sponsors } = await getActiveSponsors()
+  const sponsorCreative = pickSponsorFrom("story", sponsors)
+
+  return (
+    <StoryContent story={story} sponsorCreative={sponsorCreative} sponsors={sponsors} />
+  )
 }

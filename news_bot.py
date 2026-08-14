@@ -38,6 +38,7 @@ import time as time_mod
 from telegram.ext import Application, CommandHandler, ContextTypes, filters
 
 from newsbot import config
+from newsbot.ads_admin import register_ads_handlers
 from newsbot.bot import (
     _tg_send,
     fetch_and_post,
@@ -447,6 +448,7 @@ def main() -> None:
     _add_command(app, "start", start_command)
     _add_command(app, "stop", stop_command)
     _add_command(app, "fetch", fetch_command)
+    register_ads_handlers(app)
 
     if config.TELEGRAM_CHANNEL_ID is not None:
         logger.info(

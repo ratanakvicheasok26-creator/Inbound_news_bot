@@ -108,6 +108,26 @@ export function pickArticleImage(article: {
   return extractImageFromRaw(article.raw_json)
 }
 
+/** Hosts that already allow hotlinking — skip weserv (faster, no fail-then-swap flicker). */
+const DIRECT_IMAGE_HOSTS = new Set([
+  "images.unsplash.com",
+  "unsplash.com",
+  "plus.unsplash.com",
+  "images.weserv.nl",
+])
+
+export function shouldLoadImageDirect(imageUrl: string): boolean {
+  try {
+    const host = new URL(sanitizeImageUrl(imageUrl)).hostname.toLowerCase()
+    if (DIRECT_IMAGE_HOSTS.has(host)) return true
+    if (host.endsWith(".supabase.co") && host.includes("storage")) return true
+    if (host.endsWith(".supabase.in")) return true
+  } catch {
+    return false
+  }
+  return false
+}
+
 /**
  * Proxy via images.weserv.nl so Next/Image only needs one remote host
  * and hotlink blockers are less likely to break thumbnails.
@@ -116,4 +136,11 @@ export function proxiedImageUrl(imageUrl: string, width = 960, height?: number):
   const stripped = sanitizeImageUrl(imageUrl.replace(/^https?:\/\//i, ""))
   const h = height ? `&h=${height}` : ""
   return `https://images.weserv.nl/?url=${encodeURIComponent(stripped)}&w=${width}${h}&fit=cover&we&output=webp`
+}
+
+/** Display URL: direct for trusted CDNs, weserv otherwise. */
+export function displayImageUrl(imageUrl: string, width = 960, height?: number): string {
+  const clean = sanitizeImageUrl(imageUrl)
+  if (shouldLoadImageDirect(clean)) return clean
+  return proxiedImageUrl(clean, width, height)
 }

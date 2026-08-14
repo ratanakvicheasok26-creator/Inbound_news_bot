@@ -87,6 +87,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
@@ -905,3 +906,29 @@ footer {
     width: 100%;
   }
 }
+
+/* Poster ads — clip on iOS, stretch image column on tablet/desktop */
+.ad-band-frame,
+.ad-band-card {
+  max-width: 100%;
+}
+
+.ad-band-card {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ad-band-media img {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+@media (min-width: 768px) {
+  .ad-band-card {
+    min-height: 168px;
+  }
+
+  .ad-band-media {
+    min-height: 100%;
+  }
+}
+
