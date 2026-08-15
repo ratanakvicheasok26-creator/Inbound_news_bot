@@ -30,6 +30,7 @@ from newsbot.config import (
     IMPORTANT_MIN_SOURCES,
     MAX_ENTRY_AGE_HOURS,
     MAX_ITEMS_PER_FEED,
+    NEWS_LANGUAGE,
     RSS_FEEDS,
     SPAM_BLOCK_NON_LATIN_SCRIPTS,
     SPAM_FILTER_ENABLED,
@@ -494,15 +495,27 @@ def _collect_worker(
 def collect_new_entries(posted_ids: set[str], posted_titles: set[str] | None = None) -> list[Entry]:
     """Pull fresh entries from all feeds in parallel, skipping already-posted IDs and similar titles.
 
-    Runs the actual fetch in a fresh subprocess per call (see
+    English bot only. The Khmer deployment drains the Redis mirror and must
+    never poll RSS — spawning a collector there would waste memory and can
+    OOM the KH service.
+
+    On NEWS_LANGUAGE=en, runs the fetch in a fresh subprocess per call (see
     _collect_new_entries_inline) so the OS guarantees full memory reclaim
     between cycles instead of relying on CPython's allocator, which does not
     reliably return freed memory to the OS. This is what keeps repeated
     polling of ~965 feeds, ~72 times/day, from stair-stepping memory usage
-    until Railway OOM-kills the service.
+    until Railway OOM-kills the English service.
     """
     if posted_titles is None:
         posted_titles = set()
+
+    if NEWS_LANGUAGE != "en":
+        logger.warning(
+            "Skipping RSS collection on NEWS_LANGUAGE=%s — English ingest only; "
+            "Khmer posts come from the mirror queue.",
+            NEWS_LANGUAGE,
+        )
+        return []
 
     global_timeout = FEED_TIMEOUT_SECONDS + FEED_GLOBAL_TIMEOUT_EXTRA
     result_queue: mp.Queue = _MP_SPAWN_CTX.Queue()

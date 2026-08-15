@@ -100,6 +100,18 @@ class TestIsTechText:
         entries, _completed, _total = feeds_mod._collect_new_entries_inline(set(), set())
         assert [e.title for e in entries] == ["City council approves budget"]
 
+    def test_collect_new_entries_skips_rss_on_khmer_bot(self, monkeypatch):
+        import newsbot.feeds as feeds_mod
+
+        monkeypatch.setattr(feeds_mod, "NEWS_LANGUAGE", "km")
+
+        def _boom(*_args, **_kwargs):
+            raise AssertionError("Khmer bot must not start an RSS worker")
+
+        monkeypatch.setattr(feeds_mod._MP_SPAWN_CTX, "Process", _boom)
+        monkeypatch.setattr(feeds_mod._MP_SPAWN_CTX, "Queue", _boom)
+        assert feeds_mod.collect_new_entries(set()) == []
+
 
 class TestNormalizeTitle:
     def test_lowercase(self):
