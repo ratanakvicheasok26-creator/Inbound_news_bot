@@ -117,10 +117,10 @@ export function KhmerDecodePanel({ storyId }: { storyId: string }) {
         </div>
       ) : content ? (
         <>
-          <h3 className="font-display text-[20px] sm:text-[22px] font-semibold leading-snug mb-3">
+          <h3 className="text-[20px] sm:text-[22px] font-semibold leading-snug mb-3 [overflow-wrap:anywhere]">
             {content.title}
           </h3>
-          <p className="text-[15px] sm:text-[16px] leading-[1.75] text-[var(--text-primary)]">
+          <p className="text-[15px] sm:text-[16px] leading-[1.75] text-[var(--text-primary)] [overflow-wrap:anywhere]">
             {content.body}
           </p>
 
@@ -128,7 +128,7 @@ export function KhmerDecodePanel({ storyId }: { storyId: string }) {
             <div className="mt-4 space-y-1.5">
               <p className="meta-text mb-1">{t("story.khmerArticleN")}</p>
               {content.articles.map((a) => (
-                <p key={a.id} className="text-[13px] text-[var(--text-secondary)] leading-relaxed">
+                <p key={a.id} className="text-[13px] text-[var(--text-secondary)] leading-relaxed [overflow-wrap:anywhere]">
                   <span className="font-semibold text-[var(--text-primary)]">{a.title}</span>
                   {a.summary ? ` — ${a.summary}` : ""}
                 </p>

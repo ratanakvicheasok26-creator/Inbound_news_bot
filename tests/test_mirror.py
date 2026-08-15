@@ -1,5 +1,6 @@
 """Tests for mirror.py — queue payloads, publish/drain, and bot mirror handlers."""
 
+import asyncio
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -392,6 +393,66 @@ class TestMirrorHandlers:
             mock_settle.assert_called_once_with(
                 payload, raw, success=True, poison=False
             )
+
+    async def test_mirror_drain_processes_items_in_parallel(self):
+        items = [
+            QueuedPayload(
+                payload=self._story_payload(),
+                raw=json.dumps(self._story_payload()),
+            )
+            for _ in range(4)
+        ]
+        context = MagicMock()
+        in_flight = 0
+        peak = 0
+
+        async def slow_story(*args, **kwargs):
+            nonlocal in_flight, peak
+            in_flight += 1
+            peak = max(peak, in_flight)
+            await asyncio.sleep(0.01)
+            in_flight -= 1
+            return (True, False)
+
+        with patch.dict("newsbot.bot.__dict__", {"NEWS_LANGUAGE": "km"}), \
+             patch("newsbot.bot.mirror_available", return_value=True), \
+             patch("newsbot.bot.drain", return_value=items), \
+             patch("newsbot.bot._mirror_story", new=slow_story), \
+             patch("newsbot.bot.settle", return_value=True) as mock_settle:
+            await mirror_drain_job(context)
+            assert mock_settle.call_count == 4
+            assert peak > 1, "expected concurrent mirror processing"
+
+    async def test_mirror_drain_concurrency_is_bounded(self):
+        items = [
+            QueuedPayload(
+                payload=self._story_payload(),
+                raw=json.dumps(self._story_payload()),
+            )
+            for _ in range(10)
+        ]
+        context = MagicMock()
+        in_flight = 0
+        peak = 0
+
+        async def slow_story(*args, **kwargs):
+            nonlocal in_flight, peak
+            in_flight += 1
+            peak = max(peak, in_flight)
+            await asyncio.sleep(0.01)
+            in_flight -= 1
+            return (True, False)
+
+        with patch.dict(
+            "newsbot.bot.__dict__",
+            {"NEWS_LANGUAGE": "km", "MIRROR_DRAIN_CONCURRENCY": 2},
+        ), \
+             patch("newsbot.bot.mirror_available", return_value=True), \
+             patch("newsbot.bot.drain", return_value=items), \
+             patch("newsbot.bot._mirror_story", new=slow_story), \
+             patch("newsbot.bot.settle", return_value=True):
+            await mirror_drain_job(context)
+            assert peak == 2
 
     async def test_mirror_story_requeues_when_send_fails(self):
         e = _entry("e1")

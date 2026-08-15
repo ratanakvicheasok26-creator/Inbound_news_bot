@@ -1,6 +1,6 @@
 import type { User } from "@supabase/supabase-js"
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { callGroq } from "./groq"
+import { callGemini, callGroq } from "./groq"
 import { rateLimit } from "./rate-limit"
 import { canAccessTier, type PlanTier } from "./access"
 
@@ -98,6 +98,17 @@ function containsKhmer(text: string): boolean {
   return Boolean(text && _KHMER_RE.test(text))
 }
 
+/**
+ * Prefer Gemini for Khmer translation (the Telegram bot's pipeline does the
+ * same — Gemini handles Khmer script far better than the Llama models), with
+ * Groq as fallback when no Gemini key is set or the call fails.
+ */
+async function callAI(system: string, prompt: string, maxTokens: number): Promise<string> {
+  const gemini = await callGemini({ system, prompt, maxTokens })
+  if (gemini) return gemini
+  return callGroq({ system, prompt, maxTokens })
+}
+
 function extractJsonObject(text: string): Record<string, unknown> | null {
   const cleaned = text.replace(/```(?:json)?/gi, "").trim()
   const start = cleaned.indexOf("{")
@@ -122,11 +133,7 @@ async function translateToKhmer(text: string): Promise<string> {
   if (!text || !text.trim()) return ""
   const trimmed = text.trim().slice(0, 800)
   try {
-    const result = await callGroq({
-      system: SINGLE_TEXT_SYSTEM,
-      prompt: trimmed,
-      maxTokens: 400,
-    })
+    const result = await callAI(SINGLE_TEXT_SYSTEM, trimmed, 400)
     const translated = result.trim()
     if (containsKhmer(translated)) return translated
   } catch {
@@ -144,11 +151,11 @@ async function translateToKhmer(text: string): Promise<string> {
 async function translateEnPostToKm(enText: string): Promise<string | null> {
   if (!enText || !enText.trim()) return null
   try {
-    const text = await callGroq({
-      system: FULL_POST_SYSTEM,
-      prompt: `English post:\n\n${enText.trim()}`,
-      maxTokens: 1400,
-    })
+    const text = await callAI(
+      FULL_POST_SYSTEM,
+      `English post:\n\n${enText.trim()}`,
+      1400,
+    )
     const output = text
       .replace(/^```(?:html)?\s*\n?/gi, "")
       .replace(/\n?```$/g, "")
@@ -164,7 +171,7 @@ async function translateArticle(
   article: KhmerArticleSource,
 ): Promise<{ title: string; summary: string | null } | null> {
   const prompt = `TITLE: ${article.title}\nSUMMARY: ${article.summary || ""}`
-  const text = await callGroq({ system: TRANSLATION_SYSTEM, prompt, maxTokens: 800 })
+  const text = await callAI(TRANSLATION_SYSTEM, prompt, 800)
 
   let title = ""
   let summary: string | null = ""

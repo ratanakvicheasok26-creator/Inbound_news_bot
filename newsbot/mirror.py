@@ -36,6 +36,10 @@ _PROCESSING_TIMEOUT_SECONDS = float(
 )
 # Bound queue growth if the Khmer bot is down — overflow oldest to deadletter.
 _MAX_QUEUE_LENGTH: int = int(os.environ.get("MIRROR_MAX_QUEUE_LENGTH", "500"))
+# How many mirror payloads the Khmer bot translates/posts in parallel per drain
+# tick. Bounded so AI providers and Telegram rate limits aren't slammed by a
+# backlog after an outage or a large Brief batch.
+MIRROR_DRAIN_CONCURRENCY: int = int(os.environ.get("MIRROR_DRAIN_CONCURRENCY", "4"))
 _OUTBOX_PATH = Path(
     os.environ.get("MIRROR_OUTBOX_PATH", "data/mirror_outbox.jsonl")
 )
