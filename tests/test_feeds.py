@@ -67,7 +67,11 @@ class TestIsTechText:
         monkeypatch.setattr(feeds_mod, "RSS_FEEDS", ["http://a.com/feed"])
         monkeypatch.setattr(feeds_mod.random, "sample", lambda seq, k: list(seq))
 
-        entries = feeds_mod.collect_new_entries(set())
+        # Exercise the inline collector directly (not the subprocess-isolated
+        # public wrapper) — the isolated worker re-imports the module fresh
+        # in a separate process, so in-process monkeypatches on _fetch_feed
+        # wouldn't be visible there anyway.
+        entries, _completed, _total = feeds_mod._collect_new_entries_inline(set(), set())
         assert [e.title for e in entries] == ["AI chip startup raises funding"]
 
     def test_collect_new_entries_keeps_all_when_tech_only_disabled(self, monkeypatch):
@@ -93,7 +97,7 @@ class TestIsTechText:
         monkeypatch.setattr(feeds_mod, "RSS_FEEDS", ["http://a.com/feed"])
         monkeypatch.setattr(feeds_mod.random, "sample", lambda seq, k: list(seq))
 
-        entries = feeds_mod.collect_new_entries(set())
+        entries, _completed, _total = feeds_mod._collect_new_entries_inline(set(), set())
         assert [e.title for e in entries] == ["City council approves budget"]
 
 

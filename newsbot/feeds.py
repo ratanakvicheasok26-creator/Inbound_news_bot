@@ -5,6 +5,7 @@ from __future__ import annotations
 import concurrent.futures
 import html
 import logging
+import multiprocessing as mp
 import os
 import random
 import re
@@ -369,11 +370,27 @@ def _fetch_feed(url: str) -> Any:
     raise ValueError(f"feed exceeded {_MAX_FEED_REDIRECTS} redirects: {url!r}")
 
 
-def collect_new_entries(posted_ids: set[str], posted_titles: set[str] | None = None) -> list[Entry]:
-    """Pull fresh entries from all feeds in parallel, skipping already-posted IDs and similar titles."""
-    if posted_titles is None:
-        posted_titles = set()
+# Isolated spawn context — never inherits the parent's open httpx clients,
+# threads, or asyncio loop (fork would copy all of that, spawn re-imports
+# clean). Module-level so it's picklable as a target for mp.Process.
+_MP_SPAWN_CTX = mp.get_context("spawn")
 
+# Extra seconds of slack on top of the normal per-cycle timeout, to cover
+# subprocess startup (re-importing the module) and result pickling/transfer.
+_SUBPROCESS_STARTUP_SLACK = 15
+
+
+def _collect_new_entries_inline(
+    posted_ids: set[str], posted_titles: set[str]
+) -> tuple[list[Entry], int, int]:
+    """The actual fetch-all-feeds-in-parallel logic. Runs inside the isolated
+    worker subprocess (see collect_new_entries) so the OS reclaims every byte
+    — thread-pool buffers, parsed feed bodies, allocator arenas — the instant
+    that process exits. CPython's allocator does not reliably hand freed
+    memory back to the OS between cycles, so without this isolation, memory
+    use stair-steps upward across repeated in-process cycles until Railway
+    OOM-kills the service.
+    """
     shuffled = random.sample(RSS_FEEDS, len(RSS_FEEDS))
     futures: dict[concurrent.futures.Future, str] = {
         _feed_pool.submit(_fetch_feed, url): url for url in shuffled
@@ -450,6 +467,76 @@ def collect_new_entries(posted_ids: set[str], posted_titles: set[str] | None = N
     except TimeoutError:
         logger.info("Global feed timeout after %ds — %d/%d feeds completed, %d entries collected.",
                     global_timeout, completed, total, len(entries))
+
+    return entries, completed, total
+
+
+def _collect_worker(
+    posted_ids: set[str],
+    posted_titles: set[str],
+    result_queue: "mp.Queue",
+) -> None:
+    """Entry point for the isolated subprocess. Does the fetch, hands the
+    result back over the queue, then returns — letting the process exit and
+    the OS reclaim its memory.
+    """
+    try:
+        entries, completed, total = _collect_new_entries_inline(posted_ids, posted_titles)
+        result_queue.put(("ok", entries, completed, total))
+    except Exception:
+        logger.exception("Feed collection worker crashed")
+        try:
+            result_queue.put(("error", [], 0, 0))
+        except Exception:
+            pass
+
+
+def collect_new_entries(posted_ids: set[str], posted_titles: set[str] | None = None) -> list[Entry]:
+    """Pull fresh entries from all feeds in parallel, skipping already-posted IDs and similar titles.
+
+    Runs the actual fetch in a fresh subprocess per call (see
+    _collect_new_entries_inline) so the OS guarantees full memory reclaim
+    between cycles instead of relying on CPython's allocator, which does not
+    reliably return freed memory to the OS. This is what keeps repeated
+    polling of ~965 feeds, ~72 times/day, from stair-stepping memory usage
+    until Railway OOM-kills the service.
+    """
+    if posted_titles is None:
+        posted_titles = set()
+
+    global_timeout = FEED_TIMEOUT_SECONDS + FEED_GLOBAL_TIMEOUT_EXTRA
+    result_queue: mp.Queue = _MP_SPAWN_CTX.Queue()
+    proc = _MP_SPAWN_CTX.Process(
+        target=_collect_worker,
+        args=(posted_ids, posted_titles, result_queue),
+        daemon=True,
+    )
+    proc.start()
+
+    entries: list[Entry] = []
+    try:
+        status, entries, completed, total = result_queue.get(
+            timeout=global_timeout + _SUBPROCESS_STARTUP_SLACK
+        )
+        if status == "error":
+            logger.warning("Feed collection worker reported an internal error — 0 entries this cycle.")
+        else:
+            logger.info(
+                "Feed cycle done via isolated worker — %d/%d feeds completed, %d entries.",
+                completed, total, len(entries),
+            )
+    except Exception:
+        logger.warning(
+            "Feed collection worker produced no result within %ds — skipping this cycle.",
+            global_timeout + _SUBPROCESS_STARTUP_SLACK,
+        )
+    finally:
+        proc.join(timeout=5)
+        if proc.is_alive():
+            logger.warning("Feed collection worker still alive after join — terminating.")
+            proc.terminate()
+            proc.join(timeout=5)
+        result_queue.close()
 
     return entries
 
