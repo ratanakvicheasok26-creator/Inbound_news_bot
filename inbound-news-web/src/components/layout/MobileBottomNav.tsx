@@ -2,18 +2,15 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, BookOpen, GitCompareArrows, LayoutGrid, Newspaper } from "lucide-react"
+import { Home, BookOpen, Eye, GitCompareArrows, Newspaper } from "lucide-react"
 
 const navItems = [
   { href: "/", icon: Home, label: "Home" },
   { href: "/brief", icon: Newspaper, label: "Brief" },
   { href: "/compare", icon: GitCompareArrows, label: "Compare" },
+  { href: "/blindspot", icon: Eye, label: "Blindspot" },
   { href: "/glossary", icon: BookOpen, label: "Glossary" },
 ]
-
-function openTopicsDrawer() {
-  window.dispatchEvent(new CustomEvent("inbound:open-mobile-menu"))
-}
 
 export function MobileBottomNav() {
   const pathname = usePathname()
@@ -50,15 +47,6 @@ export function MobileBottomNav() {
             </Link>
           )
         })}
-        <button
-          type="button"
-          onClick={openTopicsDrawer}
-          aria-label="Open menu"
-          className="flex flex-col items-center justify-center gap-0.5 w-full h-full transition-colors text-[var(--text-secondary)]"
-        >
-          <LayoutGrid className="h-4 w-4" />
-          <span className="text-[10px] font-semibold uppercase tracking-wide">Menu</span>
-        </button>
       </div>
     </nav>
   )

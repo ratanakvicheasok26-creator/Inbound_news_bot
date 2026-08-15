@@ -2,13 +2,13 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { createPortal } from "react-dom"
 import { CATEGORIES } from "@/lib/categories"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { LiveSearch } from "@/components/layout/LiveSearch"
-import { Menu, X, ChevronDown, Search, UserRound } from "lucide-react"
+import { Menu, X, ChevronDown, UserRound } from "lucide-react"
 import { supabase, signOut } from "@/lib/auth"
 import type { User } from "@supabase/supabase-js"
 
@@ -23,16 +23,13 @@ const NAV_LINKS = [
 
 export function Header() {
   const pathname = usePathname()
-  const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [topicsOpen, setTopicsOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
   const [mounted, setMounted] = useState(false)
   const topicsRef = useRef<HTMLDivElement>(null)
   const accountRef = useRef<HTMLDivElement>(null)
-  const searchInputRef = useRef<HTMLInputElement>(null)
   const closeBtnRef = useRef<HTMLButtonElement>(null)
 
   /* eslint-disable react-hooks/set-state-in-effect -- gate client-only rendering after first render */
@@ -70,19 +67,8 @@ export function Header() {
   }, [pathname])
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  useEffect(() => {
-    function onOpenFromBottomNav() {
-      setTopicsOpen(false)
-      setAccountOpen(false)
-      setMobileOpen(true)
-    }
-    window.addEventListener("inbound:open-mobile-menu", onOpenFromBottomNav)
-    return () => window.removeEventListener("inbound:open-mobile-menu", onOpenFromBottomNav)
-  }, [])
-
   const closeMobileMenu = useCallback(() => {
     setMobileOpen(false)
-    setSearchQuery("")
   }, [])
 
   useEffect(() => {
@@ -113,15 +99,6 @@ export function Header() {
     setUser(null)
   }
 
-  function submitSearch(e: React.FormEvent) {
-    e.preventDefault()
-    const q = searchQuery.trim()
-    if (q.length >= 2) {
-      router.push(`/search?q=${encodeURIComponent(q)}`)
-      closeMobileMenu()
-    }
-  }
-
   function openMobileMenu() {
     setTopicsOpen(false)
     setAccountOpen(false)
@@ -141,123 +118,109 @@ export function Header() {
           className="mobile-overlay-panel"
           role="dialog"
           aria-modal="true"
-          aria-label="Site menu"
+          aria-label="Account"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between px-5 h-14 border-b border-[var(--border)] shrink-0">
-            <span className="font-display text-lg font-semibold">Menu</span>
+            <span className="font-display text-lg font-semibold">Account</span>
             <button
               ref={closeBtnRef}
               type="button"
               className="w-11 h-11 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
               onClick={closeMobileMenu}
-              aria-label="Close menu"
+              aria-label="Close account menu"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
 
           <div className="flex-1 overflow-y-auto overscroll-contain">
-            <form onSubmit={submitSearch} className="px-5 py-4">
-              <div className="flex items-center border border-[var(--border)] rounded-[var(--radius-sm)] overflow-hidden bg-[var(--bg)]">
-                <input
-                  ref={searchInputRef}
-                  type="search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search stories and sources…"
-                  className="flex-1 min-w-0 px-3 h-11 bg-transparent text-[14px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none"
-                  enterKeyHint="search"
-                />
-                <button
-                  type="submit"
-                  className="w-11 h-11 flex items-center justify-center text-[var(--text-secondary)]"
-                  aria-label="Submit search"
-                >
-                  <Search className="h-4 w-4" />
-                </button>
-              </div>
-            </form>
-
-            <div className="px-5 pb-4">
+            <div className="px-5 pt-5 pb-6 space-y-5">
               {user ? (
-                <Link
-                  href="/account"
-                  onClick={closeMobileMenu}
-                  className="btn-ghost w-full h-11"
-                >
-                  Account
-                </Link>
-              ) : (
-                <div className="border border-[var(--border)] rounded-[var(--radius-sm)] overflow-hidden">
-                  <p className="px-3 py-2 meta-text border-b border-[var(--border)] bg-[var(--surface-alt)]">
-                    Account
-                  </p>
+                <div className="space-y-2">
                   <Link
-                    href="/login"
+                    href="/account"
                     onClick={closeMobileMenu}
-                    className="block px-3 py-3 text-[15px] font-medium text-[var(--text-primary)] border-b border-[var(--border)]"
+                    className="btn-primary w-full h-11"
                   >
-                    Sign in
+                    Open account
                   </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleSignOut()
+                      closeMobileMenu()
+                    }}
+                    className="btn-ghost w-full h-11"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
                   <Link
                     href="/signup"
                     onClick={closeMobileMenu}
-                    className="block px-3 py-3 text-[15px] font-semibold text-[var(--accent)]"
+                    className="btn-primary w-full h-11"
                   >
                     Create account
                   </Link>
+                  <Link
+                    href="/login"
+                    onClick={closeMobileMenu}
+                    className="btn-ghost w-full h-11"
+                  >
+                    Sign in
+                  </Link>
                 </div>
               )}
+
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  href="/pricing"
+                  onClick={closeMobileMenu}
+                  aria-current={pathname === "/pricing" ? "page" : undefined}
+                  className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-3 py-3.5 hover:border-[var(--text-secondary)] transition-colors"
+                >
+                  <span className="block text-[14px] font-semibold text-[var(--text-primary)]">
+                    Membership
+                  </span>
+                  <span className="block mt-1 text-[12px] text-[var(--text-secondary)] leading-snug">
+                    Unlock Decode
+                  </span>
+                </Link>
+                <Link
+                  href="/donate"
+                  onClick={closeMobileMenu}
+                  aria-current={pathname === "/donate" ? "page" : undefined}
+                  className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-3 py-3.5 hover:border-[var(--text-secondary)] transition-colors"
+                >
+                  <span className="block text-[14px] font-semibold text-[var(--text-primary)]">
+                    Donation
+                  </span>
+                  <span className="block mt-1 text-[12px] text-[var(--text-secondary)] leading-snug">
+                    Support the desk
+                  </span>
+                </Link>
+              </div>
             </div>
 
-            <nav className="px-3 pb-4" aria-label="Mobile">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={closeMobileMenu}
-                  aria-current={pathname === link.href ? "page" : undefined}
-                  className="block px-3 py-3.5 text-[15px] font-medium border-b border-[var(--border)] text-[var(--text-primary)]"
-                >
-                  {link.label}
-                </Link>
-              ))}
-              <Link
-                href="/donate"
-                onClick={closeMobileMenu}
-                className="block px-3 py-3.5 text-[15px] font-medium border-b border-[var(--border)] text-[var(--text-primary)]"
-              >
-                Donation
-              </Link>
-            </nav>
+            <div className="mx-5 border-t border-[var(--border)]" />
 
-            <div className="px-5 pt-2 pb-10">
+            <div className="px-5 pt-5 pb-10">
               <p className="meta-text mb-3">Topics</p>
-              <div className="grid grid-cols-2 gap-1">
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1">
                 {CATEGORIES.map((cat) => (
                   <Link
                     key={cat.slug}
                     href={`/topic/${cat.slug}`}
                     onClick={closeMobileMenu}
-                    className="px-2 py-2.5 text-[13px] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                    className="px-2 py-2.5 text-[13px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-[var(--radius-sm)] hover:bg-[var(--surface-alt)]"
                   >
                     {cat.label}
                   </Link>
                 ))}
               </div>
-              {user && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleSignOut()
-                    closeMobileMenu()
-                  }}
-                  className="mt-6 w-full btn-ghost"
-                >
-                  Sign out
-                </button>
-              )}
             </div>
           </div>
         </div>
@@ -274,7 +237,7 @@ export function Header() {
               type="button"
               className="hamburger-btn"
               onClick={openMobileMenu}
-              aria-label="Open menu"
+              aria-label="Open account menu"
               aria-expanded={mobileOpen}
               aria-controls="mobile-site-menu"
             >
@@ -374,23 +337,23 @@ export function Header() {
                   {accountOpen && (
                     <div
                       role="menu"
-                      className="absolute top-full right-0 mt-1 w-[200px] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] shadow-md z-50 p-1"
+                      className="absolute top-full right-0 mt-1 w-[220px] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] shadow-md z-50 p-2 space-y-2"
                     >
-                      <Link
-                        href="/login"
-                        role="menuitem"
-                        onClick={() => setAccountOpen(false)}
-                        className="block px-3 py-2.5 text-[13px] font-medium rounded-[var(--radius-sm)] text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
-                      >
-                        Sign in
-                      </Link>
                       <Link
                         href="/signup"
                         role="menuitem"
                         onClick={() => setAccountOpen(false)}
-                        className="block px-3 py-2.5 text-[13px] font-semibold rounded-[var(--radius-sm)] text-[var(--accent)] hover:bg-[var(--red-subtle-bg)]"
+                        className="btn-primary w-full h-10"
                       >
                         Create account
+                      </Link>
+                      <Link
+                        href="/login"
+                        role="menuitem"
+                        onClick={() => setAccountOpen(false)}
+                        className="btn-ghost w-full h-10"
+                      >
+                        Sign in
                       </Link>
                     </div>
                   )}
