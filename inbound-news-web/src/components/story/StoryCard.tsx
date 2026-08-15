@@ -2,15 +2,18 @@
 
 import Link from "next/link"
 import type { Story } from "@/lib/types"
-import { getCategoryLabel } from "@/lib/categories"
+import { CATEGORY_MAP } from "@/lib/categories"
 import { formatDistanceToNow } from "@/lib/utils"
 import { StoryImage } from "@/components/story/StoryImage"
 import { CoverageMeta } from "@/components/story/CoverageMeta"
 import { SaveButton } from "@/components/membership/SaveButton"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 
 /** Equal-weight story tile for balanced home grids. */
 export function StoryCard({ story }: { story: Story }) {
-  const categoryLabel = getCategoryLabel(story.category || "") || "News"
+  const { t } = useI18n()
+  const slug = story.category || ""
+  const categoryLabel = CATEGORY_MAP[slug] ? t(`category.${slug}`) : t("common.news")
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] transition-colors duration-200 hover:border-[var(--text-secondary)]">
@@ -45,7 +48,7 @@ export function StoryCard({ story }: { story: Story }) {
             href={`/story/${story.id}`}
             className="text-[13px] font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)]"
           >
-            Decode
+            {t("common.decode")}
           </Link>
           <SaveButton storyId={story.id} />
         </div>

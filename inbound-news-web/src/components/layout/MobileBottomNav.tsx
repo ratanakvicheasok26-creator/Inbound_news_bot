@@ -3,17 +3,19 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Home, BookOpen, Eye, GitCompareArrows, Newspaper } from "lucide-react"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 
 const navItems = [
-  { href: "/", icon: Home, label: "Home" },
-  { href: "/brief", icon: Newspaper, label: "Brief" },
-  { href: "/compare", icon: GitCompareArrows, label: "Compare" },
-  { href: "/blindspot", icon: Eye, label: "Blindspot" },
-  { href: "/glossary", icon: BookOpen, label: "Glossary" },
+  { href: "/", icon: Home, key: "nav.home" },
+  { href: "/brief", icon: Newspaper, key: "nav.brief" },
+  { href: "/compare", icon: GitCompareArrows, key: "nav.compare" },
+  { href: "/blindspot", icon: Eye, key: "nav.blindspot" },
+  { href: "/glossary", icon: BookOpen, key: "nav.glossary" },
 ]
 
 export function MobileBottomNav() {
   const pathname = usePathname()
+  const { t } = useI18n()
 
   return (
     <nav
@@ -43,7 +45,7 @@ export function MobileBottomNav() {
               }`}
             >
               <item.icon className="h-4 w-4" />
-              <span className="text-[10px] font-semibold uppercase tracking-wide">{item.label}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wide">{t(item.key)}</span>
             </Link>
           )
         })}

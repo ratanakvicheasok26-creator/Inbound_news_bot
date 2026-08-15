@@ -11,6 +11,7 @@ import { Header } from "@/components/layout/Header";
 import { Ticker } from "@/components/Ticker";
 import { Footer } from "@/components/layout/Footer";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 const display = Source_Serif_4({
@@ -102,6 +103,29 @@ const themeInitScript = `
 })();
 `;
 
+const localeInitScript = `
+(function() {
+  try {
+    var stored = localStorage.getItem('ib_locale');
+    if (!stored) {
+      var profile = localStorage.getItem('ib_profile');
+      if (profile) {
+        try {
+          var parsed = JSON.parse(profile);
+          stored = parsed && parsed.preferences && parsed.preferences.defaultLang;
+        } catch (e) {}
+      }
+    }
+    if (stored !== 'en' && stored !== 'km') {
+      stored = (navigator.language || '').toLowerCase().indexOf('km') === 0 ? 'km' : 'en';
+    }
+    if (stored !== 'km') stored = 'en';
+    document.documentElement.lang = stored;
+    document.cookie = 'locale=' + stored + '; path=/; max-age=31536000; SameSite=Lax';
+  } catch (e) {}
+})();
+`;
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -128,16 +152,19 @@ export default async function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: localeInitScript }} />
       </head>
       <body className="pb-[var(--mobile-nav-offset)] md:pb-0">
         <a href="#main-content" className="skip-to-content">
           Skip to content
         </a>
-        <Header />
-        <Ticker />
-        <main id="main-content">{children}</main>
-        <Footer />
-        <MobileBottomNav />
+        <LocaleProvider>
+          <Header />
+          <Ticker />
+          <main id="main-content">{children}</main>
+          <Footer />
+          <MobileBottomNav />
+        </LocaleProvider>
       </body>
     </html>
   );

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Bookmark, BookmarkCheck, Lock } from "lucide-react"
 import { useFeatureAccess } from "@/lib/membership"
 import { isStorySaved, toggleSavedStory } from "@/lib/profile"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 
 /**
  * Save/bookmark button gated to Pro+. Free users see a lock button that points
@@ -17,6 +18,7 @@ export function SaveButton({
   storyId: string
   variant?: "card" | "content" | "row"
 }) {
+  const { t } = useI18n()
   const router = useRouter()
   const { loading, allowed } = useFeatureAccess("bookmarks")
   const [saved, setSaved] = useState(() => isStorySaved(storyId))
@@ -41,8 +43,8 @@ export function SaveButton({
       <button
         type="button"
         onClick={() => router.push("/pricing")}
-        aria-label="Bookmarks are available with Pro"
-        title="Bookmarks are available with Pro"
+        aria-label={t("common.saveStory")}
+        title={t("common.saveStory")}
         className={
           variant === "content"
             ? "inline-flex items-center gap-1.5 h-9 px-3 text-[13px] font-semibold rounded-[var(--radius-sm)] border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent)] transition-colors"
@@ -52,7 +54,7 @@ export function SaveButton({
         }
       >
         <Lock className="h-4 w-4" />
-        {variant === "content" && <span>Save</span>}
+        {variant === "content" && <span>{t("common.save")}</span>}
       </button>
     )
   }
@@ -83,10 +85,10 @@ export function SaveButton({
                   : "text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--surface-alt)]"
               }`
       }
-      aria-label={saved ? "Unsave story" : "Save story"}
+      aria-label={saved ? t("common.unsave") : t("common.saveStory")}
     >
       {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
-      {variant === "content" && (saved ? "Saved" : "Save")}
+      {variant === "content" && (saved ? t("common.saved") : t("common.save"))}
     </button>
   )
 }

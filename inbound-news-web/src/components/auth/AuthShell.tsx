@@ -3,6 +3,7 @@
 import { useState, type ReactNode, type InputHTMLAttributes } from "react"
 import Link from "next/link"
 import { Eye, EyeOff } from "lucide-react"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 
 interface AuthShellProps {
   title: string
@@ -11,6 +12,7 @@ interface AuthShellProps {
 }
 
 export function AuthShell({ title, subtitle, children }: AuthShellProps) {
+  const { t } = useI18n()
   return (
     <div className="container py-12 md:py-16">
       <div className="max-w-[440px] mx-auto bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6 md:p-8">
@@ -22,7 +24,7 @@ export function AuthShell({ title, subtitle, children }: AuthShellProps) {
             href="/"
             className="text-[13px] text-[var(--text-secondary)] hover:text-[var(--accent)]"
           >
-            ← Back to Inbound Reports
+            {t("auth.backToReports")}
           </Link>
         </div>
       </div>
@@ -39,6 +41,7 @@ interface PasswordInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>,
 }
 
 export function PasswordInput({ value, onChange, className, ...props }: PasswordInputProps) {
+  const { t } = useI18n()
   const [visible, setVisible] = useState(false)
   return (
     <div className="relative">
@@ -51,7 +54,7 @@ export function PasswordInput({ value, onChange, className, ...props }: Password
       />
       <button
         type="button"
-        aria-label={visible ? "Hide password" : "Show password"}
+        aria-label={visible ? t("auth.hidePassword") : t("auth.showPassword")}
         aria-pressed={visible}
         onClick={() => setVisible((v) => !v)}
         className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--accent)]"

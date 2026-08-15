@@ -2,9 +2,9 @@
 
 import Link from "next/link"
 import { getProfile } from "@/lib/profile"
-import { getCategoryLabel } from "@/lib/categories"
+import { CATEGORY_MAP } from "@/lib/categories"
 import { formatDistanceToNow } from "@/lib/utils"
-import { OUTLET_ROLE_LABELS, type OutletRole } from "@/lib/outlet-roles"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 
 function tally<T extends string>(items: T[]): { key: T; count: number }[] {
   const map = new Map<T, number>()
@@ -18,6 +18,7 @@ function tally<T extends string>(items: T[]): { key: T; count: number }[] {
 }
 
 export function DashboardTab() {
+  const { t } = useI18n()
   const profile = getProfile()
   const recent = profile.recentlyRead.slice(0, 5)
   const categoryDiet = tally(
@@ -35,12 +36,12 @@ export function DashboardTab() {
     <div className="space-y-8">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[
-          { label: "Literacy score", value: profile.literacyScore.toLocaleString() },
-          { label: "Day streak", value: String(profile.readingStreak.current) },
-          { label: "Saved", value: String(profile.savedStoryIds.length) },
+          { key: "literacyScore", label: t("account.dashboard.literacyScore"), value: profile.literacyScore.toLocaleString() },
+          { key: "dayStreak", label: t("account.dashboard.dayStreak"), value: String(profile.readingStreak.current) },
+          { key: "saved", label: t("account.dashboard.saved"), value: String(profile.savedStoryIds.length) },
         ].map((item) => (
           <div
-            key={item.label}
+            key={item.key}
             className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] px-5 py-4"
           >
             <div className="font-display text-[28px] font-semibold tabular-nums">{item.value}</div>
@@ -51,29 +52,28 @@ export function DashboardTab() {
 
       <section>
         <div className="section-header">
-          <h2 className="section-title">My News Diet</h2>
-          <span className="meta-text">This device · last {profile.recentlyRead.length} reads</span>
+          <h2 className="section-title">{t("account.dashboard.newsDiet")}</h2>
+          <span className="meta-text">
+            {t("account.dashboard.thisDevice", { count: profile.recentlyRead.length })}
+          </span>
         </div>
         {profile.recentlyRead.length === 0 ? (
           <div className="empty-state py-10 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)]">
-            <p className="text-[15px] text-[var(--text-primary)] mb-1">No reading diet yet</p>
-            <p className="text-[13px]">
-              Decode stories to see which desks and outlet roles you lean on — a personal
-              blindspot check.
-            </p>
+            <p className="text-[15px] text-[var(--text-primary)] mb-1">{t("account.dashboard.noDietTitle")}</p>
+            <p className="text-[13px]">{t("account.dashboard.noDietBody")}</p>
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-5">
-              <h3 className="text-[13px] font-semibold mb-3">Desks you read</h3>
+              <h3 className="text-[13px] font-semibold mb-3">{t("account.dashboard.desksYouRead")}</h3>
               {categoryDiet.length === 0 ? (
-                <p className="text-[13px] text-[var(--text-secondary)]">No categories tracked yet.</p>
+                <p className="text-[13px] text-[var(--text-secondary)]">{t("account.dashboard.noCategories")}</p>
               ) : (
                 <ul className="space-y-2">
                   {categoryDiet.map(({ key, count }) => (
                     <li key={key} className="flex items-center justify-between gap-3 text-[13px]">
                       <Link href={`/topic/${key}`} className="hover:text-[var(--accent)]">
-                        {getCategoryLabel(key)}
+                        {CATEGORY_MAP[key] ? t(`category.${key}`) : key}
                       </Link>
                       <span className="meta-text tabular-nums">{count}</span>
                     </li>
@@ -82,17 +82,17 @@ export function DashboardTab() {
               )}
             </div>
             <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-5">
-              <h3 className="text-[13px] font-semibold mb-3">Outlet roles in your feed</h3>
+              <h3 className="text-[13px] font-semibold mb-3">{t("account.dashboard.outletRoles")}</h3>
               {roleDiet.length === 0 ? (
                 <p className="text-[13px] text-[var(--text-secondary)]">
-                  Roles appear after you open stories with coverage data.
+                  {t("account.dashboard.rolesHint")}
                 </p>
               ) : (
                 <ul className="space-y-2">
                   {roleDiet.map(({ key, count }) => (
                     <li key={key} className="flex items-center justify-between gap-3 text-[13px]">
                       <span>
-                        {OUTLET_ROLE_LABELS[key as OutletRole] || key}
+                        {t(`outletRoles.${key}`)}
                       </span>
                       <span className="meta-text tabular-nums">{count}</span>
                     </li>
@@ -100,7 +100,7 @@ export function DashboardTab() {
                 </ul>
               )}
               <p className="mt-3 text-[11px] text-[var(--text-secondary)] leading-relaxed">
-                Heavy on Booster or Corporate? Try Blindspot → Research / Critical filters.
+                {t("account.dashboard.roleTip")}
               </p>
             </div>
           </div>
@@ -110,7 +110,7 @@ export function DashboardTab() {
       {(followedTopics.length > 0 || followedConcepts.length > 0) && (
         <section>
           <div className="section-header">
-            <h2 className="section-title">Following</h2>
+            <h2 className="section-title">{t("account.dashboard.following")}</h2>
           </div>
           <div className="flex flex-wrap gap-2">
             {followedTopics.map((slug) => (
@@ -119,7 +119,7 @@ export function DashboardTab() {
                 href={`/topic/${slug}`}
                 className="chip hover:border-[var(--accent)]"
               >
-                {getCategoryLabel(slug)}
+                {CATEGORY_MAP[slug] ? t(`category.${slug}`) : slug}
               </Link>
             ))}
             {followedConcepts.map((slug) => (
@@ -137,12 +137,12 @@ export function DashboardTab() {
 
       <section>
         <div className="section-header">
-          <h2 className="section-title">Recently read</h2>
+          <h2 className="section-title">{t("account.dashboard.recentlyRead")}</h2>
         </div>
         {recent.length === 0 ? (
           <div className="empty-state py-10 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)]">
-            <p className="text-[15px] text-[var(--text-primary)] mb-1">No stories decoded yet</p>
-            <p className="text-[13px]">Decode a story to start tracking literacy points.</p>
+            <p className="text-[15px] text-[var(--text-primary)] mb-1">{t("account.dashboard.noRecentTitle")}</p>
+            <p className="text-[13px]">{t("account.dashboard.noRecentBody")}</p>
           </div>
         ) : (
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] divide-y divide-[var(--border)]">
@@ -158,7 +158,7 @@ export function DashboardTab() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="meta-text text-[var(--accent)]">
-                      {getCategoryLabel(entry.category)}
+                      {CATEGORY_MAP[entry.category] ? t(`category.${entry.category}`) : entry.category}
                     </span>
                     <span className="meta-text">{formatDistanceToNow(entry.readAt)}</span>
                   </div>
@@ -172,14 +172,14 @@ export function DashboardTab() {
 
       <section>
         <div className="section-header">
-          <h2 className="section-title">How to earn points</h2>
+          <h2 className="section-title">{t("account.dashboard.howToEarn")}</h2>
         </div>
         <div className="grid gap-3 md:grid-cols-2">
           {[
-            { action: "Decode a story", pts: "+5", desc: "Open a clustered story to start tracking" },
-            { action: "Tap a jargon term", pts: "+10", desc: "Learn a tech term from the glossary" },
-            { action: "Switch reading tier", pts: "+15", desc: "Move between ELI5, Standard, and Deep" },
-            { action: "Compare sources", pts: "+20", desc: "Review multiple sources on one story" },
+            { action: t("account.dashboard.earnDecode"), pts: "+5", desc: t("account.dashboard.earnDecodeDesc") },
+            { action: t("account.dashboard.earnJargon"), pts: "+10", desc: t("account.dashboard.earnJargonDesc") },
+            { action: t("account.dashboard.earnTier"), pts: "+15", desc: t("account.dashboard.earnTierDesc") },
+            { action: t("account.dashboard.earnCompare"), pts: "+20", desc: t("account.dashboard.earnCompareDesc") },
           ].map((item) => (
             <div
               key={item.action}

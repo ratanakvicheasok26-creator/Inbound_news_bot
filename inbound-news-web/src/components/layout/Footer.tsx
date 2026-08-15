@@ -1,7 +1,10 @@
+"use client"
+
 import Link from "next/link"
 import Image from "next/image"
 import { Mail } from "lucide-react"
 import { CATEGORIES } from "@/lib/categories"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 
 function TelegramIcon({ className }: { className?: string }) {
   return (
@@ -35,41 +38,43 @@ function InstagramIcon({ className }: { className?: string }) {
   )
 }
 
-const COMPANY_LINKS = [
-  { href: "/about", label: "About" },
-  { href: "/legal/methodology", label: "Methodology" },
-  { href: "/donate", label: "Donation" },
-]
-
-const HELP_LINKS = [
-  { href: "/brief", label: "Daily Brief" },
-  { href: "/blindspot", label: "Blindspot" },
-  { href: "/compare", label: "Compare" },
-  { href: "/glossary", label: "Glossary" },
-  { href: "/search", label: "Search" },
-  { href: "/pricing", label: "Membership" },
-  { href: "mailto:inboundcrew82@gmail.com", label: "Contact" },
-]
-
-const SOCIAL_LINKS = [
-  { href: "https://t.me/+n3p4DMJ5mspmMGE1", label: "Telegram (EN)", icon: TelegramIcon, badge: "EN" },
-  { href: "https://t.me/+XGZesNq7wqsxYWE1", label: "Telegram (KH)", icon: TelegramIcon, badge: "KH" },
-  { href: "https://x.com/inboundcrewm?s=11", label: "X (Twitter)", icon: XIcon },
-  { href: "https://www.facebook.com/inboundcrew420", label: "Facebook", icon: FacebookIcon },
-  { href: "https://www.instagram.com/inboundcrew/", label: "Instagram", icon: InstagramIcon },
-  { href: "mailto:inboundcrew82@gmail.com", label: "Email", icon: Mail },
-]
-
-const LEGAL_LINKS = [
-  { href: "/legal/terms", label: "Terms" },
-  { href: "/legal/privacy", label: "Privacy" },
-  { href: "/legal/dmca", label: "DMCA" },
-]
-
 const linkClass =
   "text-[14px] text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
 
 export function Footer() {
+  const { t } = useI18n()
+
+  const COMPANY_LINKS = [
+    { href: "/about", label: t("footer.about") },
+    { href: "/legal/methodology", label: t("footer.methodology") },
+    { href: "/donate", label: t("footer.donation") },
+  ]
+
+  const HELP_LINKS = [
+    { href: "/brief", label: t("footer.dailyBrief") },
+    { href: "/blindspot", label: t("footer.blindspot") },
+    { href: "/compare", label: t("footer.compare") },
+    { href: "/glossary", label: t("footer.glossary") },
+    { href: "/search", label: t("footer.search") },
+    { href: "/pricing", label: t("footer.membership") },
+    { href: "mailto:inboundcrew82@gmail.com", label: t("footer.contact") },
+  ]
+
+  const SOCIAL_LINKS = [
+    { href: "https://t.me/+n3p4DMJ5mspmMGE1", label: t("footer.telegramEn"), icon: TelegramIcon, badge: "EN" },
+    { href: "https://t.me/+XGZesNq7wqsxYWE1", label: t("footer.telegramKh"), icon: TelegramIcon, badge: "KH" },
+    { href: "https://x.com/inboundcrewm?s=11", label: t("footer.xTwitter"), icon: XIcon },
+    { href: "https://www.facebook.com/inboundcrew420", label: t("footer.facebook"), icon: FacebookIcon },
+    { href: "https://www.instagram.com/inboundcrew/", label: t("footer.instagram"), icon: InstagramIcon },
+    { href: "mailto:inboundcrew82@gmail.com", label: t("footer.email"), icon: Mail },
+  ]
+
+  const LEGAL_LINKS = [
+    { href: "/legal/terms", label: t("footer.terms") },
+    { href: "/legal/privacy", label: t("footer.privacy") },
+    { href: "/legal/dmca", label: t("footer.dmca") },
+  ]
+
   return (
     <footer>
       <div className="container">
@@ -92,8 +97,7 @@ export function Footer() {
               />
             </Link>
             <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[360px]">
-              Technology news from Phnom Penh. We map who covered a story, how they framed it,
-              and what&apos;s undercovered — literacy tools included, not hype chase.
+              {t("footer.tagline")}
             </p>
           </div>
 
@@ -115,12 +119,12 @@ export function Footer() {
 
         <div className="footer-grid">
           <div className="footer-col-topics">
-            <h4 className="meta-text text-[var(--text-primary)] mb-3">Topics</h4>
+            <h4 className="meta-text text-[var(--text-primary)] mb-3">{t("footer.topics")}</h4>
             <ul className="grid grid-cols-2 gap-x-4 gap-y-2 md:grid-cols-3">
               {CATEGORIES.map((cat) => (
                 <li key={cat.slug}>
                   <Link href={`/topic/${cat.slug}`} className={linkClass}>
-                    {cat.label}
+                    {t(`category.${cat.slug}`)}
                   </Link>
                 </li>
               ))}
@@ -128,7 +132,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="meta-text text-[var(--text-primary)] mb-3">Company</h4>
+            <h4 className="meta-text text-[var(--text-primary)] mb-3">{t("footer.company")}</h4>
             <ul className="space-y-2">
               {COMPANY_LINKS.map(({ href, label }) => (
                 <li key={label}>
@@ -141,7 +145,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="meta-text text-[var(--text-primary)] mb-3">Help</h4>
+            <h4 className="meta-text text-[var(--text-primary)] mb-3">{t("footer.help")}</h4>
             <ul className="space-y-2">
               {HELP_LINKS.map(({ href, label }) => (
                 <li key={label}>
@@ -156,7 +160,7 @@ export function Footer() {
 
         <div className="footer-bottom">
           <span>&copy; {new Date().getFullYear()} Inbound Reports</span>
-          <nav className="footer-legal" aria-label="Legal">
+          <nav className="footer-legal" aria-label={t("footer.legalNav")}>
             {LEGAL_LINKS.map(({ href, label }) => (
               <Link key={label} href={href} className={linkClass}>
                 {label}

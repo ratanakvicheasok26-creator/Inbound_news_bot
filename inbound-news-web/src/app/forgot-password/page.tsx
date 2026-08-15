@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { resetPassword } from "@/lib/auth"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 import {
   AuthShell,
   AuthError,
@@ -11,6 +12,7 @@ import {
 } from "@/components/auth/AuthShell"
 
 export default function ForgotPasswordPage() {
+  const { t } = useI18n()
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -30,20 +32,17 @@ export default function ForgotPasswordPage() {
         setSent(true)
       }
     } catch {
-      setError("Something went wrong. Try again.")
+      setError(t("auth.errorGeneric"))
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <AuthShell
-      title="Forgot password"
-      subtitle="Enter your account email and we'll send you a link to create a new password."
-    >
+    <AuthShell title={t("auth.forgotPageTitle")} subtitle={t("auth.forgotPageSubtitle")}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="meta-text block mb-2">Email</label>
+          <label className="meta-text block mb-2">{t("auth.email")}</label>
           <input
             type="email"
             required
@@ -51,28 +50,22 @@ export default function ForgotPasswordPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className={authInputClass}
-            placeholder="you@example.com"
+            placeholder={t("auth.emailPlaceholder")}
           />
         </div>
 
         <AuthError message={error} />
-        <AuthSuccess
-          message={
-            sent
-              ? "If that email has an account, a password reset link is on its way."
-              : ""
-          }
-        />
+        <AuthSuccess message={sent ? t("auth.resetSent") : ""} />
 
         <button type="submit" disabled={loading} className="btn-primary w-full h-11 disabled:opacity-50">
-          {loading ? "Sending…" : "Send reset link"}
+          {loading ? t("auth.sending") : t("auth.sendResetLink")}
         </button>
       </form>
 
       <p className="mt-6 text-center text-[13px] text-[var(--text-secondary)]">
-        Remembered it?{" "}
+        {t("auth.rememberedIt")}{" "}
         <Link href="/login" className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent)]">
-          Back to sign in
+          {t("auth.backToLogin")}
         </Link>
       </p>
     </AuthShell>

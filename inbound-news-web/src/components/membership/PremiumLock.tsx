@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Lock } from "lucide-react"
 import { subscribe } from "@/lib/membership"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 import { PaymentModal } from "@/components/membership/PaymentModal"
 
 export function PremiumLock({ teaser }: { teaser?: string | null }) {
+  const { t } = useI18n()
   const router = useRouter()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
@@ -27,10 +29,10 @@ export function PremiumLock({ teaser }: { teaser?: string | null }) {
     }
     setError(
       res.error === "configured"
-        ? "Payments are being set up — please check back soon."
+        ? t("membership.paymentsSetup")
         : res.error === "already"
-          ? "You're all set — refresh to read."
-          : "Something went wrong — please try again.",
+          ? t("membership.allSet")
+          : t("membership.tryAgain"),
     )
     setBusy(false)
   }
@@ -39,7 +41,7 @@ export function PremiumLock({ teaser }: { teaser?: string | null }) {
     <div>
       <div className="flex items-center gap-2 mb-3">
         <Lock className="h-4 w-4 text-[var(--accent)]" />
-        <span className="meta-text font-semibold text-[var(--accent)]">Pro members only</span>
+        <span className="meta-text font-semibold text-[var(--accent)]">{t("membership.proOnly")}</span>
       </div>
 
       {teaser && (
@@ -50,8 +52,7 @@ export function PremiumLock({ teaser }: { teaser?: string | null }) {
       )}
 
       <p className="text-[14px] text-[var(--text-secondary)] mb-5 max-w-[58ch]">
-        This story is for Pro and Premium members — the full breakdown, right when it’s
-        published. Members also fund independent tech coverage from Phnom Penh.
+        {t("membership.storyForMembers")}
       </p>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -60,22 +61,22 @@ export function PremiumLock({ teaser }: { teaser?: string | null }) {
           onClick={() => setQrOpen(true)}
           className="btn-primary text-[14px] px-5"
         >
-          Pay by QR — $7.99/mo
+          {t("membership.payByQrMonthly")}
         </button>
         <Link href="/pricing" className="btn-ghost text-[14px] px-5">
-          View plans
+          {t("membership.viewPlans")}
         </Link>
       </div>
 
       <p className="mt-3 text-[13px] text-[var(--text-secondary)]">
-        Prefer card?{" "}
+        {t("membership.preferCard")}{" "}
         <button
           type="button"
           onClick={handleJoin}
           disabled={busy}
           className="font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)] disabled:opacity-60"
         >
-          {busy ? "Opening checkout…" : "Pay with Stripe"}
+          {busy ? t("membership.openingCheckout") : t("membership.payWithStripe")}
         </button>
       </p>
 

@@ -1,3 +1,5 @@
+import { LocalizedText } from "@/components/LocalizedText"
+
 interface HypeRealityBarProps {
   score: number
   sources?: { name: string; score: number }[]
@@ -38,8 +40,8 @@ export function HypeRealityBar({
       </div>
       {showLabels && (
         <div className="flex justify-between mt-1.5">
-          <span className="meta-text">Quiet</span>
-          <span className="meta-text">Wide</span>
+          <span className="meta-text"><LocalizedText k="coverage.quiet" /></span>
+          <span className="meta-text"><LocalizedText k="coverage.wide" /></span>
         </div>
       )}
       {sources.length > 0 && showLabels && (

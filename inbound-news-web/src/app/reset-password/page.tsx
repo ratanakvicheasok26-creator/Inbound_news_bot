@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { supabase, updatePassword, signOut } from "@/lib/auth"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 import {
   AuthShell,
   AuthError,
@@ -12,6 +13,7 @@ import {
 } from "@/components/auth/AuthShell"
 
 export default function ResetPasswordPage() {
+  const { t } = useI18n()
   const router = useRouter()
   const [ready, setReady] = useState(false)
   const [password, setPassword] = useState("")
@@ -46,15 +48,15 @@ export default function ResetPasswordPage() {
     setSuccess("")
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters.")
+      setError(t("auth.errorPasswordMin"))
       return
     }
     if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
-      setError("Password needs upper + lower + number + special character.")
+      setError(t("auth.errorPasswordWeak"))
       return
     }
     if (password !== confirmPassword) {
-      setError("Passwords do not match.")
+      setError(t("auth.errorPasswordsMatch"))
       return
     }
 
@@ -66,10 +68,10 @@ export default function ResetPasswordPage() {
         return
       }
       await signOut()
-      setSuccess("Password updated. You can now sign in with your new password.")
+      setSuccess(t("auth.passwordUpdated"))
       setTimeout(() => router.push("/login"), 1200)
     } catch {
-      setError("Something went wrong. Try again.")
+      setError(t("auth.errorGeneric"))
     } finally {
       setLoading(false)
     }
@@ -77,14 +79,14 @@ export default function ResetPasswordPage() {
 
   if (!ready) {
     return (
-      <AuthShell title="Create new password" subtitle="Set a new password for your account.">
-        <AuthError message={error || "This reset link is invalid or has expired. Request a new one."} />
+      <AuthShell title={t("auth.resetPageTitle")} subtitle={t("auth.resetPageSubtitle")}>
+        <AuthError message={error || t("auth.resetInvalid")} />
         <div className="mt-4 text-center">
           <Link
             href="/forgot-password"
             className="text-[13px] font-semibold text-[var(--text-primary)] hover:text-[var(--accent)]"
           >
-            Request a new reset link
+            {t("auth.requestNewLink")}
           </Link>
         </div>
       </AuthShell>
@@ -92,28 +94,28 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <AuthShell title="Create new password" subtitle="Set a new password for your account.">
+    <AuthShell title={t("auth.resetPageTitle")} subtitle={t("auth.resetPageSubtitle")}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="meta-text block mb-2">New password</label>
+          <label className="meta-text block mb-2">{t("auth.newPassword")}</label>
           <PasswordInput
             required
             autoComplete="new-password"
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Min 8 characters, upper + lower + number + special"
+            placeholder={t("auth.passwordHint")}
           />
         </div>
 
         <div>
-          <label className="meta-text block mb-2">Confirm new password</label>
+          <label className="meta-text block mb-2">{t("auth.confirmNewPassword")}</label>
           <PasswordInput
             required
             autoComplete="new-password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Repeat your new password"
+            placeholder={t("auth.confirmNewPlaceholder")}
           />
         </div>
 
@@ -121,7 +123,7 @@ export default function ResetPasswordPage() {
         <AuthSuccess message={success} />
 
         <button type="submit" disabled={loading} className="btn-primary w-full h-11 disabled:opacity-50">
-          {loading ? "Updating…" : "Update password"}
+          {loading ? t("auth.updating") : t("auth.updatePassword")}
         </button>
       </form>
     </AuthShell>

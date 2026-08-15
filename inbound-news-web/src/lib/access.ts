@@ -22,6 +22,21 @@ export type Feature =
   | "local_lens"
   | "undercovered"
   | "trend_radar"
+  // Khmer AI content — the Khmer UI itself is free; these gate AI-generated
+  // Khmer translations / analyses. Same central system, same server checks.
+  | "basic_khmer_translation"
+  | "khmer_summary"
+  | "full_khmer_translation"
+  | "unlimited_khmer_translation"
+  | "khmer_decode"
+  | "khmer_compare"
+  | "khmer_daily_brief"
+  | "khmer_coverage_intelligence"
+  | "khmer_local_lens"
+  | "khmer_trend_radar"
+  | "khmer_intelligence_reports"
+  | "khmer_historical_intelligence"
+  | "khmer_premium_analysis"
 
 /** Minimum plan tier required for each feature. */
 const FEATURE_TIER: Record<Feature, PlanTier> = {
@@ -33,6 +48,20 @@ const FEATURE_TIER: Record<Feature, PlanTier> = {
   local_lens: "premium",
   undercovered: "premium",
   trend_radar: "premium",
+  // Khmer content — free tier gets limited translation + basic summaries.
+  basic_khmer_translation: "free",
+  khmer_summary: "free",
+  full_khmer_translation: "pro",
+  unlimited_khmer_translation: "premium",
+  khmer_decode: "pro",
+  khmer_compare: "pro",
+  khmer_daily_brief: "pro",
+  khmer_coverage_intelligence: "pro",
+  khmer_local_lens: "premium",
+  khmer_trend_radar: "premium",
+  khmer_intelligence_reports: "premium",
+  khmer_historical_intelligence: "premium",
+  khmer_premium_analysis: "premium",
 }
 
 /** Human-friendly feature names for locked / upgrade UI copy. */
@@ -45,6 +74,19 @@ export const FEATURE_LABELS: Record<Feature, string> = {
   local_lens: "Premium Local Lens",
   undercovered: "Undercovered Stories",
   trend_radar: "Trend Radar",
+  basic_khmer_translation: "Basic Khmer Translation",
+  khmer_summary: "Khmer Summaries",
+  full_khmer_translation: "Full Khmer Translation",
+  unlimited_khmer_translation: "Unlimited Khmer Translation",
+  khmer_decode: "Full Khmer Decode",
+  khmer_compare: "Khmer Advanced Compare",
+  khmer_daily_brief: "Khmer Daily Brief",
+  khmer_coverage_intelligence: "Khmer Coverage Intelligence",
+  khmer_local_lens: "Premium Khmer Local Lens",
+  khmer_trend_radar: "Khmer Trend Radar",
+  khmer_intelligence_reports: "Khmer Intelligence Reports",
+  khmer_historical_intelligence: "Khmer Historical Intelligence",
+  khmer_premium_analysis: "Khmer Premium Analysis",
 }
 
 export const TIER_LABELS: Record<PlanTier, string> = {

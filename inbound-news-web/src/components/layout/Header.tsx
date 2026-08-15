@@ -8,20 +8,23 @@ import { createPortal } from "react-dom"
 import { CATEGORIES } from "@/lib/categories"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { LiveSearch } from "@/components/layout/LiveSearch"
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 import { Menu, X, ChevronDown, UserRound } from "lucide-react"
 import { supabase, signOut } from "@/lib/auth"
 import type { User } from "@supabase/supabase-js"
 
-const NAV_LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/brief", label: "Brief" },
-  { href: "/compare", label: "Compare" },
-  { href: "/blindspot", label: "Blindspot" },
-  { href: "/glossary", label: "Glossary" },
-  { href: "/pricing", label: "Membership" },
+const NAV_HREFS = [
+  { href: "/", key: "home" },
+  { href: "/brief", key: "brief" },
+  { href: "/compare", key: "compare" },
+  { href: "/blindspot", key: "blindspot" },
+  { href: "/glossary", key: "glossary" },
+  { href: "/pricing", key: "membership" },
 ]
 
 export function Header() {
+  const { t } = useI18n()
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [topicsOpen, setTopicsOpen] = useState(false)
@@ -31,6 +34,11 @@ export function Header() {
   const topicsRef = useRef<HTMLDivElement>(null)
   const accountRef = useRef<HTMLDivElement>(null)
   const closeBtnRef = useRef<HTMLButtonElement>(null)
+
+  const NAV_LINKS = NAV_HREFS.map(({ href, key }) => ({
+    href,
+    label: t(`nav.${key}`),
+  }))
 
   /* eslint-disable react-hooks/set-state-in-effect -- gate client-only rendering after first render */
   useEffect(() => {
@@ -118,17 +126,17 @@ export function Header() {
           className="mobile-overlay-panel"
           role="dialog"
           aria-modal="true"
-          aria-label="Account"
+          aria-label={t("nav.account")}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between px-5 h-14 border-b border-[var(--border)] shrink-0">
-            <span className="font-display text-lg font-semibold">Account</span>
+            <span className="font-display text-lg font-semibold">{t("nav.account")}</span>
             <button
               ref={closeBtnRef}
               type="button"
               className="w-11 h-11 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
               onClick={closeMobileMenu}
-              aria-label="Close account menu"
+              aria-label={t("common.close")}
             >
               <X className="h-5 w-5" />
             </button>
@@ -136,6 +144,7 @@ export function Header() {
 
           <div className="flex-1 overflow-y-auto overscroll-contain">
             <div className="px-5 pt-5 pb-6 space-y-5">
+              <LanguageSwitcher className="w-full justify-center" />
               {user ? (
                 <div className="space-y-2">
                   <Link
@@ -143,7 +152,7 @@ export function Header() {
                     onClick={closeMobileMenu}
                     className="btn-primary w-full h-11"
                   >
-                    Open account
+                    {t("nav.openAccount")}
                   </Link>
                   <button
                     type="button"
@@ -153,7 +162,7 @@ export function Header() {
                     }}
                     className="btn-ghost w-full h-11"
                   >
-                    Sign out
+                    {t("nav.signOut")}
                   </button>
                 </div>
               ) : (
@@ -163,14 +172,14 @@ export function Header() {
                     onClick={closeMobileMenu}
                     className="btn-primary w-full h-11"
                   >
-                    Create account
+                    {t("nav.createAccount")}
                   </Link>
                   <Link
                     href="/login"
                     onClick={closeMobileMenu}
                     className="btn-ghost w-full h-11"
                   >
-                    Sign in
+                    {t("nav.signIn")}
                   </Link>
                 </div>
               )}
@@ -183,10 +192,10 @@ export function Header() {
                   className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-3 py-3.5 hover:border-[var(--text-secondary)] transition-colors"
                 >
                   <span className="block text-[14px] font-semibold text-[var(--text-primary)]">
-                    Membership
+                    {t("nav.membership")}
                   </span>
                   <span className="block mt-1 text-[12px] text-[var(--text-secondary)] leading-snug">
-                    Unlock Decode
+                    {t("nav.unlockDecode")}
                   </span>
                 </Link>
                 <Link
@@ -196,10 +205,10 @@ export function Header() {
                   className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-3 py-3.5 hover:border-[var(--text-secondary)] transition-colors"
                 >
                   <span className="block text-[14px] font-semibold text-[var(--text-primary)]">
-                    Donation
+                    {t("nav.donate")}
                   </span>
                   <span className="block mt-1 text-[12px] text-[var(--text-secondary)] leading-snug">
-                    Support the desk
+                    {t("nav.supportTheDesk")}
                   </span>
                 </Link>
               </div>
@@ -208,7 +217,7 @@ export function Header() {
             <div className="mx-5 border-t border-[var(--border)]" />
 
             <div className="px-5 pt-5 pb-10">
-              <p className="meta-text mb-3">Topics</p>
+              <p className="meta-text mb-3">{t("nav.topics")}</p>
               <div className="grid grid-cols-2 gap-x-2 gap-y-1">
                 {CATEGORIES.map((cat) => (
                   <Link
@@ -237,7 +246,7 @@ export function Header() {
               type="button"
               className="hamburger-btn"
               onClick={openMobileMenu}
-              aria-label="Open account menu"
+              aria-label={t("nav.account")}
               aria-expanded={mobileOpen}
               aria-controls="mobile-site-menu"
             >
@@ -283,7 +292,7 @@ export function Header() {
                 aria-expanded={topicsOpen}
                 className="site-nav-link inline-flex items-center gap-1"
               >
-                Topics
+                {t("nav.topics")}
                 <ChevronDown className={`h-3.5 w-3.5 transition-transform ${topicsOpen ? "rotate-180" : ""}`} />
               </button>
               {topicsOpen && (
@@ -305,16 +314,17 @@ export function Header() {
 
           <div className="site-header-actions">
             <LiveSearch />
+            <LanguageSwitcher className="hidden md:inline-flex" />
             <ThemeToggle />
             <div className="relative hidden sm:block" ref={accountRef}>
               {user ? (
                 <Link
                   href="/account"
                   className="btn-ghost"
-                  aria-label="Account"
+                  aria-label={t("nav.account")}
                 >
                   <UserRound className="h-4 w-4" />
-                  Account
+                  {t("nav.account")}
                 </Link>
               ) : (
                 <>
@@ -329,7 +339,7 @@ export function Header() {
                     className="btn-ghost inline-flex items-center gap-1"
                   >
                     <UserRound className="h-4 w-4" />
-                    Account
+                    {t("nav.account")}
                     <ChevronDown
                       className={`h-3.5 w-3.5 transition-transform ${accountOpen ? "rotate-180" : ""}`}
                     />
@@ -345,7 +355,7 @@ export function Header() {
                         onClick={() => setAccountOpen(false)}
                         className="btn-primary w-full h-10"
                       >
-                        Create account
+                        {t("nav.createAccount")}
                       </Link>
                       <Link
                         href="/login"
@@ -353,7 +363,7 @@ export function Header() {
                         onClick={() => setAccountOpen(false)}
                         className="btn-ghost w-full h-10"
                       >
-                        Sign in
+                        {t("nav.signIn")}
                       </Link>
                     </div>
                   )}
@@ -366,11 +376,11 @@ export function Header() {
                 onClick={handleSignOut}
                 className="btn-ghost hidden lg:inline-flex"
               >
-                Sign out
+                {t("nav.signOut")}
               </button>
             )}
             <Link href="/donate" className="btn-outline hidden lg:inline-flex">
-              Donation
+              {t("nav.donate")}
             </Link>
           </div>
         </div>

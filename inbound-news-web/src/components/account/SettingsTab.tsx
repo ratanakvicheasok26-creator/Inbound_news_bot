@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { getProfile, updatePreferences, resetProfile, syncPreferencesToSupabase } from "@/lib/profile"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 import type { User } from "@supabase/supabase-js"
 
 interface SettingsTabProps {
@@ -70,6 +71,7 @@ function Switch({
 }
 
 export function SettingsTab({ user, onSignOut }: SettingsTabProps) {
+  const { t } = useI18n()
   const [prefs, setPrefs] = useState(() => getProfile().preferences)
 
   function update<K extends keyof typeof prefs>(key: K, value: (typeof prefs)[K]) {
@@ -80,7 +82,7 @@ export function SettingsTab({ user, onSignOut }: SettingsTabProps) {
   }
 
   function handleDelete() {
-    if (confirm("This will erase your reading history, score, and saved stories. Continue?")) {
+    if (confirm(t("account.settings.eraseConfirm"))) {
       resetProfile()
       setPrefs({
         defaultTier: "standard",
@@ -94,13 +96,13 @@ export function SettingsTab({ user, onSignOut }: SettingsTabProps) {
   return (
     <div className="max-w-[560px] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] px-5 divide-y divide-[var(--border)]">
       <div className="flex items-center justify-between py-4 gap-4">
-        <label className="meta-text">Default tier</label>
+        <label className="meta-text">{t("account.settings.defaultTier")}</label>
         <Segmented
           value={prefs.defaultTier}
           options={[
             { id: "eli5", label: "ELI5" },
-            { id: "standard", label: "Standard" },
-            { id: "deep", label: "Deep" },
+            { id: "standard", label: t("story.simplified") },
+            { id: "deep", label: t("story.deepCoverage") },
           ]}
           onChange={(v) => update("defaultTier", v)}
         />
@@ -108,9 +110,9 @@ export function SettingsTab({ user, onSignOut }: SettingsTabProps) {
 
       <div className="flex items-center justify-between py-4 gap-4">
         <div>
-          <span className="text-[14px] font-semibold block">Stealth mode</span>
+          <span className="text-[14px] font-semibold block">{t("account.settings.stealthMode")}</span>
           <span className="text-[13px] text-[var(--text-secondary)]">
-            Stop recording history and points
+            {t("account.settings.stealthHint")}
           </span>
         </div>
         <Switch
@@ -121,22 +123,21 @@ export function SettingsTab({ user, onSignOut }: SettingsTabProps) {
       </div>
 
       <div className="py-4">
-        <p className="meta-text mb-2">Account</p>
+        <p className="meta-text mb-2">{t("account.settings.account")}</p>
         {user ? (
           <div className="flex items-center justify-between gap-3">
             <span className="text-[14px] text-[var(--text-secondary)] truncate">{user.email}</span>
             <button type="button" onClick={onSignOut} className="btn-ghost shrink-0">
-              Sign out
+              {t("account.signOut")}
             </button>
           </div>
         ) : (
           <div>
             <p className="text-[13px] text-[var(--text-secondary)] mb-3">
-              Optional — sign in to sync reading preferences across devices. Library and score stay
-              on this browser for now.
+              {t("account.settings.optionalSignIn")}
             </p>
             <Link href="/login" className="btn-primary text-[13px] h-9 px-4 inline-flex items-center">
-              Sign in / Sign up
+              {t("account.settings.signInUp")}
             </Link>
           </div>
         )}
@@ -148,10 +149,10 @@ export function SettingsTab({ user, onSignOut }: SettingsTabProps) {
           onClick={handleDelete}
           className="text-[13px] font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)]"
         >
-          Delete local data
+          {t("account.settings.deleteLocalData")}
         </button>
         <p className="text-[12px] text-[var(--text-secondary)] mt-1">
-          Erase reading history, score, and saved stories from this device.
+          {t("account.settings.deleteLocalHint")}
         </p>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { AdBand } from "@/components/ads/AdBand"
 import { isMockStoriesEnabled } from "@/lib/mock-stories"
 import { pickSponsorFrom } from "@/lib/sponsors"
 import { getActiveSponsors } from "@/lib/sponsors-server"
+import { LocalizedText } from "@/components/LocalizedText"
 import Link from "next/link"
 
 export const revalidate = 60
@@ -34,11 +35,12 @@ export default async function HomePage() {
     return (
       <div className="container py-20">
         <div className="empty-state max-w-lg mx-auto">
-          <p className="page-title mb-3">No stories yet</p>
+          <p className="page-title mb-3">
+            <LocalizedText k="home.noStoriesTitle" />
+          </p>
           <p className="text-[var(--text-secondary)] normal-case tracking-normal">
-            {error
-              ? `Could not load stories: ${error}. Check Supabase env vars and migrations.`
-              : "Run website ingest to cluster sources and start decoding coverage."}
+            <LocalizedText k="home.loadError" />
+            {error ? `: ${error}` : ""}
           </p>
         </div>
       </div>
@@ -50,10 +52,11 @@ export default async function HomePage() {
       {demoMode && (
         <div className="border-b border-[var(--border)] bg-[var(--surface-alt)]">
           <div className="container py-2.5 text-[12px] text-[var(--text-secondary)]">
-            <strong className="text-[var(--text-primary)]">Demo data</strong>
+            <strong className="text-[var(--text-primary)]">
+              <LocalizedText k="home.demoData" />
+            </strong>
             {" — "}
-            Supabase is not configured locally. Showing mock stories so you can review coverage,
-            Blindspot, Compare, and Local Lens. Real ingest replaces this later.
+            <LocalizedText k="home.demoBody" />
           </div>
         </div>
       )}
@@ -63,14 +66,13 @@ export default async function HomePage() {
           <div className="mb-8 md:mb-10">
             <p className="chip mb-4">
               <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
-              Inbound Reports
+              <LocalizedText k="home.heroTag" />
             </p>
             <h1 className="font-display-modern text-[clamp(32px,5vw,56px)] font-bold leading-[1.04] tracking-[-0.025em]">
-              Decode the Tech.
+              <LocalizedText k="home.heroTitle" />
             </h1>
             <p className="mt-4 max-w-[46ch] text-[15px] md:text-[17px] leading-[1.6] text-[var(--text-secondary)]">
-              Technology coverage from Phnom Penh — who covered it, how they framed it, and
-              what&apos;s undercovered. Compare outlets, cut jargon, Local Lens for Cambodia.
+              <LocalizedText k="home.heroSubtitle" />
             </p>
           </div>
 
@@ -85,13 +87,13 @@ export default async function HomePage() {
         <div className="section-header">
           <h2 className="section-title flex items-center gap-2.5">
             <span className="inline-block h-4 w-1 rounded-full bg-[var(--accent)]" aria-hidden="true" />
-            Latest stories
+            <LocalizedText k="home.latest" />
           </h2>
           <Link
             href="/search"
             className="meta-text hover:text-[var(--accent)] transition-colors"
           >
-            Search all
+            <LocalizedText k="search.searchAll" />
           </Link>
         </div>
 

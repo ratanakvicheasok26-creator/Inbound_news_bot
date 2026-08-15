@@ -2,6 +2,19 @@
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
+/* Khmer interface: prefer the bundled Noto Sans Khmer font so glyphs render
+   cleanly across the whole UI when the site is in Khmer. */
+html[lang="km"] body,
+html[lang="km"] .font-sans,
+html[lang="km"] .site-nav-link,
+html[lang="km"] button,
+html[lang="km"] a,
+html[lang="km"] input,
+html[lang="km"] textarea,
+html[lang="km"] select {
+  font-family: var(--font-khmer), var(--font-sans), system-ui, sans-serif;
+}
+
 /* ===== Editorial color system — flat surfaces, no gradients ===== */
 :root {
   --bg: #F6F7F9;

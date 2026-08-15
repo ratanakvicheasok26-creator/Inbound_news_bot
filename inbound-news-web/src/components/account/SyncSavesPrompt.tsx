@@ -7,6 +7,7 @@ import {
   hasSyncPromptPending,
   isSyncPromptDismissed,
 } from "@/lib/sync-prompt"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 
 /**
  * Soft CTA: sign in to sync preferences. Saves/library stay on-device for now.
@@ -20,6 +21,7 @@ export function SyncSavesPrompt({
   /** Show when guest has saves even without pending flag (Library). */
   force?: boolean
 }) {
+  const { t } = useI18n()
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -45,15 +47,14 @@ export function SyncSavesPrompt({
   return (
     <div className={box} role="status">
       <p className="text-[14px] font-semibold text-[var(--text-primary)] mb-1">
-        Sign in to sync reading preferences
+        {t("account.syncPrompt.title")}
       </p>
       <p className="text-[13px] text-[var(--text-secondary)] mb-3 max-w-[52ch]">
-        Saves, score, and library stay on this device. An account syncs tier and settings across
-        browsers — full library sync comes later.
+        {t("account.syncPrompt.body")}
       </p>
       <div className="flex flex-wrap items-center gap-3">
         <Link href="/login" className="btn-primary text-[13px] h-9 px-4">
-          Sign in
+          {t("account.signIn")}
         </Link>
         <button
           type="button"
@@ -63,7 +64,7 @@ export function SyncSavesPrompt({
           }}
           className="text-[13px] font-semibold text-[var(--text-secondary)] hover:text-[var(--accent)]"
         >
-          Not now
+          {t("account.syncPrompt.notNow")}
         </button>
       </div>
     </div>

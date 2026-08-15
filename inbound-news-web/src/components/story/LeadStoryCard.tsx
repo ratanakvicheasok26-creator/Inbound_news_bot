@@ -1,13 +1,15 @@
 import type { Story } from "@/lib/types"
-import { getCategoryLabel } from "@/lib/categories"
+import { CATEGORY_MAP } from "@/lib/categories"
 import { resolveStoryDek } from "@/lib/story-body"
 import { formatDistanceToNow } from "@/lib/utils"
 import { StoryImage } from "@/components/story/StoryImage"
 import { CoverageMeta } from "@/components/story/CoverageMeta"
+import { LocalizedText } from "@/components/LocalizedText"
 import Link from "next/link"
 
 export function LeadStoryCard({ story }: { story: Story }) {
-  const categoryLabel = getCategoryLabel(story.category || "") || "News"
+  const slug = story.category || ""
+  const categoryLabel = CATEGORY_MAP[slug] ? slug : null
   const dek = resolveStoryDek(story.summary_en, 180)
 
   return (
@@ -26,7 +28,13 @@ export function LeadStoryCard({ story }: { story: Story }) {
 
         <div className="lg:py-4">
           <div className="mb-4 flex items-center gap-2.5 flex-wrap">
-            <span className="chip">{categoryLabel}</span>
+            <span className="chip">
+              {categoryLabel ? (
+                <LocalizedText k={`category.${categoryLabel}`} />
+              ) : (
+                <LocalizedText k="common.news" />
+              )}
+            </span>
             <span className="meta-text">{formatDistanceToNow(story.created_at)}</span>
           </div>
 
@@ -48,7 +56,7 @@ export function LeadStoryCard({ story }: { story: Story }) {
 
           <div className="mt-6">
             <Link href={`/story/${story.id}`} className="btn-primary">
-              Decode this story
+              <LocalizedText k="story.decodeThis" />
             </Link>
           </div>
         </div>

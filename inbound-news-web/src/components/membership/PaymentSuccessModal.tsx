@@ -5,12 +5,30 @@ import { createPortal } from "react-dom"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Check, ShieldCheck, X } from "lucide-react"
-import { PLANS, PLAN_FEATURES, priceLabel } from "@/lib/plans"
+import { PLANS, priceLabel } from "@/lib/plans"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 import type { MembershipPlan } from "@/lib/plans"
 
 interface PaymentSuccessModalProps {
   plan: MembershipPlan
   onClose: () => void
+}
+
+const PLAN_FEATURE_KEYS: Record<MembershipPlan, string[]> = {
+  pro_monthly: [
+    "pricing.features.pro1",
+    "pricing.features.pro2",
+    "pricing.features.pro3",
+    "pricing.features.pro4",
+    "pricing.features.pro5",
+    "pricing.features.pro6",
+  ],
+  premium_yearly: [
+    "pricing.features.premium1",
+    "pricing.features.premium2",
+    "pricing.features.premium3",
+    "pricing.features.premium4",
+  ],
 }
 
 /**
@@ -19,6 +37,7 @@ interface PaymentSuccessModalProps {
  * benefits the member just unlocked.
  */
 export function PaymentSuccessModal({ plan, onClose }: PaymentSuccessModalProps) {
+  const { t } = useI18n()
   const router = useRouter()
   const meta = PLANS[plan]
 
@@ -42,7 +61,7 @@ export function PaymentSuccessModal({ plan, onClose }: PaymentSuccessModalProps)
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label={`${meta.name} membership confirmed`}
+      aria-label={`${meta.name} ${t("payment.planSuffix")}`}
     >
       <div
         className="w-full sm:max-w-[440px] bg-[var(--surface)] border border-[var(--border)] sm:rounded-[var(--radius)] rounded-t-[var(--radius)] p-6 md:p-8 text-center shadow-[0_24px_64px_-24px_rgba(0,0,0,0.4)] overflow-y-auto"
@@ -54,13 +73,13 @@ export function PaymentSuccessModal({ plan, onClose }: PaymentSuccessModalProps)
       >
         <div className="flex items-center justify-between mb-2 text-left">
           <span className="text-[12px] font-semibold uppercase tracking-wide text-[var(--accent)]">
-            Payment verified
+            {t("payment.verified")}
           </span>
           <button
             type="button"
             onClick={onClose}
             className="w-9 h-9 shrink-0 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
-            aria-label="Close confirmation"
+            aria-label={t("payment.closeConfirmation")}
           >
             <X className="h-5 w-5" />
           </button>
@@ -71,21 +90,21 @@ export function PaymentSuccessModal({ plan, onClose }: PaymentSuccessModalProps)
         </div>
 
         <h2 className="font-display text-[22px] font-semibold mb-2">
-          Welcome to {meta.name}!
+          {t("payment.welcomeTo")} {meta.name}!
         </h2>
 
         <p className="text-[14px] text-[var(--text-secondary)] mb-5 max-w-[52ch] mx-auto">
-          Your {meta.name} membership is active at{" "}
-          <span className="font-semibold text-[var(--text-primary)]">{priceLabel(plan)}</span>.
-          Here&rsquo;s what you now have access to:
+          {t("payment.membershipActive", { plan: meta.name })}{" "}
+          <span className="font-semibold text-[var(--text-primary)]">{priceLabel(plan)}</span>.{" "}
+          {t("payment.accessNote")}
         </p>
 
         <div className="text-left bg-[var(--surface-alt)] border border-[var(--border)] rounded-[var(--radius-sm)] p-4 mb-6">
           <ul className="space-y-2.5 text-[14px] text-[var(--text-primary)]">
-            {PLAN_FEATURES[plan].map((f) => (
-              <li key={f} className="flex items-start gap-2">
+            {PLAN_FEATURE_KEYS[plan].map((k) => (
+              <li key={k} className="flex items-start gap-2">
                 <Check className="h-4 w-4 shrink-0 mt-0.5 text-[var(--accent)]" />
-                {f}
+                {t(k)}
               </li>
             ))}
           </ul>
@@ -100,14 +119,14 @@ export function PaymentSuccessModal({ plan, onClose }: PaymentSuccessModalProps)
             }}
             className="btn-primary flex-1 h-11 text-[14px]"
           >
-            Start reading
+            {t("payment.startReading")}
           </button>
           <Link
             href="/account?tab=membership"
             onClick={onClose}
             className="btn-ghost h-11 px-4 text-[14px]"
           >
-            Account
+            {t("account.title")}
           </Link>
         </div>
       </div>

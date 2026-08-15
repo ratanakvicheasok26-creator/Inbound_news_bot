@@ -4,14 +4,16 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Bookmark, X } from "lucide-react"
 import { getProfile, toggleSavedStory, toggleFollowedConcept, toggleFollowedTopic } from "@/lib/profile"
-import { getCategoryLabel } from "@/lib/categories"
+import { CATEGORY_MAP } from "@/lib/categories"
 import { formatDistanceToNow } from "@/lib/utils"
 import { SyncSavesPrompt } from "@/components/account/SyncSavesPrompt"
 import { FeatureGate } from "@/components/membership/FeatureGate"
 import { supabase } from "@/lib/auth"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 import type { Story } from "@/lib/types"
 
 export function LibraryTab() {
+  const { t } = useI18n()
   const [savedIds, setSavedIds] = useState<string[]>(() => getProfile().savedStoryIds)
   const [concepts, setConcepts] = useState<string[]>(() => getProfile().followedConcepts)
   const [topics, setTopics] = useState<string[]>(() => getProfile().followedTopics || [])
@@ -67,17 +69,17 @@ export function LibraryTab() {
       <div className="mb-10">
         <FeatureGate feature="bookmarks">
           <div className="section-header">
-            <h2 className="section-title">Saved stories</h2>
+            <h2 className="section-title">{t("account.library.savedStories")}</h2>
             <span className="meta-text">{savedIds.length}</span>
           </div>
 
           {savedIds.length === 0 ? (
             <div className="empty-state py-12">
-              <p className="story-title mb-2">No saved stories</p>
-              <p>Bookmark stories to build your library.</p>
+              <p className="story-title mb-2">{t("account.library.noSavedTitle")}</p>
+              <p>{t("account.library.noSavedBody")}</p>
             </div>
           ) : loading ? (
-            <p className="meta-text py-8">Loading saved stories…</p>
+            <p className="meta-text py-8">{t("account.library.loadingSaved")}</p>
           ) : (
             <div>
               {savedIds.map((id) => {
@@ -85,11 +87,11 @@ export function LibraryTab() {
                 if (!story) {
                   return (
                     <div key={id} className="flex items-center justify-between py-4 border-b border-[var(--border)]">
-                      <span className="meta-text">Story unavailable</span>
+                      <span className="meta-text">{t("account.library.storyUnavailable")}</span>
                       <button
                         onClick={() => handleUnsave(id)}
                         className="text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
-                        aria-label="Remove saved story"
+                        aria-label={t("account.library.removeSaved")}
                       >
                         <Bookmark className="h-4 w-4 fill-current" />
                       </button>
@@ -101,7 +103,9 @@ export function LibraryTab() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="meta-text text-[var(--accent)]">
-                          {getCategoryLabel(story.category || "")}
+                          {CATEGORY_MAP[story.category || ""]
+                            ? t(`category.${story.category}`)
+                            : t("common.news")}
                         </span>
                         <span className="meta-text">
                           {formatDistanceToNow(story.created_at)}
@@ -122,7 +126,7 @@ export function LibraryTab() {
                     <button
                       onClick={() => handleUnsave(id)}
                       className="flex-shrink-0 mt-1 w-8 h-8 flex items-center justify-center text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
-                      aria-label="Unsave story"
+                      aria-label={t("common.unsave")}
                     >
                       <Bookmark className="h-4 w-4 fill-current" />
                     </button>
@@ -139,7 +143,7 @@ export function LibraryTab() {
           {topics.length > 0 && (
             <div>
               <div className="section-header">
-                <h2 className="section-title">Followed desks</h2>
+                <h2 className="section-title">{t("account.library.followedDesks")}</h2>
                 <span className="meta-text">{topics.length}</span>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -149,12 +153,12 @@ export function LibraryTab() {
                     className="group flex items-center gap-1.5 border border-[var(--border)] px-3 py-1.5 text-[12px] font-medium text-[var(--text-primary)]"
                   >
                     <Link href={`/topic/${slug}`} className="hover:text-[var(--accent)] transition-colors">
-                      {getCategoryLabel(slug)}
+                      {CATEGORY_MAP[slug] ? t(`category.${slug}`) : slug}
                     </Link>
                     <button
                       onClick={() => handleUnfollowTopic(slug)}
                       className="text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors ml-1"
-                      aria-label={`Unfollow ${slug}`}
+                      aria-label={t("account.library.unfollow", { name: slug })}
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -167,7 +171,7 @@ export function LibraryTab() {
           {concepts.length > 0 && (
             <div>
               <div className="section-header">
-                <h2 className="section-title">Followed concepts</h2>
+                <h2 className="section-title">{t("account.library.followedConcepts")}</h2>
                 <span className="meta-text">{concepts.length}</span>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -182,7 +186,7 @@ export function LibraryTab() {
                     <button
                       onClick={() => handleUnfollow(slug)}
                       className="text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors ml-1"
-                      aria-label={`Unfollow ${slug}`}
+                      aria-label={t("account.library.unfollow", { name: slug })}
                     >
                       <X className="h-3 w-3" />
                     </button>

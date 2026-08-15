@@ -26,6 +26,8 @@ import { SyncSavesPrompt } from "@/components/account/SyncSavesPrompt"
 import { AdBand } from "@/components/ads/AdBand"
 import { PremiumLock } from "@/components/membership/PremiumLock"
 import { SaveButton } from "@/components/membership/SaveButton"
+import { KhmerDecodePanel } from "@/components/story/KhmerDecodePanel"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 import { getAccessToken } from "@/lib/membership"
 import type { SponsorCreative } from "@/lib/sponsors"
 import type { Article } from "@/lib/types"
@@ -102,6 +104,7 @@ export function StoryContent({
   premiumLocked = false,
   premiumTeaser = null,
 }: StoryContentProps) {
+  const { t } = useI18n()
   const [activeTier, setActiveTier] = useState<"eli5" | "standard" | "deep">(initialTier)
   const [premiumFull, setPremiumFull] = useState<{ body: string; articles: Article[] } | null>(
     null,
@@ -147,7 +150,7 @@ export function StoryContent({
     })
   }, [])
 
-  const categoryLabel = getCategoryLabel(story.category || "") || "News"
+  const categoryLabel = getCategoryLabel(story.category || "") || t("common.news")
   const articles = premiumFull ? premiumFull.articles : story.articles || []
   const tags = story.tags || []
   const body = premiumFull ? premiumFull.body : resolveStoryBody(story)
@@ -173,7 +176,7 @@ export function StoryContent({
           className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          Back to feed
+          {t("story.backToFeed")}
         </Link>
       </div>
 
@@ -194,7 +197,8 @@ export function StoryContent({
             <div className="flex flex-wrap items-center gap-2">
               <span className="meta-text text-[var(--accent)]">{categoryLabel}</span>
               <span className="meta-text">
-                {story.source_count} source{story.source_count !== 1 ? "s" : ""}
+                {story.source_count}{" "}
+                {story.source_count !== 1 ? t("story.sources") : t("story.source")}
               </span>
               <span className="meta-text">{formatDistanceToNow(story.created_at)}</span>
             </div>
@@ -212,9 +216,7 @@ export function StoryContent({
         </h1>
 
         <p className="mt-3 text-[14px] text-[var(--text-secondary)] max-w-[58ch]">
-          {showTierToggle
-            ? "Technology coverage map — switch ELI5 / Standard / Deep when the text actually differs. Compare outlets below; Local Lens adds Cambodia context."
-            : "Technology coverage with jargon highlights. Compare outlets below; Local Lens adds Cambodia context."}
+          {showTierToggle ? t("story.techCoverageMap") : t("story.techCoverageJargon")}
         </p>
 
         {primaryUrl && (
@@ -224,13 +226,17 @@ export function StoryContent({
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 mt-4 text-[14px] font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)]"
           >
-            Open source article
+            {t("story.openSourceArticle")}
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
         )}
       </header>
 
       {timelineNodes.length > 1 && <StoryTimeline nodes={timelineNodes} />}
+
+      <div className="pt-6 pb-2">
+        <KhmerDecodePanel storyId={story.id} />
+      </div>
 
       <section className="py-8">
         <div className="grid gap-6 md:gap-8 lg:grid-cols-[1.5fr_0.85fr]">
@@ -241,7 +247,7 @@ export function StoryContent({
               <>
                 {showTierToggle && activeTier !== "standard" && (
                   <p className="meta-text text-[var(--accent)] mb-3">
-                    {activeTier === "eli5" ? "Simplified" : "Deep coverage"}
+                    {activeTier === "eli5" ? t("story.simplified") : t("story.deepCoverage")}
                   </p>
                 )}
                 <JargonText
@@ -282,7 +288,7 @@ export function StoryContent({
           <div className="section-header">
             <h2 className="section-title">
               <Newspaper className="mr-2 inline h-3.5 w-3.5" />
-              Source coverage ({articles.length})
+              {t("story.sourceCoverage")} ({articles.length})
             </h2>
             {compareBothHref && !lockedOut && (
               <Link
@@ -290,12 +296,12 @@ export function StoryContent({
                 className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)]"
               >
                 <GitCompareArrows className="h-3.5 w-3.5" />
-                Compare coverage
+                {t("story.compareCoverage")}
               </Link>
             )}
           </div>
           <p className="text-[13px] text-[var(--text-secondary)] mb-4 max-w-[64ch]">
-            Coverage map — {coverage.mapLine}
+            {t("story.coverageMap")} {coverage.mapLine}
           </p>
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] px-5 md:px-6">
             {articles.map((article) => (
@@ -308,7 +314,7 @@ export function StoryContent({
       {articles.length === 0 && (
         <section className="py-6">
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6 text-[var(--text-secondary)]">
-            No linked source articles yet for this story.
+            {t("story.noLinkedSources")}
           </div>
         </section>
       )}

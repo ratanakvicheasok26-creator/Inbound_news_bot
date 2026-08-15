@@ -43,9 +43,6 @@ export const PLAN_FEATURES: Record<MembershipPlan, string[]> = {
     "Everything in Pro",
     "Premium Local Lens for Cambodia and Southeast Asia",
     "Undercovered Stories and Trend Radar",
-    "Premium Intelligence Reports",
-    "Historical Intelligence and coverage trends",
-    "Exclusive premium analysis",
     "Sponsored content remains visible",
   ],
 }

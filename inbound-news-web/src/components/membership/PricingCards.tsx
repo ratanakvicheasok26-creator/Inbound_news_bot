@@ -4,13 +4,38 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Check, Sparkles } from "lucide-react"
 import { useMembership, subscribe, openBillingPortal } from "@/lib/membership"
-import { PLANS, PLAN_FEATURES, priceLabel, FREE_FEATURES, isActiveMembership } from "@/lib/plans"
+import { PLANS, priceLabel, isActiveMembership, type MembershipPlan } from "@/lib/plans"
 import { PaymentModal } from "@/components/membership/PaymentModal"
-import type { MembershipPlan } from "@/lib/plans"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 
 const TIER_ORDER: MembershipPlan[] = ["pro_monthly", "premium_yearly"]
 
+const FREE_FEATURE_KEYS = [
+  "pricing.features.free1",
+  "pricing.features.free2",
+  "pricing.features.free3",
+  "pricing.features.free4",
+  "pricing.features.free5",
+]
+
+const PRO_FEATURE_KEYS = [
+  "pricing.features.pro1",
+  "pricing.features.pro2",
+  "pricing.features.pro3",
+  "pricing.features.pro4",
+  "pricing.features.pro5",
+  "pricing.features.pro6",
+]
+
+const PREMIUM_FEATURE_KEYS = [
+  "pricing.features.premium1",
+  "pricing.features.premium2",
+  "pricing.features.premium3",
+  "pricing.features.premium4",
+]
+
 export function PricingCards() {
+  const { t } = useI18n()
   const router = useRouter()
   const { membership } = useMembership()
   const member = isActiveMembership(membership)
@@ -33,10 +58,10 @@ export function PricingCards() {
     }
     setError(
       res.error === "configured"
-        ? "Payments are being set up — please check back soon."
+        ? t("membership.paymentsSetup")
         : res.error === "already"
-          ? "You're already a member — manage it from your account."
-          : "Something went wrong — please try again.",
+          ? t("membership.alreadyMember")
+          : t("membership.tryAgain"),
     )
     setBusy(null)
   }
@@ -47,7 +72,7 @@ export function PricingCards() {
     if (url) {
       window.location.assign(url)
     } else {
-      setError("Couldn't open billing — please try again.")
+      setError(t("membership.billingError"))
     }
   }
 
@@ -56,18 +81,18 @@ export function PricingCards() {
       <div className="grid gap-6 lg:grid-cols-3 items-stretch">
         {/* Free */}
         <div className="flex flex-col bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6">
-          <h3 className="font-display text-[18px] font-semibold mb-1">Free</h3>
+          <h3 className="font-display text-[18px] font-semibold mb-1">{t("membership.free")}</h3>
           <p className="text-[28px] font-semibold leading-none mb-4">
-            $0<span className="text-[14px] font-normal text-[var(--text-secondary)]"> forever</span>
+            $0<span className="text-[14px] font-normal text-[var(--text-secondary)]"> {t("membership.forever")}</span>
           </p>
           <p className="text-[13px] text-[var(--text-secondary)] mb-5">
-            Everything Inbound Reports already is.
+            {t("membership.freeDescription")}
           </p>
           <ul className="space-y-2.5 mb-6 text-[14px] text-[var(--text-primary)]">
-            {FREE_FEATURES.map((f) => (
-              <li key={f} className="flex items-start gap-2">
+            {FREE_FEATURE_KEYS.map((k) => (
+              <li key={k} className="flex items-start gap-2">
                 <Check className="h-4 w-4 shrink-0 mt-0.5 text-[var(--accent)]" />
-                {f}
+                {t(k)}
               </li>
             ))}
           </ul>
@@ -78,7 +103,7 @@ export function PricingCards() {
                 disabled
                 className="w-full btn-primary text-[14px] disabled:opacity-50"
               >
-                Free confirmed
+                {t("membership.freeConfirmed")}
               </button>
             ) : member ? (
               <button
@@ -86,7 +111,7 @@ export function PricingCards() {
                 disabled
                 className="w-full btn-ghost text-[14px] disabled:opacity-50"
               >
-                Current plan
+                {t("membership.currentPlan")}
               </button>
             ) : (
               <button
@@ -94,12 +119,12 @@ export function PricingCards() {
                 onClick={() => setFreeChosen(true)}
                 className="w-full btn-ghost text-[14px]"
               >
-                Choose Free
+                {t("membership.chooseFree")}
               </button>
             )}
             {freeChosen && (
               <p className="mt-3 text-[13px] text-[var(--text-secondary)] text-center">
-                You&rsquo;re on the Free plan — no payment needed.
+                {t("membership.youAreFree")}
               </p>
             )}
           </div>
@@ -109,6 +134,7 @@ export function PricingCards() {
         {TIER_ORDER.map((plan, idx) => {
           const meta = PLANS[plan]
           const current = member && membership?.plan === plan
+          const featureKeys = plan === "pro_monthly" ? PRO_FEATURE_KEYS : PREMIUM_FEATURE_KEYS
           return (
             <div
               key={plan}
@@ -123,17 +149,19 @@ export function PricingCards() {
                 {idx === 0 && (
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--accent)] bg-[var(--red-subtle-bg)] rounded-full px-2 py-0.5">
                     <Sparkles className="h-3 w-3" />
-                    Popular
+                    {t("membership.popular")}
                   </span>
                 )}
               </div>
               <p className="text-[28px] font-semibold leading-none mb-1">{priceLabel(plan)}</p>
-              <p className="text-[13px] text-[var(--text-secondary)] mb-5">{meta.tagline}</p>
+              <p className="text-[13px] text-[var(--text-secondary)] mb-5">
+                {t(plan === "pro_monthly" ? "pricing.proTagline" : "pricing.premiumTagline")}
+              </p>
               <ul className="space-y-2.5 mb-6 text-[14px] text-[var(--text-primary)]">
-                {PLAN_FEATURES[plan].map((f) => (
-                  <li key={f} className="flex items-start gap-2">
+                {featureKeys.map((k) => (
+                  <li key={k} className="flex items-start gap-2">
                     <Check className="h-4 w-4 shrink-0 mt-0.5 text-[var(--accent)]" />
-                    {f}
+                    {t(k)}
                   </li>
                 ))}
               </ul>
@@ -145,7 +173,7 @@ export function PricingCards() {
                     disabled={busy !== null}
                     className="w-full btn-ghost text-[14px]"
                   >
-                    Manage billing
+                    {t("membership.manageBilling")}
                   </button>
                 ) : member ? (
                   <button
@@ -156,7 +184,7 @@ export function PricingCards() {
                       idx === 0 ? "btn-primary" : "btn-ghost"
                     } disabled:opacity-60`}
                   >
-                    {busy === plan ? "Opening checkout…" : "Switch plan"}
+                    {busy === plan ? t("membership.openingCheckout") : t("membership.switchPlan")}
                   </button>
                 ) : (
                   <>
@@ -167,7 +195,7 @@ export function PricingCards() {
                         idx === 0 ? "btn-primary" : "btn-ghost"
                       }`}
                     >
-                      Pay by QR — {meta.name}
+                      {t("membership.payByQr")} {meta.name}
                     </button>
                     <button
                       type="button"
@@ -175,7 +203,7 @@ export function PricingCards() {
                       disabled={busy !== null}
                       className="w-full text-[13px] font-semibold text-[var(--text-secondary)] hover:text-[var(--accent)] disabled:opacity-60"
                     >
-                      {busy === plan ? "Opening checkout…" : "Pay with card"}
+                      {busy === plan ? t("membership.openingCheckout") : t("membership.payWithCard")}
                     </button>
                   </>
                 )}

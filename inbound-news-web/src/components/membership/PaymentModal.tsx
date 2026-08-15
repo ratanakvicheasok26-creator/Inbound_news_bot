@@ -6,9 +6,10 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { X, Check, ShieldCheck } from "lucide-react"
-import { PLANS, PLAN_FEATURES } from "@/lib/plans"
+import { PLANS } from "@/lib/plans"
 import { paymentQrUrl } from "@/lib/payment-qr"
 import { submitQrPayment } from "@/lib/membership"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 import type { MembershipPlan } from "@/lib/plans"
 import type { QrSubmission } from "@/lib/membership"
 
@@ -19,6 +20,23 @@ interface PaymentModalProps {
 
 type Step = "qr" | "done"
 
+const PLAN_FEATURE_KEYS: Record<MembershipPlan, string[]> = {
+  pro_monthly: [
+    "pricing.features.pro1",
+    "pricing.features.pro2",
+    "pricing.features.pro3",
+    "pricing.features.pro4",
+    "pricing.features.pro5",
+    "pricing.features.pro6",
+  ],
+  premium_yearly: [
+    "pricing.features.premium1",
+    "pricing.features.premium2",
+    "pricing.features.premium3",
+    "pricing.features.premium4",
+  ],
+}
+
 /**
  * QR-code payment dialog for a single membership plan. The price is derived
  * from the plan metadata and can't be edited. After paying by QR, the user taps
@@ -27,6 +45,7 @@ type Step = "qr" | "done"
  * before the membership activates.
  */
 export function PaymentModal({ plan, onClose }: PaymentModalProps) {
+  const { t } = useI18n()
   const router = useRouter()
   const meta = PLANS[plan]
   const price = `$${meta.price.toFixed(2)}/${meta.cadence}`
@@ -66,9 +85,9 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
       close()
       router.push("/login?returnTo=/pricing")
     } else if (res.error === "already_member") {
-      setError("You're already a member — premium stories are unlocked. Close and refresh to read.")
+      setError(t("payment.alreadyMemberError"))
     } else {
-      setError(res.error || "Something went wrong — please try again.")
+      setError(res.error || t("membership.tryAgain"))
     }
     setBusy(false)
   }
@@ -80,7 +99,7 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
       onClick={close}
       role="dialog"
       aria-modal="true"
-      aria-label={`Pay for ${meta.name} plan`}
+      aria-label={`${meta.name} ${t("payment.planSuffix")}`}
     >
       <div
         className="w-full sm:max-w-[440px] bg-[var(--surface)] border border-[var(--border)] sm:rounded-[var(--radius)] rounded-t-[var(--radius)] p-6 md:p-8 text-left shadow-[0_24px_64px_-24px_rgba(0,0,0,0.4)] overflow-y-auto"
@@ -92,14 +111,16 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
       >
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="min-w-0">
-            <h2 className="font-display text-[18px] font-semibold leading-tight">{meta.name} Plan</h2>
+            <h2 className="font-display text-[18px] font-semibold leading-tight">
+              {meta.name} {t("payment.planSuffix")}
+            </h2>
             <p className="text-[28px] font-semibold leading-none mt-2">{price}</p>
           </div>
           <button
             type="button"
             onClick={close}
             className="w-9 h-9 shrink-0 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
-            aria-label="Close payment dialog"
+            aria-label={t("payment.closeDialog")}
           >
             <X className="h-5 w-5" />
           </button>
@@ -108,7 +129,7 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
         {step === "qr" && (
           <>
             <div className="flex items-center justify-center gap-2 mb-4">
-              <span className="meta-text text-[var(--accent)]">KHQR payment</span>
+              <span className="meta-text text-[var(--accent)]">{t("payment.khqrPayment")}</span>
             </div>
 
             <a
@@ -119,7 +140,7 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
             >
               <Image
                 src={paymentQrUrl(plan)}
-                alt={`KHQR payment for ${meta.name} plan`}
+                alt={`KHQR payment for ${meta.name} ${t("payment.planSuffix")}`}
                 fill
                 sizes="300px"
                 priority
@@ -128,14 +149,11 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
             </a>
 
             <div className="text-center">
-              <p className="text-[14px] text-[var(--text-secondary)] mb-1">
-                Scan with any KHQR-compatible app
-              </p>
-              <p className="text-[13px] text-[var(--text-secondary)]">
-                ABA Bank · Inbound Crew
-              </p>
+              <p className="text-[14px] text-[var(--text-secondary)] mb-1">{t("payment.scanHint")}</p>
+              <p className="text-[13px] text-[var(--text-secondary)]">{t("payment.abaPayee")}</p>
               <p className="text-[13px] text-[var(--text-secondary)] mt-2">
-                Pay <span className="font-semibold text-[var(--text-primary)]">exactly ${meta.price.toFixed(2)}</span>
+                {t("payment.payExactly")}{" "}
+                <span className="font-semibold text-[var(--text-primary)]">${meta.price.toFixed(2)}</span>
               </p>
             </div>
 
@@ -154,7 +172,7 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
               disabled={busy}
               className="btn-primary w-full h-11 mt-5 disabled:opacity-50"
             >
-              {busy ? "Confirming…" : "I've paid"}
+              {busy ? t("payment.confirming") : t("payment.iHavePaid")}
             </button>
           </>
         )}
@@ -166,33 +184,33 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
             </div>
 
             <div className="text-center text-[12px] font-semibold uppercase tracking-wide text-[var(--accent)] mb-3">
-              Payment received — verification pending
+              {t("payment.verifiedPending")}
             </div>
 
             <p className="text-center text-[14px] text-[var(--text-secondary)] mb-2 max-w-[52ch] mx-auto">
-              Your payment of{" "}
+              {t("payment.yourPaymentOf")}{" "}
               <span className="font-semibold text-[var(--text-primary)]">
                 ${meta.price.toFixed(2)}
               </span>{" "}
-              has been recorded. You&apos;ll see it on your account page until it&apos;s approved.
+              {t("payment.recordedNote")}
             </p>
 
             <div className="text-left bg-[var(--surface-alt)] border border-[var(--border)] rounded-[var(--radius-sm)] p-4 mb-5">
               <p className="text-[12px] font-semibold uppercase tracking-wide text-[var(--text-secondary)] mb-2">
-                What you get once verified
+                {t("payment.whatYouGet")}
               </p>
               <ul className="space-y-2 text-[14px] text-[var(--text-primary)]">
-                {PLAN_FEATURES[plan].map((f) => (
-                  <li key={f} className="flex items-start gap-2">
+                {PLAN_FEATURE_KEYS[plan].map((k) => (
+                  <li key={k} className="flex items-start gap-2">
                     <Check className="h-4 w-4 shrink-0 mt-0.5 text-[var(--accent)]" />
-                    {f}
+                    {t(k)}
                   </li>
                 ))}
               </ul>
             </div>
 
             <p className="text-center text-[13px] text-[var(--text-secondary)] mb-5 max-w-[52ch] mx-auto">
-              No email? Check back any time — approval typically takes a few hours.
+              {t("payment.noEmailNote")}
             </p>
             <div className="flex items-center gap-2">
               <Link
@@ -200,10 +218,10 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
                 className="btn-primary flex-1 h-11 text-[14px] inline-flex items-center justify-center"
                 onClick={close}
               >
-                Track my submission
+                {t("payment.trackSubmission")}
               </Link>
               <button type="button" onClick={close} className="btn-ghost h-11 px-4 text-[14px]">
-                Close
+                {t("payment.close")}
               </button>
             </div>
           </div>

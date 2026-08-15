@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { signUp } from "@/lib/auth"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 import {
   AuthShell,
   AuthError,
@@ -13,6 +14,7 @@ import {
 } from "@/components/auth/AuthShell"
 
 export default function SignupPage() {
+  const { t } = useI18n()
   const router = useRouter()
   const [displayName, setDisplayName] = useState("")
   const [email, setEmail] = useState("")
@@ -24,15 +26,15 @@ export default function SignupPage() {
 
   function validate(): string {
     const name = displayName.trim()
-    if (!name) return "Please enter your display name."
-    if (name.length > 40) return "Display name must be 40 characters or fewer."
+    if (!name) return t("auth.errorNameEmpty")
+    if (name.length > 40) return t("auth.errorDisplayName")
     const mail = email.trim()
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) return "Enter a valid email address."
-    if (password.length < 8) return "Password must be at least 8 characters."
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) return t("auth.errorEmailInvalid")
+    if (password.length < 8) return t("auth.errorPasswordMin")
     if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
-      return "Password needs upper + lower + number + special character."
+      return t("auth.errorPasswordWeak")
     }
-    if (password !== confirmPassword) return "Passwords do not match."
+    if (password !== confirmPassword) return t("auth.errorPasswordsMatch")
     return ""
   }
 
@@ -56,23 +58,20 @@ export default function SignupPage() {
         router.push("/account")
         router.refresh()
       } else {
-        setSuccess("Account created! Check your email for a confirmation link before signing in.")
+        setSuccess(t("auth.accountCreated"))
       }
     } catch {
-      setError("Something went wrong. Try again.")
+      setError(t("auth.errorGeneric"))
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <AuthShell
-      title="Create account"
-      subtitle="Create an account so reading preferences can sync. Library and score stay on this device."
-    >
+    <AuthShell title={t("auth.signUpButton")} subtitle={t("auth.signupSubtitleSync")}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="meta-text block mb-2">Display name</label>
+          <label className="meta-text block mb-2">{t("auth.displayName")}</label>
           <input
             type="text"
             required
@@ -81,12 +80,12 @@ export default function SignupPage() {
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             className={authInputClass}
-            placeholder="How you'd like to be addressed"
+            placeholder={t("auth.displayNameHint")}
           />
         </div>
 
         <div>
-          <label className="meta-text block mb-2">Email</label>
+          <label className="meta-text block mb-2">{t("auth.email")}</label>
           <input
             type="email"
             required
@@ -94,30 +93,30 @@ export default function SignupPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className={authInputClass}
-            placeholder="you@example.com"
+            placeholder={t("auth.emailPlaceholder")}
           />
         </div>
 
         <div>
-          <label className="meta-text block mb-2">Password</label>
+          <label className="meta-text block mb-2">{t("auth.password")}</label>
           <PasswordInput
             required
             autoComplete="new-password"
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Min 8 characters, upper + lower + number + special"
+            placeholder={t("auth.passwordHint")}
           />
         </div>
 
         <div>
-          <label className="meta-text block mb-2">Confirm password</label>
+          <label className="meta-text block mb-2">{t("auth.confirmPasswordLabel")}</label>
           <PasswordInput
             required
             autoComplete="new-password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Repeat your password"
+            placeholder={t("auth.confirmPassword")}
           />
         </div>
 
@@ -125,14 +124,14 @@ export default function SignupPage() {
         <AuthSuccess message={success} />
 
         <button type="submit" disabled={loading} className="btn-primary w-full h-11 disabled:opacity-50">
-          {loading ? "Creating…" : "Create account"}
+          {loading ? t("auth.creating") : t("auth.signUpButton")}
         </button>
       </form>
 
       <p className="mt-6 text-center text-[13px] text-[var(--text-secondary)]">
-        Already have an account?{" "}
+        {t("auth.haveAccount")}{" "}
         <Link href="/login" className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent)]">
-          Sign in
+          {t("auth.signInButton")}
         </Link>
       </p>
     </AuthShell>

@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { Lock } from "lucide-react"
 import { FEATURE_LABELS, TIER_LABELS, requiredTier, type Feature } from "@/lib/access"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 
 /**
  * Locked / upgrade call-to-action shown when a user doesn't have access to a
@@ -18,6 +19,7 @@ export function UpgradePrompt({
   teaser?: string | null
   compact?: boolean
 }) {
+  const { t } = useI18n()
   const tier = requiredTier(feature)
   const tierName = TIER_LABELS[tier]
   const featureName = FEATURE_LABELS[feature]
@@ -27,7 +29,7 @@ export function UpgradePrompt({
       <div className="flex items-center gap-2 mb-3">
         <Lock className="h-4 w-4 text-[var(--accent)]" />
         <span className="meta-text font-semibold text-[var(--accent)]">
-          {tierName} members only
+          {tierName} {t("membership.membersOnly")}
         </span>
       </div>
 
@@ -40,16 +42,17 @@ export function UpgradePrompt({
 
       <p className="text-[14px] text-[var(--text-secondary)] mb-5 max-w-[58ch]">
         <strong className="font-semibold text-[var(--text-primary)]">{featureName}</strong>{" "}
-        is available with {tierName}. Upgrade to unlock it, plus everything in{" "}
-        {tierName === "Pro" ? "Free" : "Pro"}.
+        {t("membership.isAvailableWith")} {tierName}.{" "}
+        {t("membership.upgradeTo")} {tierName}, {t("membership.plusEverythingIn")}{" "}
+        {tierName === "Pro" ? t("membership.free") : "Pro"}.
       </p>
 
       <div className="flex flex-wrap items-center gap-3">
         <Link href="/pricing" className="btn-primary text-[14px] px-5">
-          Upgrade to {tierName}
+          {t("membership.upgradeTo")} {tierName}
         </Link>
         <Link href="/pricing" className="btn-ghost text-[14px] px-5">
-          View plans
+          {t("membership.viewPlans")}
         </Link>
       </div>
     </div>

@@ -13,22 +13,17 @@ import { MembershipTab } from "@/components/account/MembershipTab"
 import { SyncSavesPrompt } from "@/components/account/SyncSavesPrompt"
 import { PaymentSuccessModal } from "@/components/membership/PaymentSuccessModal"
 import { getMembership, isActiveMembership } from "@/lib/membership"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 import type { MembershipPlan } from "@/lib/plans"
 import type { User } from "@supabase/supabase-js"
 
-const tabs = [
-  { id: "profile" as const, label: "Profile" },
-  { id: "membership" as const, label: "Membership" },
-  { id: "dashboard" as const, label: "Dashboard" },
-  { id: "library" as const, label: "Library" },
-  { id: "settings" as const, label: "Settings" },
-]
+const tabIds = ["profile", "membership", "dashboard", "library", "settings"] as const
+type TabId = (typeof tabIds)[number]
 
 export default function AccountPage() {
+  const { t } = useI18n()
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<
-    "profile" | "membership" | "dashboard" | "library" | "settings"
-  >("profile")
+  const [activeTab, setActiveTab] = useState<TabId>("profile")
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [paidModal, setPaidModal] = useState<MembershipPlan | null>(null)
@@ -113,7 +108,7 @@ export default function AccountPage() {
   if (loading) {
     return (
       <div className="container py-16 text-center text-[var(--text-secondary)]">
-        Loading…
+        {t("account.loading")}
       </div>
     )
   }
@@ -122,14 +117,14 @@ export default function AccountPage() {
     return null
   }
 
-  const displayName = user?.email?.split("@")[0] || "Guest Reader"
+  const displayName = user?.email?.split("@")[0] || t("account.guestReader")
   const liveProfile = profileTick >= 0 ? getProfile() : profile
 
   return (
     <div className="container container-lg py-10 md:py-14">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h1 className="page-title mb-2">Account</h1>
+          <h1 className="page-title mb-2">{t("account.title")}</h1>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="text-[14px] font-semibold">{displayName}</span>
             {user?.email ? (
@@ -138,27 +133,27 @@ export default function AccountPage() {
               </span>
             ) : (
               <span className="text-[13px] text-[var(--text-secondary)]">
-                On this device · no sign-in required
+                {t("account.deviceOnly")}
               </span>
             )}
             {stealthOn && (
               <span className="meta-text text-[var(--accent)] bg-[var(--red-subtle-bg)] px-2 py-0.5 rounded-full">
-                Stealth
+                {t("account.stealth")}
               </span>
             )}
           </div>
         </div>
         <div className="flex items-center gap-2 sm:shrink-0">
           <span className="meta-text bg-[var(--surface)] border border-[var(--border)] px-3 py-1.5 rounded-full">
-            {liveProfile.literacyScore} pts
+            {liveProfile.literacyScore} {t("account.pts")}
           </span>
           {user ? (
             <button type="button" onClick={handleSignOut} className="btn-ghost">
-              Sign out
+              {t("account.signOut")}
             </button>
           ) : (
             <Link href="/login" className="btn-primary text-[13px] h-9 px-4">
-              Sign in
+              {t("account.signIn")}
             </Link>
           )}
         </div>
@@ -170,8 +165,7 @@ export default function AccountPage() {
 
       {paidNotice && (
         <div className="mb-6 max-w-md p-3 rounded-[var(--radius-sm)] bg-[var(--surface-alt)] border border-[var(--border)] text-[13px] text-[var(--text-primary)]">
-          Payment successful — you’re now a Pro/Premium member. Premium stories unlock as
-          soon as Stripe confirms your subscription.
+          {t("account.paidNotice")}
         </div>
       )}
 
@@ -182,22 +176,22 @@ export default function AccountPage() {
       <nav
         className="mb-8 flex gap-1 overflow-x-auto overscroll-x-contain border-b border-[var(--border)]"
         role="tablist"
-        aria-label="Account sections"
+        aria-label={t("account.accountSections")}
       >
-        {tabs.map((tab) => (
+        {tabIds.map((id) => (
           <button
-            key={tab.id}
+            key={id}
             type="button"
             role="tab"
-            aria-selected={activeTab === tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            aria-selected={activeTab === id}
+            onClick={() => setActiveTab(id)}
             className={`shrink-0 -mb-px whitespace-nowrap border-b-2 px-3 sm:px-4 py-2.5 text-[13px] sm:text-[14px] font-semibold transition-colors ${
-              activeTab === tab.id
+              activeTab === id
                 ? "border-[var(--accent)] text-[var(--accent)]"
                 : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             }`}
           >
-            {tab.label}
+            {t(`account.tabs.${id}`)}
           </button>
         ))}
       </nav>

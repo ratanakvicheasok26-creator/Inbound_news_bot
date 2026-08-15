@@ -5,21 +5,22 @@ import Link from "next/link"
 import { useMembership, isActiveMembership, openBillingPortal, getQrSubmissions, getProofUrl } from "@/lib/membership"
 import { PLANS, priceLabel } from "@/lib/plans"
 import { PaymentSuccessModal } from "@/components/membership/PaymentSuccessModal"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 import type { Membership, QrSubmission } from "@/lib/membership"
 
-const STATUS_LABELS: Record<Membership["status"], string> = {
-  active: "Active",
-  trialing: "Trial",
-  past_due: "Past due",
-  canceled: "Canceled",
-  incomplete: "Incomplete",
-  unpaid: "Unpaid",
+const STATUS_KEYS: Record<Membership["status"], string> = {
+  active: "account.membershipTab.statusActive",
+  trialing: "account.membershipTab.statusTrial",
+  past_due: "account.membershipTab.statusPastDue",
+  canceled: "account.membershipTab.statusCanceled",
+  incomplete: "account.membershipTab.statusIncomplete",
+  unpaid: "account.membershipTab.statusUnpaid",
 }
 
-const SUBMISSION_STATUS: Record<QrSubmission["status"], { label: string; tone: string }> = {
-  pending: { label: "Pending review", tone: "text-[var(--text-secondary)] bg-[var(--surface-alt)]" },
-  approved: { label: "Approved", tone: "text-[var(--text-primary)] bg-[var(--red-subtle-bg)]" },
-  rejected: { label: "Rejected", tone: "text-[var(--text-secondary)] bg-[var(--surface-alt)]" },
+const SUBMISSION_STATUS: Record<QrSubmission["status"], { key: string; tone: string }> = {
+  pending: { key: "account.qrStatus.pending", tone: "text-[var(--text-secondary)] bg-[var(--surface-alt)]" },
+  approved: { key: "account.qrStatus.approved", tone: "text-[var(--text-primary)] bg-[var(--red-subtle-bg)]" },
+  rejected: { key: "account.qrStatus.rejected", tone: "text-[var(--text-secondary)] bg-[var(--surface-alt)]" },
 }
 
 function formatDate(iso: string | null): string | null {
@@ -30,6 +31,7 @@ function formatDate(iso: string | null): string | null {
 }
 
 export function MembershipTab() {
+  const { t } = useI18n()
   const { loading, membership } = useMembership()
   const member = isActiveMembership(membership)
   const [busy, setBusy] = useState(false)
@@ -81,13 +83,13 @@ export function MembershipTab() {
       window.location.assign(url)
       return
     }
-    setError("Couldn't open billing — please try again.")
+    setError(t("membership.billingError"))
     setBusy(false)
   }
 
   if (loading) {
     return (
-      <p className="text-[14px] text-[var(--text-secondary)] py-8">Loading membership…</p>
+      <p className="text-[14px] text-[var(--text-secondary)] py-8">{t("account.membershipTab.loading")}</p>
     )
   }
 
@@ -97,22 +99,22 @@ export function MembershipTab() {
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6 mb-6">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
-              <h3 className="font-display text-[18px] font-semibold mb-1">Free plan</h3>
+              <h3 className="font-display text-[18px] font-semibold mb-1">{t("account.membershipTab.freePlanTitle")}</h3>
               <p className="text-[14px] text-[var(--text-secondary)] max-w-[52ch]">
-                You’re on the free plan. Premium stories are for Pro and Premium members.
+                {t("account.membershipTab.freePlanBody")}
               </p>
             </div>
             <Link href="/pricing" className="btn-primary text-[14px] h-10 px-5">
-              See plans
+              {t("account.membershipTab.seePlans")}
             </Link>
           </div>
         </div>
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6">
-          <h3 className="font-display text-[16px] font-semibold mb-2">Why join</h3>
+          <h3 className="font-display text-[16px] font-semibold mb-2">{t("account.membershipTab.whyJoin")}</h3>
           <ul className="space-y-1.5 text-[14px] text-[var(--text-secondary)]">
-            <li>• Full access to premium stories, right when they’re published.</li>
-            <li>• Funds independent coverage and the Telegram digest from Phnom Penh.</li>
-            <li>• Cancel anytime from the billing portal.</li>
+            <li>• {t("account.membershipTab.join1")}</li>
+            <li>• {t("account.membershipTab.join2")}</li>
+            <li>• {t("account.membershipTab.join3")}</li>
           </ul>
         </div>
 
@@ -138,12 +140,14 @@ export function MembershipTab() {
                 {meta?.name} — {membership ? priceLabel(membership.plan) : ""}
               </h3>
               <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--accent)] bg-[var(--red-subtle-bg)] rounded-full px-2 py-0.5">
-                {membership ? STATUS_LABELS[membership.status] : ""}
+                {membership ? t(STATUS_KEYS[membership.status]) : ""}
               </span>
             </div>
             <p className="text-[14px] text-[var(--text-secondary)]">
-              {periodEnd ? `Next billing date: ${periodEnd}` : "Active subscription"}
-              {membership?.cancel_at_period_end ? " · cancels at period end" : ""}
+              {periodEnd
+                ? t("account.membershipTab.nextBilling", { date: periodEnd })
+                : t("account.membershipTab.activeSubscription")}
+              {membership?.cancel_at_period_end ? t("account.membershipTab.cancelsAtEnd") : ""}
             </p>
           </div>
           <button
@@ -152,13 +156,12 @@ export function MembershipTab() {
             disabled={busy}
             className="btn-ghost text-[14px] h-10 px-5 disabled:opacity-60"
           >
-            {busy ? "Opening…" : "Manage billing"}
+            {busy ? t("account.membershipTab.opening") : t("account.manageBilling")}
           </button>
         </div>
         {membership?.cancel_at_period_end && (
           <p className="mt-4 text-[13px] text-[var(--text-secondary)] max-w-[58ch]">
-            Your plan is set to cancel at the end of the billing period — you keep premium
-            access until then. Re-open it anytime from the billing portal.
+            {t("account.membershipTab.cancelNote")}
           </p>
         )}
       </div>
@@ -182,6 +185,7 @@ export function MembershipTab() {
 }
 
 function ViewProofButton({ proofKey }: { proofKey: string }) {
+  const { t } = useI18n()
   const [busy, setBusy] = useState(false)
   const [failed, setFailed] = useState(false)
 
@@ -200,14 +204,14 @@ function ViewProofButton({ proofKey }: { proofKey: string }) {
 
   return (
     <span className="inline-flex items-center gap-1.5">
-      {failed && <span className="text-[12px] text-[var(--text-secondary)]">Couldn’t load</span>}
+      {failed && <span className="text-[12px] text-[var(--text-secondary)]">{t("account.membershipTab.couldNotLoad")}</span>}
       <button
         type="button"
         onClick={handleView}
         disabled={busy}
         className="text-[12px] font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)] disabled:opacity-60"
       >
-        {busy ? "Loading…" : "View proof"}
+        {busy ? t("account.loading") : t("account.membershipTab.viewProof")}
       </button>
     </span>
   )
@@ -220,17 +224,18 @@ function QrSubmissionsSection({
   submissions: QrSubmission[]
   loaded: boolean
 }) {
+  const { t } = useI18n()
   if (!loaded) return null
   if (submissions.length === 0) {
     return (
       <div className="mt-6 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6">
-        <h3 className="font-display text-[16px] font-semibold mb-2">QR payments</h3>
+        <h3 className="font-display text-[16px] font-semibold mb-2">{t("account.membershipTab.qrPayments")}</h3>
         <p className="text-[14px] text-[var(--text-secondary)]">
-          Paid by QR? Tap “I&apos;ve paid” on{" "}
+          {t("account.membershipTab.qrEmptyBody1")}{" "}
           <Link href="/pricing" className="font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)]">
-            the pricing page
+            {t("account.membershipTab.pricingPage")}
           </Link>{" "}
-          and it will show up here for verification.
+          {t("account.membershipTab.qrEmptyBody2")}
         </p>
       </div>
     )
@@ -238,7 +243,7 @@ function QrSubmissionsSection({
 
   return (
     <div className="mt-6 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6">
-      <h3 className="font-display text-[16px] font-semibold mb-4">QR payments</h3>
+      <h3 className="font-display text-[16px] font-semibold mb-4">{t("account.membershipTab.qrPayments")}</h3>
       <ul className="divide-y divide-[var(--border)]">
         {submissions.map((s) => {
           const meta = PLANS[s.plan]
@@ -250,7 +255,7 @@ function QrSubmissionsSection({
                 {meta?.name} · {Number(s.amount).toFixed(2)} {s.currency || "USD"}
               </p>
               <p className="text-[13px] text-[var(--text-secondary)]">
-                {s.aba_transaction_id ? `Txn ${s.aba_transaction_id} · ` : ""}
+                {s.aba_transaction_id ? `${t("account.membershipTab.txn")} ${s.aba_transaction_id} · ` : ""}
                 {formatDate(s.created_at)}
               </p>
             </div>
@@ -261,7 +266,7 @@ function QrSubmissionsSection({
               <span
                 className={`text-[11px] font-semibold uppercase tracking-wide rounded-full px-2 py-1 ${tone}`}
               >
-                {SUBMISSION_STATUS[s.status].label}
+                {t(SUBMISSION_STATUS[s.status].key)}
               </span>
             </div>
           </li>
