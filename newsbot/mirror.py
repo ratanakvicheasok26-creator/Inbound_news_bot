@@ -654,3 +654,24 @@ def drain(max_items: int = 25, *, replay: int = 10) -> list[QueuedPayload]:
     if claimed:
         logger.info("Mirror: drained %d payload(s) to post in Khmer.", len(claimed))
     return claimed
+
+
+def get_queue_stats() -> dict[str, int]:
+    """Return current lengths of queue, processing, and deadletter lists."""
+    if not mirror_available():
+        return {"queue": 0, "processing": 0, "deadletter": 0, "outbox_exists": _OUTBOX_PATH.exists()}
+    try:
+        client = _client()
+        try:
+            return {
+                "queue": client.llen(_QUEUE_KEY) or 0,
+                "processing": client.llen(_PROCESSING_KEY) or 0,
+                "deadletter": client.llen(_DEADLETTER_KEY) or 0,
+                "outbox_exists": _OUTBOX_PATH.exists(),
+            }
+        finally:
+            client.close()
+    except Exception:
+        logger.exception("Mirror: failed to fetch queue stats")
+        return {"queue": -1, "processing": -1, "deadletter": -1, "outbox_exists": _OUTBOX_PATH.exists()}
+

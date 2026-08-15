@@ -1112,8 +1112,8 @@ async def _mirror_story(
                 urgent=bool(payload.get("urgent")),
             )
         except Exception as exc:
-            logger.warning("Mirror: direct post translation failed (%s) — falling back to cluster rewrite", exc)
-            story = None
+            logger.warning("Mirror: direct post translation failed (%s) — will requeue for exact translation", exc)
+            return False, False
 
     if not story:
         story = _cluster_to_story(
@@ -1181,8 +1181,8 @@ async def _mirror_batch(
                     entries=cluster,
                 )
             except Exception as exc:
-                logger.warning("Mirror: direct compact translation failed (%s) — falling back to cluster rewrite", exc)
-                story = None
+                logger.warning("Mirror: direct compact translation failed (%s) — will requeue for exact translation", exc)
+                return None
 
         if not story:
             story = _cluster_to_batched(cluster, website_url=_safe_link(item.get("website_url")))
