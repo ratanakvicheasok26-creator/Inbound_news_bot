@@ -108,9 +108,35 @@ class TestIsTechText:
         def _boom(*_args, **_kwargs):
             raise AssertionError("Khmer bot must not start an RSS worker")
 
-        monkeypatch.setattr(feeds_mod._MP_SPAWN_CTX, "Process", _boom)
-        monkeypatch.setattr(feeds_mod._MP_SPAWN_CTX, "Queue", _boom)
+        monkeypatch.setattr(feeds_mod.subprocess, "run", _boom)
         assert feeds_mod.collect_new_entries(set()) == []
+
+    def test_collect_new_entries_english_uses_subprocess_worker(self, monkeypatch):
+        import pickle
+
+        import newsbot.feeds as feeds_mod
+        from newsbot.feeds import Entry
+
+        monkeypatch.setattr(feeds_mod, "NEWS_LANGUAGE", "en")
+        fake = [
+            Entry(
+                id="1",
+                title="AI chip startup raises funding",
+                summary="ml",
+                link="http://a.com/1",
+                source_name="Test",
+            )
+        ]
+
+        def fake_run(*_args, **kwargs):
+            env = kwargs["env"]
+            with open(env["NEWSBOT_COLLECT_OUT"], "wb") as fh:
+                pickle.dump(("ok", fake, 1, 1), fh)
+            return type("R", (), {"returncode": 0, "stderr": b""})()
+
+        monkeypatch.setattr(feeds_mod.subprocess, "run", fake_run)
+        entries = feeds_mod.collect_new_entries(set())
+        assert [e.title for e in entries] == ["AI chip startup raises funding"]
 
 
 class TestNormalizeTitle:

@@ -5,10 +5,13 @@ from __future__ import annotations
 import concurrent.futures
 import html
 import logging
-import multiprocessing as mp
 import os
+import pickle
 import random
 import re
+import subprocess
+import sys
+import tempfile
 import threading
 import time
 from calendar import timegm
@@ -76,8 +79,20 @@ def _get_http_client() -> httpx.Client:
     return client
 
 
-# Shared thread pool for parallel feed fetching
-_feed_pool = concurrent.futures.ThreadPoolExecutor(max_workers=min(len(RSS_FEEDS), 60))
+# Lazy thread pool — do not create 60 workers at import (Khmer bot never fetches RSS).
+_feed_pool: concurrent.futures.ThreadPoolExecutor | None = None
+_feed_pool_lock = threading.Lock()
+
+
+def _get_feed_pool() -> concurrent.futures.ThreadPoolExecutor:
+    global _feed_pool
+    if _feed_pool is None:
+        with _feed_pool_lock:
+            if _feed_pool is None:
+                _feed_pool = concurrent.futures.ThreadPoolExecutor(
+                    max_workers=min(len(RSS_FEEDS), 60)
+                )
+    return _feed_pool
 
 # Stop words for title normalization
 _STOP_WORDS: frozenset[str] = frozenset({
@@ -371,11 +386,6 @@ def _fetch_feed(url: str) -> Any:
     raise ValueError(f"feed exceeded {_MAX_FEED_REDIRECTS} redirects: {url!r}")
 
 
-# Isolated spawn context — never inherits the parent's open httpx clients,
-# threads, or asyncio loop (fork would copy all of that, spawn re-imports
-# clean). Module-level so it's picklable as a target for mp.Process.
-_MP_SPAWN_CTX = mp.get_context("spawn")
-
 # Extra seconds of slack on top of the normal per-cycle timeout, to cover
 # subprocess startup (re-importing the module) and result pickling/transfer.
 _SUBPROCESS_STARTUP_SLACK = 15
@@ -394,7 +404,7 @@ def _collect_new_entries_inline(
     """
     shuffled = random.sample(RSS_FEEDS, len(RSS_FEEDS))
     futures: dict[concurrent.futures.Future, str] = {
-        _feed_pool.submit(_fetch_feed, url): url for url in shuffled
+        _get_feed_pool().submit(_fetch_feed, url): url for url in shuffled
     }
 
     entries: list[Entry] = []
@@ -472,39 +482,36 @@ def _collect_new_entries_inline(
     return entries, completed, total
 
 
-def _collect_worker(
-    posted_ids: set[str],
-    posted_titles: set[str],
-    result_queue: "mp.Queue",
-) -> None:
-    """Entry point for the isolated subprocess. Does the fetch, hands the
-    result back over the queue, then returns — letting the process exit and
-    the OS reclaim its memory.
-    """
+def _repo_root() -> str:
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _subprocess_main() -> None:
+    """Child process entry: fetch feeds, write pickle, exit so the OS reclaims RAM."""
+    in_path = os.environ["NEWSBOT_COLLECT_IN"]
+    out_path = os.environ["NEWSBOT_COLLECT_OUT"]
+    with open(in_path, "rb") as fh:
+        posted_ids, posted_titles = pickle.load(fh)
     try:
         entries, completed, total = _collect_new_entries_inline(posted_ids, posted_titles)
-        result_queue.put(("ok", entries, completed, total))
+        payload = ("ok", entries, completed, total)
     except Exception:
         logger.exception("Feed collection worker crashed")
-        try:
-            result_queue.put(("error", [], 0, 0))
-        except Exception:
-            pass
+        payload = ("error", [], 0, 0)
+    with open(out_path, "wb") as fh:
+        pickle.dump(payload, fh, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def collect_new_entries(posted_ids: set[str], posted_titles: set[str] | None = None) -> list[Entry]:
     """Pull fresh entries from all feeds in parallel, skipping already-posted IDs and similar titles.
 
     English bot only. The Khmer deployment drains the Redis mirror and must
-    never poll RSS — spawning a collector there would waste memory and can
-    OOM the KH service.
+    never poll RSS.
 
-    On NEWS_LANGUAGE=en, runs the fetch in a fresh subprocess per call (see
-    _collect_new_entries_inline) so the OS guarantees full memory reclaim
-    between cycles instead of relying on CPython's allocator, which does not
-    reliably return freed memory to the OS. This is what keeps repeated
-    polling of ~965 feeds, ~72 times/day, from stair-stepping memory usage
-    until Railway OOM-kills the English service.
+    Digest jobs run inside ``asyncio.to_thread``, so ``multiprocessing.Process``
+    (spawn) from that worker thread hangs on Railway. This uses ``subprocess``
+    (safe from any thread): a one-shot ``python -c`` child fetches, pickles,
+    and exits so the OS reclaims the feed buffers.
     """
     if posted_titles is None:
         posted_titles = set()
@@ -518,40 +525,68 @@ def collect_new_entries(posted_ids: set[str], posted_titles: set[str] | None = N
         return []
 
     global_timeout = FEED_TIMEOUT_SECONDS + FEED_GLOBAL_TIMEOUT_EXTRA
-    result_queue: mp.Queue = _MP_SPAWN_CTX.Queue()
-    proc = _MP_SPAWN_CTX.Process(
-        target=_collect_worker,
-        args=(posted_ids, posted_titles, result_queue),
-        daemon=True,
-    )
-    proc.start()
-
-    entries: list[Entry] = []
+    timeout = global_timeout + _SUBPROCESS_STARTUP_SLACK
+    in_path = out_path = ""
     try:
-        status, entries, completed, total = result_queue.get(
-            timeout=global_timeout + _SUBPROCESS_STARTUP_SLACK
+        with tempfile.NamedTemporaryFile(prefix="inbound-feeds-in-", suffix=".pkl", delete=False) as fh:
+            pickle.dump((posted_ids, posted_titles), fh, protocol=pickle.HIGHEST_PROTOCOL)
+            in_path = fh.name
+        out_path = in_path + ".out"
+        env = os.environ.copy()
+        env["NEWSBOT_COLLECT_IN"] = in_path
+        env["NEWSBOT_COLLECT_OUT"] = out_path
+        env.setdefault("NEWS_LANGUAGE", "en")
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "from newsbot.feeds import _subprocess_main; _subprocess_main()",
+            ],
+            cwd=_repo_root(),
+            env=env,
+            timeout=timeout,
+            capture_output=True,
+            check=False,
         )
+        if result.stderr:
+            err = result.stderr.decode("utf-8", errors="replace").strip()
+            if err:
+                logger.info("Feed worker log:\n%s", err[-4000:])
+        if result.returncode != 0:
+            logger.warning(
+                "Feed collection worker exited %s — 0 entries this cycle.",
+                result.returncode,
+            )
+            return []
+        if not os.path.exists(out_path):
+            logger.warning("Feed collection worker produced no output file — skipping this cycle.")
+            return []
+        with open(out_path, "rb") as fh:
+            status, entries, completed, total = pickle.load(fh)
         if status == "error":
             logger.warning("Feed collection worker reported an internal error — 0 entries this cycle.")
-        else:
-            logger.info(
-                "Feed cycle done via isolated worker — %d/%d feeds completed, %d entries.",
-                completed, total, len(entries),
-            )
-    except Exception:
+            return []
+        logger.info(
+            "Feed cycle done via isolated worker — %d/%d feeds completed, %d entries.",
+            completed, total, len(entries),
+        )
+        return entries
+    except subprocess.TimeoutExpired:
         logger.warning(
             "Feed collection worker produced no result within %ds — skipping this cycle.",
-            global_timeout + _SUBPROCESS_STARTUP_SLACK,
+            timeout,
         )
+        return []
+    except Exception:
+        logger.exception("Feed collection worker failed to start — skipping this cycle.")
+        return []
     finally:
-        proc.join(timeout=5)
-        if proc.is_alive():
-            logger.warning("Feed collection worker still alive after join — terminating.")
-            proc.terminate()
-            proc.join(timeout=5)
-        result_queue.close()
-
-    return entries
+        for path in (in_path, out_path):
+            if path:
+                try:
+                    os.unlink(path)
+                except OSError:
+                    pass
 
 
 def cluster_entries(
