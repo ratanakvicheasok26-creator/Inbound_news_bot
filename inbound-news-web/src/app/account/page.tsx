@@ -127,13 +127,15 @@ export default function AccountPage() {
 
   return (
     <div className="container container-lg py-10 md:py-14">
-      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
-        <div>
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <h1 className="page-title mb-2">Account</h1>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="text-[14px] font-semibold">{displayName}</span>
             {user?.email ? (
-              <span className="text-[13px] text-[var(--text-secondary)]">{user.email}</span>
+              <span className="truncate text-[13px] text-[var(--text-secondary)]">
+                {user.email}
+              </span>
             ) : (
               <span className="text-[13px] text-[var(--text-secondary)]">
                 On this device · no sign-in required
@@ -146,7 +148,7 @@ export default function AccountPage() {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:shrink-0">
           <span className="meta-text bg-[var(--surface)] border border-[var(--border)] px-3 py-1.5 rounded-full">
             {liveProfile.literacyScore} pts
           </span>
@@ -177,8 +179,8 @@ export default function AccountPage() {
         <PaymentSuccessModal plan={paidModal} onClose={() => setPaidModal(null)} />
       )}
 
-      <div
-        className="account-tabs mb-8"
+      <nav
+        className="mb-8 flex gap-1 overflow-x-auto overscroll-x-contain border-b border-[var(--border)]"
         role="tablist"
         aria-label="Account sections"
       >
@@ -189,12 +191,16 @@ export default function AccountPage() {
             role="tab"
             aria-selected={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`account-tab ${activeTab === tab.id ? "active" : ""}`}
+            className={`shrink-0 -mb-px whitespace-nowrap border-b-2 px-3 sm:px-4 py-2.5 text-[13px] sm:text-[14px] font-semibold transition-colors ${
+              activeTab === tab.id
+                ? "border-[var(--accent)] text-[var(--accent)]"
+                : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            }`}
           >
             {tab.label}
           </button>
         ))}
-      </div>
+      </nav>
 
       {activeTab === "profile" && user && <ProfileTab user={user} />}
       {activeTab === "membership" && <MembershipTab />}

@@ -1,18 +1,15 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
 import type { Story } from "@/lib/types"
 import { getCategoryLabel } from "@/lib/categories"
 import { formatDistanceToNow } from "@/lib/utils"
-import { Bookmark, BookmarkCheck } from "lucide-react"
-import { toggleSavedStory, isStorySaved } from "@/lib/profile"
 import { StoryImage } from "@/components/story/StoryImage"
 import { CoverageMeta } from "@/components/story/CoverageMeta"
+import { SaveButton } from "@/components/membership/SaveButton"
 
 /** Equal-weight story tile for balanced home grids. */
 export function StoryCard({ story }: { story: Story }) {
-  const [saved, setSaved] = useState(() => isStorySaved(story.id))
   const categoryLabel = getCategoryLabel(story.category || "") || "News"
 
   return (
@@ -50,22 +47,7 @@ export function StoryCard({ story }: { story: Story }) {
           >
             Decode
           </Link>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault()
-              const next = toggleSavedStory(story.id)
-              setSaved(next)
-            }}
-            className={`w-9 h-9 flex items-center justify-center shrink-0 rounded-[var(--radius-sm)] transition-colors ${
-              saved
-                ? "text-[var(--accent)]"
-                : "text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--surface-alt)]"
-            }`}
-            aria-label={saved ? "Unsave story" : "Save story"}
-          >
-            {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
-          </button>
+          <SaveButton storyId={story.id} />
         </div>
       </div>
     </article>

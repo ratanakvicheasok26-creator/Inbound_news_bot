@@ -7,6 +7,7 @@ import { getProfile, toggleSavedStory, toggleFollowedConcept, toggleFollowedTopi
 import { getCategoryLabel } from "@/lib/categories"
 import { formatDistanceToNow } from "@/lib/utils"
 import { SyncSavesPrompt } from "@/components/account/SyncSavesPrompt"
+import { FeatureGate } from "@/components/membership/FeatureGate"
 import { supabase } from "@/lib/auth"
 import type { Story } from "@/lib/types"
 
@@ -64,71 +65,73 @@ export function LibraryTab() {
       {isGuest && savedIds.length > 0 && <SyncSavesPrompt variant="inline" force />}
 
       <div className="mb-10">
-        <div className="section-header">
-          <h2 className="section-title">Saved stories</h2>
-          <span className="meta-text">{savedIds.length}</span>
-        </div>
-
-        {savedIds.length === 0 ? (
-          <div className="empty-state py-12">
-            <p className="story-title mb-2">No saved stories</p>
-            <p>Bookmark stories to build your library.</p>
+        <FeatureGate feature="bookmarks">
+          <div className="section-header">
+            <h2 className="section-title">Saved stories</h2>
+            <span className="meta-text">{savedIds.length}</span>
           </div>
-        ) : loading ? (
-          <p className="meta-text py-8">Loading saved stories…</p>
-        ) : (
-          <div>
-            {savedIds.map((id) => {
-              const story = stories[id]
-              if (!story) {
+
+          {savedIds.length === 0 ? (
+            <div className="empty-state py-12">
+              <p className="story-title mb-2">No saved stories</p>
+              <p>Bookmark stories to build your library.</p>
+            </div>
+          ) : loading ? (
+            <p className="meta-text py-8">Loading saved stories…</p>
+          ) : (
+            <div>
+              {savedIds.map((id) => {
+                const story = stories[id]
+                if (!story) {
+                  return (
+                    <div key={id} className="flex items-center justify-between py-4 border-b border-[var(--border)]">
+                      <span className="meta-text">Story unavailable</span>
+                      <button
+                        onClick={() => handleUnsave(id)}
+                        className="text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+                        aria-label="Remove saved story"
+                      >
+                        <Bookmark className="h-4 w-4 fill-current" />
+                      </button>
+                    </div>
+                  )
+                }
                 return (
-                  <div key={id} className="flex items-center justify-between py-4 border-b border-[var(--border)]">
-                    <span className="meta-text">Story unavailable</span>
+                  <div key={id} className="flex items-start gap-3 py-4 border-b border-[var(--border)]">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="meta-text text-[var(--accent)]">
+                          {getCategoryLabel(story.category || "")}
+                        </span>
+                        <span className="meta-text">
+                          {formatDistanceToNow(story.created_at)}
+                        </span>
+                      </div>
+                      <Link
+                        href={`/story/${story.id}`}
+                        className="story-title hover:text-[var(--accent)] transition-colors line-clamp-2"
+                      >
+                        {story.title}
+                      </Link>
+                      {story.summary_en && (
+                        <p className="text-[13px] text-[var(--text-secondary)] line-clamp-1 mt-1">
+                          {story.summary_en}
+                        </p>
+                      )}
+                    </div>
                     <button
                       onClick={() => handleUnsave(id)}
-                      className="text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
-                      aria-label="Remove saved story"
+                      className="flex-shrink-0 mt-1 w-8 h-8 flex items-center justify-center text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
+                      aria-label="Unsave story"
                     >
                       <Bookmark className="h-4 w-4 fill-current" />
                     </button>
                   </div>
                 )
-              }
-              return (
-                <div key={id} className="flex items-start gap-3 py-4 border-b border-[var(--border)]">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="meta-text text-[var(--accent)]">
-                        {getCategoryLabel(story.category || "")}
-                      </span>
-                      <span className="meta-text">
-                        {formatDistanceToNow(story.created_at)}
-                      </span>
-                    </div>
-                    <Link
-                      href={`/story/${story.id}`}
-                      className="story-title hover:text-[var(--accent)] transition-colors line-clamp-2"
-                    >
-                      {story.title}
-                    </Link>
-                    {story.summary_en && (
-                      <p className="text-[13px] text-[var(--text-secondary)] line-clamp-1 mt-1">
-                        {story.summary_en}
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => handleUnsave(id)}
-                    className="flex-shrink-0 mt-1 w-8 h-8 flex items-center justify-center text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
-                    aria-label="Unsave story"
-                  >
-                    <Bookmark className="h-4 w-4 fill-current" />
-                  </button>
-                </div>
-              )
-            })}
-          </div>
-        )}
+              })}
+            </div>
+          )}
+        </FeatureGate>
       </div>
 
       {(topics.length > 0 || concepts.length > 0) && (

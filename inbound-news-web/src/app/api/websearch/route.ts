@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getClientIp, rateLimit } from "@/lib/rate-limit"
+import { requireFeature } from "@/lib/api-auth"
 
 const EXA_API_KEY = process.env.EXA_API_KEY?.trim() || ""
 const EXA_URL = "https://api.exa.ai/search"
@@ -33,6 +34,12 @@ export async function GET(req: NextRequest) {
       { results: [], available: false, error: "Web search is not configured" },
       { status: 503 },
     )
+  }
+
+  // Advanced (live web) Search is a Pro+ feature — enforce server-side.
+  const access = await requireFeature(req, "advanced_search")
+  if (!access.ok) {
+    return NextResponse.json({ error: "membership_required" }, { status: access.status })
   }
 
   const q = req.nextUrl.searchParams.get("q")?.trim()

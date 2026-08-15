@@ -5,11 +5,11 @@ export function isActiveMembership(m: { status: string } | null | undefined): bo
 }
 
 export const FREE_FEATURES = [
-  "Daily clustered tech feed",
-  "Reading tiers (ELI5 / Standard / Deep)",
-  "Glossary with Khmer explanations",
-  "Saved stories on your device",
-  "Ads-supported",
+  "Latest technology news and all categories",
+  "Basic search, summaries, Coverage Intensity, and Glossary",
+  "Selected Cambodia and Southeast Asia news",
+  "Sponsored content",
+  "Limited access to advanced features",
 ]
 
 export const PLANS: Record<
@@ -33,17 +33,20 @@ export const PLANS: Record<
 export const PLAN_FEATURES: Record<MembershipPlan, string[]> = {
   pro_monthly: [
     "Everything in Free",
-    "Full access to premium stories",
-    "New stories the moment they're published",
-    "Funds independent coverage from Phnom Penh",
-    "Cancel anytime",
+    "Full Decode — what happened, why it matters, and key takeaways",
+    "Advanced Compare and Coverage Intelligence",
+    "Personalized Daily Brief",
+    "Bookmarks and advanced search",
+    "Sponsored content remains visible",
   ],
   premium_yearly: [
     "Everything in Pro",
-    "Billed yearly — about 48% off Pro monthly",
-    "One simple annual bill",
-    "Funds independent coverage from Phnom Penh",
-    "Cancel anytime",
+    "Premium Local Lens for Cambodia and Southeast Asia",
+    "Undercovered Stories and Trend Radar",
+    "Premium Intelligence Reports",
+    "Historical Intelligence and coverage trends",
+    "Exclusive premium analysis",
+    "Sponsored content remains visible",
   ],
 }
 

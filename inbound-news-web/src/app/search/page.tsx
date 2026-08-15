@@ -9,6 +9,8 @@ import type { Story, Article, WebResult } from "@/lib/types"
 import { Search, Globe } from "lucide-react"
 import { formatDistanceToNow } from "@/lib/utils"
 import { fetchJson, safeExternalHref } from "@/lib/client-fetch"
+import { useFeatureAccess } from "@/lib/membership"
+import { UpgradePrompt } from "@/components/membership/UpgradePrompt"
 
 const LOCAL_DEBOUNCE_MS = 280
 const WEB_DEBOUNCE_MS = 900
@@ -34,6 +36,9 @@ function SearchResults() {
   const webTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Keep URL q and input in sync when navigating via router / back button.
   const lastUrlQ = useRef(initialQ)
+
+  // Live web search is a Pro+ feature — local (database) search stays Free.
+  const { loading: gateLoading, allowed: webAllowed } = useFeatureAccess("advanced_search")
 
   useEffect(() => {
     const q = searchParams.get("q") || ""
@@ -133,15 +138,17 @@ function SearchResults() {
 
     // Paid Exa websearch only after the query has settled longer — typing
     // should not fire simultaneous paid requests on every keystroke.
-    webTimerRef.current = setTimeout(() => {
-      void runWebSearch(term)
-    }, WEB_DEBOUNCE_MS)
+    if (webAllowed) {
+      webTimerRef.current = setTimeout(() => {
+        void runWebSearch(term)
+      }, WEB_DEBOUNCE_MS)
+    }
 
     return () => {
       if (localTimerRef.current) clearTimeout(localTimerRef.current)
       if (webTimerRef.current) clearTimeout(webTimerRef.current)
     }
-  }, [input, router, runLocalSearch, runWebSearch])
+  }, [input, router, runLocalSearch, runWebSearch, webAllowed])
 
   useEffect(() => {
     return () => {
@@ -160,11 +167,13 @@ function SearchResults() {
     lastUrlQ.current = trimmed
     router.replace(`/search?q=${encodeURIComponent(trimmed)}`, { scroll: false })
     void runLocalSearch(trimmed)
-    void runWebSearch(trimmed)
+    if (webAllowed) void runWebSearch(trimmed)
   }
 
   const searched = input.trim().length >= MIN_QUERY
   const totalResults = stories.length + articles.length
+  const webLocked = searched && !webAllowed && !gateLoading
+  const webReady = searched && webAllowed && !gateLoading
 
   return (
     <div className="container container-md py-10 md:py-14">
@@ -281,7 +290,19 @@ function SearchResults() {
         </section>
       )}
 
-      {searched && webLoading && (
+      {webLocked && (
+        <section className="mt-10">
+          <div className="section-header">
+            <h2 className="section-title flex items-center gap-2">
+              <Globe className="h-4 w-4" aria-hidden />
+              Live web
+            </h2>
+          </div>
+          <UpgradePrompt feature="advanced_search" compact />
+        </section>
+      )}
+
+      {webReady && webLoading && (
         <section className="mt-10">
           <div className="section-header">
             <h2 className="section-title">Live web</h2>
@@ -293,7 +314,7 @@ function SearchResults() {
         </section>
       )}
 
-      {searched && !webLoading && webAvailable && webResults.length > 0 && (
+      {webReady && !webLoading && webAvailable && webResults.length > 0 && (
         <section className="mt-10">
           <div className="section-header">
             <h2 className="section-title flex items-center gap-2">
@@ -336,7 +357,7 @@ function SearchResults() {
         </section>
       )}
 
-      {searched && !webLoading && webAvailable && webResults.length === 0 && (
+      {webReady && !webLoading && webAvailable && webResults.length === 0 && (
         <section className="mt-10">
           <div className="section-header">
             <h2 className="section-title flex items-center gap-2">
@@ -351,7 +372,7 @@ function SearchResults() {
         </section>
       )}
 
-      {searched && !webLoading && !webAvailable && (
+      {webReady && !webLoading && !webAvailable && (
         <p className="mt-10 text-[12px] text-[var(--text-secondary)]">
           Live web search isn&apos;t configured on this deploy.
         </p>

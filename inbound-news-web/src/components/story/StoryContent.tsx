@@ -15,18 +15,17 @@ import {
   trackStoryRead,
   recordTierSwitch,
   recordJargonTap,
-  toggleSavedStory,
-  isStorySaved,
 } from "@/lib/profile"
 import type { StoryWithArticles } from "@/lib/types"
 import { resolveStoryBody, buildTierTexts, tiersHaveDistinctContent } from "@/lib/story-body"
 import { StoryImage } from "@/components/story/StoryImage"
-import { ArrowLeft, Bookmark, BookmarkCheck, ExternalLink, GitCompareArrows, Newspaper } from "lucide-react"
+import { ArrowLeft, ExternalLink, GitCompareArrows, Newspaper } from "lucide-react"
 import Link from "next/link"
 import { summarizeCoverage } from "@/lib/outlet-roles"
 import { SyncSavesPrompt } from "@/components/account/SyncSavesPrompt"
 import { AdBand } from "@/components/ads/AdBand"
 import { PremiumLock } from "@/components/membership/PremiumLock"
+import { SaveButton } from "@/components/membership/SaveButton"
 import { getAccessToken } from "@/lib/membership"
 import type { SponsorCreative } from "@/lib/sponsors"
 import type { Article } from "@/lib/types"
@@ -104,18 +103,9 @@ export function StoryContent({
   premiumTeaser = null,
 }: StoryContentProps) {
   const [activeTier, setActiveTier] = useState<"eli5" | "standard" | "deep">(initialTier)
-  const [saved, setSaved] = useState(() => isStorySaved(story.id))
   const [premiumFull, setPremiumFull] = useState<{ body: string; articles: Article[] } | null>(
     null,
   )
-
-  // Re-sync saved state when navigating between stories without a remount
-  // (render-time adjustment instead of a setState-in-effect cascade).
-  const [prevStoryId, setPrevStoryId] = useState(story.id)
-  if (prevStoryId !== story.id) {
-    setPrevStoryId(story.id)
-    setSaved(isStorySaved(story.id))
-  }
 
   useEffect(() => {
     trackStoryRead({
@@ -208,19 +198,7 @@ export function StoryContent({
               </span>
               <span className="meta-text">{formatDistanceToNow(story.created_at)}</span>
             </div>
-            <button
-              type="button"
-              onClick={() => setSaved(toggleSavedStory(story.id))}
-              className={`inline-flex items-center gap-1.5 h-9 px-3 text-[13px] font-semibold rounded-[var(--radius-sm)] border border-[var(--border)] transition-colors ${
-                saved
-                  ? "text-[var(--accent)] bg-[var(--red-subtle-bg)] border-[var(--accent)]"
-                  : "text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--surface-alt)]"
-              }`}
-              aria-label={saved ? "Unsave story" : "Save story"}
-            >
-              {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
-              {saved ? "Saved" : "Save"}
-            </button>
+            <SaveButton key={story.id} storyId={story.id} variant="content" />
           </div>
           {showTierToggle && (
             <div className="w-full sm:w-auto sm:self-end">

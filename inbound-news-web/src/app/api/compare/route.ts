@@ -4,6 +4,7 @@ import {
   type ComparisonResult,
 } from "@/lib/compare-analysis"
 import { getClientIp, rateLimit } from "@/lib/rate-limit"
+import { requireFeature } from "@/lib/api-auth"
 
 const GROQ_KEYS = [
   ...(process.env.GROQ_API_KEYS || "").split(","),
@@ -142,6 +143,13 @@ Content: ${content}`
 
 export async function POST(req: NextRequest) {
   try {
+    // Advanced Compare is a Pro+ feature — enforce server-side so a Free user
+    // can't hit the analysis endpoint directly.
+    const access = await requireFeature(req, "advanced_compare")
+    if (!access.ok) {
+      return NextResponse.json({ error: "membership_required" }, { status: access.status })
+    }
+
     const limit = rateLimit(`compare:${getClientIp(req)}`, 6, 60_000)
     if (!limit.ok) {
       return NextResponse.json(

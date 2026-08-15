@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getClientIp, rateLimit } from "@/lib/rate-limit"
+import { requireFeature } from "@/lib/api-auth"
 
 const GROQ_KEYS = [
   ...(process.env.GROQ_API_KEYS || "").split(","),
@@ -68,6 +69,12 @@ async function callGroq(prompt: string): Promise<string> {
 
 export async function POST(req: NextRequest) {
   try {
+    // Premium Local Lens is a Premium+ feature — enforce server-side.
+    const access = await requireFeature(req, "local_lens")
+    if (!access.ok) {
+      return NextResponse.json({ error: "membership_required" }, { status: access.status })
+    }
+
     const limit = rateLimit(`local-lens:${getClientIp(req)}`, 8, 60_000)
     if (!limit.ok) {
       return NextResponse.json(

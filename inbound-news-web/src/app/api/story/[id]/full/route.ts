@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { authenticateRequest } from "@/lib/api-auth"
+import { authenticateRequest, getMembershipForUser } from "@/lib/api-auth"
+import { canAccessTier, effectiveTier } from "@/lib/access"
 import { createUserClient } from "@/lib/supabase-server"
 import { resolveStoryBody } from "@/lib/story-body"
 import type { Article } from "@/lib/types"
@@ -10,7 +11,7 @@ const ARTICLE_COLUMNS =
 
 type Params = { params: Promise<{ id: string }> }
 
-/** Full premium story body + articles — members only (JWT via Authorization). */
+/** Full premium story body + articles — Full Decode is Pro+ (JWT via Authorization). */
 export async function GET(req: NextRequest, { params }: Params) {
   const { id } = await params
 
@@ -19,22 +20,12 @@ export async function GET(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 })
   }
 
-  const supabase = createUserClient(`Bearer ${auth.token}`)
-  const { data: membership } = await supabase
-    .from("memberships")
-    .select("user_id, plan, status, current_period_end")
-    .eq("user_id", auth.user.id)
-    .maybeSingle()
-
-  const m = membership as { status?: string; current_period_end?: string | null } | null
-  const status = m?.status
-  const periodEnd = m?.current_period_end ? new Date(m.current_period_end).getTime() : null
-  const isMember =
-    (status === "active" || status === "trialing") &&
-    (periodEnd === null || periodEnd > Date.now())
-  if (!isMember) {
+  const membership = await getMembershipForUser(auth)
+  if (!canAccessTier(effectiveTier(membership), "full_decode")) {
     return NextResponse.json({ error: "membership_required" }, { status: 403 })
   }
+
+  const supabase = createUserClient(`Bearer ${auth.token}`)
 
   const { data: story, error: storyError } = await supabase
     .from("stories")

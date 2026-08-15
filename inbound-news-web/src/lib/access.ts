@@ -1,0 +1,85 @@
+import type { Membership } from "./stripe"
+import { isActiveMembership } from "./plans"
+
+/**
+ * Centralized plan-based feature authorization.
+ *
+ * The source of truth is the user's `memberships` row in Supabase
+ * (plan + status + billing period). Everything that gates a feature goes
+ * through here — client gates and server-side API checks — so plan rules
+ * live in exactly one place.
+ */
+
+export type PlanTier = "free" | "pro" | "premium"
+
+/** Every feature that can be gated behind a paid plan. */
+export type Feature =
+  | "full_decode"
+  | "advanced_compare"
+  | "daily_brief"
+  | "bookmarks"
+  | "advanced_search"
+  | "local_lens"
+  | "undercovered"
+  | "trend_radar"
+
+/** Minimum plan tier required for each feature. */
+const FEATURE_TIER: Record<Feature, PlanTier> = {
+  full_decode: "pro",
+  advanced_compare: "pro",
+  daily_brief: "pro",
+  bookmarks: "pro",
+  advanced_search: "pro",
+  local_lens: "premium",
+  undercovered: "premium",
+  trend_radar: "premium",
+}
+
+/** Human-friendly feature names for locked / upgrade UI copy. */
+export const FEATURE_LABELS: Record<Feature, string> = {
+  full_decode: "Full Decode",
+  advanced_compare: "Advanced Compare",
+  daily_brief: "Personalized Daily Brief",
+  bookmarks: "Bookmarks",
+  advanced_search: "Advanced Search",
+  local_lens: "Premium Local Lens",
+  undercovered: "Undercovered Stories",
+  trend_radar: "Trend Radar",
+}
+
+export const TIER_LABELS: Record<PlanTier, string> = {
+  free: "Free",
+  pro: "Pro",
+  premium: "Premium",
+}
+
+const TIER_RANK: Record<PlanTier, number> = { free: 0, pro: 1, premium: 2 }
+
+/** The plan tier a given feature requires. */
+export function requiredTier(feature: Feature): PlanTier {
+  return FEATURE_TIER[feature]
+}
+
+/**
+ * A user's effective plan tier, resolved from their Supabase membership.
+ * Active + trialing memberships within the billing period count as paid;
+ * expired / canceled / past_due / unpaid / incomplete rows drop back to Free.
+ */
+export function effectiveTier(membership: Membership | null | undefined): PlanTier {
+  if (!membership || !isActiveMembership(membership)) return "free"
+  if (membership.current_period_end) {
+    const end = new Date(membership.current_period_end).getTime()
+    if (Number.isFinite(end) && end <= Date.now()) return "free"
+  }
+  return membership.plan === "premium_yearly" ? "premium" : "pro"
+}
+
+/** True when a resolved tier may use the feature. */
+export function canAccessTier(tier: PlanTier, feature: Feature): boolean {
+  return TIER_RANK[tier] >= TIER_RANK[FEATURE_TIER[feature]]
+}
+
+/** True when the given membership row may use the feature. */
+export function canAccess(membership: Membership | null | undefined, feature: Feature): boolean {
+  return canAccessTier(effectiveTier(membership), feature)
+}

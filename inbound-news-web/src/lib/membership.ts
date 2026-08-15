@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "./supabase"
 import { isActiveMembership } from "./plans"
+import { canAccess, type Feature } from "./access"
 import type { Membership, MembershipPlan } from "./stripe"
 
 export type { Membership, MembershipPlan }
@@ -204,7 +205,12 @@ export function useMembership(): MembershipState {
 
   useEffect(() => {
     let mounted = true
-    getMembership().then((membership) => {
+    // Dedupe concurrent mounts (e.g. a grid of story cards each asking for the
+    // same plan) into a single /api/membership request.
+    const pending = (membershipsInflight ??= getMembership().finally(() => {
+      membershipsInflight = null
+    }))
+    pending.then((membership) => {
       if (!mounted) return
       setState({ loading: false, membership })
     })
@@ -214,4 +220,16 @@ export function useMembership(): MembershipState {
   }, [])
 
   return state
+}
+
+let membershipsInflight: Promise<Membership | null> | null = null
+
+/** Client-side feature gate state — permission rules live in lib/access. */
+export function useFeatureAccess(feature: Feature): {
+  loading: boolean
+  allowed: boolean
+  membership: Membership | null
+} {
+  const { loading, membership } = useMembership()
+  return { loading, allowed: canAccess(membership, feature), membership }
 }

@@ -14,6 +14,7 @@ import {
 import { ArticleCard } from "./ArticleCard"
 import { ArticlePicker } from "./ArticlePicker"
 import { recordSourceComparison } from "@/lib/profile"
+import { FeatureGate } from "@/components/membership/FeatureGate"
 
 interface CompareViewProps {
   articleA: CompareOption | null
@@ -287,97 +288,99 @@ export function CompareView({
         </Link>
       </div>
 
-      <header className="pb-8">
-        <p className="chip mb-3">
-          <GitCompareArrows className="h-3 w-3" />
-          Compare
-        </p>
-        <h1 className="page-title">Comparing articles</h1>
-        <p className="mt-2 max-w-[58ch] text-[14px] leading-relaxed text-[var(--text-secondary)]">
-          Pick two related articles to read them side by side — what they both say, where they
-          differ, and how each source frames the story.
-        </p>
-      </header>
+      <FeatureGate feature="advanced_compare">
+        <header className="pb-8">
+          <p className="chip mb-3">
+            <GitCompareArrows className="h-3 w-3" />
+            Compare
+          </p>
+          <h1 className="page-title">Comparing articles</h1>
+          <p className="mt-2 max-w-[58ch] text-[14px] leading-relaxed text-[var(--text-secondary)]">
+            Pick two related articles to read them side by side — what they both say, where they
+            differ, and how each source frames the story.
+          </p>
+        </header>
 
-      {showResult && articleA && articleB ? (
-        <>
-          <div className="grid gap-6 md:grid-cols-2 mb-8">
-            <ArticleCard option={articleA} slot="A" />
-            <ArticleCard option={articleB} slot="B" />
-          </div>
+        {showResult && articleA && articleB ? (
+          <>
+            <div className="grid gap-6 md:grid-cols-2 mb-8">
+              <ArticleCard option={articleA} slot="A" />
+              <ArticleCard option={articleB} slot="B" />
+            </div>
 
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="section-title">Analysis</h2>
-            <button type="button" className="btn-ghost" onClick={() => setPickingB((p) => !p)}>
-              <RefreshCw className="h-3.5 w-3.5" />
-              {pickingB ? "Hide article picker" : "Compare a different article"}
-            </button>
-          </div>
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+              <h2 className="section-title">Analysis</h2>
+              <button type="button" className="btn-ghost" onClick={() => setPickingB((p) => !p)}>
+                <RefreshCw className="h-3.5 w-3.5" />
+                {pickingB ? "Hide article picker" : "Compare a different article"}
+              </button>
+            </div>
 
-          {pickingB && (
+            {pickingB && (
+              <div className="mb-8">
+                <ArticlePicker
+                  options={relatedToA.length ? relatedToA : recentOptions}
+                  excludeIds={[articleA.id, articleB.id]}
+                  selectedId={articleB.id}
+                  onSelect={handlePickDifferentB}
+                  contextLabel={pickerLabel}
+                />
+              </div>
+            )}
+
+            {analysisError && (
+              <p className="mb-4 text-[13px] text-[var(--text-secondary)] rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface-alt)] px-3 py-2">
+                Live AI compare unavailable (rate limit or missing Groq key) — showing a free local
+                comparison from the two summaries. Try again later for a deeper framing analysis.
+              </p>
+            )}
+
+            <AnalysisView result={result} loading={analysisLoading} a={articleA} b={articleB} />
+
+            <p className="mt-6 text-[12px] leading-relaxed text-[var(--text-secondary)]">
+              Analysis uses only the two articles&apos; titles and summaries. Claims are attributed
+              to their source. Where sources conflict, both sides are shown. Original articles remain
+              authoritative.
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="grid gap-6 md:grid-cols-2 mb-8">
+              <ArticleCard
+                option={slotA}
+                slot="A"
+                active={activeSlot === "a" && !fixedA}
+                onChoose={fixedA ? undefined : () => setActiveSlot("a")}
+              />
+              <ArticleCard
+                option={slotB}
+                slot="B"
+                active={activeSlot === "b"}
+                onChoose={() => setActiveSlot("b")}
+              />
+            </div>
+
             <div className="mb-8">
               <ArticlePicker
-                options={relatedToA.length ? relatedToA : recentOptions}
-                excludeIds={[articleA.id, articleB.id]}
-                selectedId={articleB.id}
-                onSelect={handlePickDifferentB}
+                options={pickOptions}
+                excludeIds={excludeIds}
+                selectedId={activeSlot === "a" ? slotA?.id ?? null : slotB?.id ?? null}
+                onSelect={handleSelectOption}
                 contextLabel={pickerLabel}
               />
             </div>
-          )}
 
-          {analysisError && (
-            <p className="mb-4 text-[13px] text-[var(--text-secondary)] rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface-alt)] px-3 py-2">
-              Live AI compare unavailable (rate limit or missing Groq key) — showing a free local
-              comparison from the two summaries. Try again later for a deeper framing analysis.
-            </p>
-          )}
-
-          <AnalysisView result={result} loading={analysisLoading} a={articleA} b={articleB} />
-
-          <p className="mt-6 text-[12px] leading-relaxed text-[var(--text-secondary)]">
-            Analysis uses only the two articles&apos; titles and summaries. Claims are attributed
-            to their source. Where sources conflict, both sides are shown. Original articles remain
-            authoritative.
-          </p>
-        </>
-      ) : (
-        <>
-          <div className="grid gap-6 md:grid-cols-2 mb-8">
-            <ArticleCard
-              option={slotA}
-              slot="A"
-              active={activeSlot === "a" && !fixedA}
-              onChoose={fixedA ? undefined : () => setActiveSlot("a")}
-            />
-            <ArticleCard
-              option={slotB}
-              slot="B"
-              active={activeSlot === "b"}
-              onChoose={() => setActiveSlot("b")}
-            />
-          </div>
-
-          <div className="mb-8">
-            <ArticlePicker
-              options={pickOptions}
-              excludeIds={excludeIds}
-              selectedId={activeSlot === "a" ? slotA?.id ?? null : slotB?.id ?? null}
-              onSelect={handleSelectOption}
-              contextLabel={pickerLabel}
-            />
-          </div>
-
-          {slotA && slotB && (
-            <div className="flex justify-center">
-              <button type="button" className="btn-primary" onClick={handleCompare}>
-                <GitCompareArrows className="h-4 w-4" />
-                Compare Articles
-              </button>
-            </div>
-          )}
-        </>
-      )}
+            {slotA && slotB && (
+              <div className="flex justify-center">
+                <button type="button" className="btn-primary" onClick={handleCompare}>
+                  <GitCompareArrows className="h-4 w-4" />
+                  Compare Articles
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </FeatureGate>
     </div>
   )
 }

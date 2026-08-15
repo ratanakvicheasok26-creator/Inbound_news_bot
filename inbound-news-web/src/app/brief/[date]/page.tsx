@@ -4,6 +4,7 @@ import { getStoriesForBrief, phnomPenhDayBounds, todayPhnomPenhYmd } from "@/lib
 import { prioritizeStoriesWithImages, selectFeedStories } from "@/lib/story-priority"
 import { StoryRow } from "@/components/story/StoryRow"
 import { AdBand } from "@/components/ads/AdBand"
+import { FeatureGate } from "@/components/membership/FeatureGate"
 import { isMockStoriesEnabled } from "@/lib/mock-stories"
 import { pickSponsorFrom } from "@/lib/sponsors"
 import { getActiveSponsors } from "@/lib/sponsors-server"
@@ -91,31 +92,33 @@ export default async function BriefDatePage({
         <AdBand placement="brief" flush creative={briefAd} sponsors={sponsors} />
       )}
 
-      {error && ranked.length === 0 ? (
-        <div className="empty-state max-w-lg mx-auto mt-12">
-          <p className="page-title mb-3">Brief unavailable</p>
-          <p className="text-[var(--text-secondary)] normal-case tracking-normal">{error}</p>
-        </div>
-      ) : ranked.length === 0 ? (
-        <div className="empty-state max-w-lg mx-auto mt-12">
-          <p className="page-title mb-3">No stories for this day</p>
-          <p className="text-[var(--text-secondary)] normal-case tracking-normal">
-            Check back after the next digest, or browse the{" "}
-            <Link href="/" className="text-[var(--accent)]">
-              latest feed
-            </Link>
-            .
-          </p>
-        </div>
-      ) : (
-        <section className="pt-8">
-          <div className="flex flex-col gap-1">
-            {ranked.map((story) => (
-              <StoryRow key={story.id} story={story} />
-            ))}
+      <FeatureGate feature="daily_brief">
+        {error && ranked.length === 0 ? (
+          <div className="empty-state max-w-lg mx-auto mt-12">
+            <p className="page-title mb-3">Brief unavailable</p>
+            <p className="text-[var(--text-secondary)] normal-case tracking-normal">{error}</p>
           </div>
-        </section>
-      )}
+        ) : ranked.length === 0 ? (
+          <div className="empty-state max-w-lg mx-auto mt-12">
+            <p className="page-title mb-3">No stories for this day</p>
+            <p className="text-[var(--text-secondary)] normal-case tracking-normal">
+              Check back after the next digest, or browse the{" "}
+              <Link href="/" className="text-[var(--accent)]">
+                latest feed
+              </Link>
+              .
+            </p>
+          </div>
+        ) : (
+          <section className="pt-8">
+            <div className="flex flex-col gap-1">
+              {ranked.map((story) => (
+                <StoryRow key={story.id} story={story} />
+              ))}
+            </div>
+          </section>
+        )}
+      </FeatureGate>
     </div>
   )
 }

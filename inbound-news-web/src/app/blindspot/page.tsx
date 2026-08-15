@@ -1,5 +1,6 @@
 import { getAllStoriesSafe } from "@/lib/posts"
 import { BlindspotExplorer } from "@/components/story/BlindspotExplorer"
+import { FeatureGate } from "@/components/membership/FeatureGate"
 import { filterTechStories } from "@/lib/tech-scope"
 import { Eye } from "lucide-react"
 import Link from "next/link"
@@ -38,7 +39,9 @@ export default async function BlindspotPage() {
           .
         </p>
 
-        <BlindspotExplorer stories={stories} error={error} />
+        <FeatureGate feature="undercovered">
+          <BlindspotExplorer stories={stories} error={error} />
+        </FeatureGate>
       </section>
     </div>
   )

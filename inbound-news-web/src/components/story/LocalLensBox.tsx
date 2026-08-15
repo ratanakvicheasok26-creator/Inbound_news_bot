@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
+import { useFeatureAccess } from "@/lib/membership"
+import { UpgradePrompt } from "@/components/membership/UpgradePrompt"
 
 interface LocalLensBoxProps {
   category?: string
@@ -53,6 +55,7 @@ function writeCached(storyTitle: string, payload: LensCache) {
 }
 
 export function LocalLensBox({ category, storyTitle, storySummary }: LocalLensBoxProps) {
+  const { loading: membershipLoading, allowed } = useFeatureAccess("local_lens")
   const cached = readCached(storyTitle)
   const [text, setText] = useState<string | null>(
     () => cached?.text || (storyTitle ? null : fallbackText(category))
@@ -64,6 +67,7 @@ export function LocalLensBox({ category, storyTitle, storySummary }: LocalLensBo
   const fetched = useRef(false)
 
   useEffect(() => {
+    if (!allowed) return
     if (!storyTitle || cached || fetched.current) return
     fetched.current = true
 
@@ -103,7 +107,28 @@ export function LocalLensBox({ category, storyTitle, storySummary }: LocalLensBo
     return () => {
       cancelled = true
     }
-  }, [category, storyTitle, storySummary, cached])
+  }, [category, storyTitle, storySummary, cached, allowed])
+
+  if (membershipLoading) {
+    return (
+      <aside className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-5 border-l-4 border-l-[var(--accent)]">
+        <p className="meta-text text-[var(--accent)] mb-3">Local Lens — Cambodia</p>
+        <div className="space-y-2 animate-pulse">
+          <div className="h-3 bg-[var(--surface-alt)] rounded w-full" />
+          <div className="h-3 bg-[var(--surface-alt)] rounded w-4/5" />
+          <div className="h-3 bg-[var(--surface-alt)] rounded w-3/5" />
+        </div>
+      </aside>
+    )
+  }
+
+  if (!allowed) {
+    return (
+      <aside className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-5 border-l-4 border-l-[var(--accent)]">
+        <UpgradePrompt feature="local_lens" compact />
+      </aside>
+    )
+  }
 
   return (
     <aside className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-5 border-l-4 border-l-[var(--accent)]">

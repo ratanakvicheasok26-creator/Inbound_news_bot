@@ -4,6 +4,7 @@ import { getStoriesBySourceDomain } from "@/lib/posts"
 import { prioritizeStoriesWithImages } from "@/lib/story-priority"
 import { StoryRow } from "@/components/story/StoryRow"
 import { TrustRadar } from "@/components/story/TrustRadar"
+import { FeatureGate } from "@/components/membership/FeatureGate"
 import { ArrowLeft, ExternalLink, Shield } from "lucide-react"
 
 const SOURCES: Record<string, {
@@ -98,20 +99,22 @@ export default async function SourcePage({ params }: { params: Promise<{ slug: s
           Editorial estimates for this profile — not live audited scores. Use as orientation,
           then read the outlet&apos;s own coverage below.
         </p>
-        <div className="grid gap-4 md:grid-cols-2">
-          {[
-            { label: "Primary Sourcing", score: scores.primary_sourcing },
-            { label: "Technical Accuracy", score: scores.technical_accuracy },
-            { label: "Originality", score: scores.originality },
-            { label: "Correction History", score: scores.corrections },
-            { label: "Funding Disclosure", score: scores.funding_disclosure },
-          ].map((item) => (
-            <div key={item.label} className="flex items-center justify-between py-2 border-b border-[var(--border)]">
-              <span className="text-[13px] text-[var(--text-secondary)]">{item.label}</span>
-              <TrustRadar score={item.score} size="md" />
-            </div>
-          ))}
-        </div>
+        <FeatureGate feature="trend_radar">
+          <div className="grid gap-4 md:grid-cols-2">
+            {[
+              { label: "Primary Sourcing", score: scores.primary_sourcing },
+              { label: "Technical Accuracy", score: scores.technical_accuracy },
+              { label: "Originality", score: scores.originality },
+              { label: "Correction History", score: scores.corrections },
+              { label: "Funding Disclosure", score: scores.funding_disclosure },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center justify-between py-2 border-b border-[var(--border)]">
+                <span className="text-[13px] text-[var(--text-secondary)]">{item.label}</span>
+                <TrustRadar score={item.score} size="md" />
+              </div>
+            ))}
+          </div>
+        </FeatureGate>
       </section>
 
       {/* Ownership */}

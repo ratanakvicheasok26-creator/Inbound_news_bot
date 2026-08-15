@@ -1,18 +1,15 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
 import type { Story } from "@/lib/types"
 import { getCategoryLabel } from "@/lib/categories"
 import { resolveStoryDek } from "@/lib/story-body"
 import { formatDistanceToNow } from "@/lib/utils"
-import { Bookmark, BookmarkCheck } from "lucide-react"
-import { toggleSavedStory, isStorySaved } from "@/lib/profile"
 import { StoryImage } from "@/components/story/StoryImage"
 import { CoverageMeta } from "@/components/story/CoverageMeta"
+import { SaveButton } from "@/components/membership/SaveButton"
 
 export function StoryRow({ story }: { story: Story }) {
-  const [saved, setSaved] = useState(() => isStorySaved(story.id))
   const categoryLabel = getCategoryLabel(story.category || "") || "News"
   const dek = resolveStoryDek(story.summary_en)
 
@@ -50,22 +47,7 @@ export function StoryRow({ story }: { story: Story }) {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={(e) => {
-          e.preventDefault()
-          const next = toggleSavedStory(story.id)
-          setSaved(next)
-        }}
-        className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center shrink-0 rounded-[var(--radius-sm)] transition-colors ${
-          saved
-            ? "text-[var(--accent)]"
-            : "text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--surface-alt)]"
-        }`}
-        aria-label={saved ? "Unsave story" : "Save story"}
-      >
-        {saved ? <BookmarkCheck className="h-5 w-5" /> : <Bookmark className="h-5 w-5" />}
-      </button>
+      <SaveButton storyId={story.id} variant="row" />
     </article>
   )
 }
