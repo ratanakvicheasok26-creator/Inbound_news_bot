@@ -184,31 +184,18 @@ export function Header() {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-2">
+              <div>
                 <Link
                   href="/pricing"
                   onClick={closeMobileMenu}
                   aria-current={pathname === "/pricing" ? "page" : undefined}
-                  className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-3 py-3.5 hover:border-[var(--text-secondary)] transition-colors"
+                  className="block rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3.5 hover:border-[var(--text-secondary)] transition-colors"
                 >
                   <span className="block text-[14px] font-semibold text-[var(--text-primary)]">
                     {t("nav.membership")}
                   </span>
                   <span className="block mt-1 text-[12px] text-[var(--text-secondary)] leading-snug">
                     {t("nav.unlockDecode")}
-                  </span>
-                </Link>
-                <Link
-                  href="/donate"
-                  onClick={closeMobileMenu}
-                  aria-current={pathname === "/donate" ? "page" : undefined}
-                  className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-3 py-3.5 hover:border-[var(--text-secondary)] transition-colors"
-                >
-                  <span className="block text-[14px] font-semibold text-[var(--text-primary)]">
-                    {t("nav.donate")}
-                  </span>
-                  <span className="block mt-1 text-[12px] text-[var(--text-secondary)] leading-snug">
-                    {t("nav.supportTheDesk")}
                   </span>
                 </Link>
               </div>
@@ -379,9 +366,6 @@ export function Header() {
                 {t("nav.signOut")}
               </button>
             )}
-            <Link href="/donate" className="btn-outline hidden lg:inline-flex">
-              {t("nav.donate")}
-            </Link>
           </div>
         </div>
       </header>

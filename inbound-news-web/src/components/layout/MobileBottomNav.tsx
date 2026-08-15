@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, BookOpen, Eye, GitCompareArrows, Newspaper } from "lucide-react"
+import { Home, BookOpen, Eye, GitCompareArrows, Newspaper, Heart } from "lucide-react"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 
 const navItems = [
@@ -11,6 +11,7 @@ const navItems = [
   { href: "/compare", icon: GitCompareArrows, key: "nav.compare" },
   { href: "/blindspot", icon: Eye, key: "nav.blindspot" },
   { href: "/glossary", icon: BookOpen, key: "nav.glossary" },
+  { href: "/donate", icon: Heart, key: "nav.donate" },
 ]
 
 export function MobileBottomNav() {

@@ -287,78 +287,79 @@ a:focus:not(:focus-visible) {
   }
 }
 
-/* Buttons stay unlayered so a { color: inherit } cannot wash out accent */
-.btn-ghost,
-.btn-primary,
-.btn-outline {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 36px;
-  font-size: 13px;
-  font-weight: 600;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
-}
+@layer components {
+  .btn-ghost,
+  .btn-primary,
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 36px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
 
-.btn-ghost {
-  padding: 0 12px;
-  color: var(--text-secondary);
-  background: transparent;
-  border: 1px solid var(--border);
-}
+  .btn-ghost {
+    padding: 0 12px;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid var(--border);
+  }
 
-.btn-ghost:hover,
-.btn-ghost:focus-visible {
-  color: var(--text-primary);
-  border-color: var(--text-secondary);
-  background: var(--surface-alt);
-}
+  .btn-ghost:hover,
+  .btn-ghost:focus-visible {
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
+    background: var(--surface-alt);
+  }
 
-.btn-primary {
-  padding: 0 14px;
-  color: var(--accent-contrast);
-  background: var(--accent);
-  border: 1px solid var(--accent);
-}
+  .btn-primary {
+    padding: 0 14px;
+    color: var(--accent-contrast);
+    background: var(--accent);
+    border: 1px solid var(--accent);
+  }
 
-.btn-primary:hover,
-.btn-primary:focus-visible {
-  color: var(--accent-contrast);
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
-}
+  .btn-primary:hover,
+  .btn-primary:focus-visible {
+    color: var(--accent-contrast);
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+  }
 
-.btn-outline {
-  padding: 0 14px;
-  letter-spacing: 0.01em;
-  color: var(--accent);
-  background: transparent;
-  border: 1px solid var(--accent);
-}
+  .btn-outline {
+    padding: 0 14px;
+    letter-spacing: 0.01em;
+    color: var(--accent);
+    background: transparent;
+    border: 1px solid var(--accent);
+  }
 
-.btn-outline:hover,
-.btn-outline:focus-visible {
-  color: var(--accent-contrast);
-  background: var(--accent);
-  border-color: var(--accent);
-}
+  .btn-outline:hover,
+  .btn-outline:focus-visible {
+    color: var(--accent-contrast);
+    background: var(--accent);
+    border-color: var(--accent);
+  }
 
-a.btn-primary:hover,
-a.btn-primary:focus-visible {
-  color: var(--accent-contrast);
-}
+  a.btn-primary:hover,
+  a.btn-primary:focus-visible {
+    color: var(--accent-contrast);
+  }
 
-a.btn-ghost:hover,
-a.btn-ghost:focus-visible {
-  color: var(--text-primary);
-}
+  a.btn-ghost:hover,
+  a.btn-ghost:focus-visible {
+    color: var(--text-primary);
+  }
 
-a.btn-outline:hover,
-a.btn-outline:focus-visible {
-  color: var(--accent-contrast);
+  a.btn-outline:hover,
+  a.btn-outline:focus-visible {
+    color: var(--accent-contrast);
+  }
 }
 
 /* ===== Sections ===== */
