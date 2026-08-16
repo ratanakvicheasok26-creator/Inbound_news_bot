@@ -104,7 +104,7 @@ export function StoryContent({
   premiumLocked = false,
   premiumTeaser = null,
 }: StoryContentProps) {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const [activeTier, setActiveTier] = useState<"eli5" | "standard" | "deep">(initialTier)
   const [premiumFull, setPremiumFull] = useState<{ body: string; articles: Article[] } | null>(
     null,
@@ -151,6 +151,7 @@ export function StoryContent({
   }, [])
 
   const categoryLabel = getCategoryLabel(story.category || "") || t("common.news")
+  const displayTitle = locale === "km" && story.title_km ? story.title_km : story.title
   const articles = premiumFull ? premiumFull.articles : story.articles || []
   const tags = story.tags || []
   const body = premiumFull ? premiumFull.body : resolveStoryBody(story)
@@ -212,7 +213,7 @@ export function StoryContent({
         </div>
 
         <h1 className="font-display text-[clamp(28px,4.5vw,44px)] font-semibold leading-[1.12] tracking-[-0.025em]">
-          {story.title}
+          {displayTitle}
         </h1>
 
         <p className="mt-3 text-[14px] text-[var(--text-secondary)] max-w-[58ch]">

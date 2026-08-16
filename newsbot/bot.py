@@ -86,6 +86,30 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
+
+def _extract_story_id_from_url(url: str | None) -> str | None:
+    """Extract story UUID from a website URL like /story/{id}."""
+    if not url:
+        return None
+    match = re.search(r"/story/([0-9a-f-]{36})", url)
+    return match.group(1) if match else None
+
+
+def _update_story_khmer_content(story_id: str, title_km: str, summary_km: str) -> bool:
+    """Update a story row with Khmer title and summary. Returns True on success."""
+    try:
+        from workers.db import get_supabase
+        supabase = get_supabase()
+        supabase.table("stories").update({
+            "title_km": title_km,
+            "summary_km": summary_km,
+        }).eq("id", story_id).execute()
+        logger.info("Updated story %s with Khmer content", story_id)
+        return True
+    except Exception as exc:
+        logger.warning("Failed to update story %s with Khmer content: %s", story_id, exc)
+        return False
+
 _pipeline_lock = asyncio.Lock()
 _mirror_drain_lock = asyncio.Lock()
 
@@ -1123,6 +1147,19 @@ async def _mirror_story(
     if succeeded:
         _mark_posted([story], succeeded)
         logger.info("Mirror: posted Khmer story (%d entries).", len(cluster))
+        # Update story in Supabase with Khmer title and summary
+        story_id = _extract_story_id_from_url(story.primary_url)
+        if story_id and cluster:
+            en_title = cluster[0].title or ""
+            en_summary = cluster[0].summary or ""
+            if en_title:
+                try:
+                    km_title, km_summary = await asyncio.to_thread(
+                        translate_compact_to_km, en_title, en_summary
+                    )
+                    _update_story_khmer_content(story_id, km_title, km_summary)
+                except Exception as exc:
+                    logger.warning("Failed to translate story title/summary for DB: %s", exc)
         return True, False
     logger.warning("Mirror: Telegram send failed for story — will requeue")
     return False, False
@@ -1196,6 +1233,11 @@ async def _mirror_batch(
     if succeeded:
         _mark_posted_batched(batched, succeeded)
         logger.info("Mirror: posted Khmer batch digest (%d stories).", len(batched))
+        # Update stories in Supabase with Khmer title and summary
+        for b_story in batched:
+            story_id = _extract_story_id_from_url(b_story.website_url)
+            if story_id and b_story.title:
+                _update_story_khmer_content(story_id, b_story.title, b_story.summary)
         return True, False
     logger.warning("Mirror: Telegram send failed for batch — will requeue")
     return False, False

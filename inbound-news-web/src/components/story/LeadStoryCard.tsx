@@ -5,12 +5,17 @@ import { formatDistanceToNow } from "@/lib/utils"
 import { StoryImage } from "@/components/story/StoryImage"
 import { CoverageMeta } from "@/components/story/CoverageMeta"
 import { LocalizedText } from "@/components/LocalizedText"
+import { useI18n } from "@/lib/i18n/LocaleProvider"
 import Link from "next/link"
 
 export function LeadStoryCard({ story }: { story: Story }) {
+  const { locale } = useI18n()
   const slug = story.category || ""
   const categoryLabel = CATEGORY_MAP[slug] ? slug : null
-  const dek = resolveStoryDek(story.summary_en, 180)
+  const displayTitle = locale === "km" && story.title_km ? story.title_km : story.title
+  const dek = locale === "km" && story.summary_km
+    ? resolveStoryDek(story.summary_km, 180)
+    : resolveStoryDek(story.summary_en, 180)
 
   return (
     <article className="animate-[riseIn_400ms_ease-out]">
@@ -40,7 +45,7 @@ export function LeadStoryCard({ story }: { story: Story }) {
 
           <Link href={`/story/${story.id}`} className="group block">
             <h1 className="font-display-modern text-[clamp(28px,4.2vw,44px)] font-bold leading-[1.08] tracking-[-0.02em] transition-colors duration-200 group-hover:text-[var(--accent)]">
-              {story.title}
+              {displayTitle}
             </h1>
           </Link>
 

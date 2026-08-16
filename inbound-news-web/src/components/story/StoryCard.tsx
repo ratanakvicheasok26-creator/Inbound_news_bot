@@ -11,9 +11,10 @@ import { useI18n } from "@/lib/i18n/LocaleProvider"
 
 /** Equal-weight story tile for balanced home grids. */
 export function StoryCard({ story }: { story: Story }) {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const slug = story.category || ""
   const categoryLabel = CATEGORY_MAP[slug] ? t(`category.${slug}`) : t("common.news")
+  const displayTitle = locale === "km" && story.title_km ? story.title_km : story.title
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] transition-colors duration-200 hover:border-[var(--text-secondary)]">
@@ -35,7 +36,7 @@ export function StoryCard({ story }: { story: Story }) {
 
         <Link href={`/story/${story.id}`} className="block flex-1">
           <h3 className="font-display-modern text-[17px] md:text-[18px] font-semibold leading-snug tracking-[-0.015em] transition-colors duration-200 group-hover:text-[var(--accent)] line-clamp-3">
-            {story.title}
+            {displayTitle}
           </h3>
         </Link>
 
