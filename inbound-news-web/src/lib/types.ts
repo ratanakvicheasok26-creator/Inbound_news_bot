@@ -21,10 +21,6 @@ export type Story = {
   premium?: boolean
   /** Unique outlets from linked articles (client enrich). */
   coverage_outlets?: CoverageOutlet[]
-  /** Pre-translated Khmer title (populated by KM bot mirror pipeline). */
-  title_km?: string | null
-  /** Pre-translated Khmer summary (populated by KM bot mirror pipeline). */
-  summary_km?: string | null
 }
 
 export type Article = {

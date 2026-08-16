@@ -20,9 +20,9 @@ export type StoriesResult = {
 
 /** Explicit column lists — never select `embedding`/`raw_json` for public payloads. */
 const STORY_COLUMNS =
-  "id, title, summary_en, source_count, category, tags, created_at, image_url, premium, title_km, summary_km"
+  "id, title, summary_en, source_count, category, tags, created_at, image_url, premium"
 const STORY_COLUMNS_NO_PREMIUM =
-  "id, title, summary_en, source_count, category, tags, created_at, image_url, title_km, summary_km"
+  "id, title, summary_en, source_count, category, tags, created_at, image_url"
 const ARTICLE_COLUMNS =
   "id, title, summary, url, source_name, source_domain, category, language, published_at, ingested_at, image_url"
 
