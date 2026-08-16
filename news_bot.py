@@ -386,7 +386,7 @@ def schedule_language_jobs(job_queue: object, *, news_language: str) -> list[str
             )
         job_queue.run_repeating(  # type: ignore[attr-defined]
             mirror_drain_job,
-            interval=10,
+            interval=int(os.environ.get("MIRROR_DRAIN_INTERVAL_SECONDS", "5")),
             name="mirror_drain",
         )
         names.append("mirror_drain")

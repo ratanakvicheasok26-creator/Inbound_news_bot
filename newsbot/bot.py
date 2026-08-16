@@ -1000,9 +1000,7 @@ async def mirror_outbox_flush_job(context: ContextTypes.DEFAULT_TYPE) -> None:
 async def mirror_drain_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     """km mode: re-post whatever the English bot published, in Khmer.
 
-    Payloads are translated and posted in parallel (bounded by
-    ``MIRROR_DRAIN_CONCURRENCY``) so a backlog of story mirrors or a large
-    Brief batch catches up in ~one translation round instead of one at a time.
+    Items are processed one-by-one to preserve the original EN posting order.
     """
     if NEWS_LANGUAGE != "km" or not mirror_available():
         return
@@ -1011,13 +1009,8 @@ async def mirror_drain_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         return
     async with _mirror_drain_lock:
         items = await asyncio.to_thread(drain)
-        semaphore = asyncio.Semaphore(MIRROR_DRAIN_CONCURRENCY)
-
-        async def process(item) -> None:
-            async with semaphore:
-                await _mirror_process_item(context, item)
-
-        await asyncio.gather(*(process(item) for item in items))
+        for item in items:
+            await _mirror_process_item(context, item)
 
 
 async def _mirror_process_item(context: ContextTypes.DEFAULT_TYPE, item) -> None:
