@@ -181,7 +181,7 @@ function SubmissionRow({
           {sub.user_email || "Unknown email"}
         </p>
         <p className="text-[13px] text-[var(--text-secondary)]">
-          {meta?.name} · {Number(sub.amount).toFixed(2)} {sub.currency || "USD"}
+          {meta?.name} · {meta?.periodMonths === 1 ? "1 month" : "12 months"} · {Number(sub.amount).toFixed(2)} {sub.currency || "USD"}
           {sub.aba_transaction_id ? ` · Txn ${sub.aba_transaction_id}` : ""} ·{" "}
           {formatDate(sub.created_at)}
         </p>

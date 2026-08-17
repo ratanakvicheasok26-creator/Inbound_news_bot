@@ -56,8 +56,10 @@ export type GlossaryTerm = {
   definition_en: string
   definition_km: string
   analogy: string
+  /** Khmer analogy; shown when the site language is Khmer. */
+  analogy_km?: string
   story_count: number
-  /** Topic bucket for glossary browsing (English-first). */
+  /** Topic bucket for glossary browsing. */
   category: GlossaryCategory
   /** Extra spellings matched in story text (e.g. LLMs for LLM). */
   aliases?: string[]

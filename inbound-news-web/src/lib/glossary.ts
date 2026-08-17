@@ -1,16 +1,61 @@
 import type { GlossaryCategory, GlossaryTerm } from "./types"
+import { GLOSSARY_KM } from "./glossary-km"
+import type { Locale } from "./i18n/dictionaries"
 
 export const GLOSSARY_CATEGORIES: {
   id: GlossaryCategory
   label: string
+  label_km: string
   blurb: string
+  blurb_km: string
 }[] = [
-  { id: "ai", label: "AI & ML", blurb: "Models, training, and how AI products work" },
-  { id: "security", label: "Security", blurb: "Attacks, defenses, and vulnerability jargon" },
-  { id: "infra", label: "Infra & chips", blurb: "Cloud, networks, and the hardware underneath" },
-  { id: "business", label: "Business", blurb: "Startups, funding, and company moves" },
-  { id: "policy", label: "Policy & region", blurb: "Rules, identity, and Southeast Asia context" },
+  {
+    id: "ai",
+    label: "AI & ML",
+    label_km: "បញ្ញាសិប្បនិម្មិត និងការរៀនរបស់ម៉ាស៊ីន",
+    blurb: "Models, training, and how AI products work",
+    blurb_km: "គំរូ ការហ្វឹកហាត់ និងរបៀបដែលផលិតផល AI ដំណើរការ",
+  },
+  {
+    id: "security",
+    label: "Security",
+    label_km: "សន្តិសុខតាមប្រព័ន្ធអ៊ីនធឺណិត",
+    blurb: "Attacks, defenses, and vulnerability jargon",
+    blurb_km: "ការវាយប្រហារ ការការពារ និងពាក្យភាពងាយរងគ្រោះ",
+  },
+  {
+    id: "infra",
+    label: "Infra & chips",
+    label_km: "ហេដ្ឋារចនាសម្ព័ន្ធ និងបន្ទះឈីប",
+    blurb: "Cloud, networks, and the hardware underneath",
+    blurb_km: "ពពក បណ្តាញ និងផ្នែករឹងនៅពីក្រោម",
+  },
+  {
+    id: "business",
+    label: "Business",
+    label_km: "អាជីវកម្ម",
+    blurb: "Startups, funding, and company moves",
+    blurb_km: "ក្រុមហ៊ុនចាប់ផ្តើម ការរៃអង្គាសថវិកា និងចលនាក្រុមហ៊ុន",
+  },
+  {
+    id: "policy",
+    label: "Policy & region",
+    label_km: "គោលនយោបាយ និងតំបន់",
+    blurb: "Rules, identity, and Southeast Asia context",
+    blurb_km: "ក្បួន អត្តសញ្ញាណ និងបរិបទអាស៊ីអាគ្នេយ៍",
+  },
 ]
+
+/** Definition and analogy in the active site language. The English heading is kept so news jargon still matches. */
+export function glossaryCopy(term: GlossaryTerm, locale: Locale) {
+  const useKm = locale === "km" && Boolean(term.definition_km)
+  return {
+    heading: term.term_en,
+    nativeName: useKm ? term.term_km : "",
+    definition: useKm ? term.definition_km : term.definition_en,
+    analogy: useKm && term.analogy_km ? term.analogy_km : term.analogy,
+  }
+}
 
 /** All match strings for a term (canonical + aliases), longest first. */
 export function glossaryMatchForms(term: GlossaryTerm): string[] {
@@ -19,7 +64,7 @@ export function glossaryMatchForms(term: GlossaryTerm): string[] {
   return unique.sort((a, b) => b.length - a.length)
 }
 
-export const GLOSSARY_TERMS: GlossaryTerm[] = [
+const GLOSSARY_TERMS_EN: GlossaryTerm[] = [
   // —— AI & ML ——
   {
     slug: "api",
@@ -2390,4 +2435,15 @@ export const GLOSSARY_TERMS: GlossaryTerm[] = [
     aliases: ["lidar sensor"],
   },
 ]
+
+export const GLOSSARY_TERMS: GlossaryTerm[] = GLOSSARY_TERMS_EN.map((term) => {
+  const km = GLOSSARY_KM[term.slug]
+  if (!km) return term
+  return {
+    ...term,
+    term_km: km.term,
+    definition_km: km.definition,
+    analogy_km: km.analogy,
+  }
+})
 

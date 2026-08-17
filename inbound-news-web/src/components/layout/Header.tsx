@@ -283,7 +283,7 @@ export function Header() {
                 <ChevronDown className={`h-3.5 w-3.5 transition-transform ${topicsOpen ? "rotate-180" : ""}`} />
               </button>
               {topicsOpen && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[320px] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] shadow-md z-50 p-2 grid grid-cols-2 gap-0.5">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[min(320px,calc(100vw-32px))] min-w-0 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] shadow-md z-50 p-2 grid grid-cols-2 gap-0.5">
                   {CATEGORIES.map((cat) => (
                     <Link
                       key={cat.slug}

@@ -4,7 +4,20 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Check, Sparkles } from "lucide-react"
 import { useMembership, subscribe, openBillingPortal } from "@/lib/membership"
-import { PLANS, priceLabel, isActiveMembership, type MembershipPlan } from "@/lib/plans"
+import {
+  PLANS,
+  formatUsd,
+  isActiveMembership,
+  hasStripeBilling,
+  MEMBER_FEATURE_KEYS,
+  planTitleKey,
+  planTaglineKey,
+  annualMonthlyEquivalent,
+  annualSavingsVsMonthly,
+  annualMonthsFree,
+  yearlyIfPaidMonthly,
+  type MembershipPlan,
+} from "@/lib/plans"
 import { PaymentModal } from "@/components/membership/PaymentModal"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 
@@ -18,27 +31,12 @@ const FREE_FEATURE_KEYS = [
   "pricing.features.free5",
 ]
 
-const PRO_FEATURE_KEYS = [
-  "pricing.features.pro1",
-  "pricing.features.pro2",
-  "pricing.features.pro3",
-  "pricing.features.pro4",
-  "pricing.features.pro5",
-  "pricing.features.pro6",
-]
-
-const PREMIUM_FEATURE_KEYS = [
-  "pricing.features.premium1",
-  "pricing.features.premium2",
-  "pricing.features.premium3",
-  "pricing.features.premium4",
-]
-
 export function PricingCards() {
   const { t } = useI18n()
   const router = useRouter()
   const { membership } = useMembership()
   const member = isActiveMembership(membership)
+  const stripeBilled = hasStripeBilling(membership)
   const [busy, setBusy] = useState<MembershipPlan | null>(null)
   const [error, setError] = useState("")
   const [qrPlan, setQrPlan] = useState<MembershipPlan | null>(null)
@@ -78,9 +76,9 @@ export function PricingCards() {
 
   return (
     <div>
-      <div className="grid gap-6 lg:grid-cols-3 items-stretch">
-        {/* Free */}
-        <div className="flex flex-col bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3 items-stretch">
+        {/* Free — last on phones (Annual first), first on desktop */}
+        <div className="order-3 xl:order-1 flex min-w-0 flex-col bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-4 sm:p-6 md:col-span-2 xl:col-span-1">
           <h3 className="font-display text-[18px] font-semibold mb-1">{t("membership.free")}</h3>
           <p className="text-[28px] font-semibold leading-none mb-4">
             $0<span className="text-[14px] font-normal text-[var(--text-secondary)]"> {t("membership.forever")}</span>
@@ -90,9 +88,9 @@ export function PricingCards() {
           </p>
           <ul className="space-y-2.5 mb-6 text-[14px] text-[var(--text-primary)]">
             {FREE_FEATURE_KEYS.map((k) => (
-              <li key={k} className="flex items-start gap-2">
+              <li key={k} className="flex items-start gap-2 min-w-0">
                 <Check className="h-4 w-4 shrink-0 mt-0.5 text-[var(--accent)]" />
-                {t(k)}
+                <span className="min-w-0 text-pretty">{t(k)}</span>
               </li>
             ))}
           </ul>
@@ -111,7 +109,7 @@ export function PricingCards() {
                 disabled
                 className="w-full btn-ghost text-[14px] disabled:opacity-50"
               >
-                {t("membership.currentPlan")}
+                {t("membership.youHaveMembership")}
               </button>
             ) : (
               <button
@@ -130,72 +128,114 @@ export function PricingCards() {
           </div>
         </div>
 
-        {/* Paid tiers */}
-        {TIER_ORDER.map((plan, idx) => {
+        {/* Paid cadences — same membership, two billing periods */}
+        {TIER_ORDER.map((plan) => {
           const meta = PLANS[plan]
           const current = member && membership?.plan === plan
-          const featureKeys = plan === "pro_monthly" ? PRO_FEATURE_KEYS : PREMIUM_FEATURE_KEYS
+          const otherPaid = member && membership?.plan !== plan
+          const highlighted = plan === "premium_yearly"
           return (
             <div
               key={plan}
-              className={`relative flex flex-col bg-[var(--surface)] border rounded-[var(--radius)] p-6 ${
-                idx === 0
-                  ? "border-[var(--accent)] shadow-[0_0_0_1px_var(--accent)]"
-                  : "border-[var(--border)]"
+              className={`relative flex min-w-0 flex-col bg-[var(--surface)] border rounded-[var(--radius)] p-4 sm:p-6 ${
+                highlighted
+                  ? "order-1 xl:order-3 border-[var(--accent)] shadow-[0_0_0_1px_var(--accent)]"
+                  : "order-2 xl:order-2 border-[var(--border)]"
               }`}
             >
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-display text-[18px] font-semibold">{meta.name}</h3>
-                {idx === 0 && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--accent)] bg-[var(--red-subtle-bg)] rounded-full px-2 py-0.5">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <h3 className="font-display text-[18px] font-semibold">{t(planTitleKey(plan))}</h3>
+                {highlighted && (
+                  <span className="inline-flex items-center gap-1 shrink-0 text-[11px] font-semibold uppercase tracking-wide text-[var(--accent)] bg-[var(--red-subtle-bg)] rounded-full px-2 py-0.5">
                     <Sparkles className="h-3 w-3" />
-                    {t("membership.popular")}
+                    {t("membership.bestValue")}
                   </span>
                 )}
               </div>
-              <p className="text-[28px] font-semibold leading-none mb-1">{priceLabel(plan)}</p>
-              <p className="text-[13px] text-[var(--text-secondary)] mb-5">
-                {t(plan === "pro_monthly" ? "pricing.proTagline" : "pricing.premiumTagline")}
+              <p className="text-[26px] sm:text-[28px] font-semibold leading-none mb-1">
+                {highlighted ? (
+                  <>
+                    {formatUsd(annualMonthlyEquivalent())}
+                    <span className="text-[14px] font-normal text-[var(--text-secondary)]">
+                      {" "}
+                      {t("pricing.perMonth")}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    {formatUsd(meta.price)}
+                    <span className="text-[14px] font-normal text-[var(--text-secondary)]">
+                      {" "}
+                      {t("pricing.perMonth")}
+                    </span>
+                  </>
+                )}
+              </p>
+              {highlighted ? (
+                <>
+                  <p className="text-[13px] text-[var(--text-secondary)] mb-1">
+                    {t("pricing.billedYearly", { yearly: formatUsd(meta.price) })}
+                  </p>
+                  <p className="text-[13px] font-semibold text-[var(--accent)] mb-1 leading-snug text-pretty">
+                    <s className="font-normal text-[var(--text-secondary)] mr-1.5">
+                      {formatUsd(yearlyIfPaidMonthly())}
+                    </s>
+                    {t("pricing.annualDeal", {
+                      savings: formatUsd(annualSavingsVsMonthly()),
+                      months: annualMonthsFree(),
+                    })}
+                  </p>
+                </>
+              ) : (
+                <p className="text-[13px] text-[var(--text-secondary)] mb-1">
+                  {t("pricing.monthlyYearlyHint", { yearly: formatUsd(yearlyIfPaidMonthly()) })}
+                </p>
+              )}
+              <p className="text-[13px] text-[var(--text-secondary)] mb-5 text-pretty">
+                {t(planTaglineKey(plan))}
               </p>
               <ul className="space-y-2.5 mb-6 text-[14px] text-[var(--text-primary)]">
-                {featureKeys.map((k) => (
-                  <li key={k} className="flex items-start gap-2">
+                {MEMBER_FEATURE_KEYS.map((k) => (
+                  <li key={k} className="flex items-start gap-2 min-w-0">
                     <Check className="h-4 w-4 shrink-0 mt-0.5 text-[var(--accent)]" />
-                    {t(k)}
+                    <span className="min-w-0 text-pretty">{t(k)}</span>
                   </li>
                 ))}
               </ul>
               <div className="mt-auto space-y-2">
                 {current ? (
-                  <button
-                    type="button"
-                    onClick={handlePortal}
-                    disabled={busy !== null}
-                    className="w-full btn-ghost text-[14px]"
-                  >
-                    {t("membership.manageBilling")}
-                  </button>
-                ) : member ? (
-                  <button
-                    type="button"
-                    onClick={() => handleSubscribe(plan)}
-                    disabled={busy !== null}
-                    className={`w-full text-[14px] ${
-                      idx === 0 ? "btn-primary" : "btn-ghost"
-                    } disabled:opacity-60`}
-                  >
-                    {busy === plan ? t("membership.openingCheckout") : t("membership.switchPlan")}
-                  </button>
+                  stripeBilled ? (
+                    <button
+                      type="button"
+                      onClick={handlePortal}
+                      disabled={busy !== null}
+                      className="w-full btn-ghost text-[14px]"
+                    >
+                      {t("membership.manageBilling")}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full btn-primary text-[14px] disabled:opacity-50"
+                    >
+                      {t("membership.currentPlan")}
+                    </button>
+                  )
+                ) : otherPaid ? (
+                  <p className="text-[13px] text-[var(--text-secondary)] text-center leading-snug">
+                    {t("membership.switchAfterPeriod")}
+                  </p>
                 ) : (
                   <>
                     <button
                       type="button"
                       onClick={() => setQrPlan(plan)}
                       className={`w-full text-[14px] ${
-                        idx === 0 ? "btn-primary" : "btn-ghost"
+                        highlighted ? "btn-primary" : "btn-ghost"
                       }`}
                     >
-                      {t("membership.payByQr")} {meta.name}
+                      {t("membership.payByQr")} {t(planTitleKey(plan))}
                     </button>
                     <button
                       type="button"

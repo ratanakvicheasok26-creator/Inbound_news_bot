@@ -6,7 +6,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { X, Check, ShieldCheck } from "lucide-react"
-import { PLANS } from "@/lib/plans"
+import { PLANS, MEMBER_FEATURE_KEYS, planTitleKey, formatUsd, annualMonthlyEquivalent } from "@/lib/plans"
 import { paymentQrUrl } from "@/lib/payment-qr"
 import { submitQrPayment } from "@/lib/membership"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
@@ -20,35 +20,20 @@ interface PaymentModalProps {
 
 type Step = "qr" | "done"
 
-const PLAN_FEATURE_KEYS: Record<MembershipPlan, string[]> = {
-  pro_monthly: [
-    "pricing.features.pro1",
-    "pricing.features.pro2",
-    "pricing.features.pro3",
-    "pricing.features.pro4",
-    "pricing.features.pro5",
-    "pricing.features.pro6",
-  ],
-  premium_yearly: [
-    "pricing.features.premium1",
-    "pricing.features.premium2",
-    "pricing.features.premium3",
-    "pricing.features.premium4",
-  ],
-}
-
 /**
- * QR-code payment dialog for a single membership plan. The price is derived
- * from the plan metadata and can't be edited. After paying by QR, the user taps
- * I've paid and immediately sees the verification-pending message. A site
- * admin verifies the payment in their bank app and approves it on /admin/qr
- * before the membership activates.
+ * QR-code payment dialog for a single membership cadence. Monthly and annual
+ * unlock the same membership; only the prepaid period differs. After paying
+ * by QR, the user taps I've paid and immediately sees the verification-pending
+ * message. A site admin verifies the payment in their bank app and approves it
+ * on /admin/qr before the membership activates.
  */
 export function PaymentModal({ plan, onClose }: PaymentModalProps) {
   const { t } = useI18n()
   const router = useRouter()
   const meta = PLANS[plan]
-  const price = `$${meta.price.toFixed(2)}/${meta.cadence}`
+  const planTitle = t(planTitleKey(plan))
+  const isAnnual = plan === "premium_yearly"
+  const periodKey = plan === "pro_monthly" ? "payment.monthlyPeriod" : "payment.annualPeriod"
 
   const [step, setStep] = useState<Step>("qr")
   const [busy, setBusy] = useState(false)
@@ -94,27 +79,38 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[400] bg-[rgba(0,0,0,0.5)] flex items-end sm:items-center justify-center p-0 sm:p-4"
-      style={{ paddingBottom: "var(--mobile-nav-offset)" }}
+      className="fixed inset-0 z-[400] bg-[rgba(0,0,0,0.5)] flex items-end sm:items-center justify-center sm:p-4 max-sm:pb-[var(--mobile-nav-offset)]"
       onClick={close}
       role="dialog"
       aria-modal="true"
-      aria-label={`${meta.name} ${t("payment.planSuffix")}`}
+      aria-label={`${planTitle} ${t("payment.planSuffix")}`}
     >
       <div
-        className="w-full sm:max-w-[440px] bg-[var(--surface)] border border-[var(--border)] sm:rounded-[var(--radius)] rounded-t-[var(--radius)] p-6 md:p-8 text-left shadow-[0_24px_64px_-24px_rgba(0,0,0,0.4)] overflow-y-auto"
+        className="w-full sm:max-w-[440px] min-w-0 bg-[var(--surface)] border border-[var(--border)] sm:rounded-[var(--radius)] rounded-t-[var(--radius)] p-4 sm:p-6 md:p-8 text-left shadow-[0_24px_64px_-24px_rgba(0,0,0,0.4)] overflow-y-auto overflow-x-hidden overscroll-contain"
         style={{
           animation: "riseIn 220ms ease-out",
-          maxHeight: "calc(100dvh - var(--mobile-nav-offset) - 24px)",
+          maxHeight: "min(90dvh, calc(100dvh - var(--mobile-nav-offset)))",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="min-w-0">
             <h2 className="font-display text-[18px] font-semibold leading-tight">
-              {meta.name} {t("payment.planSuffix")}
+              {planTitle} {t("payment.planSuffix")}
             </h2>
-            <p className="text-[28px] font-semibold leading-none mt-2">{price}</p>
+            <p className="text-[28px] font-semibold leading-none mt-2">
+              {isAnnual ? formatUsd(annualMonthlyEquivalent()) : formatUsd(meta.price)}
+              <span className="text-[14px] font-normal text-[var(--text-secondary)]">
+                {" "}
+                {t("pricing.perMonth")}
+              </span>
+            </p>
+            {isAnnual ? (
+              <p className="text-[13px] text-[var(--text-secondary)] mt-2">
+                {t("pricing.billedYearly", { yearly: formatUsd(meta.price) })}
+              </p>
+            ) : null}
+            <p className="text-[13px] text-[var(--text-secondary)] mt-2 text-pretty">{t(periodKey)}</p>
           </div>
           <button
             type="button"
@@ -136,11 +132,11 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
               href={paymentQrUrl(plan)}
               target="_blank"
               rel="noopener noreferrer"
-              className="relative block w-full max-w-[300px] aspect-square mx-auto mb-5 bg-[var(--surface)] p-2 transition-opacity hover:opacity-80"
+              className="relative block w-full max-w-[min(280px,100%)] aspect-square mx-auto mb-5 bg-[var(--surface)] p-2 transition-opacity hover:opacity-80"
             >
               <Image
                 src={paymentQrUrl(plan)}
-                alt={`KHQR payment for ${meta.name} ${t("payment.planSuffix")}`}
+                alt={`KHQR payment for ${planTitle} ${t("payment.planSuffix")}`}
                 fill
                 sizes="300px"
                 priority
@@ -153,7 +149,7 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
               <p className="text-[13px] text-[var(--text-secondary)]">{t("payment.abaPayee")}</p>
               <p className="text-[13px] text-[var(--text-secondary)] mt-2">
                 {t("payment.payExactly")}{" "}
-                <span className="font-semibold text-[var(--text-primary)]">${meta.price.toFixed(2)}</span>
+                <span className="font-semibold text-[var(--text-primary)]">{formatUsd(meta.price)}</span>
               </p>
             </div>
 
@@ -170,7 +166,7 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
               type="button"
               onClick={handleSubmit}
               disabled={busy}
-              className="btn-primary w-full h-11 mt-5 disabled:opacity-50"
+              className="btn-primary w-full min-h-11 mt-5 disabled:opacity-50"
             >
               {busy ? t("payment.confirming") : t("payment.iHavePaid")}
             </button>
@@ -190,9 +186,13 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
             <p className="text-center text-[14px] text-[var(--text-secondary)] mb-2 max-w-[52ch] mx-auto">
               {t("payment.yourPaymentOf")}{" "}
               <span className="font-semibold text-[var(--text-primary)]">
-                ${meta.price.toFixed(2)}
+                {formatUsd(meta.price)}
               </span>{" "}
               {t("payment.recordedNote")}
+            </p>
+
+            <p className="text-center text-[13px] text-[var(--text-secondary)] mb-5 max-w-[52ch] mx-auto">
+              {t(periodKey)}
             </p>
 
             <div className="text-left bg-[var(--surface-alt)] border border-[var(--border)] rounded-[var(--radius-sm)] p-4 mb-5">
@@ -200,10 +200,10 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
                 {t("payment.whatYouGet")}
               </p>
               <ul className="space-y-2 text-[14px] text-[var(--text-primary)]">
-                {PLAN_FEATURE_KEYS[plan].map((k) => (
-                  <li key={k} className="flex items-start gap-2">
+                {MEMBER_FEATURE_KEYS.map((k) => (
+                  <li key={k} className="flex items-start gap-2 min-w-0">
                     <Check className="h-4 w-4 shrink-0 mt-0.5 text-[var(--accent)]" />
-                    {t(k)}
+                    <span className="min-w-0 text-pretty">{t(k)}</span>
                   </li>
                 ))}
               </ul>
@@ -212,15 +212,15 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
             <p className="text-center text-[13px] text-[var(--text-secondary)] mb-5 max-w-[52ch] mx-auto">
               {t("payment.noEmailNote")}
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2">
               <Link
                 href="/account?tab=membership"
-                className="btn-primary flex-1 h-11 text-[14px] inline-flex items-center justify-center"
+                className="btn-primary w-full sm:flex-1 min-h-11 text-[14px] inline-flex items-center justify-center"
                 onClick={close}
               >
                 {t("payment.trackSubmission")}
               </Link>
-              <button type="button" onClick={close} className="btn-ghost h-11 px-4 text-[14px]">
+              <button type="button" onClick={close} className="btn-ghost w-full sm:w-auto min-h-11 px-4 text-[14px]">
                 {t("payment.close")}
               </button>
             </div>

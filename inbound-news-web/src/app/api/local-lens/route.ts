@@ -69,7 +69,7 @@ async function callGroq(prompt: string): Promise<string> {
 
 export async function POST(req: NextRequest) {
   try {
-    // Premium Local Lens is a Premium+ feature — enforce server-side.
+    // Local Lens is a member feature — monthly and annual unlock the same access.
     const access = await requireFeature(req, "local_lens")
     if (!access.ok) {
       return NextResponse.json({ error: "membership_required" }, { status: access.status })

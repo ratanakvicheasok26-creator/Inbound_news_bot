@@ -14,8 +14,7 @@ type Params = { params: Promise<{ id: string }> }
  * Khmer AI content for a story.
  *
  *   Free    → basic Khmer summary (daily cap enforced) — `basic_khmer_translation`
- *   Pro     → full Khmer Decode of every source         — `khmer_decode`
- *   Premium → full Khmer Decode, no daily cap           — `khmer_decode`
+ *   Member  → full Khmer Decode of every source         — `khmer_decode`
  *
  * The Khmer interface itself is free; this endpoint only gates AI-generated
  * Khmer content. Translations are cached in `article_translations` and reused.

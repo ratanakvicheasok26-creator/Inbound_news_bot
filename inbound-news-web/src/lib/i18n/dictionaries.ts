@@ -37,7 +37,7 @@ const nav = {
   createAccount: "Create account",
   signOut: "Sign out",
   openAccount: "Open account",
-  unlockDecode: "Unlock Decode",
+  unlockDecode: "Monthly or yearly",
   supportTheDesk: "Support the desk",
   skipToContent: "Skip to content",
 }
@@ -125,11 +125,11 @@ const story = {
   khmerPanelHint:
     "Translate the full breakdown of this story into Khmer. Saved translations are reused for everyone — no repeated generation.",
   khmerBasicHint:
-    "Free users get a limited Khmer summary. Upgrade to Pro for the full Khmer Decode of every source in this story.",
+    "Free users get a limited Khmer summary. Membership (monthly or annual) unlocks the full Khmer Decode of every source in this story.",
   khmerProHint:
     "You’re reading the full Khmer Decode — every source in this story, translated and recombined.",
-  khmerUnlockFull: "Full Khmer Decode is available with the Pro plan.",
-  khmerUnlockPremium: "This Khmer intelligence feature is available with the Premium plan.",
+  khmerUnlockFull: "Full Khmer Decode is included with membership — monthly or annual.",
+  khmerUnlockPremium: "This Khmer feature is included with membership — monthly or annual.",
   khmerLoading: "Preparing Khmer translation…",
   khmerError: "Couldn’t load the Khmer translation. Please try again.",
   khmerNotSignedIn: "Sign in to read this story in Khmer.",
@@ -192,10 +192,11 @@ const footer = {
 }
 
 const membership = {
-  proOnly: "Pro members only",
+  membersOnlyBadge: "Members only",
   storyForMembers:
-    "This story is for Pro and Premium members — the full breakdown, right when it’s published. Members also fund independent tech coverage from Phnom Penh.",
-  payByQrMonthly: "Pay by QR — $7.99/mo",
+    "This story is gated for members — the full breakdown, when it’s marked as a member story. Membership also funds independent tech coverage from Phnom Penh.",
+  payByQrMonthly: "Pay by QR — {price}/mo",
+  joinFrom: "Join from {price}/mo",
   viewPlans: "View plans",
   preferCard: "Prefer card?",
   payWithStripe: "Pay with Stripe",
@@ -205,66 +206,58 @@ const membership = {
   freeDescription: "Everything Inbound Reports already is.",
   chooseFree: "Choose Free",
   freeConfirmed: "Free confirmed",
-  currentPlan: "Current plan",
+  currentPlan: "Current cadence",
+  youHaveMembership: "You’re a member",
   manageBilling: "Manage billing",
-  switchPlan: "Switch plan",
+  switchAfterPeriod: "Same membership — change monthly or annual when this period ends.",
   payByQr: "Pay by QR —",
   payWithCard: "Pay with card",
-  popular: "Popular",
+  bestValue: "Best value",
   youAreFree: "You’re on the Free plan — no payment needed.",
-  paymentsSetup: "Payments are being set up — please check back soon.",
+  paymentsSetup: "Card payments are being set up — KHQR is available now.",
   alreadyMember: "You’re already a member — manage it from your account.",
   tryAgain: "Something went wrong — please try again.",
   allSet: "You’re all set — refresh to read.",
   billingError: "Couldn’t open billing — please try again.",
-  subscribeFor: "Subscribe to Inbound Reports",
-  membersOnly: "members only",
-  isAvailableWith: "is available with",
-  upgradeTo: "Upgrade to",
-  plusEverythingIn: "Upgrade to unlock it, plus everything in",
-  currentPlanBadge: "Current plan",
+  memberFeatureBody:
+    "{feature} is included with Inbound Reports membership — monthly or annual, same access.",
 }
 
 const pricing = {
   pageTitle: "Membership",
   pageSubtitle:
-    "Independent technology coverage from Phnom Penh. Pick the tier that fits — Khmer UI and translations are included for everyone.",
+    "One Inbound Reports membership. Pay monthly or yearly — same access either way. Khmer UI is free for everyone.",
   goodToKnow: "Good to know",
   payKhqr:
-    "Pay by KHQR — the QR code includes the exact amount, so you just scan and confirm.",
-  payCard: "Prefer a card? Stripe checkout works too — charged at the same price.",
-  alreadyMember: "Already a member? Manage your plan from your account.",
-  cancelAnytime: "Manage or cancel your plan from your account anytime.",
+    "Pay by KHQR from Cambodia — scan the code, tap I’ve paid, then wait for verification (usually a few hours). Access starts when we approve the payment.",
+  payCard:
+    "Prefer a card? Stripe checkout is available when configured, at the same prices. KHQR is the usual path from Cambodia.",
+  alreadyMember: "Already a member? See your cadence and period end on your account.",
+  cancelAnytime:
+    "KHQR is prepaid, not an automatic subscription — access lasts one month or one year from approval. Pay again before it ends to stay a member.",
   freeKeepsEverything: "The Free plan keeps everything Inbound Reports already is",
   backToFeed: "Back to feed",
-  title: "Membership",
-  subtitle:
-    "Independent technology coverage from Phnom Penh. Pick the tier that fits — Khmer UI and translations are included for everyone.",
-  freeTitle: "Free",
-  freeTagline: "$0 forever",
-  proTitle: "Pro",
-  proTagline: "Full premium story access",
-  premiumTitle: "Premium",
-  premiumTagline: "All Pro benefits, billed yearly",
+  monthlyTitle: "Monthly",
+  monthlyTagline: "Flexible — one month at a time, same access as Annual.",
+  annualTitle: "Annual",
+  annualTagline: "The one most members pick. Same access, lowest monthly rate.",
+  perMonth: "/mo",
+  billedYearly: "billed {yearly}/year",
+  annualDeal: "save {savings} · {months} months free",
+  monthlyYearlyHint: "{yearly}/year if you stay all year",
   features: {
     free1: "Latest technology news and all categories",
     free2: "Basic search, summaries, Coverage Intensity, and Glossary",
     free3: "Selected Cambodia and Southeast Asia news",
     free4: "Sponsored content",
-    free5: "Limited access to advanced features",
-    pro1: "Everything in Free",
-    pro2: "Full Decode — what happened, why it matters, and key takeaways",
-    pro3: "Advanced Compare and Coverage Intelligence",
-    pro4: "Personalized Daily Brief",
-    pro5: "Bookmarks and advanced search",
-    pro6: "Sponsored content remains visible",
-    premium1: "Everything in Pro",
-    premium2: "Premium Local Lens for Cambodia and Southeast Asia",
-    premium3: "Undercovered Stories and Trend Radar",
-    premium4: "Sponsored content remains visible",
+    free5: "Limited access to member tools (Daily Brief, Compare, Local Lens)",
+    member1: "Everything in Free",
+    member2: "Member tools — Daily Brief, advanced Compare, Blindspot, bookmarks, and advanced search",
+    member3: "Local Lens for Cambodia and Southeast Asia",
+    member4: "Full Khmer Decode (AI) beyond the free summary",
+    member5: "Full Decode when a story is gated for members",
+    member6: "Sponsored placements stay on — membership funds the desk",
   },
-  khmerNote:
-    "The Khmer website interface and basic Khmer translations are free for all plans. Membership unlocks deeper AI-generated Khmer content.",
 }
 
 const auth = {
@@ -369,7 +362,7 @@ const account = {
   pts: "pts",
   accountSections: "Account sections",
   paidNotice:
-    "Payment successful — you’re now a Pro/Premium member. Premium stories unlock as soon as Stripe confirms your subscription.",
+    "We recorded your card payment — membership unlocks as soon as it’s confirmed. If you paid by KHQR, check Membership for verification status.",
   settings: {
     defaultTier: "Default tier",
     stealthMode: "Stealth mode",
@@ -419,18 +412,24 @@ const account = {
     statusUnpaid: "Unpaid",
     loading: "Loading membership…",
     freePlanTitle: "Free plan",
-    freePlanBody: "You’re on the free plan. Premium stories are for Pro and Premium members.",
+    freePlanBody:
+      "You’re on the free plan. Membership is one product with two cadences — monthly or annual — and unlocks the same member tools either way.",
     seePlans: "See plans",
     whyJoin: "Why join",
-    join1: "Full access to premium stories, right when they’re published.",
-    join2: "Funds independent coverage and the Telegram digest from Phnom Penh.",
-    join3: "Cancel anytime from the billing portal.",
+    join1: "Daily Brief, advanced Compare, Blindspot, Local Lens, bookmarks, and advanced search.",
+    join2: "Full Khmer Decode, and Full Decode on stories gated for members.",
+    join3: "Prepaid by KHQR for one month or one year — pay again when the period ends to stay a member.",
     nextBilling: "Next billing date: {date}",
-    activeSubscription: "Active subscription",
+    accessUntil: "Access until {date}",
+    activeMembership: "Active membership",
+    memberTitle: "Member · {cadence}",
+    prepaidNote:
+      "This is a prepaid KHQR period, not an automatic card charge. Pay again before it ends to keep access.",
+    renew: "Renew",
     cancelsAtEnd: " · cancels at period end",
     opening: "Opening…",
     cancelNote:
-      "Your plan is set to cancel at the end of the billing period — you keep premium access until then. Re-open it anytime from the billing portal.",
+      "Your Stripe plan is set to cancel at the end of the billing period — you keep member access until then.",
     viewProof: "View proof",
     couldNotLoad: "Couldn’t load",
     qrPayments: "QR payments",
@@ -514,13 +513,14 @@ const blindspot = {
 
 const glossary = {
   title: "Glossary",
-  subtitle: "Jargon decoded — search terms, aliases, and plain-language definitions.",
+  intro:
+    "Tech jargon explained in plain English — so you can decode coverage instead of scrolling past it. Tap highlighted terms in a story to open the same definitions.",
+  meta: "{count} terms · English and Khmer",
   placeholder: "Search terms, aliases, or definitions…",
   noResults: "No terms match your search.",
-  backToTop: "Back to top",
-  related: "Related",
-  example: "Example",
-  analogue: "Analogy",
+  alsoMatches: "Also matches:",
+  viewInGlossary: "View in Glossary",
+  all: "All",
 }
 
 const localLens = {
@@ -529,7 +529,7 @@ const localLens = {
   unavailable: "Local Lens is unavailable right now.",
   cambodia: "Cambodia",
   seAsia: "Southeast Asia",
-  premiumOnly: "Premium Local Lens is a Premium feature.",
+  premiumOnly: "Local Lens is included with membership.",
 }
 
 const donate = {
@@ -572,10 +572,16 @@ const payment = {
   verified: "Payment verified",
   closeConfirmation: "Close confirmation",
   welcomeTo: "Welcome to",
+  welcomeMember: "Welcome to Inbound Reports membership",
   membershipActive: "Your {plan} membership is active at",
   accessNote: "Here’s what you now have access to:",
   startReading: "Start reading",
-  alreadyMemberError: "You’re already a member — premium stories are unlocked. Close and refresh to read.",
+  alreadyMemberError:
+    "You’re already a member — member tools are unlocked. Close and refresh if something still looks locked.",
+  monthlyPeriod:
+    "This KHQR payment covers 1 month of membership. It does not auto-renew — pay again when the period ends.",
+  annualPeriod:
+    "This KHQR payment covers 12 months of membership. It does not auto-renew — pay again when the period ends.",
 }
 
 const empty = {
@@ -623,7 +629,7 @@ export const dictionaries = {
       createAccount: "បង្កើតគណនី",
       signOut: "ចាកចេញ",
       openAccount: "បើកគណនី",
-      unlockDecode: "បើកដំណើរការ Decode",
+      unlockDecode: "ប្រចាំខែ ឬប្រចាំឆ្នាំ",
       supportTheDesk: "គាំទ្រក្រុមការងារ",
       skipToContent: "រំលងទៅមាតិកា",
     },
@@ -705,11 +711,11 @@ export const dictionaries = {
       khmerPanelHint:
         "បកប្រែការវិភាគពេញលេញនៃព័ត៌មាននេះទៅជាភាសាខ្មែរ។ ការបកប្រែត្រូវបានរក្សាទុក និងប្រើឡើងវិញសម្រាប់អ្នករាល់គ្នា — មិនបង្កើតឡើងវិញម្តងហើយម្តងទៀតទេ។",
       khmerBasicHint:
-        "អ្នកប្រើ Free ទទួលបានសង្ខេបខ្មែរកំណត់។ ដំឡើងកម្រិត Pro ដើម្បីវិភាគខ្មែរពេញលេញនៃប្រភពទាំងអស់។",
+        "អ្នកប្រើ Free ទទួលបានសង្ខេបខ្មែរកំណត់។ សមាជិកភាព (ប្រចាំខែ ឬប្រចាំឆ្នាំ) បើកការវិភាគខ្មែរពេញលេញនៃប្រភពទាំងអស់។",
       khmerProHint:
         "អ្នកកំពុងអានការវិភាគខ្មែរពេញលេញ — ប្រភពទាំងអស់ក្នុងព័ត៌មាននេះ បកប្រែ និងផ្សំឡើងវិញ។",
-      khmerUnlockFull: "ការវិភាគខ្មែរពេញលេញ អាចប្រើបានជាមួយផែនការ Pro។",
-      khmerUnlockPremium: "លក្ខណៈពិសេសខ្មែរនេះ អាចប្រើបានជាមួយផែនការ Premium។",
+      khmerUnlockFull: "ការវិភាគខ្មែរពេញលេញ រួមបញ្ចូលក្នុងសមាជិកភាព — ប្រចាំខែ ឬប្រចាំឆ្នាំ។",
+      khmerUnlockPremium: "លក្ខណៈពិសេសខ្មែរនេះ រួមបញ្ចូលក្នុងសមាជិកភាព — ប្រចាំខែ ឬប្រចាំឆ្នាំ។",
       khmerLoading: "កំពុងរៀបចំការបកប្រែខ្មែរ…",
       khmerError: "មិនអាចផ្ទុកការបកប្រែខ្មែរបានទេ។ សូមព្យាយាមម្តងទៀត។",
       khmerNotSignedIn: "ចូលគណនីដើម្បីអានព័ត៌មាននេះជាភាសាខ្មែរ។",
@@ -769,10 +775,11 @@ export const dictionaries = {
       legalNav: "ច្បាប់",
     },
     membership: {
-      proOnly: "សម្រាប់សមាជិក Pro តែប៉ុណ្ណោះ",
+      membersOnlyBadge: "សម្រាប់សមាជិកតែប៉ុណ្ណោះ",
       storyForMembers:
-        "ព័ត៌មាននេះសម្រាប់សមាជិក Pro និង Premium — ការវិភាគពេញលេញ ភ្លាមៗនៅពេលផ្សាយ។ សមាជិកក៏គាំទ្រការគ្របដណ្តប់បច្ចេកវិទ្យាឯករាជ្យពីភ្នំពេញផងដែរ។",
-      payByQrMonthly: "បង់តាម QR — $7.99/ខែ",
+        "ព័ត៌មាននេះសម្រាប់សមាជិក — ការវិភាគពេញលេញ នៅពេលព័ត៌មានត្រូវបានដាក់ជាព័ត៌មានសមាជិក។ សមាជិកក៏គាំទ្រការគ្របដណ្តប់បច្ចេកវិទ្យាឯករាជ្យពីភ្នំពេញផងដែរ។",
+      payByQrMonthly: "បង់តាម QR — {price}/ខែ",
+      joinFrom: "ចូលរួមពី {price}/ខែ",
       viewPlans: "មើលផែនការ",
       preferCard: "ចង់បង់តាមកាត?",
       payWithStripe: "បង់តាម Stripe",
@@ -782,67 +789,58 @@ export const dictionaries = {
       freeDescription: "អ្វីគ្រប់យ៉ាងដែល Inbound Reports មានរួចហើយ។",
       chooseFree: "ជ្រើសរើស Free",
       freeConfirmed: "Free បានបញ្ជាក់",
-      currentPlan: "ផែនការបច្ចុប្បន្ន",
+      currentPlan: "កាលកំណត់បច្ចុប្បន្ន",
+      youHaveMembership: "អ្នកជាសមាជិក",
       manageBilling: "គ្រប់គ្រងការទូទាត់",
-      switchPlan: "ប្តូរផែនការ",
+      switchAfterPeriod: "សមាជិកភាពដូចគ្នា — ប្តូរប្រចាំខែ ឬប្រចាំឆ្នាំនៅពេលកាលកំណត់នេះចប់។",
       payByQr: "បង់តាម QR —",
       payWithCard: "បង់តាមកាត",
-      popular: "ពេញនិយម",
+      bestValue: "តម្លៃល្អបំផុត",
       youAreFree: "អ្នកកំពុងប្រើផែនការ Free — មិនចាំបាច់បង់លុយទេ។",
-      paymentsSetup: "ការទូទាត់កំពុងដំណើរការ — សូមត្រឡប់មកវិញពេលក្រោយ។",
+      paymentsSetup: "ការទូទាត់តាមកាតកំពុងដំណើរការ — KHQR អាចប្រើបានឥឡូវនេះ។",
       alreadyMember: "អ្នកជាសមាជិករួចហើយ — គ្រប់គ្រងពីគណនីរបស់អ្នក។",
       tryAgain: "មានបញ្ហាអ្វីមួយ — សូមព្យាយាមម្តងទៀត។",
       allSet: "អ្នករួចរាល់ — សូមធ្វើ Refresh ដើម្បីអាន។",
       billingError: "មិនអាចបើកការទូទាត់បានទេ — សូមព្យាយាមម្តងទៀត។",
-      subscribeFor: "ចុះឈ្មោះ Inbound Reports",
-      membersOnly: "សម្រាប់សមាជិក",
-      isAvailableWith: "អាចប្រើបានជាមួយ",
-      upgradeTo: "ដំឡើងកម្រិតទៅ",
-      plusEverythingIn: "ដំឡើងកម្រិតដើម្បីបើកវា បូករួមទាំងអ្វីៗនៅក្នុង",
-      currentPlanBadge: "ផែនការបច្ចុប្បន្ន",
+      memberFeatureBody:
+        "{feature} រួមបញ្ចូលក្នុងសមាជិកភាព Inbound Reports — ប្រចាំខែ ឬប្រចាំឆ្នាំ ការចូលប្រើដូចគ្នា។",
     },
     pricing: {
       pageTitle: "សមាជិកភាព",
       pageSubtitle:
-        "ការគ្របដណ្តប់បច្ចេកវិទ្យាឯករាជ្យពីភ្នំពេញ។ ជ្រើសរើសកម្រិតដែលសមនឹងអ្នក — ចំណុចប្រទាក់ភាសាខ្មែរ និងការបកប្រែមូលដ្ឋានមានសម្រាប់គ្រប់គ្នា។",
+        "សមាជិកភាព Inbound Reports មួយ។ បង់ប្រចាំខែ ឬប្រចាំឆ្នាំ — ការចូលប្រើដូចគ្នា។ ចំណុចប្រទាក់ខ្មែរឥតគិតថ្លៃសម្រាប់គ្រប់គ្នា។",
       goodToKnow: "គួរដឹង",
       payKhqr:
-        "បង់តាម KHQR — លេខកូដ QR រួមបញ្ចូលចំនួនទឹកប្រាក់ពិតប្រាកដ អ្នកគ្រាន់តែស្កេន និងបញ្ជាក់។",
-      payCard: "ចូលចិត្តបង់តាមកាត? Stripe checkout ក៏ដំណើរការដែរ — គិតថ្លៃក្នុងតម្លៃដូចគ្នា។",
-      alreadyMember: "ជាសមាជិករួចហើយ? គ្រប់គ្រងផែនការពីគណនីរបស់អ្នក។",
+        "បង់តាម KHQR ពីកម្ពុជា — ស្កេនកូដ ប៉ះ «ខ្ញុំបានបង់រួច» រួចរង់ចាំការផ្ទៀងផ្ទាត់ (ជាធម្មតាប៉ុន្មានម៉ោង)។ ការចូលប្រើចាប់ផ្តើមនៅពេលយើងអនុម័ត។",
+      payCard:
+        "ចូលចិត្តបង់តាមកាត? Stripe checkout អាចប្រើបាននៅពេលបានកំណត់ — តម្លៃដូចគ្នា។ KHQR គឺផ្លូវធម្មតាពីកម្ពុជា។",
+      alreadyMember: "ជាសមាជិករួចហើយ? មើលកាលកំណត់ និងថ្ងៃផុតកំណត់នៅលើគណនីរបស់អ្នក។",
       cancelAnytime:
-        "គ្រប់គ្រង ឬលុបចោលផែនការរបស់អ្នកនៅពេលណាក៏បាន ពីគណនីរបស់អ្នក។",
+        "KHQR គឺបង់មុន មិនមែនការជាវស្វ័យប្រវត្តិ — ការចូលប្រើមានរយៈពេលមួយខែ ឬមួយឆ្នាំចាប់ពីការអនុម័ត។ បង់ម្តងទៀតមុនផុតកំណត់ដើម្បីបន្តជាសមាជិក។",
       freeKeepsEverything:
         "ផែនការ Free រក្សាអ្វីៗទាំងអស់ដែល Inbound Reports មានរួចហើយ",
       backToFeed: "ត្រឡប់ទៅព័ត៌មាន",
-      title: "សមាជិកភាព",
-      subtitle:
-        "ការគ្របដណ្តប់បច្ចេកវិទ្យាឯករាជ្យពីភ្នំពេញ។ ជ្រើសរើសកម្រិតដែលសមនឹងអ្នក — ចំណុចប្រទាក់ភាសាខ្មែរ និងការបកប្រែមូលដ្ឋានមានសម្រាប់គ្រប់គ្នា។",
-      freeTitle: "ឥតគិតថ្លៃ",
-      freeTagline: "$0 ជារៀងរហូត",
-      proTitle: "Pro",
-      proTagline: "ចូលប្រើព័ត៌មានពេញលេញ",
-      premiumTitle: "Premium",
-      premiumTagline: "អត្ថប្រយោជន៍ Pro ទាំងអស់ គិតជាឆ្នាំ",
+      monthlyTitle: "ប្រចាំខែ",
+      monthlyTagline: "បត់បែន — បង់មួយខែម្ដង ការចូលប្រើដូចប្រចាំឆ្នាំ។",
+      annualTitle: "ប្រចាំឆ្នាំ",
+      annualTagline: "ជម្រើសដែលសមាជិកភាគច្រើនជ្រើស។ ការចូលប្រើដូចគ្នា តម្លៃក្នុងមួយខែទាបបំផុត។",
+      perMonth: "/ខែ",
+      billedYearly: "គិត {yearly}/ឆ្នាំ",
+      annualDeal: "សន្សំ {savings} · បាន {months} ខែឥតគិតថ្លៃ",
+      monthlyYearlyHint: "{yearly}/ឆ្នាំ ប្រសិនបើនៅពេញមួយឆ្នាំ",
       features: {
         free1: "ព័ត៌មានបច្ចេកវិទ្យាថ្មីៗ និងគ្រប់ប្រភេទ",
         free2: "ស្វែងរកមូលដ្ឋាន សង្ខេប Coverage Intensity និងសទ្ទានុក្រម",
         free3: "ព័ត៌មានកម្ពុជា និងអាស៊ីអាគ្នេយ៍ជ្រើសរើស",
         free4: "ខ្លឹមសារផ្សាយពាណិជ្ជកម្ម",
         free5: "ការចូលប្រើលក្ខណៈពិសេសកម្រិតខ្ពស់កំណត់",
-        pro1: "អ្វីៗទាំងអស់ក្នុង Free",
-        pro2: "Full Decode — អ្វីដែលកើតឡើង ហេតុអ្វីសំខាន់ និងចំណុចសំខាន់ៗ",
-        pro3: "Advanced Compare និង Coverage Intelligence",
-        pro4: "សង្ខេបប្រចាំថ្ងៃផ្ទាល់ខ្លួន",
-        pro5: "Bookmarks និងការស្វែងរកកម្រិតខ្ពស់",
-        pro6: "ខ្លឹមសារផ្សាយពាណិជ្ជកម្មនៅតែបង្ហាញ",
-        premium1: "អ្វីៗទាំងអស់ក្នុង Pro",
-        premium2: "Premium Local Lens សម្រាប់កម្ពុជា និងអាស៊ីអាគ្នេយ៍",
-        premium3: "Undercovered Stories និង Trend Radar",
-        premium4: "ខ្លឹមសារផ្សាយពាណិជ្ជកម្មនៅតែបង្ហាញ",
+        member1: "អ្វីៗទាំងអស់ក្នុង Free",
+        member2: "ឧបករណ៍សមាជិក — សង្ខេបប្រចាំថ្ងៃ ប្រៀបធៀបកម្រិតខ្ពស់ Blindspot ការចំណាំ និងការស្វែងរកកម្រិតខ្ពស់",
+        member3: "Local Lens សម្រាប់កម្ពុជា និងអាស៊ីអាគ្នេយ៍",
+        member4: "Khmer Decode ពេញលេញ (AI) លើសពីសង្ខេបឥតគិតថ្លៃ",
+        member5: "Decode ពេញលេញនៅពេលព័ត៌មានត្រូវបានចាក់សោរសម្រាប់សមាជិក",
+        member6: "ការផ្សាយពាណិជ្ជកម្មនៅតែបង្ហាញ — សមាជិកភាពគាំទ្រក្រុមការងារ",
       },
-      khmerNote:
-        "ចំណុចប្រទាក់ភាសាខ្មែរ និងការបកប្រែខ្មែរមូលដ្ឋាន គឺឥតគិតថ្លៃសម្រាប់គ្រប់ផែនការ។ សមាជិកភាពបើកខ្លឹមសារខ្មែរដែលបង្កើតដោយ AI កាន់តែស៊ីជម្រៅ។",
     },
     auth: {
       loginTitle: "ស្វាគមន៍ត្រឡប់មកវិញ",
@@ -945,7 +943,7 @@ export const dictionaries = {
       pts: "ពិន្ទុ",
       accountSections: "ផ្នែកគណនី",
       paidNotice:
-        "ការទូទាត់ជោគជ័យ — អ្នកឥឡូវជាសមាជិក Pro/Premium។ ព័ត៌មាន Premium នឹងដោះសោភ្លាមៗនៅពេល Stripe បញ្ជាក់ការជាវរបស់អ្នក។",
+        "យើងបានកត់ត្រាការទូទាត់តាមកាត — សមាជិកភាពនឹងដោះសោនៅពេលបញ្ជាក់។ ប្រសិនបើអ្នកបង់តាម KHQR សូមពិនិត្យផ្ទាំងសមាជិកភាពសម្រាប់ស្ថានភាពផ្ទៀងផ្ទាត់។",
       settings: {
         defaultTier: "កម្រិតលំនាំដើម",
         stealthMode: "របៀប Stealth",
@@ -995,18 +993,24 @@ export const dictionaries = {
         statusUnpaid: "មិនបានបង់",
         loading: "កំពុងផ្ទុកសមាជិកភាព…",
         freePlanTitle: "ផែនការ Free",
-        freePlanBody: "អ្នកកំពុងប្រើផែនការ Free។ ព័ត៌មាន Premium សម្រាប់សមាជិក Pro និង Premium។",
+        freePlanBody:
+          "អ្នកកំពុងប្រើផែនការ Free។ សមាជិកភាពគឺផលិតផលមួយ មានពីរកាលកំណត់ — ប្រចាំខែ ឬប្រចាំឆ្នាំ — ហើយបើកឧបករណ៍សមាជិកដូចគ្នា។",
         seePlans: "មើលផែនការ",
         whyJoin: "ហេតុអ្វីចូលរួម",
-        join1: "ចូលប្រើព័ត៌មាន Premium ពេញលេញ ភ្លាមៗនៅពេលផ្សាយ។",
-        join2: "គាំទ្រការគ្របដណ្តប់ឯករាជ្យ និងសង្ខេប Telegram ពីភ្នំពេញ។",
-        join3: "លុបចោលនៅពេលណាក៏បានពីផ្ទាំងគ្រប់គ្រងការទូទាត់។",
+        join1: "សង្ខេបប្រចាំថ្ងៃ, ប្រៀបធៀបកម្រិតខ្ពស់, Blindspot, Local Lens, bookmarks និងការស្វែងរកកម្រិតខ្ពស់។",
+        join2: "ការវិភាគខ្មែរពេញលេញ និង Full Decode នៅពេលព័ត៌មានត្រូវបានដាក់សម្រាប់សមាជិក។",
+        join3: "បង់មុនតាម KHQR មួយខែ ឬមួយឆ្នាំ — បង់ម្តងទៀតនៅពេលកាលកំណត់ចប់ដើម្បីបន្តជាសមាជិក។",
         nextBilling: "កាលបរិច្ឆេទទូទាត់បន្ទាប់៖ {date}",
-        activeSubscription: "ការជាវសកម្ម",
+        accessUntil: "ចូលប្រើបានរហូតដល់ {date}",
+        activeMembership: "សមាជិកភាពសកម្ម",
+        memberTitle: "សមាជិក · {cadence}",
+        prepaidNote:
+          "នេះគឺកាលកំណត់ KHQR បង់មុន មិនមែនការគិតថ្លៃកាតស្វ័យប្រវត្តិ។ បង់ម្តងទៀតមុនផុតកំណត់ដើម្បីរក្សាការចូលប្រើ។",
+        renew: "បន្ត",
         cancelsAtEnd: " · នឹងលុបនៅចុងកាលកំណត់",
         opening: "កំពុងបើក…",
         cancelNote:
-          "ផែនការរបស់អ្នកនឹងត្រូវលុបចោលនៅចុងបញ្ចប់នៃកាលកំណត់ទូទាត់ — អ្នកនៅតែអាចចូលប្រើ Premium រហូតដល់ពេលនោះ។ អាចបើកឡើងវិញបានគ្រប់ពេលពីផ្ទាំងគ្រប់គ្រងការទូទាត់។",
+          "ផែនការ Stripe របស់អ្នកនឹងត្រូវលុបចោលនៅចុងបញ្ចប់នៃកាលកំណត់ទូទាត់ — អ្នកនៅតែអាចចូលប្រើជាសមាជិករហូតដល់ពេលនោះ។",
         viewProof: "មើលភស្តុតាង",
         couldNotLoad: "មិនអាចផ្ទុកបាន",
         qrPayments: "ការទូទាត់ QR",
@@ -1086,13 +1090,14 @@ export const dictionaries = {
     },
     glossary: {
       title: "សទ្ទានុក្រម",
-      subtitle: "ពន្យល់ពាក្យបច្ចេកទេស — ស្វែងរកពាក្យ ឈ្មោះហៅផ្សេង និងនិយមន័យភាសាសាមញ្ញ។",
+      intro:
+        "ពាក្យបច្ចេកទេសពន្យល់ដោយភាសាងាយស្រួលយល់ — ដើម្បីឱ្យអ្នកអាចស្វែងយល់ព័ត៌មានបាន ដោយមិនត្រូវរំលងពាក្យលំបាក។ ចុចពាក្យដែលរំលេចក្នុងអត្ថបទ ដើម្បីមើលនិយមន័យដូចគ្នានេះ។",
+      meta: "{count} ពាក្យ · អង់គ្លេស និងខ្មែរ",
       placeholder: "ស្វែងរកពាក្យ ឈ្មោះហៅផ្សេង ឬនិយមន័យ…",
       noResults: "មិនមានពាក្យដែលត្រូវនឹងការស្វែងរករបស់អ្នកទេ។",
-      backToTop: "ត្រឡប់ទៅខាងលើ",
-      related: "ពាក់ព័ន្ធ",
-      example: "ឧទាហរណ៍",
-      analogue: "ការប្រៀបធៀប",
+      alsoMatches: "ឈ្មោះហៅផ្សេង៖",
+      viewInGlossary: "មើលក្នុងសទ្ទានុក្រម",
+      all: "ទាំងអស់",
     },
     localLens: {
       title: "Local Lens",
@@ -1100,7 +1105,7 @@ export const dictionaries = {
       unavailable: "Local Lens មិនអាចប្រើបាននាពេលនេះទេ។",
       cambodia: "កម្ពុជា",
       seAsia: "អាស៊ីអាគ្នេយ៍",
-      premiumOnly: "Premium Local Lens គឺជាលក្ខណៈពិសេស Premium។",
+      premiumOnly: "Local Lens រួមបញ្ចូលក្នុងសមាជិកភាព។",
     },
     donate: {
       title: "គាំទ្រការគ្របដណ្តប់ឯករាជ្យ",
@@ -1132,10 +1137,16 @@ export const dictionaries = {
       verified: "ការទូទាត់ត្រូវបានផ្ទៀងផ្ទាត់",
       closeConfirmation: "បិទការបញ្ជាក់",
       welcomeTo: "សូមស្វាគមន៍មកកាន់",
+      welcomeMember: "សូមស្វាគមន៍មកកាន់សមាជិកភាព Inbound Reports",
       membershipActive: "សមាជិកភាព {plan} របស់អ្នកសកម្មក្នុងតម្លៃ",
       accessNote: "នេះជាអ្វីដែលអ្នកអាចចូលប្រើបានឥឡូវនេះ៖",
       startReading: "ចាប់ផ្តើមអាន",
-      alreadyMemberError: "អ្នកជាសមាជិករួចហើយ — ព័ត៌មាន Premium ត្រូវបានដោះសោ។ សូមបិទ និងធ្វើឱ្យស្រស់ដើម្បីអាន។",
+      alreadyMemberError:
+        "អ្នកជាសមាជិករួចហើយ — ឧបករណ៍សមាជិកត្រូវបានដោះសោ។ សូមបិទ និងធ្វើឱ្យស្រស់ប្រសិនបើនៅតែមើលទៅដូចជាចាក់សោ។",
+      monthlyPeriod:
+        "ការទូទាត់ KHQR នេះគ្របដណ្តប់សមាជិកភាព 1 ខែ។ មិនបន្តស្វ័យប្រវត្តិ — បង់ម្តងទៀតនៅពេលកាលកំណត់ចប់។",
+      annualPeriod:
+        "ការទូទាត់ KHQR នេះគ្របដណ្តប់សមាជិកភាព 12 ខែ។ មិនបន្តស្វ័យប្រវត្តិ — បង់ម្តងទៀតនៅពេលកាលកំណត់ចប់។",
     },
     topic: {
       title: "ប្រធានបទ",

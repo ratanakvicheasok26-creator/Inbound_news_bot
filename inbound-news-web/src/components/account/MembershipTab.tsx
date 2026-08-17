@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { useMembership, isActiveMembership, openBillingPortal, getQrSubmissions, getProofUrl } from "@/lib/membership"
-import { PLANS, priceLabel } from "@/lib/plans"
+import { priceLabel, hasStripeBilling, planTitleKey } from "@/lib/plans"
 import { PaymentSuccessModal } from "@/components/membership/PaymentSuccessModal"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import type { Membership, QrSubmission } from "@/lib/membership"
@@ -34,6 +34,7 @@ export function MembershipTab() {
   const { t } = useI18n()
   const { loading, membership } = useMembership()
   const member = isActiveMembership(membership)
+  const stripeBilled = hasStripeBilling(membership)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
   const [submissions, setSubmissions] = useState<QrSubmission[]>([])
@@ -97,14 +98,14 @@ export function MembershipTab() {
     return (
       <div>
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6 mb-6">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="min-w-0">
               <h3 className="font-display text-[18px] font-semibold mb-1">{t("account.membershipTab.freePlanTitle")}</h3>
               <p className="text-[14px] text-[var(--text-secondary)] max-w-[52ch]">
                 {t("account.membershipTab.freePlanBody")}
               </p>
             </div>
-            <Link href="/pricing" className="btn-primary text-[14px] h-10 px-5">
+            <Link href="/pricing" className="btn-primary w-full sm:w-auto text-[14px] min-h-10 px-5">
               {t("account.membershipTab.seePlans")}
             </Link>
           </div>
@@ -127,37 +128,54 @@ export function MembershipTab() {
     )
   }
 
-  const meta = membership ? PLANS[membership.plan] : null
+  const planTitle = membership ? t(planTitleKey(membership.plan)) : ""
   const periodEnd = formatDate(membership?.current_period_end ?? null)
 
   return (
     <div>
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-display text-[18px] font-semibold">
-                {meta?.name} — {membership ? priceLabel(membership.plan) : ""}
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <h3 className="font-display text-[18px] font-semibold text-pretty">
+                {t("account.membershipTab.memberTitle", { cadence: planTitle })} —{" "}
+                {membership ? priceLabel(membership.plan) : ""}
               </h3>
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--accent)] bg-[var(--red-subtle-bg)] rounded-full px-2 py-0.5">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--accent)] bg-[var(--red-subtle-bg)] rounded-full px-2 py-0.5 shrink-0">
                 {membership ? t(STATUS_KEYS[membership.status]) : ""}
               </span>
             </div>
             <p className="text-[14px] text-[var(--text-secondary)]">
               {periodEnd
-                ? t("account.membershipTab.nextBilling", { date: periodEnd })
-                : t("account.membershipTab.activeSubscription")}
+                ? stripeBilled
+                  ? t("account.membershipTab.nextBilling", { date: periodEnd })
+                  : t("account.membershipTab.accessUntil", { date: periodEnd })
+                : t("account.membershipTab.activeMembership")}
               {membership?.cancel_at_period_end ? t("account.membershipTab.cancelsAtEnd") : ""}
             </p>
+            {!stripeBilled && (
+              <p className="mt-2 text-[13px] text-[var(--text-secondary)] max-w-[58ch]">
+                {t("account.membershipTab.prepaidNote")}
+              </p>
+            )}
           </div>
-          <button
-            type="button"
-            onClick={handlePortal}
-            disabled={busy}
-            className="btn-ghost text-[14px] h-10 px-5 disabled:opacity-60"
-          >
-            {busy ? t("account.membershipTab.opening") : t("account.manageBilling")}
-          </button>
+          {stripeBilled ? (
+            <button
+              type="button"
+              onClick={handlePortal}
+              disabled={busy}
+              className="btn-ghost w-full sm:w-auto text-[14px] min-h-10 px-5 disabled:opacity-60"
+            >
+              {busy ? t("account.membershipTab.opening") : t("account.manageBilling")}
+            </button>
+          ) : (
+            <Link
+              href="/pricing"
+              className="btn-ghost w-full sm:w-auto text-[14px] min-h-10 px-5 inline-flex items-center justify-center"
+            >
+              {t("account.membershipTab.renew")}
+            </Link>
+          )}
         </div>
         {membership?.cancel_at_period_end && (
           <p className="mt-4 text-[13px] text-[var(--text-secondary)] max-w-[58ch]">
@@ -246,13 +264,13 @@ function QrSubmissionsSection({
       <h3 className="font-display text-[16px] font-semibold mb-4">{t("account.membershipTab.qrPayments")}</h3>
       <ul className="divide-y divide-[var(--border)]">
         {submissions.map((s) => {
-          const meta = PLANS[s.plan]
+          const cadence = t(planTitleKey(s.plan))
           const tone = SUBMISSION_STATUS[s.status].tone
           return (
           <li key={s.id} className="py-3 flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-[14px] font-semibold text-[var(--text-primary)]">
-                {meta?.name} · {Number(s.amount).toFixed(2)} {s.currency || "USD"}
+                {cadence} · {Number(s.amount).toFixed(2)} {s.currency || "USD"}
               </p>
               <p className="text-[13px] text-[var(--text-secondary)]">
                 {s.aba_transaction_id ? `${t("account.membershipTab.txn")} ${s.aba_transaction_id} · ` : ""}

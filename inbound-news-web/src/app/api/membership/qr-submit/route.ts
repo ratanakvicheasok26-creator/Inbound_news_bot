@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { authenticateRequest } from "@/lib/api-auth"
 import { createUserClient, supabaseAdmin } from "@/lib/supabase-server"
-import { PLANS } from "@/lib/plans"
+import { PLANS, isActiveMembership } from "@/lib/plans"
 import type { MembershipPlan } from "@/lib/plans"
 
 /**
@@ -34,12 +34,11 @@ export async function POST(req: NextRequest) {
   const supabase = createUserClient(`Bearer ${auth.token}`)
   const { data: existing } = await supabase
     .from("memberships")
-    .select("user_id, status")
+    .select("user_id, status, current_period_end")
     .eq("user_id", auth.user.id)
     .maybeSingle()
 
-  const status = (existing as { status?: string } | null)?.status
-  if (status === "active" || status === "trialing") {
+  if (isActiveMembership(existing)) {
     return NextResponse.json({ error: "already_member" }, { status: 409 })
   }
 

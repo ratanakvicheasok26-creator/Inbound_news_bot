@@ -41,12 +41,14 @@ export function MobileBottomNav() {
               key={item.href}
               href={item.href}
               aria-current={isActive ? "page" : undefined}
-              className={`flex flex-col items-center justify-center gap-0.5 w-full h-full transition-colors ${
+              className={`flex min-w-0 flex-col items-center justify-center gap-0.5 w-full h-full px-0.5 transition-colors ${
                 isActive ? "text-[var(--accent)]" : "text-[var(--text-secondary)]"
               }`}
             >
-              <item.icon className="h-4 w-4" />
-              <span className="text-[10px] font-semibold uppercase tracking-wide">{t(item.key)}</span>
+              <item.icon className="h-4 w-4 shrink-0" />
+              <span className="max-w-full text-[9px] font-semibold leading-tight tracking-normal text-center line-clamp-2">
+                {t(item.key)}
+              </span>
             </Link>
           )
         })}
