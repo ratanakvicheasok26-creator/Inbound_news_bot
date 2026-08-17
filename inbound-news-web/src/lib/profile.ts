@@ -13,6 +13,7 @@ export interface ReadEntry {
 }
 
 export interface UserProfile {
+  displayName?: string
   literacyScore: number
   readingStreak: { current: number; lastDate: string }
   recentlyRead: ReadEntry[]
@@ -192,14 +193,19 @@ export async function loadPreferencesFromSupabase(): Promise<void> {
   if (typeof window === "undefined") return
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
-  const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single()
-  if (!data) return
-  saveProfile({
-    preferences: {
-      defaultTier: data.default_tier || "standard",
-      defaultLang: data.default_lang || "en",
-      stealthMode: data.stealth_mode ?? false,
-      telegramDigest: data.telegram_digest ?? false,
-    },
-  })
+  try {
+    const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle()
+    if (!data) return
+    saveProfile({
+      displayName: data.display_name || undefined,
+      preferences: {
+        defaultTier: data.default_tier || "standard",
+        defaultLang: data.default_lang || "en",
+        stealthMode: data.stealth_mode ?? false,
+        telegramDigest: data.telegram_digest ?? false,
+      },
+    })
+  } catch {
+    // Profile row may not exist yet (trigger not applied) — silently skip
+  }
 }

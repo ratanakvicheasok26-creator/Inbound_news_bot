@@ -46,6 +46,21 @@ export default function AccountPage() {
       setUser(u)
       setLoading(false)
       if (u) {
+        // Ensure profile row exists (trigger may not have run)
+        const { data: existing } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", u.id)
+          .maybeSingle()
+        if (!existing) {
+          await supabase.from("profiles").upsert(
+            {
+              id: u.id,
+              display_name: u.user_metadata?.display_name || u.email?.split("@")[0] || "Reader",
+            },
+            { onConflict: "id" },
+          )
+        }
         await loadPreferencesFromSupabase()
       } else {
         router.replace("/login")
@@ -132,8 +147,12 @@ export default function AccountPage() {
     return null
   }
 
-  const displayName = user?.email?.split("@")[0] || t("account.guestReader")
   const liveProfile = profileTick >= 0 ? getProfile() : profile
+  const displayName =
+    liveProfile.displayName ||
+    user?.user_metadata?.display_name ||
+    user?.email?.split("@")[0] ||
+    t("account.guestReader")
 
   return (
     <div className="container container-lg py-10 md:py-14">

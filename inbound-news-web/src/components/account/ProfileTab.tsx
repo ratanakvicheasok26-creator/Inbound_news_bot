@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/auth"
-import { getProfile, updatePreferences, syncPreferencesToSupabase } from "@/lib/profile"
+import { getProfile, saveProfile, updatePreferences, syncPreferencesToSupabase } from "@/lib/profile"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import type { User } from "@supabase/supabase-js"
 
@@ -85,6 +85,7 @@ export function ProfileTab({ user }: ProfileTabProps) {
         return
       }
       updatePreferences({ defaultLang: lang })
+      saveProfile({ displayName: name })
       setDisplayName(name)
       setSaved(true)
     } catch {
