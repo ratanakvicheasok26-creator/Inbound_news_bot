@@ -43,21 +43,21 @@ export const PLANS: Record<
     tagline: string
   }
 > = {
-  // Display / recorded amounts. Replace public/khqr7_9.png and
-  // public/khqr49_99.png with KHQR codes for these figures before taking live payments.
+  // Display / recorded amounts. Match public/khqr7_9.png ($7.99) and
+  // public/khqr49_99.png ($49.99) with KHQR codes for live payments.
   pro_monthly: {
-    name: "Monthly",
-    price: 6.99,
+    name: "Pro",
+    price: 7.99,
     cadence: "month",
     periodMonths: 1,
-    tagline: "Same membership, billed monthly",
+    tagline: "Full premium story access",
   },
   premium_yearly: {
-    name: "Annual",
-    price: 59.99,
+    name: "Premium",
+    price: 49.99,
     cadence: "year",
     periodMonths: 12,
-    tagline: "Same membership, billed yearly",
+    tagline: "All Pro benefits, billed yearly",
   },
 }
 

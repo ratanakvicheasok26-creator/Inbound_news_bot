@@ -1,34 +1,45 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
+import { motion, AnimatePresence } from "framer-motion"
 import { Check, Sparkles } from "lucide-react"
+import NumberFlow from "@number-flow/react"
+import confetti from "canvas-confetti"
 import { useMembership, subscribe, openBillingPortal } from "@/lib/membership"
 import {
   PLANS,
   formatUsd,
   isActiveMembership,
   hasStripeBilling,
-  MEMBER_FEATURE_KEYS,
-  planTitleKey,
-  planTaglineKey,
-  annualMonthlyEquivalent,
-  annualSavingsVsMonthly,
-  annualMonthsFree,
-  yearlyIfPaidMonthly,
   type MembershipPlan,
 } from "@/lib/plans"
 import { PaymentModal } from "@/components/membership/PaymentModal"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
+import { InteractiveStarfield } from "@/components/ui/pricing"
 
-const TIER_ORDER: MembershipPlan[] = ["pro_monthly", "premium_yearly"]
+const FREE_FEATURES = [
+  "Latest technology news and all categories",
+  "Basic search, summaries, Coverage Intensity, and Glossary",
+  "Selected Cambodia and Southeast Asia news",
+  "Sponsored content",
+  "Limited access to advanced features",
+]
 
-const FREE_FEATURE_KEYS = [
-  "pricing.features.free1",
-  "pricing.features.free2",
-  "pricing.features.free3",
-  "pricing.features.free4",
-  "pricing.features.free5",
+const PRO_FEATURES = [
+  "Everything in Free",
+  "Full Decode — what happened, why it matters, and key takeaways",
+  "Advanced Compare and Coverage Intelligence",
+  "Personalized Daily Brief",
+  "Bookmarks and advanced search",
+  "Sponsored content remains visible",
+]
+
+const PREMIUM_FEATURES = [
+  "Everything in Pro",
+  "Premium Local Lens for Cambodia and Southeast Asia",
+  "Undercovered Stories and Trend Radar",
+  "Sponsored content remains visible",
 ]
 
 export function PricingCards() {
@@ -37,10 +48,36 @@ export function PricingCards() {
   const { membership } = useMembership()
   const member = isActiveMembership(membership)
   const stripeBilled = hasStripeBilling(membership)
+
+  const [isMonthly, setIsMonthly] = useState(true)
   const [busy, setBusy] = useState<MembershipPlan | null>(null)
   const [error, setError] = useState("")
   const [qrPlan, setQrPlan] = useState<MembershipPlan | null>(null)
   const [freeChosen, setFreeChosen] = useState(false)
+
+  const toggleRef = useRef<HTMLDivElement>(null)
+
+  const handleToggle = (monthly: boolean) => {
+    if (isMonthly === monthly) return
+    setIsMonthly(monthly)
+
+    if (!monthly && toggleRef.current) {
+      const rect = toggleRef.current.getBoundingClientRect()
+      const originX = (rect.left + rect.width * 0.75) / window.innerWidth
+      const originY = (rect.top + rect.height / 2) / window.innerHeight
+
+      confetti({
+        particleCount: 50,
+        spread: 60,
+        origin: { x: originX, y: originY },
+        colors: ["#FF0030", "#FFFFFF", "#2563EB", "#0F766E"],
+        ticks: 200,
+        gravity: 1.1,
+        decay: 0.94,
+        startVelocity: 25,
+      })
+    }
+  }
 
   async function handleSubscribe(plan: MembershipPlan) {
     setBusy(plan)
@@ -74,188 +111,250 @@ export function PricingCards() {
     }
   }
 
+  const targetPlan: MembershipPlan = isMonthly ? "pro_monthly" : "premium_yearly"
+  const isCurrentPlan = member && membership?.plan === targetPlan
+  const isOtherPaid = member && membership?.plan !== targetPlan
+  const activeFeatures = isMonthly ? PRO_FEATURES : PREMIUM_FEATURES
+
   return (
-    <div>
-      <div className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3 items-stretch">
-        {/* Free — last on phones (Annual first), first on desktop */}
-        <div className="order-3 xl:order-1 flex min-w-0 flex-col bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-4 sm:p-6 md:col-span-2 xl:col-span-1">
-          <h3 className="font-display text-[18px] font-semibold mb-1">{t("membership.free")}</h3>
-          <p className="text-[28px] font-semibold leading-none mb-4">
-            $0<span className="text-[14px] font-normal text-[var(--text-secondary)]"> {t("membership.forever")}</span>
-          </p>
-          <p className="text-[13px] text-[var(--text-secondary)] mb-5">
-            {t("membership.freeDescription")}
-          </p>
-          <ul className="space-y-2.5 mb-6 text-[14px] text-[var(--text-primary)]">
-            {FREE_FEATURE_KEYS.map((k) => (
-              <li key={k} className="flex items-start gap-2 min-w-0">
-                <Check className="h-4 w-4 shrink-0 mt-0.5 text-[var(--accent)]" />
-                <span className="min-w-0 text-pretty">{t(k)}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-auto">
-            {freeChosen ? (
-              <button
-                type="button"
-                disabled
-                className="w-full btn-primary text-[14px] disabled:opacity-50"
-              >
-                {t("membership.freeConfirmed")}
-              </button>
-            ) : member ? (
-              <button
-                type="button"
-                disabled
-                className="w-full btn-ghost text-[14px] disabled:opacity-50"
-              >
-                {t("membership.youHaveMembership")}
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setFreeChosen(true)}
-                className="w-full btn-ghost text-[14px]"
-              >
-                {t("membership.chooseFree")}
-              </button>
+    <div className="relative w-full overflow-hidden rounded-2xl py-4 sm:py-6">
+      <InteractiveStarfield />
+
+      {/* Monthly / Annual Toggle */}
+      <div className="relative z-10 flex justify-center mb-8 sm:mb-12">
+        <div
+          ref={toggleRef}
+          className="relative inline-flex items-center rounded-full bg-neutral-900 border border-neutral-800 p-1 shadow-inner"
+        >
+          <button
+            type="button"
+            onClick={() => handleToggle(true)}
+            className={`relative rounded-full px-5 sm:px-6 py-2 text-xs sm:text-sm font-semibold transition-colors duration-200 cursor-pointer ${
+              isMonthly ? "text-neutral-900" : "text-neutral-400 hover:text-neutral-200"
+            }`}
+          >
+            {isMonthly && (
+              <motion.div
+                layoutId="pricing-active-pill"
+                className="absolute inset-0 rounded-full bg-white dark:bg-neutral-100 shadow-md"
+                transition={{ type: "spring", stiffness: 500, damping: 35 }}
+              />
             )}
-            {freeChosen && (
-              <p className="mt-3 text-[13px] text-[var(--text-secondary)] text-center">
-                {t("membership.youAreFree")}
+            <span className="relative z-10">Monthly</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleToggle(false)}
+            className={`relative rounded-full px-5 sm:px-6 py-2 text-xs sm:text-sm font-semibold transition-colors duration-200 cursor-pointer ${
+              !isMonthly ? "text-neutral-900" : "text-neutral-400 hover:text-neutral-200"
+            }`}
+          >
+            {!isMonthly && (
+              <motion.div
+                layoutId="pricing-active-pill"
+                className="absolute inset-0 rounded-full bg-white dark:bg-neutral-100 shadow-md"
+                transition={{ type: "spring", stiffness: 500, damping: 35 }}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-1.5">
+              Annual
+              <span
+                className={`text-xs font-bold ${
+                  !isMonthly ? "text-[#FF0030]" : "text-[#FF0030]/90"
+                }`}
+              >
+                (Save 48%)
+              </span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* 2-Card Layout (Free on Left, Paid Pro/Premium on Right) */}
+      <div className="relative z-10 max-w-4xl mx-auto grid gap-6 sm:gap-8 grid-cols-1 md:grid-cols-2 items-stretch">
+        {/* 1. FREE PLAN */}
+        <div className="animate-card-in flex min-w-0 flex-col bg-neutral-950/80 backdrop-blur-md border border-neutral-800 rounded-2xl p-6 sm:p-8 transition-all duration-200 hover:border-neutral-700">
+          <div className="flex-1 flex flex-col">
+            <div>
+              <h3 className="font-display text-2xl font-bold text-white mb-1">
+                {t("membership.free")}
+              </h3>
+              <div className="flex items-baseline gap-1.5 mt-3 mb-1">
+                <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">
+                  $0
+                </span>
+                <span className="text-sm font-normal text-neutral-400">
+                  {t("membership.forever")}
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-neutral-400 mt-2 mb-6 min-h-[38px]">
+                {t("membership.freeDescription")}
               </p>
-            )}
+            </div>
+
+            <ul className="space-y-3.5 mb-8 text-xs sm:text-sm text-neutral-300">
+              {FREE_FEATURES.map((feat) => (
+                <li key={feat} className="flex items-start gap-2.5 min-w-0">
+                  <Check className="h-4 w-4 shrink-0 mt-0.5 text-[#FF0030]" />
+                  <span className="min-w-0 text-pretty leading-snug">{feat}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-auto pt-2">
+              {freeChosen ? (
+                <button
+                  type="button"
+                  disabled
+                  className="w-full h-11 rounded-xl bg-[#FF0030] text-white text-sm font-semibold disabled:opacity-60"
+                >
+                  {t("membership.freeConfirmed")}
+                </button>
+              ) : member ? (
+                <button
+                  type="button"
+                  disabled
+                  className="w-full h-11 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-400 text-sm font-semibold disabled:opacity-60"
+                >
+                  {t("membership.youHaveMembership")}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setFreeChosen(true)}
+                  className="w-full h-11 rounded-xl bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 text-white text-sm font-semibold transition-colors cursor-pointer"
+                >
+                  {t("membership.chooseFree")}
+                </button>
+              )}
+              {freeChosen && (
+                <p className="mt-3 text-xs text-neutral-400 text-center">
+                  {t("membership.youAreFree")}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Paid cadences — same membership, two billing periods */}
-        {TIER_ORDER.map((plan) => {
-          const meta = PLANS[plan]
-          const current = member && membership?.plan === plan
-          const otherPaid = member && membership?.plan !== plan
-          const highlighted = plan === "premium_yearly"
-          return (
-            <div
-              key={plan}
-              className={`relative flex min-w-0 flex-col bg-[var(--surface)] border rounded-[var(--radius)] p-4 sm:p-6 ${
-                highlighted
-                  ? "order-1 xl:order-3 border-[var(--accent)] shadow-[0_0_0_1px_var(--accent)]"
-                  : "order-2 xl:order-2 border-[var(--border)]"
-              }`}
-            >
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h3 className="font-display text-[18px] font-semibold">{t(planTitleKey(plan))}</h3>
-                {highlighted && (
-                  <span className="inline-flex items-center gap-1 shrink-0 text-[11px] font-semibold uppercase tracking-wide text-[var(--accent)] bg-[var(--red-subtle-bg)] rounded-full px-2 py-0.5">
-                    <Sparkles className="h-3 w-3" />
-                    {t("membership.bestValue")}
-                  </span>
-                )}
-              </div>
-              <p className="text-[26px] sm:text-[28px] font-semibold leading-none mb-1">
-                {highlighted ? (
-                  <>
-                    {formatUsd(annualMonthlyEquivalent())}
-                    <span className="text-[14px] font-normal text-[var(--text-secondary)]">
-                      {" "}
-                      {t("pricing.perMonth")}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    {formatUsd(meta.price)}
-                    <span className="text-[14px] font-normal text-[var(--text-secondary)]">
-                      {" "}
-                      {t("pricing.perMonth")}
-                    </span>
-                  </>
-                )}
-              </p>
-              {highlighted ? (
-                <>
-                  <p className="text-[13px] text-[var(--text-secondary)] mb-1">
-                    {t("pricing.billedYearly", { yearly: formatUsd(meta.price) })}
-                  </p>
-                  <p className="text-[13px] font-semibold text-[var(--accent)] mb-1 leading-snug text-pretty">
-                    <s className="font-normal text-[var(--text-secondary)] mr-1.5">
-                      {formatUsd(yearlyIfPaidMonthly())}
-                    </s>
-                    {t("pricing.annualDeal", {
-                      savings: formatUsd(annualSavingsVsMonthly()),
-                      months: annualMonthsFree(),
-                    })}
-                  </p>
-                </>
-              ) : (
-                <p className="text-[13px] text-[var(--text-secondary)] mb-1">
-                  {t("pricing.monthlyYearlyHint", { yearly: formatUsd(yearlyIfPaidMonthly()) })}
-                </p>
-              )}
-              <p className="text-[13px] text-[var(--text-secondary)] mb-5 text-pretty">
-                {t(planTaglineKey(plan))}
-              </p>
-              <ul className="space-y-2.5 mb-6 text-[14px] text-[var(--text-primary)]">
-                {MEMBER_FEATURE_KEYS.map((k) => (
-                  <li key={k} className="flex items-start gap-2 min-w-0">
-                    <Check className="h-4 w-4 shrink-0 mt-0.5 text-[var(--accent)]" />
-                    <span className="min-w-0 text-pretty">{t(k)}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-auto space-y-2">
-                {current ? (
-                  stripeBilled ? (
-                    <button
-                      type="button"
-                      onClick={handlePortal}
-                      disabled={busy !== null}
-                      className="w-full btn-ghost text-[14px]"
-                    >
-                      {t("membership.manageBilling")}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled
-                      className="w-full btn-primary text-[14px] disabled:opacity-50"
-                    >
-                      {t("membership.currentPlan")}
-                    </button>
-                  )
-                ) : otherPaid ? (
-                  <p className="text-[13px] text-[var(--text-secondary)] text-center leading-snug">
-                    {t("membership.switchAfterPeriod")}
-                  </p>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setQrPlan(plan)}
-                      className={`w-full text-[14px] ${
-                        highlighted ? "btn-primary" : "btn-ghost"
-                      }`}
-                    >
-                      {t("membership.payByQr")} {t(planTitleKey(plan))}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSubscribe(plan)}
-                      disabled={busy !== null}
-                      className="w-full text-[13px] font-semibold text-[var(--text-secondary)] hover:text-[var(--accent)] disabled:opacity-60"
-                    >
-                      {busy === plan ? t("membership.openingCheckout") : t("membership.payWithCard")}
-                    </button>
-                  </>
-                )}
-              </div>
+        {/* 2. PAID PLAN (Pro when Monthly, Premium when Annual) */}
+        <div className="animate-card-in-delayed relative flex min-w-0 flex-col rounded-2xl p-6 sm:p-8 bg-neutral-950/90 backdrop-blur-md border-2 border-[#FF0030] shadow-xl shadow-[#FF0030]/10 transition-all duration-200">
+          {/* POPULAR Badge */}
+          <div className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 z-20">
+            <div className="bg-[#FF0030] py-1 px-4 rounded-full flex items-center gap-1.5 shadow-md">
+              <Sparkles className="text-white h-3.5 w-3.5 fill-current" />
+              <span className="text-white text-xs font-bold uppercase tracking-wider">
+                POPULAR
+              </span>
             </div>
-          )
-        })}
+          </div>
+
+          <div className="flex-1 flex flex-col">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-display text-2xl font-bold text-white transition-all duration-200">
+                  {isMonthly ? "Pro" : "Premium"}
+                </h3>
+              </div>
+
+              <div className="flex items-baseline gap-1 mt-3 mb-1">
+                <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">
+                  <NumberFlow
+                    value={isMonthly ? 7.99 : 49.99}
+                    format={{
+                      style: "currency",
+                      currency: "USD",
+                      minimumFractionDigits: 2,
+                    }}
+                    className="font-variant-numeric: tabular-nums"
+                  />
+                </span>
+                <span className="text-sm font-medium text-neutral-400">
+                  {isMonthly ? "/mo" : "/yr"}
+                </span>
+              </div>
+
+              <p className="text-xs sm:text-sm text-neutral-400 mt-2 mb-6 min-h-[38px] transition-all duration-200">
+                {isMonthly
+                  ? "Full premium story access"
+                  : "All Pro benefits, billed yearly"}
+              </p>
+            </div>
+
+            {/* Dynamic Perks list with smooth transition */}
+            <div className="min-h-[220px] mb-8">
+              <AnimatePresence mode="wait">
+                <motion.ul
+                  key={isMonthly ? "pro-perks" : "premium-perks"}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.18 }}
+                  className="space-y-3.5 text-xs sm:text-sm text-neutral-300"
+                >
+                  {activeFeatures.map((feat) => (
+                    <li key={feat} className="flex items-start gap-2.5 min-w-0">
+                      <Check className="h-4 w-4 shrink-0 mt-0.5 text-[#FF0030]" />
+                      <span className="min-w-0 text-pretty leading-snug">{feat}</span>
+                    </li>
+                  ))}
+                </motion.ul>
+              </AnimatePresence>
+            </div>
+
+            <div className="mt-auto pt-2 space-y-2.5">
+              {isCurrentPlan ? (
+                stripeBilled ? (
+                  <button
+                    type="button"
+                    onClick={handlePortal}
+                    disabled={busy !== null}
+                    className="w-full h-11 rounded-xl bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 text-white text-sm font-semibold transition-colors cursor-pointer"
+                  >
+                    {t("membership.manageBilling")}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    className="w-full h-11 rounded-xl bg-[#FF0030] text-white text-sm font-semibold disabled:opacity-60"
+                  >
+                    {t("membership.currentPlan")}
+                  </button>
+                )
+              ) : isOtherPaid ? (
+                <p className="text-xs text-neutral-400 text-center leading-snug py-2">
+                  {t("membership.switchAfterPeriod")}
+                </p>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setQrPlan(targetPlan)}
+                    className="w-full h-11 rounded-xl bg-[#FF0030] hover:bg-[#FF0030]/90 text-white text-sm font-semibold shadow-md shadow-[#FF0030]/20 transition-all cursor-pointer"
+                  >
+                    Pay by QR — {isMonthly ? "Pro" : "Premium"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSubscribe(targetPlan)}
+                    disabled={busy !== null}
+                    className="w-full text-xs font-semibold text-neutral-400 hover:text-white transition-colors disabled:opacity-60 cursor-pointer text-center py-1"
+                  >
+                    {busy === targetPlan
+                      ? t("membership.openingCheckout")
+                      : t("membership.payWithCard")}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {error && (
         <p
-          className="mt-5 p-3 rounded-[var(--radius-sm)] bg-[var(--red-subtle-bg)] text-[13px] font-semibold text-[var(--accent)] text-center"
+          className="mt-6 max-w-4xl mx-auto p-4 rounded-xl bg-[#FF0030]/10 border border-[#FF0030]/20 text-sm font-medium text-[#FF0030] text-center"
           role="alert"
         >
           {error}

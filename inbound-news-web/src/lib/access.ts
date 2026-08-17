@@ -66,6 +66,7 @@ const FEATURE_TIER: Record<Feature, PlanTier> = {
   khmer_premium_analysis: "pro",
 }
 
+
 /** Human-friendly feature names for locked / upgrade UI copy. */
 export const FEATURE_LABELS: Record<Feature, string> = {
   full_decode: "Full Decode",

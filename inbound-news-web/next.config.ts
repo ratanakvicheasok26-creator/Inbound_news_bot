@@ -48,6 +48,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: __dirname,
+  },
   // Allow phone/LAN access to the dev server. Auto-detects the current LAN IPs
   // so this keeps working when the machine's IP changes (DHCP).
   allowedDevOrigins: getLanAddresses(),
