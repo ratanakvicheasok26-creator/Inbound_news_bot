@@ -69,7 +69,15 @@ export default function ConfirmPage() {
   }, [searchParams, router, t])
 
   return (
-    <AuthShell title={t("auth.confirmTitle")} subtitle={t("auth.confirmSubtitle")}>
+    <AuthShell
+      title={t("auth.confirmTitle")}
+      subtitle={t("auth.confirmSubtitle")}
+      footer={
+        <Link href="/login" className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent)]">
+          {t("auth.goToSignIn")}
+        </Link>
+      }
+    >
       {status === "loading" && (
         <div className="text-center py-4">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-[var(--border)] border-t-[var(--accent)]" />
@@ -99,23 +107,15 @@ export default function ConfirmPage() {
           <p className="text-[14px] text-[var(--text-primary)] font-semibold mb-1">
             {t("auth.confirmFailed")}
           </p>
-          <p className="text-[13px] text-[var(--text-secondary)] mb-6 max-w-[48ch] mx-auto">
+          <p className="text-[13px] text-[var(--text-secondary)] mb-4 max-w-[48ch] mx-auto">
             {errorMsg}
           </p>
-          <div className="space-y-3">
-            <Link
-              href="/login"
-              className="btn-primary w-full h-11 inline-flex items-center justify-center"
-            >
-              {t("auth.goToSignIn")}
-            </Link>
-            <Link
-              href="/signup"
-              className="block text-center text-[13px] text-[var(--text-secondary)] hover:text-[var(--accent)]"
-            >
-              {t("auth.tryAgain")}
-            </Link>
-          </div>
+          <Link
+            href="/signup"
+            className="btn-primary w-full h-11 inline-flex items-center justify-center"
+          >
+            {t("auth.tryAgain")}
+          </Link>
         </div>
       )}
     </AuthShell>

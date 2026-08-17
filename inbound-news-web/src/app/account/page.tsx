@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { User, CreditCard, BarChart3, BookOpen, Settings, LogOut } from "lucide-react"
 import { supabase, signOut } from "@/lib/auth"
 import { getProfile, loadPreferencesFromSupabase } from "@/lib/profile"
 import { ProfileTab } from "@/components/account/ProfileTab"
@@ -15,16 +16,28 @@ import { PaymentSuccessModal } from "@/components/membership/PaymentSuccessModal
 import { getMembership, isActiveMembership, refreshAllMemberships } from "@/lib/membership"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import type { MembershipPlan } from "@/lib/plans"
-import type { User } from "@supabase/supabase-js"
+import type { User as SupabaseUser } from "@supabase/supabase-js"
 
 const tabIds = ["profile", "membership", "dashboard", "library", "settings"] as const
 type TabId = (typeof tabIds)[number]
+
+const tabIcons: Record<TabId, typeof User> = {
+  profile: User,
+  membership: CreditCard,
+  dashboard: BarChart3,
+  library: BookOpen,
+  settings: Settings,
+}
+
+function getInitial(name: string) {
+  return name.charAt(0).toUpperCase()
+}
 
 export default function AccountPage() {
   const { t } = useI18n()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabId>("profile")
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<SupabaseUser | null>(null)
   const [loading, setLoading] = useState(true)
   const [paidModal, setPaidModal] = useState<MembershipPlan | null>(null)
   const [paidNotice, setPaidNotice] = useState(false)
@@ -46,7 +59,6 @@ export default function AccountPage() {
       setUser(u)
       setLoading(false)
       if (u) {
-        // Ensure profile row exists (trigger may not have run)
         const { data: existing } = await supabase
           .from("profiles")
           .select("id")
@@ -84,9 +96,6 @@ export default function AccountPage() {
     }
   }, [router])
 
-  // Stripe checkout redirects here with ?paid=1. Poll until the webhook marks
-  // the membership active — that's the proof of payment — then pop a
-  // confirmation with the benefits just unlocked.
   const startPaidPolling = useCallback(() => {
     let cancelled = false
     let attempts = 0
@@ -117,7 +126,6 @@ export default function AccountPage() {
     url.searchParams.delete("paid")
     window.history.replaceState({}, "", url.toString())
 
-    // Use a micro-delay so setState calls happen outside the synchronous effect body
     const raf = requestAnimationFrame(() => {
       setPaidNotice(false)
       setActiveTab("membership")
@@ -153,109 +161,167 @@ export default function AccountPage() {
     user?.user_metadata?.display_name ||
     user?.email?.split("@")[0] ||
     t("account.guestReader")
+  const initial = getInitial(displayName)
 
   return (
-    <div className="container container-lg py-10 md:py-14">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="page-title mb-2">{t("account.title")}</h1>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="text-[14px] font-semibold">{displayName}</span>
-            {user?.email ? (
-              <span className="truncate text-[13px] text-[var(--text-secondary)]">
-                {user.email}
-              </span>
-            ) : (
-              <span className="text-[13px] text-[var(--text-secondary)]">
-                {t("account.deviceOnly")}
-              </span>
-            )}
+    <div className="container container-lg py-8 md:py-12">
+      {/* Mobile: top card with avatar + name */}
+      <div className="md:hidden mb-6">
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-11 h-11 rounded-full bg-[var(--accent)] text-[var(--accent-contrast)] flex items-center justify-center text-[18px] font-bold shrink-0">
+              {initial}
+            </div>
+            <div className="min-w-0">
+              <p className="text-[15px] font-semibold text-[var(--text-primary)] truncate">{displayName}</p>
+              <p className="text-[13px] text-[var(--text-secondary)] truncate">{user.email}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="meta-text bg-[var(--surface-alt)] border border-[var(--border)] px-2.5 py-1 rounded-full text-[12px]">
+              {liveProfile.literacyScore} {t("account.pts")}
+            </span>
             {stealthOn && (
-              <span className="meta-text text-[var(--accent)] bg-[var(--red-subtle-bg)] px-2 py-0.5 rounded-full">
+              <span className="meta-text text-[var(--accent)] bg-[var(--red-subtle-bg)] px-2.5 py-1 rounded-full text-[12px]">
                 {t("account.stealth")}
               </span>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 sm:shrink-0">
-          <span className="meta-text bg-[var(--surface)] border border-[var(--border)] px-3 py-1.5 rounded-full">
-            {liveProfile.literacyScore} {t("account.pts")}
-          </span>
-          {user ? (
-            <button type="button" onClick={handleSignOut} className="btn-ghost">
-              {t("account.signOut")}
-            </button>
-          ) : (
-            <Link href="/login" className="btn-primary text-[13px] h-9 px-4">
-              {t("account.signIn")}
-            </Link>
-          )}
-        </div>
       </div>
 
-      {!user && hasSaves && (
-        <SyncSavesPrompt variant="banner" force />
-      )}
-
-      {paidNotice && (
-        <div className="mb-6 max-w-md p-4 rounded-[var(--radius-sm)] bg-[var(--surface-alt)] border border-[var(--border)] text-[13px] text-[var(--text-primary)]">
-          <p className="mb-3">{t("account.paidNotice")}</p>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                cleanupRef.current?.()
-                cleanupRef.current = startPaidPolling()
-              }}
-              className="btn-primary text-[13px] h-8 px-4"
-            >
-              {t("account.checkAgain")}
-            </button>
-            <Link
-              href="/account?tab=membership"
-              onClick={() => setActiveTab("membership")}
-              className="text-[13px] text-[var(--text-secondary)] hover:text-[var(--accent)]"
-            >
-              {t("account.viewMembership")}
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {paidModal && (
-        <PaymentSuccessModal plan={paidModal} onClose={() => setPaidModal(null)} />
-      )}
-
+      {/* Mobile: tabs */}
       <nav
-        className="mb-8 flex gap-1 overflow-x-auto overscroll-x-contain border-b border-[var(--border)]"
+        className="md:hidden mb-6 flex gap-1 overflow-x-auto overscroll-x-contain border-b border-[var(--border)]"
         role="tablist"
         aria-label={t("account.accountSections")}
       >
-        {tabIds.map((id) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={activeTab === id}
-            onClick={() => setActiveTab(id)}
-            className={`shrink-0 -mb-px whitespace-nowrap border-b-2 px-3 sm:px-4 py-2.5 text-[13px] sm:text-[14px] font-semibold transition-colors ${
-              activeTab === id
-                ? "border-[var(--accent)] text-[var(--accent)]"
-                : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-            }`}
-          >
-            {t(`account.tabs.${id}`)}
-          </button>
-        ))}
+        {tabIds.map((id) => {
+          const Icon = tabIcons[id]
+          return (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === id}
+              onClick={() => setActiveTab(id)}
+              className={`shrink-0 -mb-px flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px] font-semibold transition-colors ${
+                activeTab === id
+                  ? "border-[var(--accent)] text-[var(--accent)]"
+                  : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {t(`account.tabs.${id}`)}
+            </button>
+          )
+        })}
       </nav>
 
-      {activeTab === "profile" && user && <ProfileTab user={user} />}
-      {activeTab === "membership" && <MembershipTab />}
-      {activeTab === "dashboard" && <DashboardTab />}
-      {activeTab === "library" && <LibraryTab />}
-      {activeTab === "settings" && (
-        <SettingsTab user={user} onSignOut={handleSignOut} />
-      )}
+      <div className="flex gap-8">
+        {/* Desktop: sidebar */}
+        <aside className="hidden md:block w-56 shrink-0">
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4 sticky top-24">
+            <div className="flex items-center gap-3 mb-4 pb-4 border-b border-[var(--border)]">
+              <div className="w-10 h-10 rounded-full bg-[var(--accent)] text-[var(--accent-contrast)] flex items-center justify-center text-[16px] font-bold shrink-0">
+                {initial}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[14px] font-semibold text-[var(--text-primary)] truncate">{displayName}</p>
+                <p className="text-[12px] text-[var(--text-secondary)] truncate">{user.email}</p>
+              </div>
+            </div>
+
+            <nav className="space-y-0.5" role="tablist" aria-label={t("account.accountSections")}>
+              {tabIds.map((id) => {
+                const Icon = tabIcons[id]
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === id}
+                    onClick={() => setActiveTab(id)}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium transition-colors ${
+                      activeTab === id
+                        ? "bg-[var(--accent)] bg-opacity-10 text-[var(--accent)]"
+                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    {t(`account.tabs.${id}`)}
+                  </button>
+                )
+              })}
+            </nav>
+
+            <div className="mt-4 pt-4 border-t border-[var(--border)]">
+              <div className="flex items-center justify-between mb-2">
+                <span className="meta-text text-[12px]">
+                  {liveProfile.literacyScore} {t("account.pts")}
+                </span>
+                {stealthOn && (
+                  <span className="meta-text text-[var(--accent)] text-[12px]">
+                    {t("account.stealth")}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--red-subtle-bg)] transition-colors"
+              >
+                <LogOut className="h-4 w-4 shrink-0" />
+                {t("account.signOut")}
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        {/* Main content */}
+        <main className="flex-1 min-w-0">
+          {paidNotice && (
+            <div className="mb-6 p-4 rounded-2xl bg-[var(--surface-alt)] border border-[var(--border)] text-[13px] text-[var(--text-primary)]">
+              <p className="mb-3">{t("account.paidNotice")}</p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    cleanupRef.current?.()
+                    cleanupRef.current = startPaidPolling()
+                  }}
+                  className="btn-primary text-[13px] h-8 px-4"
+                >
+                  {t("account.checkAgain")}
+                </button>
+                <Link
+                  href="/account?tab=membership"
+                  onClick={() => setActiveTab("membership")}
+                  className="text-[13px] text-[var(--text-secondary)] hover:text-[var(--accent)]"
+                >
+                  {t("account.viewMembership")}
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {!user && hasSaves && (
+            <SyncSavesPrompt variant="banner" force />
+          )}
+
+          {paidModal && (
+            <PaymentSuccessModal plan={paidModal} onClose={() => setPaidModal(null)} />
+          )}
+
+          {activeTab === "profile" && user && <ProfileTab user={user} />}
+          {activeTab === "membership" && <MembershipTab />}
+          {activeTab === "dashboard" && <DashboardTab />}
+          {activeTab === "library" && <LibraryTab />}
+          {activeTab === "settings" && (
+            <SettingsTab user={user} onSignOut={handleSignOut} />
+          )}
+        </main>
+      </div>
     </div>
   )
 }

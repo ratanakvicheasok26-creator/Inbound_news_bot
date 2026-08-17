@@ -39,10 +39,18 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <AuthShell title={t("auth.forgotPageTitle")} subtitle={t("auth.forgotPageSubtitle")}>
+    <AuthShell
+      title={t("auth.forgotPageTitle")}
+      subtitle={t("auth.forgotPageSubtitle")}
+      footer={
+        <Link href="/login" className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent)]">
+          {t("auth.backToLogin")}
+        </Link>
+      }
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="meta-text block mb-2">{t("auth.email")}</label>
+          <label className="text-[13px] font-medium text-[var(--text-secondary)] block mb-1.5">{t("auth.email")}</label>
           <input
             type="email"
             required
@@ -61,13 +69,6 @@ export default function ForgotPasswordPage() {
           {loading ? t("auth.sending") : t("auth.sendResetLink")}
         </button>
       </form>
-
-      <p className="mt-6 text-center text-[13px] text-[var(--text-secondary)]">
-        {t("auth.rememberedIt")}{" "}
-        <Link href="/login" className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent)]">
-          {t("auth.backToLogin")}
-        </Link>
-      </p>
     </AuthShell>
   )
 }

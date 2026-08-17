@@ -79,16 +79,16 @@ export default function ResetPasswordPage() {
 
   if (!ready) {
     return (
-      <AuthShell title={t("auth.resetPageTitle")} subtitle={t("auth.resetPageSubtitle")}>
-        <AuthError message={error || t("auth.resetInvalid")} />
-        <div className="mt-4 text-center">
-          <Link
-            href="/forgot-password"
-            className="text-[13px] font-semibold text-[var(--text-primary)] hover:text-[var(--accent)]"
-          >
+      <AuthShell
+        title={t("auth.resetPageTitle")}
+        subtitle={t("auth.resetPageSubtitle")}
+        footer={
+          <Link href="/forgot-password" className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent)]">
             {t("auth.requestNewLink")}
           </Link>
-        </div>
+        }
+      >
+        <AuthError message={error || t("auth.resetInvalid")} />
       </AuthShell>
     )
   }
@@ -97,7 +97,7 @@ export default function ResetPasswordPage() {
     <AuthShell title={t("auth.resetPageTitle")} subtitle={t("auth.resetPageSubtitle")}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="meta-text block mb-2">{t("auth.newPassword")}</label>
+          <label className="text-[13px] font-medium text-[var(--text-secondary)] block mb-1.5">{t("auth.newPassword")}</label>
           <PasswordInput
             required
             autoComplete="new-password"
@@ -109,7 +109,7 @@ export default function ResetPasswordPage() {
         </div>
 
         <div>
-          <label className="meta-text block mb-2">{t("auth.confirmNewPassword")}</label>
+          <label className="text-[13px] font-medium text-[var(--text-secondary)] block mb-1.5">{t("auth.confirmNewPassword")}</label>
           <PasswordInput
             required
             autoComplete="new-password"

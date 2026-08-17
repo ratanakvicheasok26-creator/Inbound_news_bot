@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, type ReactNode, type InputHTMLAttributes } from "react"
-import Link from "next/link"
 import { Eye, EyeOff } from "lucide-react"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 
@@ -9,24 +8,21 @@ interface AuthShellProps {
   title: string
   subtitle: string
   children: ReactNode
+  footer?: ReactNode
 }
 
-export function AuthShell({ title, subtitle, children }: AuthShellProps) {
-  const { t } = useI18n()
+export function AuthShell({ title, subtitle, children, footer }: AuthShellProps) {
   return (
-    <div className="container py-12 md:py-16">
-      <div className="max-w-[440px] mx-auto bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6 md:p-8">
-        <h1 className="page-title mb-2">{title}</h1>
-        <p className="text-[14px] text-[var(--text-secondary)] mb-6">{subtitle}</p>
-        {children}
-        <div className="mt-6 pt-4 border-t border-[var(--border)] text-center">
-          <Link
-            href="/"
-            className="text-[13px] text-[var(--text-secondary)] hover:text-[var(--accent)]"
-          >
-            {t("auth.backToReports")}
-          </Link>
+    <div className="min-h-[calc(100vh-160px)] flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-[420px]">
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 md:p-8 shadow-sm">
+          <h1 className="text-[22px] font-bold text-[var(--text-primary)] mb-1">{title}</h1>
+          <p className="text-[14px] text-[var(--text-secondary)] mb-6">{subtitle}</p>
+          {children}
         </div>
+        {footer && (
+          <p className="mt-6 text-center text-[13px] text-[var(--text-secondary)]">{footer}</p>
+        )}
       </div>
     </div>
   )

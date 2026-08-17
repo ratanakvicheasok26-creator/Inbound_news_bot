@@ -71,43 +71,47 @@ export default function SignupPage() {
 
   if (emailSent) {
     return (
-      <AuthShell title={t("auth.checkEmailTitle")} subtitle={t("auth.checkEmailSubtitle")}>
+      <AuthShell
+        title={t("auth.checkEmailTitle")}
+        subtitle={t("auth.checkEmailSubtitle")}
+        footer={
+          <Link href="/login" className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent)]">
+            {t("auth.goToSignIn")}
+          </Link>
+        }
+      >
         <div className="text-center py-4">
-          <div className="mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center bg-[var(--red-subtle-bg)]">
-            <Mail className="h-8 w-8 text-[var(--accent)]" />
+          <div className="mx-auto mb-4 w-14 h-14 rounded-full flex items-center justify-center bg-[var(--red-subtle-bg)]">
+            <Mail className="h-7 w-7 text-[var(--accent)]" />
           </div>
-          <p className="text-[14px] text-[var(--text-secondary)] mb-2">
+          <p className="text-[14px] text-[var(--text-primary)] font-medium mb-1">
             {t("auth.checkEmailSentTo")}{" "}
-            <span className="font-semibold text-[var(--text-primary)]">{sentEmail}</span>
+            <span className="font-semibold">{sentEmail}</span>
           </p>
-          <p className="text-[13px] text-[var(--text-secondary)] mb-6">
+          <p className="text-[13px] text-[var(--text-secondary)]">
             {t("auth.checkEmailInstructions")}
           </p>
-          <div className="space-y-3">
-            <button
-              type="button"
-              onClick={() => router.push("/login")}
-              className="btn-primary w-full h-11"
-            >
-              {t("auth.goToSignIn")}
-            </button>
-            <Link
-              href="/"
-              className="block text-center text-[13px] text-[var(--text-secondary)] hover:text-[var(--accent)]"
-            >
-              {t("auth.backToReports")}
-            </Link>
-          </div>
         </div>
       </AuthShell>
     )
   }
 
   return (
-    <AuthShell title={t("auth.signUpButton")} subtitle={t("auth.signupSubtitleSync")}>
+    <AuthShell
+      title={t("auth.signUpButton")}
+      subtitle={t("auth.signupSubtitleSync")}
+      footer={
+        <span>
+          {t("auth.haveAccount")}{" "}
+          <Link href="/login" className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent)]">
+            {t("auth.signInButton")}
+          </Link>
+        </span>
+      }
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="meta-text block mb-2">{t("auth.displayName")}</label>
+          <label className="text-[13px] font-medium text-[var(--text-secondary)] block mb-1.5">{t("auth.displayName")}</label>
           <input
             type="text"
             required
@@ -121,7 +125,7 @@ export default function SignupPage() {
         </div>
 
         <div>
-          <label className="meta-text block mb-2">{t("auth.email")}</label>
+          <label className="text-[13px] font-medium text-[var(--text-secondary)] block mb-1.5">{t("auth.email")}</label>
           <input
             type="email"
             required
@@ -134,7 +138,7 @@ export default function SignupPage() {
         </div>
 
         <div>
-          <label className="meta-text block mb-2">{t("auth.password")}</label>
+          <label className="text-[13px] font-medium text-[var(--text-secondary)] block mb-1.5">{t("auth.password")}</label>
           <PasswordInput
             required
             autoComplete="new-password"
@@ -146,7 +150,7 @@ export default function SignupPage() {
         </div>
 
         <div>
-          <label className="meta-text block mb-2">{t("auth.confirmPasswordLabel")}</label>
+          <label className="text-[13px] font-medium text-[var(--text-secondary)] block mb-1.5">{t("auth.confirmPasswordLabel")}</label>
           <PasswordInput
             required
             autoComplete="new-password"
@@ -162,13 +166,6 @@ export default function SignupPage() {
           {loading ? t("auth.creating") : t("auth.signUpButton")}
         </button>
       </form>
-
-      <p className="mt-6 text-center text-[13px] text-[var(--text-secondary)]">
-        {t("auth.haveAccount")}{" "}
-        <Link href="/login" className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent)]">
-          {t("auth.signInButton")}
-        </Link>
-      </p>
     </AuthShell>
   )
 }
