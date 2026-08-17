@@ -15,7 +15,7 @@ export function AuthShell({ title, subtitle, children, footer }: AuthShellProps)
   return (
     <div className="min-h-[calc(100vh-160px)] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-[420px]">
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 md:p-8 shadow-sm">
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 md:p-8 shadow-sm animate-card-in">
           <h1 className="text-[22px] font-bold text-[var(--text-primary)] mb-1">{title}</h1>
           <p className="text-[14px] text-[var(--text-secondary)] mb-6">{subtitle}</p>
           {children}

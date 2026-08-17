@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Mail } from "lucide-react"
-import { signUp, signIn } from "@/lib/auth"
+import { signUp } from "@/lib/auth"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import {
   AuthShell,
@@ -55,21 +55,12 @@ export default function SignupPage() {
       const { data, error: authError } = await signUp(mail, password, displayName.trim())
       if (authError) {
         setError(authError.message)
+      } else if (data.session) {
+        router.push("/account?welcome=1")
+        router.refresh()
       } else {
-        await fetch("/api/welcome-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: mail }),
-        }).catch(() => {})
-
-        const { error: signInError } = await signIn(mail, password)
-        if (signInError) {
-          setSentEmail(mail)
-          setEmailSent(true)
-        } else {
-          router.push("/account?welcome=1")
-          router.refresh()
-        }
+        setSentEmail(mail)
+        setEmailSent(true)
       }
     } catch {
       setError(t("auth.errorGeneric"))
@@ -90,14 +81,14 @@ export default function SignupPage() {
         }
       >
         <div className="text-center py-4">
-          <div className="mx-auto mb-4 w-14 h-14 rounded-full flex items-center justify-center bg-[var(--red-subtle-bg)]">
+          <div className="mx-auto mb-4 w-14 h-14 rounded-full flex items-center justify-center bg-[var(--red-subtle-bg)] animate-mail-float">
             <Mail className="h-7 w-7 text-[var(--accent)]" />
           </div>
-          <p className="text-[14px] text-[var(--text-primary)] font-medium mb-1">
+          <p className="text-[14px] text-[var(--text-primary)] font-medium mb-1 animate-card-in">
             {t("auth.checkEmailSentTo")}{" "}
             <span className="font-semibold">{sentEmail}</span>
           </p>
-          <p className="text-[13px] text-[var(--text-secondary)]">
+          <p className="text-[13px] text-[var(--text-secondary)] animate-card-in-delayed">
             {t("auth.checkEmailInstructions")}
           </p>
         </div>

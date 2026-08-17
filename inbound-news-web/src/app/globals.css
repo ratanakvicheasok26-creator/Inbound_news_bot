@@ -231,6 +231,37 @@ html[lang="km"] select {
   box-shadow: 0 0 30px -10px rgba(255, 0, 51, 0.3);
 }
 
+@keyframes mailFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-6px) rotate(-3deg); }
+  75% { transform: translateY(4px) rotate(2deg); }
+}
+
+.animate-mail-float {
+  animation: mailFloat 3s ease-in-out infinite;
+}
+
+@keyframes checkmarkDraw {
+  0% { stroke-dashoffset: 24; }
+  100% { stroke-dashoffset: 0; }
+}
+
+.animate-checkmark {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: checkmarkDraw 0.5s ease-out 0.3s forwards;
+}
+
+@keyframes slideBannerIn {
+  0% { opacity: 0; transform: translateY(-12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-banner-in {
+  animation: slideBannerIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+}
+
 * {
   box-sizing: border-box;
 }

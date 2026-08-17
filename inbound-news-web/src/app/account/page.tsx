@@ -296,7 +296,7 @@ export default function AccountPage() {
         {/* Main content */}
         <main className="flex-1 min-w-0">
           {showWelcome && (
-            <div className="mb-6 p-4 rounded-2xl bg-[var(--red-subtle-bg)] border border-[var(--accent)] border-opacity-30 text-[13px] text-[var(--text-primary)] flex items-start justify-between gap-3">
+            <div className="mb-6 p-4 rounded-2xl bg-[var(--red-subtle-bg)] border border-[var(--accent)] border-opacity-30 text-[13px] text-[var(--text-primary)] flex items-start justify-between gap-3 animate-banner-in">
               <div>
                 <p className="font-semibold mb-1">{t("account.welcomeTitle")}</p>
                 <p className="text-[var(--text-secondary)]">{t("account.welcomeMessage")}</p>
