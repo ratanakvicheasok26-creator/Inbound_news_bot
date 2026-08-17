@@ -42,6 +42,21 @@ export default function AccountPage() {
   const [paidModal, setPaidModal] = useState<MembershipPlan | null>(null)
   const [paidNotice, setPaidNotice] = useState(false)
   const [profileTick, setProfileTick] = useState(0)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("welcome") === "1") {
+      const url = new URL(window.location.href)
+      url.searchParams.delete("welcome")
+      window.history.replaceState({}, "", url.toString())
+    }
+  }, [])
+
+  const [showWelcome, setShowWelcome] = useState(() => {
+    if (typeof window !== "undefined") {
+      return new URLSearchParams(window.location.search).get("welcome") === "1"
+    }
+    return false
+  })
   const cleanupRef = useRef<(() => void) | null>(null)
   const profile = getProfile()
   const stealthOn = profile.preferences.stealthMode
@@ -280,6 +295,23 @@ export default function AccountPage() {
 
         {/* Main content */}
         <main className="flex-1 min-w-0">
+          {showWelcome && (
+            <div className="mb-6 p-4 rounded-2xl bg-[var(--red-subtle-bg)] border border-[var(--accent)] border-opacity-30 text-[13px] text-[var(--text-primary)] flex items-start justify-between gap-3">
+              <div>
+                <p className="font-semibold mb-1">{t("account.welcomeTitle")}</p>
+                <p className="text-[var(--text-secondary)]">{t("account.welcomeMessage")}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowWelcome(false)}
+                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] shrink-0 text-[18px] leading-none"
+                aria-label="Dismiss"
+              >
+                ×
+              </button>
+            </div>
+          )}
+
           {paidNotice && (
             <div className="mb-6 p-4 rounded-2xl bg-[var(--surface-alt)] border border-[var(--border)] text-[13px] text-[var(--text-primary)]">
               <p className="mb-3">{t("account.paidNotice")}</p>

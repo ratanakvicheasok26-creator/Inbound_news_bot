@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Mail } from "lucide-react"
-import { signUp } from "@/lib/auth"
+import { signUp, signIn } from "@/lib/auth"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import {
   AuthShell,
@@ -55,12 +55,21 @@ export default function SignupPage() {
       const { data, error: authError } = await signUp(mail, password, displayName.trim())
       if (authError) {
         setError(authError.message)
-      } else if (data.session) {
-        router.push("/account")
-        router.refresh()
       } else {
-        setSentEmail(mail)
-        setEmailSent(true)
+        await fetch("/api/welcome-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: mail }),
+        }).catch(() => {})
+
+        const { error: signInError } = await signIn(mail, password)
+        if (signInError) {
+          setSentEmail(mail)
+          setEmailSent(true)
+        } else {
+          router.push("/account?welcome=1")
+          router.refresh()
+        }
       }
     } catch {
       setError(t("auth.errorGeneric"))

@@ -385,6 +385,8 @@ const account = {
   stealth: "Stealth",
   signOut: "Sign out",
   pts: "pts",
+  welcomeTitle: "Welcome to Inbound News!",
+  welcomeMessage: "Your account is ready. A confirmation email has been sent to your inbox — check your email to complete setup.",
   accountSections: "Account sections",
   paidNotice:
     "Payment successful — you're now a Pro/Premium member. Premium stories unlock as soon as Stripe confirms your subscription.",
@@ -1014,6 +1016,8 @@ export const dictionaries = {
       stealth: "Stealth",
       signOut: "ចាកចេញ",
       pts: "ពិន្ទុ",
+      welcomeTitle: "ស្វាគមន៍មកកាន់ Inbound News!",
+      welcomeMessage: "គណនីរបស់អ្នករួចរាល់ហើយ។ អ៊ីមែលបញ្ជាក់ត្រូវបានផ្ញើទៅกล่องសំបុត្ររបស់អ្នក — សូមពិនិត្យមើលអ៊ីមែលរបស់អ្នកដើម្បីបញ្ចប់ការរៀបចំ។",
       accountSections: "ផ្នែកគណនី",
       paidNotice:
         "ការទូទាត់ជោគជ័យ — អ្នកឥឡូវជាសមាជិក Pro/Premium។ ព័ត៌មាន Premium នឹងដោះសោភ្លាមៗនៅពេល Stripe បញ្ជាក់ការជាវរបស់អ្នក។",
