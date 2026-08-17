@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { listQrSubmissions, reviewQrSubmission, getProofUrl } from "@/lib/membership"
+import { listAllOrders, reviewOrder } from "@/lib/membership"
 import { PLANS } from "@/lib/plans"
-import type { AdminQrSubmission } from "@/lib/membership"
+import type { AdminPaymentOrder } from "@/lib/membership"
 
 const STATUS_LABELS: Record<string, string> = {
-  pending: "Pending",
+  created: "Awaiting payment",
+  pending: "Pending review",
   approved: "Approved",
   rejected: "Rejected",
 }
@@ -24,22 +25,22 @@ function formatDate(iso: string | null): string {
   })
 }
 
-export default function AdminQrReviewPage() {
+export default function AdminPaymentsPage() {
   const [loading, setLoading] = useState(true)
   const [forbidden, setForbidden] = useState(false)
-  const [submissions, setSubmissions] = useState<AdminQrSubmission[]>([])
+  const [orders, setOrders] = useState<AdminPaymentOrder[]>([])
   const [busyId, setBusyId] = useState<string | null>(null)
   const [error, setError] = useState("")
 
   const load = useCallback(async () => {
     setLoading(true)
-    const list = await listQrSubmissions()
+    const list = await listAllOrders()
     if (list === null) {
       setForbidden(true)
       setLoading(false)
       return
     }
-    setSubmissions(list)
+    setOrders(list)
     setForbidden(false)
     setLoading(false)
   }, [])
@@ -50,47 +51,35 @@ export default function AdminQrReviewPage() {
   }, [load])
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  async function handleReview(sub: AdminQrSubmission, action: "approve" | "reject") {
+  async function handleReview(order: AdminPaymentOrder, action: "approve" | "reject") {
     if (busyId) return
-    setBusyId(sub.id)
+    setBusyId(order.id)
     setError("")
-    const res = await reviewQrSubmission(sub.id, action)
+    const res = await reviewOrder(order.id, action)
     if (!res.ok) {
       setError(res.error === "auth" ? "Signed out — refresh and try again." : "Something went wrong — please try again.")
       setBusyId(null)
       return
     }
-    setSubmissions((prev) =>
-      prev.map((s) =>
-        s.id === sub.id
-          ? { ...s, status: action === "approve" ? "approved" : "rejected", reviewed_at: new Date().toISOString() }
-          : s
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === order.id
+          ? { ...o, status: action === "approve" ? "approved" : "rejected", reviewed_at: new Date().toISOString() }
+          : o
       )
     )
     setBusyId(null)
   }
 
-  async function handleViewProof(sub: AdminQrSubmission) {
-    if (!sub.payment_proof_url || busyId) return
-    setBusyId(sub.id)
-    setError("")
-    const url = await getProofUrl(sub.payment_proof_url)
-    setBusyId(null)
-    if (url) {
-      window.open(url, "_blank", "noopener,noreferrer")
-    } else {
-      setError("Couldn't load the screenshot — please try again.")
-    }
-  }
-
-  const pending = submissions.filter((s) => s.status === "pending")
-  const reviewed = submissions.filter((s) => s.status !== "pending")
+  const pending = orders.filter((o) => o.status === "pending")
+  const created = orders.filter((o) => o.status === "created")
+  const reviewed = orders.filter((o) => o.status === "approved" || o.status === "rejected")
 
   return (
     <div className="container container-lg py-10 md:py-14">
-      <h1 className="page-title mb-2">QR payment review</h1>
+      <h1 className="page-title mb-2">Payment management</h1>
       <p className="text-[14px] text-[var(--text-secondary)] mb-8">
-        Approve QR payments after verifying them in your bank app. Admin only.
+        Review and approve member payments. Admin only.
       </p>
 
       {error && (
@@ -102,7 +91,7 @@ export default function AdminQrReviewPage() {
         </p>
       )}
 
-      {loading && <p className="text-[14px] text-[var(--text-secondary)]">Loading submissions…</p>}
+      {loading && <p className="text-[14px] text-[var(--text-secondary)]">Loading orders…</p>}
 
       {!loading && forbidden && (
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6 text-[14px] text-[var(--text-secondary)]">
@@ -110,26 +99,44 @@ export default function AdminQrReviewPage() {
         </div>
       )}
 
-      {!loading && !forbidden && submissions.length === 0 && (
+      {!loading && !forbidden && orders.length === 0 && (
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6 text-[14px] text-[var(--text-secondary)]">
-          No QR payment submissions yet.
+          No payment orders yet.
         </div>
       )}
 
       {!loading && !forbidden && pending.length > 0 && (
         <section className="mb-8">
           <h2 className="section-title mb-3">
-            Pending ({pending.length})
+            Pending Review ({pending.length})
           </h2>
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] divide-y divide-[var(--border)]">
-            {pending.map((s) => (
-              <SubmissionRow
-                key={s.id}
-                sub={s}
-                busy={busyId === s.id}
-                onApprove={() => handleReview(s, "approve")}
-                onReject={() => handleReview(s, "reject")}
-                onViewProof={() => handleViewProof(s)}
+            {pending.map((o) => (
+              <OrderRow
+                key={o.id}
+                order={o}
+                busy={busyId === o.id}
+                onApprove={() => handleReview(o, "approve")}
+                onReject={() => handleReview(o, "reject")}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {!loading && !forbidden && created.length > 0 && (
+        <section className="mb-8">
+          <h2 className="section-title mb-3">
+            Awaiting Payment ({created.length})
+          </h2>
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] divide-y divide-[var(--border)]">
+            {created.map((o) => (
+              <OrderRow
+                key={o.id}
+                order={o}
+                busy={busyId === o.id}
+                onApprove={() => handleReview(o, "approve")}
+                onReject={() => handleReview(o, "reject")}
               />
             ))}
           </div>
@@ -142,14 +149,13 @@ export default function AdminQrReviewPage() {
             Reviewed ({reviewed.length})
           </h2>
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] divide-y divide-[var(--border)]">
-            {reviewed.map((s) => (
-              <SubmissionRow
-                key={s.id}
-                sub={s}
-                busy={busyId === s.id}
-                onApprove={() => handleReview(s, "approve")}
-                onReject={() => handleReview(s, "reject")}
-                onViewProof={() => handleViewProof(s)}
+            {reviewed.map((o) => (
+              <OrderRow
+                key={o.id}
+                order={o}
+                busy={busyId === o.id}
+                onApprove={() => handleReview(o, "approve")}
+                onReject={() => handleReview(o, "reject")}
               />
             ))}
           </div>
@@ -159,68 +165,63 @@ export default function AdminQrReviewPage() {
   )
 }
 
-function SubmissionRow({
-  sub,
+function OrderRow({
+  order,
   busy,
   onApprove,
   onReject,
-  onViewProof,
 }: {
-  sub: AdminQrSubmission
+  order: AdminPaymentOrder
   busy: boolean
   onApprove: () => void
   onReject: () => void
-  onViewProof: () => void
 }) {
-  const meta = PLANS[sub.plan]
-  const pending = sub.status === "pending"
+  const meta = PLANS[order.plan]
+  const pending = order.status === "pending"
   return (
-    <div className="px-5 py-4 flex flex-wrap items-center justify-between gap-4">
-      <div className="min-w-0">
-        <p className="text-[14px] font-semibold text-[var(--text-primary)] truncate">
-          {sub.user_email || "Unknown email"}
-        </p>
-        <p className="text-[13px] text-[var(--text-secondary)]">
-          {meta?.name} · {Number(sub.amount).toFixed(2)} {sub.currency || "USD"}
-          {sub.aba_transaction_id ? ` · Txn ${sub.aba_transaction_id}` : ""} ·{" "}
-          {formatDate(sub.created_at)}
-        </p>
-        <p className="text-[12px] text-[var(--text-secondary)]">
-          {STATUS_LABELS[sub.status]}
-          {sub.reviewed_at ? ` · reviewed ${formatDate(sub.reviewed_at)}` : ""}
-        </p>
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        {sub.payment_proof_url && (
-          <button
-            type="button"
-            onClick={onViewProof}
-            disabled={busy}
-            className="btn-ghost text-[13px] h-9 px-4 disabled:opacity-60"
-          >
-            {busy ? "…" : "View proof"}
-          </button>
-        )}
-        {pending && (
-          <>
-            <button
-              type="button"
-              onClick={onApprove}
-              disabled={busy}
-              className="btn-primary text-[13px] h-9 px-4 disabled:opacity-60"
-            >
-              {busy ? "…" : "Approve"}
-            </button>
-            <button
-              type="button"
-              onClick={onReject}
-              disabled={busy}
-              className="btn-ghost text-[13px] h-9 px-4 disabled:opacity-60"
-            >
-              Reject
-            </button>
-          </>
-        )}
+    <div className="px-5 py-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-[14px] font-semibold text-[var(--text-primary)] truncate">
+            {order.user_email || "Unknown email"}
+          </p>
+          <p className="text-[13px] text-[var(--text-secondary)]">
+            {meta?.name} · {Number(order.amount).toFixed(2)} {order.currency}
+          </p>
+          <p className="text-[12px] text-[var(--text-secondary)] mt-0.5">
+            Order: {order.order_id} · Created: {formatDate(order.created_at)}
+          </p>
+          <p className="text-[12px] text-[var(--text-secondary)]">
+            Payment Code: <span className="font-mono font-bold">{order.payment_code}</span>
+            {order.transaction_code ? ` · Txn: ${order.transaction_code}` : ""}
+          </p>
+          <p className="text-[12px] text-[var(--text-secondary)]">
+            Status: {STATUS_LABELS[order.status]}
+            {order.reviewed_at ? ` · Reviewed: ${formatDate(order.reviewed_at)}` : ""}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {pending && (
+            <>
+              <button
+                type="button"
+                onClick={onApprove}
+                disabled={busy}
+                className="btn-primary text-[13px] h-9 px-4 disabled:opacity-60"
+              >
+                {busy ? "…" : "Approve"}
+              </button>
+              <button
+                type="button"
+                onClick={onReject}
+                disabled={busy}
+                className="btn-ghost text-[13px] h-9 px-4 disabled:opacity-60"
+              >
+                Reject
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )

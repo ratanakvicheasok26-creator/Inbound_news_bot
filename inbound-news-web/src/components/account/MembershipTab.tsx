@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
-import { useMembership, isActiveMembership, openBillingPortal, getQrSubmissions, getProofUrl } from "@/lib/membership"
+import { Copy, CheckCheck } from "lucide-react"
+import { useMembership, isActiveMembership, refreshAllMemberships, getOrders, submitPaymentCode } from "@/lib/membership"
 import { PLANS, priceLabel } from "@/lib/plans"
 import { PaymentSuccessModal } from "@/components/membership/PaymentSuccessModal"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
-import type { Membership, QrSubmission } from "@/lib/membership"
+import type { Membership, PaymentOrder } from "@/lib/membership"
 
 const STATUS_KEYS: Record<Membership["status"], string> = {
   active: "account.membershipTab.statusActive",
@@ -17,10 +18,11 @@ const STATUS_KEYS: Record<Membership["status"], string> = {
   unpaid: "account.membershipTab.statusUnpaid",
 }
 
-const SUBMISSION_STATUS: Record<QrSubmission["status"], { key: string; tone: string }> = {
-  pending: { key: "account.qrStatus.pending", tone: "text-[var(--text-secondary)] bg-[var(--surface-alt)]" },
-  approved: { key: "account.qrStatus.approved", tone: "text-[var(--text-primary)] bg-[var(--red-subtle-bg)]" },
-  rejected: { key: "account.qrStatus.rejected", tone: "text-[var(--text-secondary)] bg-[var(--surface-alt)]" },
+const ORDER_STATUS: Record<PaymentOrder["status"], { key: string; tone: string }> = {
+  created: { key: "account.orderStatus.created", tone: "text-[var(--text-secondary)] bg-[var(--surface-alt)]" },
+  pending: { key: "account.orderStatus.pending", tone: "text-[var(--text-secondary)] bg-[var(--surface-alt)]" },
+  approved: { key: "account.orderStatus.approved", tone: "text-[var(--text-primary)] bg-[var(--red-subtle-bg)]" },
+  rejected: { key: "account.orderStatus.rejected", tone: "text-[var(--text-secondary)] bg-[var(--surface-alt)]" },
 }
 
 function formatDate(iso: string | null): string | null {
@@ -34,12 +36,29 @@ export function MembershipTab() {
   const { t } = useI18n()
   const { loading, membership } = useMembership()
   const member = isActiveMembership(membership)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState("")
-  const [submissions, setSubmissions] = useState<QrSubmission[]>([])
-  const [subsLoaded, setSubsLoaded] = useState(false)
-  const [celebrate, setCelebrate] = useState<QrSubmission | null>(null)
+  const [orders, setOrders] = useState<PaymentOrder[]>([])
+  const [ordersLoaded, setOrdersLoaded] = useState(false)
+  const [celebrate, setCelebrate] = useState<PaymentOrder | null>(null)
   const seenPendingRef = useRef<Set<string>>(new Set())
+  const hasPendingRef = useRef(false)
+  const [refreshTick, setRefreshTick] = useState(0)
+
+  const loadOrders = useCallback(async () => {
+    const list = await getOrders()
+    setOrders(list)
+    setOrdersLoaded(true)
+    hasPendingRef.current = list.some((o) => o.status === "pending" || o.status === "created")
+
+    for (const o of list) {
+      if (o.status === "approved" && seenPendingRef.current.has(o.id)) {
+        seenPendingRef.current.delete(o.id)
+        setCelebrate(o)
+        refreshAllMemberships()
+      }
+    }
+    const nowPending = new Set(list.filter((o) => o.status === "pending").map((o) => o.id))
+    for (const id of nowPending) seenPendingRef.current.add(id)
+  }, [])
 
   useEffect(() => {
     let mounted = true
@@ -48,24 +67,11 @@ export function MembershipTab() {
 
     async function tick() {
       attempts += 1
-      const list = await getQrSubmissions()
       if (!mounted) return
-      setSubmissions(list)
-      setSubsLoaded(true)
-
-      const nowPending = new Set(
-        list.filter((s) => s.status === "pending").map((s) => s.id),
-      )
-      for (const s of list) {
-        if (s.status === "approved" && seenPendingRef.current.has(s.id)) {
-          seenPendingRef.current.delete(s.id)
-          setCelebrate(s)
-        }
-      }
-      for (const id of nowPending) seenPendingRef.current.add(id)
-
-      if (nowPending.size === 0 || attempts >= 15) return
-      timer = setTimeout(tick, 8000)
+      await loadOrders()
+      if (!hasPendingRef.current) return
+      const interval = attempts >= 10 ? 30000 : 8000
+      timer = setTimeout(tick, interval)
     }
 
     tick()
@@ -73,19 +79,7 @@ export function MembershipTab() {
       mounted = false
       clearTimeout(timer)
     }
-  }, [])
-
-  async function handlePortal() {
-    setBusy(true)
-    setError("")
-    const url = await openBillingPortal()
-    if (url) {
-      window.location.assign(url)
-      return
-    }
-    setError(t("membership.billingError"))
-    setBusy(false)
-  }
+  }, [refreshTick, loadOrders])
 
   if (loading) {
     return (
@@ -118,7 +112,11 @@ export function MembershipTab() {
           </ul>
         </div>
 
-        <QrSubmissionsSection submissions={submissions} loaded={subsLoaded} />
+        <OrdersSection
+          orders={orders}
+          loaded={ordersLoaded}
+          onRefresh={() => { setRefreshTick((v) => v + 1) }}
+        />
 
         {celebrate && (
           <PaymentSuccessModal plan={celebrate.plan} onClose={() => setCelebrate(null)} />
@@ -150,14 +148,6 @@ export function MembershipTab() {
               {membership?.cancel_at_period_end ? t("account.membershipTab.cancelsAtEnd") : ""}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handlePortal}
-            disabled={busy}
-            className="btn-ghost text-[14px] h-10 px-5 disabled:opacity-60"
-          >
-            {busy ? t("account.membershipTab.opening") : t("account.manageBilling")}
-          </button>
         </div>
         {membership?.cancel_at_period_end && (
           <p className="mt-4 text-[13px] text-[var(--text-secondary)] max-w-[58ch]">
@@ -166,16 +156,11 @@ export function MembershipTab() {
         )}
       </div>
 
-      {error && (
-        <p
-          className="mt-4 p-3 rounded-[var(--radius-sm)] bg-[var(--red-subtle-bg)] text-[13px] font-semibold text-[var(--accent)]"
-          role="alert"
-        >
-          {error}
-        </p>
-      )}
-
-      <QrSubmissionsSection submissions={submissions} loaded={subsLoaded} />
+      <OrdersSection
+        orders={orders}
+        loaded={ordersLoaded}
+        onRefresh={() => { setRefreshTick((v) => v + 1) }}
+      />
 
       {celebrate && (
         <PaymentSuccessModal plan={celebrate.plan} onClose={() => setCelebrate(null)} />
@@ -184,52 +169,38 @@ export function MembershipTab() {
   )
 }
 
-function ViewProofButton({ proofKey }: { proofKey: string }) {
-  const { t } = useI18n()
-  const [busy, setBusy] = useState(false)
-  const [failed, setFailed] = useState(false)
-
-  async function handleView() {
-    if (busy) return
-    setBusy(true)
-    setFailed(false)
-    const url = await getProofUrl(proofKey)
-    setBusy(false)
-    if (url) {
-      window.open(url, "_blank", "noopener,noreferrer")
-    } else {
-      setFailed(true)
-    }
-  }
-
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      {failed && <span className="text-[12px] text-[var(--text-secondary)]">{t("account.membershipTab.couldNotLoad")}</span>}
-      <button
-        type="button"
-        onClick={handleView}
-        disabled={busy}
-        className="text-[12px] font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)] disabled:opacity-60"
-      >
-        {busy ? t("account.loading") : t("account.membershipTab.viewProof")}
-      </button>
-    </span>
-  )
-}
-
-function QrSubmissionsSection({
-  submissions,
+function OrdersSection({
+  orders,
   loaded,
+  onRefresh,
 }: {
-  submissions: QrSubmission[]
+  orders: PaymentOrder[]
   loaded: boolean
+  onRefresh?: () => void
 }) {
   const { t } = useI18n()
+
+  const pendingOrders = orders.filter((o) => o.status === "created" || o.status === "pending")
+  const pastOrders = orders.filter((o) => o.status === "approved" || o.status === "rejected")
+
   if (!loaded) return null
-  if (submissions.length === 0) {
-    return (
-      <div className="mt-6 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6">
-        <h3 className="font-display text-[16px] font-semibold mb-2">{t("account.membershipTab.qrPayments")}</h3>
+
+  return (
+    <div className="mt-6 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-display text-[16px] font-semibold">{t("account.membershipTab.qrPayments")}</h3>
+        {onRefresh && (
+          <button
+            type="button"
+            onClick={onRefresh}
+            className="text-[13px] font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)]"
+          >
+            {t("account.membershipTab.refresh")}
+          </button>
+        )}
+      </div>
+
+      {orders.length === 0 ? (
         <p className="text-[14px] text-[var(--text-secondary)]">
           {t("account.membershipTab.qrEmptyBody1")}{" "}
           <Link href="/pricing" className="font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)]">
@@ -237,42 +208,137 @@ function QrSubmissionsSection({
           </Link>{" "}
           {t("account.membershipTab.qrEmptyBody2")}
         </p>
-      </div>
-    )
+      ) : (
+        <>
+          {pendingOrders.length > 0 && (
+            <div className="mb-4">
+              <p className="text-[12px] font-semibold uppercase tracking-wide text-[var(--text-secondary)] mb-2">
+                {t("account.activeOrders")} ({pendingOrders.length})
+              </p>
+              <ul className="divide-y divide-[var(--border)]">
+                {pendingOrders.map((o) => (
+                  <OrderRow key={o.id} order={o} />
+                ))}
+              </ul>
+            </div>
+          )}
+          {pastOrders.length > 0 && (
+            <div>
+              <p className="text-[12px] font-semibold uppercase tracking-wide text-[var(--text-secondary)] mb-2">
+                {t("account.pastOrders")} ({pastOrders.length})
+              </p>
+              <ul className="divide-y divide-[var(--border)]">
+                {pastOrders.map((o) => (
+                  <OrderRow key={o.id} order={o} />
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+function OrderRow({ order }: { order: PaymentOrder }) {
+  const { t } = useI18n()
+  const meta = PLANS[order.plan]
+  const statusInfo = ORDER_STATUS[order.status]
+  const [copied, setCopied] = useState(false)
+  const [code, setCode] = useState("")
+  const [busy, setBusy] = useState(false)
+  const [submitError, setSubmitError] = useState("")
+  const [submitted, setSubmitted] = useState(order.status !== "created")
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(order.payment_code).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }, [order.payment_code])
+
+  async function handleSubmitCode() {
+    const trimmed = code.trim().toUpperCase()
+    if (!trimmed) return
+    setBusy(true)
+    setSubmitError("")
+    const res = await submitPaymentCode(trimmed)
+    if (res.ok) {
+      setSubmitted(true)
+      refreshAllMemberships()
+    } else {
+      setSubmitError(res.error === "invalid_code" ? t("payment.errorInvalidCode") : res.error === "already_submitted" ? t("payment.errorAlreadySubmitted") : t("membership.tryAgain"))
+    }
+    setBusy(false)
   }
 
   return (
-    <div className="mt-6 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6">
-      <h3 className="font-display text-[16px] font-semibold mb-4">{t("account.membershipTab.qrPayments")}</h3>
-      <ul className="divide-y divide-[var(--border)]">
-        {submissions.map((s) => {
-          const meta = PLANS[s.plan]
-          const tone = SUBMISSION_STATUS[s.status].tone
-          return (
-          <li key={s.id} className="py-3 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-[14px] font-semibold text-[var(--text-primary)]">
-                {meta?.name} · {Number(s.amount).toFixed(2)} {s.currency || "USD"}
-              </p>
-              <p className="text-[13px] text-[var(--text-secondary)]">
-                {s.aba_transaction_id ? `${t("account.membershipTab.txn")} ${s.aba_transaction_id} · ` : ""}
-                {formatDate(s.created_at)}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              {s.payment_proof_url && (
-                <ViewProofButton key={s.payment_proof_url} proofKey={s.payment_proof_url} />
-              )}
-              <span
-                className={`text-[11px] font-semibold uppercase tracking-wide rounded-full px-2 py-1 ${tone}`}
-              >
-                {t(SUBMISSION_STATUS[s.status].key)}
-              </span>
-            </div>
-          </li>
-          )
-        })}
-      </ul>
-    </div>
+    <li className="py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-[14px] font-semibold text-[var(--text-primary)]">
+            {meta?.name} · {Number(order.amount).toFixed(2)} {order.currency}
+          </p>
+          <p className="text-[13px] text-[var(--text-secondary)]">
+            {order.order_id} · {formatDate(order.created_at)}
+          </p>
+        </div>
+        <span className={`text-[11px] font-semibold uppercase tracking-wide rounded-full px-2 py-1 ${statusInfo.tone}`}>
+          {t(statusInfo.key)}
+        </span>
+      </div>
+
+      {order.status === "created" && !submitted && (
+        <div className="mt-3">
+          <p className="text-[12px] text-[var(--text-secondary)] mb-1.5">{t("account.copyPaymentCode")}</p>
+          <div className="flex items-center gap-2 mb-2">
+            <code className="flex-1 text-[14px] font-mono font-bold tracking-wider text-[var(--text-primary)] bg-[var(--surface-alt)] border border-[var(--border)] rounded px-3 py-1.5">
+              {order.payment_code}
+            </code>
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="shrink-0 w-8 h-8 flex items-center justify-center rounded border border-[var(--border)] hover:bg-[var(--surface-alt)]"
+              aria-label="Copy payment code"
+            >
+              {copied ? <CheckCheck className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5 text-[var(--text-secondary)]" />}
+            </button>
+          </div>
+
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={code}
+              onChange={(e) => setCode(e.target.value.toUpperCase())}
+              placeholder={t("payment.paymentCodeLabel")}
+              className="flex-1 h-9 px-2 rounded border border-[var(--border)] bg-[var(--surface)] text-[13px] font-mono text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)]"
+            />
+            <button
+              type="button"
+              onClick={handleSubmitCode}
+              disabled={busy || !code.trim()}
+              className="btn-primary text-[13px] h-9 px-4 disabled:opacity-50"
+            >
+              {busy ? "…" : t("payment.submitCode")}
+            </button>
+          </div>
+          {submitError && (
+            <p className="mt-1.5 text-[12px] font-semibold text-[var(--accent)]">{submitError}</p>
+          )}
+        </div>
+      )}
+
+      {order.status === "created" && submitted && (
+        <p className="mt-2 text-[13px] text-[var(--text-secondary)]">
+          {t("payment.submittedNote")}
+        </p>
+      )}
+
+      {order.status === "pending" && (
+        <p className="mt-2 text-[13px] text-[var(--text-secondary)]">
+          {t("payment.planActivatedAfterReview")}
+        </p>
+      )}
+    </li>
   )
 }

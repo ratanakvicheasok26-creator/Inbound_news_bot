@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/auth"
-import { updatePreferences } from "@/lib/profile"
+import { getProfile, updatePreferences, syncPreferencesToSupabase } from "@/lib/profile"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import type { User } from "@supabase/supabase-js"
 
@@ -69,9 +69,17 @@ export function ProfileTab({ user }: ProfileTabProps) {
         setError(t("account.profile.nameTooLong"))
         return
       }
+      const profile = getProfile()
       const { error: saveError } = await supabase
         .from("profiles")
-        .upsert({ id: user.id, display_name: name, default_lang: lang }, { onConflict: "id" })
+        .upsert({
+          id: user.id,
+          display_name: name,
+          default_lang: lang,
+          default_tier: profile.preferences.defaultTier,
+          stealth_mode: profile.preferences.stealthMode,
+          telegram_digest: profile.preferences.telegramDigest,
+        }, { onConflict: "id" })
       if (saveError) {
         setError(saveError.message)
         return

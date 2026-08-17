@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { supabase, signOut } from "@/lib/auth"
@@ -12,7 +12,7 @@ import { SettingsTab } from "@/components/account/SettingsTab"
 import { MembershipTab } from "@/components/account/MembershipTab"
 import { SyncSavesPrompt } from "@/components/account/SyncSavesPrompt"
 import { PaymentSuccessModal } from "@/components/membership/PaymentSuccessModal"
-import { getMembership, isActiveMembership } from "@/lib/membership"
+import { getMembership, isActiveMembership, refreshAllMemberships } from "@/lib/membership"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import type { MembershipPlan } from "@/lib/plans"
 import type { User } from "@supabase/supabase-js"
@@ -29,6 +29,7 @@ export default function AccountPage() {
   const [paidModal, setPaidModal] = useState<MembershipPlan | null>(null)
   const [paidNotice, setPaidNotice] = useState(false)
   const [profileTick, setProfileTick] = useState(0)
+  const cleanupRef = useRef<(() => void) | null>(null)
   const profile = getProfile()
   const stealthOn = profile.preferences.stealthMode
   const hasSaves = profile.savedStoryIds.length > 0
@@ -71,14 +72,7 @@ export default function AccountPage() {
   // Stripe checkout redirects here with ?paid=1. Poll until the webhook marks
   // the membership active — that's the proof of payment — then pop a
   // confirmation with the benefits just unlocked.
-  useEffect(() => {
-    if (!user) return
-    const params = new URLSearchParams(window.location.search)
-    if (params.get("paid") !== "1") return
-    const url = new URL(window.location.href)
-    url.searchParams.delete("paid")
-    window.history.replaceState({}, "", url.toString())
-
+  const startPaidPolling = useCallback(() => {
     let cancelled = false
     let attempts = 0
     const timer = setInterval(async () => {
@@ -87,8 +81,9 @@ export default function AccountPage() {
       if (cancelled) return
       if (membership && isActiveMembership(membership)) {
         clearInterval(timer)
+        refreshAllMemberships()
         setPaidModal(membership.plan)
-      } else if (attempts >= 15) {
+      } else if (attempts >= 20) {
         clearInterval(timer)
         setPaidNotice(true)
       }
@@ -97,7 +92,27 @@ export default function AccountPage() {
       cancelled = true
       clearInterval(timer)
     }
-  }, [user])
+  }, [])
+
+  useEffect(() => {
+    if (!user) return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("paid") !== "1") return
+    const url = new URL(window.location.href)
+    url.searchParams.delete("paid")
+    window.history.replaceState({}, "", url.toString())
+
+    // Use a micro-delay so setState calls happen outside the synchronous effect body
+    const raf = requestAnimationFrame(() => {
+      setPaidNotice(false)
+      setActiveTab("membership")
+    })
+    cleanupRef.current = startPaidPolling()
+    return () => {
+      cancelAnimationFrame(raf)
+      cleanupRef.current?.()
+    }
+  }, [user, startPaidPolling])
 
   async function handleSignOut() {
     await signOut()
@@ -164,8 +179,27 @@ export default function AccountPage() {
       )}
 
       {paidNotice && (
-        <div className="mb-6 max-w-md p-3 rounded-[var(--radius-sm)] bg-[var(--surface-alt)] border border-[var(--border)] text-[13px] text-[var(--text-primary)]">
-          {t("account.paidNotice")}
+        <div className="mb-6 max-w-md p-4 rounded-[var(--radius-sm)] bg-[var(--surface-alt)] border border-[var(--border)] text-[13px] text-[var(--text-primary)]">
+          <p className="mb-3">{t("account.paidNotice")}</p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                cleanupRef.current?.()
+                cleanupRef.current = startPaidPolling()
+              }}
+              className="btn-primary text-[13px] h-8 px-4"
+            >
+              {t("account.checkAgain")}
+            </button>
+            <Link
+              href="/account?tab=membership"
+              onClick={() => setActiveTab("membership")}
+              className="text-[13px] text-[var(--text-secondary)] hover:text-[var(--accent)]"
+            >
+              {t("account.viewMembership")}
+            </Link>
+          </div>
         </div>
       )}
 

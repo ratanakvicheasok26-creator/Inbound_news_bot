@@ -25,12 +25,12 @@ export default function LoginPage() {
   function afterSignIn() {
     const params = new URLSearchParams(window.location.search)
     const returnTo = params.get("returnTo")
+    router.refresh()
     if (returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")) {
       router.push(returnTo)
     } else {
       router.push("/account")
     }
-    router.refresh()
   }
 
   async function handleSubmit(e: React.FormEvent) {

@@ -109,10 +109,6 @@ export function requiredTier(feature: Feature): PlanTier {
  */
 export function effectiveTier(membership: Membership | null | undefined): PlanTier {
   if (!membership || !isActiveMembership(membership)) return "free"
-  if (membership.current_period_end) {
-    const end = new Date(membership.current_period_end).getTime()
-    if (Number.isFinite(end) && end <= Date.now()) return "free"
-  }
   return membership.plan === "premium_yearly" ? "premium" : "pro"
 }
 

@@ -3,12 +3,12 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { Mail } from "lucide-react"
 import { signUp } from "@/lib/auth"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import {
   AuthShell,
   AuthError,
-  AuthSuccess,
   PasswordInput,
   authInputClass,
 } from "@/components/auth/AuthShell"
@@ -22,7 +22,8 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
+  const [emailSent, setEmailSent] = useState(false)
+  const [sentEmail, setSentEmail] = useState("")
 
   function validate(): string {
     const name = displayName.trim()
@@ -41,7 +42,6 @@ export default function SignupPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError("")
-    setSuccess("")
 
     const validationError = validate()
     if (validationError) {
@@ -51,20 +51,56 @@ export default function SignupPage() {
 
     setLoading(true)
     try {
-      const { data, error: authError } = await signUp(email.trim(), password, displayName.trim())
+      const mail = email.trim()
+      const { data, error: authError } = await signUp(mail, password, displayName.trim())
       if (authError) {
         setError(authError.message)
       } else if (data.session) {
         router.push("/account")
         router.refresh()
       } else {
-        setSuccess(t("auth.accountCreated"))
+        setSentEmail(mail)
+        setEmailSent(true)
       }
     } catch {
       setError(t("auth.errorGeneric"))
     } finally {
       setLoading(false)
     }
+  }
+
+  if (emailSent) {
+    return (
+      <AuthShell title={t("auth.checkEmailTitle")} subtitle={t("auth.checkEmailSubtitle")}>
+        <div className="text-center py-4">
+          <div className="mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center bg-[var(--red-subtle-bg)]">
+            <Mail className="h-8 w-8 text-[var(--accent)]" />
+          </div>
+          <p className="text-[14px] text-[var(--text-secondary)] mb-2">
+            {t("auth.checkEmailSentTo")}{" "}
+            <span className="font-semibold text-[var(--text-primary)]">{sentEmail}</span>
+          </p>
+          <p className="text-[13px] text-[var(--text-secondary)] mb-6">
+            {t("auth.checkEmailInstructions")}
+          </p>
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={() => router.push("/login")}
+              className="btn-primary w-full h-11"
+            >
+              {t("auth.goToSignIn")}
+            </button>
+            <Link
+              href="/"
+              className="block text-center text-[13px] text-[var(--text-secondary)] hover:text-[var(--accent)]"
+            >
+              {t("auth.backToReports")}
+            </Link>
+          </div>
+        </div>
+      </AuthShell>
+    )
   }
 
   return (
@@ -121,7 +157,6 @@ export default function SignupPage() {
         </div>
 
         <AuthError message={error} />
-        <AuthSuccess message={success} />
 
         <button type="submit" disabled={loading} className="btn-primary w-full h-11 disabled:opacity-50">
           {loading ? t("auth.creating") : t("auth.signUpButton")}

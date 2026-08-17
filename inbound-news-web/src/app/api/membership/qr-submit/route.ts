@@ -48,10 +48,25 @@ export async function POST(req: NextRequest) {
     .select("id, plan, amount, currency, aba_transaction_id, payment_proof_url, status, created_at, reviewed_at")
     .eq("user_id", auth.user.id)
     .eq("status", "pending")
+    .eq("plan", plan)
     .maybeSingle()
 
   if (pending) {
     return NextResponse.json({ submission: pending }, { status: 200 })
+  }
+
+  const { data: otherPending } = await supabaseAdmin
+    .from("payment_submissions")
+    .select("id, plan")
+    .eq("user_id", auth.user.id)
+    .eq("status", "pending")
+    .maybeSingle()
+
+  if (otherPending) {
+    return NextResponse.json(
+      { error: "pending_submission_exists", detail: `You already have a pending submission for ${otherPending.plan}. Please wait for it to be reviewed.` },
+      { status: 409 },
+    )
   }
 
   const amount = PLANS[plan].price

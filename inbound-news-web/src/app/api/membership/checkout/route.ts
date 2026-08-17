@@ -36,39 +36,56 @@ export async function POST(req: NextRequest) {
 
   const existing = await getUserMembership(req)
   if (existing && isActiveMembership(existing)) {
-    return NextResponse.json({ error: "already_member" }, { status: 409 })
+    if (existing.plan === plan) {
+      return NextResponse.json({ error: "already_member" }, { status: 409 })
+    }
   }
 
   try {
     let customerId = existing?.stripe_customer_id || null
     if (!customerId) {
-      const customers = await stripe.customers.list({
-        email: auth.user.email,
-        limit: 1,
-      })
-      customerId = customers.data[0]?.id || null
+      try {
+        const customers = await stripe.customers.list({
+          email: auth.user.email,
+          limit: 1,
+        })
+        customerId = customers.data[0]?.id || null
+      } catch (e) {
+        console.error("checkout customer lookup error:", e)
+      }
     }
     if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: auth.user.email || undefined,
-        name: auth.user.user_metadata?.display_name || undefined,
-        metadata: { user_id: auth.user.id },
-      })
-      customerId = customer.id
+      try {
+        const customer = await stripe.customers.create({
+          email: auth.user.email || undefined,
+          name: auth.user.user_metadata?.display_name || undefined,
+          metadata: { user_id: auth.user.id },
+        })
+        customerId = customer.id
+      } catch (e) {
+        console.error("checkout customer create error:", e)
+        return NextResponse.json({ error: "checkout_failed" }, { status: 500 })
+      }
     }
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      client_reference_id: auth.user.id,
-      customer: customerId,
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${originOf(req)}/account?tab=membership&paid=1`,
-      cancel_url: `${originOf(req)}/pricing`,
-      metadata: { plan, user_id: auth.user.id },
-      subscription_data: {
+    let session
+    try {
+      session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        client_reference_id: auth.user.id,
+        customer: customerId,
+        line_items: [{ price: priceId, quantity: 1 }],
+        success_url: `${originOf(req)}/account?tab=membership&paid=1`,
+        cancel_url: `${originOf(req)}/pricing`,
         metadata: { plan, user_id: auth.user.id },
-      },
-    })
+        subscription_data: {
+          metadata: { plan, user_id: auth.user.id },
+        },
+      })
+    } catch (e) {
+      console.error("checkout session create error:", e)
+      return NextResponse.json({ error: "checkout_failed" }, { status: 500 })
+    }
 
     if (!session.url) {
       return NextResponse.json({ error: "checkout_failed" }, { status: 500 })

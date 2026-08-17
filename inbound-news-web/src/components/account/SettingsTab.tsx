@@ -78,7 +78,11 @@ export function SettingsTab({ user, onSignOut }: SettingsTabProps) {
     const next = { ...prefs, [key]: value }
     setPrefs(next)
     updatePreferences({ [key]: value })
-    if (user) syncPreferencesToSupabase()
+    if (user) {
+      syncPreferencesToSupabase().catch(() => {
+        console.warn("Failed to sync preferences to Supabase")
+      })
+    }
   }
 
   function handleDelete() {

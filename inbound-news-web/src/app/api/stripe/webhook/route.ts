@@ -14,11 +14,15 @@ function toRow(
   customerId: string | null,
 ): MembershipRow & { stripe_customer_id: string | null; stripe_subscription_id: string | null } {
   const priceId = sub.items.data[0]?.price?.id ?? ""
-  const plan = planFromPriceId(priceId) || ("pro_monthly" as MembershipPlan)
+  const plan = planFromPriceId(priceId)
+  if (!plan) {
+    console.warn("webhook: unknown price ID", priceId, "— defaulting to pro_monthly")
+  }
+  const resolvedPlan: MembershipPlan = plan || ("pro_monthly" as MembershipPlan)
   const item = sub.items.data[0]
   return {
     user_id: userId,
-    plan,
+    plan: resolvedPlan,
     status: sub.status as MembershipStatus,
     stripe_customer_id: customerId,
     stripe_subscription_id: sub.id,
@@ -100,9 +104,17 @@ export async function POST(req: NextRequest) {
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription
         if (supabaseAdmin) {
+          const item = sub.items.data[0]
           await supabaseAdmin
             .from("memberships")
-            .update({ status: "canceled", updated_at: new Date().toISOString() })
+            .update({
+              status: "canceled",
+              cancel_at_period_end: false,
+              current_period_end: item?.current_period_end
+                ? new Date(item.current_period_end * 1000).toISOString()
+                : null,
+              updated_at: new Date().toISOString(),
+            })
             .eq("stripe_subscription_id", sub.id)
         }
         break

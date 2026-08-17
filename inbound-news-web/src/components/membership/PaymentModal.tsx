@@ -1,24 +1,24 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { createPortal } from "react-dom"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { X, Check, ShieldCheck } from "lucide-react"
+import { X, Check, ShieldCheck, Copy, CheckCheck, ArrowLeft } from "lucide-react"
 import { PLANS } from "@/lib/plans"
 import { paymentQrUrl } from "@/lib/payment-qr"
-import { submitQrPayment } from "@/lib/membership"
+import { createOrder, submitPaymentCode } from "@/lib/membership"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import type { MembershipPlan } from "@/lib/plans"
-import type { QrSubmission } from "@/lib/membership"
+import type { PaymentOrder } from "@/lib/membership"
 
 interface PaymentModalProps {
   plan: MembershipPlan
   onClose: () => void
 }
 
-type Step = "qr" | "done"
+type Step = "loading" | "qr" | "code_input" | "submitted"
 
 const PLAN_FEATURE_KEYS: Record<MembershipPlan, string[]> = {
   pro_monthly: [
@@ -37,23 +37,18 @@ const PLAN_FEATURE_KEYS: Record<MembershipPlan, string[]> = {
   ],
 }
 
-/**
- * QR-code payment dialog for a single membership plan. The price is derived
- * from the plan metadata and can't be edited. After paying by QR, the user taps
- * I've paid and immediately sees the verification-pending message. A site
- * admin verifies the payment in their bank app and approves it on /admin/qr
- * before the membership activates.
- */
 export function PaymentModal({ plan, onClose }: PaymentModalProps) {
   const { t } = useI18n()
   const router = useRouter()
   const meta = PLANS[plan]
   const price = `$${meta.price.toFixed(2)}/${meta.cadence}`
 
-  const [step, setStep] = useState<Step>("qr")
+  const [step, setStep] = useState<Step>("loading")
+  const [order, setOrder] = useState<PaymentOrder | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
-  const [submission, setSubmission] = useState<QrSubmission | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [code, setCode] = useState("")
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -69,25 +64,56 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  useEffect(() => {
+    let active = true
+    ;(async () => {
+      const res = await createOrder(plan)
+      if (!active) return
+      if (res.order) {
+        setOrder(res.order)
+        setStep("qr")
+      } else if (res.error === "auth") {
+        close()
+        router.push("/login?returnTo=/pricing")
+      } else {
+        setError(res.error === "already_member" ? t("payment.alreadyMemberError") : t("membership.tryAgain"))
+        setStep("qr")
+      }
+    })()
+    return () => { active = false }
+  }, [plan, router, t])
+
   function close() {
     onClose()
   }
 
-  async function handleSubmit() {
-    setError("")
-    setBusy(true)
+  const handleCopy = useCallback(() => {
+    if (!order?.payment_code) return
+    navigator.clipboard.writeText(order.payment_code).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }, [order?.payment_code])
 
-    const res = await submitQrPayment(plan)
-    if ("submission" in res && res.submission) {
-      setSubmission(res.submission)
-      setStep("done")
-    } else if (res.error === "auth") {
-      close()
-      router.push("/login?returnTo=/pricing")
-    } else if (res.error === "already_member") {
-      setError(t("payment.alreadyMemberError"))
+  async function handleSubmitCode() {
+    const trimmed = code.trim().toUpperCase()
+    if (!trimmed) {
+      setError(t("payment.errorEnterCode"))
+      return
+    }
+    setBusy(true)
+    setError("")
+    const res = await submitPaymentCode(trimmed)
+    if (res.ok) {
+      setStep("submitted")
+    } else if (res.error === "invalid_code") {
+      setError(t("payment.errorInvalidCode"))
+    } else if (res.error === "code_not_yours") {
+      setError(t("payment.errorCodeNotYours"))
+    } else if (res.error === "already_submitted") {
+      setError(t("payment.errorAlreadySubmitted"))
     } else {
-      setError(res.error || t("membership.tryAgain"))
+      setError(res.error === "auth" ? t("payment.errorEnterCode") : t("membership.tryAgain"))
     }
     setBusy(false)
   }
@@ -102,7 +128,7 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
       aria-label={`${meta.name} ${t("payment.planSuffix")}`}
     >
       <div
-        className="w-full sm:max-w-[440px] bg-[var(--surface)] border border-[var(--border)] sm:rounded-[var(--radius)] rounded-t-[var(--radius)] p-6 md:p-8 text-left shadow-[0_24px_64px_-24px_rgba(0,0,0,0.4)] overflow-y-auto"
+        className="w-full sm:max-w-[460px] bg-[var(--surface)] border border-[var(--border)] sm:rounded-[var(--radius)] rounded-t-[var(--radius)] p-6 md:p-8 text-left shadow-[0_24px_64px_-24px_rgba(0,0,0,0.4)] overflow-y-auto"
         style={{
           animation: "riseIn 220ms ease-out",
           maxHeight: "calc(100dvh - var(--mobile-nav-offset) - 24px)",
@@ -126,40 +152,72 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
           </button>
         </div>
 
-        {step === "qr" && (
-          <>
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <span className="meta-text text-[var(--accent)]">{t("payment.khqrPayment")}</span>
-            </div>
+        {step === "loading" && (
+          <div className="py-10 text-center text-[14px] text-[var(--text-secondary)]">
+            {t("payment.confirming")}
+          </div>
+        )}
 
+        {step === "qr" && order && (
+          <>
             <a
               href={paymentQrUrl(plan)}
               target="_blank"
               rel="noopener noreferrer"
-              className="relative block w-full max-w-[300px] aspect-square mx-auto mb-5 bg-[var(--surface)] p-2 transition-opacity hover:opacity-80"
+              className="relative block w-full max-w-[280px] aspect-square mx-auto mb-4 bg-[var(--surface)] p-2 transition-opacity hover:opacity-80"
             >
               <Image
                 src={paymentQrUrl(plan)}
                 alt={`KHQR payment for ${meta.name} ${t("payment.planSuffix")}`}
                 fill
-                sizes="300px"
+                sizes="280px"
                 priority
                 className="object-contain"
               />
             </a>
 
-            <div className="text-center">
+            <div className="text-center mb-4">
               <p className="text-[14px] text-[var(--text-secondary)] mb-1">{t("payment.scanHint")}</p>
               <p className="text-[13px] text-[var(--text-secondary)]">{t("payment.abaPayee")}</p>
-              <p className="text-[13px] text-[var(--text-secondary)] mt-2">
+              <p className="text-[13px] text-[var(--text-secondary)] mt-1">
                 {t("payment.payExactly")}{" "}
                 <span className="font-semibold text-[var(--text-primary)]">${meta.price.toFixed(2)}</span>
               </p>
             </div>
 
+            <div className="bg-[var(--surface-alt)] border border-[var(--border)] rounded-[var(--radius-sm)] p-4 mb-4">
+              <p className="text-[12px] font-semibold uppercase tracking-wide text-[var(--text-secondary)] mb-2">
+                {t("payment.yourPaymentCode")}
+              </p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 text-[18px] font-mono font-bold tracking-wider text-[var(--text-primary)] bg-[var(--surface)] border border-[var(--border)] rounded px-3 py-2 text-center">
+                  {order.payment_code}
+                </code>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="shrink-0 w-10 h-10 flex items-center justify-center rounded-[var(--radius-sm)] border border-[var(--border)] hover:bg-[var(--surface-alt)] transition-colors"
+                  aria-label="Copy payment code"
+                >
+                  {copied ? <CheckCheck className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-[var(--text-secondary)]" />}
+                </button>
+              </div>
+              {copied && (
+                <p className="mt-1.5 text-[12px] text-green-600 font-semibold">Copied to clipboard!</p>
+              )}
+            </div>
+
+            <div className="bg-[var(--surface-alt)] border border-[var(--border)] rounded-[var(--radius-sm)] p-4 mb-4 text-[13px] text-[var(--text-secondary)] space-y-1.5">
+              <p className="font-semibold text-[var(--text-primary)] mb-2">{t("payment.instructions")}</p>
+              <p>1. {t("payment.instruction1")}</p>
+              <p>2. {t("payment.instruction2")}</p>
+              <p>3. {t("payment.instruction3")}</p>
+              <p>4. {t("payment.instruction4")}</p>
+            </div>
+
             {error && (
               <p
-                className="mt-4 p-3 rounded-[var(--radius-sm)] bg-[var(--red-subtle-bg)] text-[13px] font-semibold text-[var(--accent)]"
+                className="mb-4 p-3 rounded-[var(--radius-sm)] bg-[var(--red-subtle-bg)] text-[13px] font-semibold text-[var(--accent)]"
                 role="alert"
               >
                 {error}
@@ -168,31 +226,74 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
 
             <button
               type="button"
-              onClick={handleSubmit}
-              disabled={busy}
-              className="btn-primary w-full h-11 mt-5 disabled:opacity-50"
+              onClick={() => setStep("code_input")}
+              className="btn-primary w-full h-11 text-[14px]"
             >
-              {busy ? t("payment.confirming") : t("payment.iHavePaid")}
+              {t("payment.iHavePaid")}
             </button>
           </>
         )}
 
-        {step === "done" && submission && (
+        {step === "code_input" && (
+          <>
+            <button
+              type="button"
+              onClick={() => { setStep("qr"); setError(""); setCode("") }}
+              className="flex items-center gap-1.5 text-[13px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] mb-4"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              {t("payment.backToQr")}
+            </button>
+
+            <h3 className="font-display text-[16px] font-semibold mb-2">{t("payment.enterPaymentCode")}</h3>
+            <p className="text-[13px] text-[var(--text-secondary)] mb-4">
+              {t("payment.enterCodeInstructions")}
+            </p>
+
+            <div className="mb-4">
+              <label className="meta-text block mb-1.5">{t("payment.paymentCodeLabel")}</label>
+              <input
+                type="text"
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder="PAY-XXXXXXXX"
+                className="w-full h-11 px-3 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] text-[16px] font-mono font-bold tracking-wider text-center text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] placeholder:font-normal placeholder:tracking-normal focus:outline-none focus:border-[var(--accent)]"
+                autoFocus
+              />
+            </div>
+
+            {error && (
+              <p
+                className="mb-4 p-3 rounded-[var(--radius-sm)] bg-[var(--red-subtle-bg)] text-[13px] font-semibold text-[var(--accent)]"
+                role="alert"
+              >
+                {error}
+              </p>
+            )}
+
+            <button
+              type="button"
+              onClick={handleSubmitCode}
+              disabled={busy || !code.trim()}
+              className="btn-primary w-full h-11 text-[14px] disabled:opacity-50"
+            >
+              {busy ? t("payment.submitting") : t("payment.submitCode")}
+            </button>
+          </>
+        )}
+
+        {step === "submitted" && (
           <div>
             <div className="mx-auto mb-4 w-14 h-14 rounded-full flex items-center justify-center bg-[var(--red-subtle-bg)]">
               <ShieldCheck className="h-7 w-7 text-[var(--accent)]" />
             </div>
 
             <div className="text-center text-[12px] font-semibold uppercase tracking-wide text-[var(--accent)] mb-3">
-              {t("payment.verifiedPending")}
+              {t("payment.paymentSubmitted")}
             </div>
 
-            <p className="text-center text-[14px] text-[var(--text-secondary)] mb-2 max-w-[52ch] mx-auto">
-              {t("payment.yourPaymentOf")}{" "}
-              <span className="font-semibold text-[var(--text-primary)]">
-                ${meta.price.toFixed(2)}
-              </span>{" "}
-              {t("payment.recordedNote")}
+            <p className="text-center text-[14px] text-[var(--text-secondary)] mb-5 max-w-[52ch] mx-auto">
+              {t("payment.submittedNote")}
             </p>
 
             <div className="text-left bg-[var(--surface-alt)] border border-[var(--border)] rounded-[var(--radius-sm)] p-4 mb-5">
@@ -210,8 +311,9 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
             </div>
 
             <p className="text-center text-[13px] text-[var(--text-secondary)] mb-5 max-w-[52ch] mx-auto">
-              {t("payment.noEmailNote")}
+              {t("payment.planActivatedAfterReview")}
             </p>
+
             <div className="flex items-center gap-2">
               <Link
                 href="/account?tab=membership"

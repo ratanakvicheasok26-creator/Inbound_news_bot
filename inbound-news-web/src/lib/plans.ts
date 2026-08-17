@@ -1,7 +1,13 @@
 export type MembershipPlan = "pro_monthly" | "premium_yearly"
 
-export function isActiveMembership(m: { status: string } | null | undefined): boolean {
-  return Boolean(m && (m.status === "active" || m.status === "trialing"))
+export function isActiveMembership(m: { status: string; current_period_end?: string | null } | null | undefined): boolean {
+  if (!m) return false
+  if (m.status !== "active" && m.status !== "trialing") return false
+  if (m.current_period_end) {
+    const end = new Date(m.current_period_end).getTime()
+    if (Number.isFinite(end) && end <= Date.now()) return false
+  }
+  return true
 }
 
 export const FREE_FEATURES = [

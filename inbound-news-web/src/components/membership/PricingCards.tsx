@@ -178,13 +178,13 @@ export function PricingCards() {
                 ) : member ? (
                   <button
                     type="button"
-                    onClick={() => handleSubscribe(plan)}
+                    onClick={() => setQrPlan(plan)}
                     disabled={busy !== null}
                     className={`w-full text-[14px] ${
                       idx === 0 ? "btn-primary" : "btn-ghost"
                     } disabled:opacity-60`}
                   >
-                    {busy === plan ? t("membership.openingCheckout") : t("membership.switchPlan")}
+                    {t("membership.switchPlan")} {meta.name}
                   </button>
                 ) : (
                   <>

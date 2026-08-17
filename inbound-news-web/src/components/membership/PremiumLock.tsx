@@ -7,18 +7,26 @@ import { Lock } from "lucide-react"
 import { subscribe } from "@/lib/membership"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import { PaymentModal } from "@/components/membership/PaymentModal"
+import type { Feature } from "@/lib/access"
+import { requiredTier } from "@/lib/access"
+import type { MembershipPlan } from "@/lib/stripe"
 
-export function PremiumLock({ teaser }: { teaser?: string | null }) {
+function planForFeature(feature: Feature): MembershipPlan {
+  return requiredTier(feature) === "premium" ? "premium_yearly" : "pro_monthly"
+}
+
+export function PremiumLock({ feature, teaser }: { feature?: Feature; teaser?: string | null }) {
   const { t } = useI18n()
   const router = useRouter()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
   const [qrOpen, setQrOpen] = useState(false)
+  const plan = feature ? planForFeature(feature) : "pro_monthly"
 
   async function handleJoin() {
     setBusy(true)
     setError("")
-    const res = await subscribe("pro_monthly")
+    const res = await subscribe(plan)
     if ("url" in res) {
       window.location.assign(res.url)
       return
@@ -89,7 +97,7 @@ export function PremiumLock({ teaser }: { teaser?: string | null }) {
         </p>
       )}
 
-      {qrOpen && <PaymentModal plan="pro_monthly" onClose={() => setQrOpen(false)} />}
+      {qrOpen && <PaymentModal plan={plan} onClose={() => setQrOpen(false)} />}
     </div>
   )
 }

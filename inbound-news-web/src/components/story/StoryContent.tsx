@@ -242,7 +242,7 @@ export function StoryContent({
         <div className="grid gap-6 md:gap-8 lg:grid-cols-[1.5fr_0.85fr]">
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-4 sm:p-6 md:p-8">
             {lockedOut ? (
-              <PremiumLock teaser={premiumTeaser} />
+              <PremiumLock feature="full_decode" teaser={premiumTeaser} />
             ) : (
               <>
                 {showTierToggle && activeTier !== "standard" && (

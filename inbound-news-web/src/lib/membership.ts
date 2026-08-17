@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { supabase } from "./supabase"
 import { isActiveMembership } from "./plans"
 import { canAccess, type Feature } from "./access"
@@ -7,7 +7,21 @@ import type { Membership, MembershipPlan } from "./stripe"
 export type { Membership, MembershipPlan }
 export { isActiveMembership }
 
-type MembershipState = { loading: boolean; membership: Membership | null }
+type MembershipState = { loading: boolean; membership: Membership | null; refresh: () => void }
+
+/**
+ * Global version counter. Incrementing this forces every mounted useMembership()
+ * hook to re-fetch from the API, which is needed after payment webhooks or QR
+ * approval update the membership row server-side.
+ */
+let membershipVersion = 0
+const membershipListeners = new Set<() => void>()
+
+/** Force every useMembership() hook to re-fetch. Call after payment events. */
+export function refreshAllMemberships() {
+  membershipVersion++
+  for (const fn of membershipListeners) fn()
+}
 
 export async function getAccessToken(): Promise<string | null> {
   const {
@@ -199,37 +213,185 @@ export async function reviewQrSubmission(
   }
 }
 
-/** Hook for interactive components — resolves the membership once on mount. */
+/** Hook for interactive components — resolves the membership on mount,
+ *  and re-fetches when refreshAllMemberships() is called. */
 export function useMembership(): MembershipState {
-  const [state, setState] = useState<MembershipState>({ loading: true, membership: null })
+  const [membership, setMembership] = useState<Membership | null>(null)
+  const [initialLoad, setInitialLoad] = useState(true)
+  const [version, setVersion] = useState(membershipVersion)
 
   useEffect(() => {
-    let mounted = true
-    // Dedupe concurrent mounts (e.g. a grid of story cards each asking for the
-    // same plan) into a single /api/membership request.
-    const pending = (membershipsInflight ??= getMembership().finally(() => {
-      membershipsInflight = null
-    }))
-    pending.then((membership) => {
-      if (!mounted) return
-      setState({ loading: false, membership })
-    })
+    function handleVersionChange() {
+      setVersion((v) => v + 1)
+    }
+    membershipListeners.add(handleVersionChange)
     return () => {
-      mounted = false
+      membershipListeners.delete(handleVersionChange)
     }
   }, [])
 
-  return state
-}
+  useEffect(() => {
+    let active = true
+    getMembership().then((m) => {
+      if (active) {
+        setMembership(m)
+        setInitialLoad(false)
+      }
+    })
+    return () => {
+      active = false
+    }
+  }, [version])
 
-let membershipsInflight: Promise<Membership | null> | null = null
+  const refresh = useCallback(() => {
+    refreshAllMemberships()
+  }, [])
+
+  return { loading: initialLoad, membership, refresh }
+}
 
 /** Client-side feature gate state — permission rules live in lib/access. */
 export function useFeatureAccess(feature: Feature): {
   loading: boolean
   allowed: boolean
   membership: Membership | null
+  refresh: () => void
 } {
-  const { loading, membership } = useMembership()
-  return { loading, allowed: canAccess(membership, feature), membership }
+  const { loading, membership, refresh } = useMembership()
+  return { loading, allowed: canAccess(membership, feature), membership, refresh }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Payment Orders — structured order / payment-code flow              */
+/* ------------------------------------------------------------------ */
+
+export type PaymentOrderStatus = "created" | "pending" | "approved" | "rejected"
+
+export type PaymentOrder = {
+  id: string
+  order_id: string
+  payment_code: string
+  plan: MembershipPlan
+  amount: number
+  currency: string
+  status: PaymentOrderStatus
+  transaction_code: string | null
+  created_at: string
+  submitted_at: string | null
+  reviewed_at: string | null
+}
+
+export type AdminPaymentOrder = PaymentOrder & {
+  user_id: string
+  user_email: string | null
+  verified_by: string | null
+}
+
+/** Create a new payment order → returns order details + payment code. */
+export async function createOrder(
+  plan: MembershipPlan,
+): Promise<{ order?: PaymentOrder; error?: string }> {
+  const token = await getAccessToken()
+  if (!token) return { error: "auth" }
+  try {
+    const res = await fetch("/api/membership/create-order", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ plan }),
+    })
+    const data = (await res.json().catch(() => ({}))) as {
+      order?: PaymentOrder
+      error?: string
+    }
+    if (!res.ok) return { error: data.error || "failed" }
+    return { order: data.order }
+  } catch {
+    return { error: "failed" }
+  }
+}
+
+/** Submit a payment code after paying → sets order status to "pending". */
+export async function submitPaymentCode(
+  paymentCode: string,
+): Promise<{ ok?: boolean; error?: string }> {
+  const token = await getAccessToken()
+  if (!token) return { error: "auth" }
+  try {
+    const res = await fetch("/api/membership/submit-code", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ payment_code: paymentCode }),
+    })
+    const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string }
+    if (!res.ok) return { error: data.error || "failed" }
+    return { ok: true }
+  } catch {
+    return { error: "failed" }
+  }
+}
+
+/** Fetch the current user's payment orders. */
+export async function getOrders(): Promise<PaymentOrder[]> {
+  const token = await getAccessToken()
+  if (!token) return []
+  try {
+    const res = await fetch("/api/membership/orders", {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    })
+    if (!res.ok) return []
+    const data = (await res.json()) as { orders?: PaymentOrder[] }
+    return data.orders ?? []
+  } catch {
+    return []
+  }
+}
+
+/** Admin: list all payment orders. Returns null when caller is not admin. */
+export async function listAllOrders(): Promise<AdminPaymentOrder[] | null> {
+  const token = await getAccessToken()
+  if (!token) return null
+  try {
+    const res = await fetch("/api/admin/payments", {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    })
+    if (!res.ok) return null
+    const data = (await res.json()) as { orders?: AdminPaymentOrder[] }
+    return data.orders ?? []
+  } catch {
+    return null
+  }
+}
+
+/** Admin: approve or reject a payment order. */
+export async function reviewOrder(
+  id: string,
+  action: "approve" | "reject",
+): Promise<{ ok: boolean; error?: string }> {
+  const token = await getAccessToken()
+  if (!token) return { ok: false, error: "auth" }
+  try {
+    const res = await fetch("/api/admin/payments/review", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ id, action }),
+    })
+    if (!res.ok) {
+      const data = (await res.json().catch(() => ({}))) as { error?: string }
+      return { ok: false, error: data.error || "failed" }
+    }
+    return { ok: true }
+  } catch {
+    return { ok: false, error: "failed" }
+  }
 }

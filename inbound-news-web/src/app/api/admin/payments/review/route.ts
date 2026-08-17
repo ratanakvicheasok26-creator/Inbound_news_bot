@@ -3,13 +3,6 @@ import { adminUser } from "@/lib/admin"
 import { supabaseAdmin } from "@/lib/supabase-server"
 import type { MembershipPlan } from "@/lib/plans"
 
-type Submission = {
-  id: string
-  user_id: string
-  plan: MembershipPlan
-  status: string
-}
-
 function periodEnd(plan: MembershipPlan, start: Date): string {
   const d = new Date(start)
   if (plan === "pro_monthly") d.setMonth(d.getMonth() + 1)
@@ -17,7 +10,6 @@ function periodEnd(plan: MembershipPlan, start: Date): string {
   return d.toISOString()
 }
 
-/** Admin verifies a QR payment: approve → activates membership, or reject. */
 export async function POST(req: NextRequest) {
   const admin = await adminUser(req)
   if (!admin) {
@@ -39,19 +31,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 })
   }
 
-  const { data: submission, error: fetchError } = await supabaseAdmin
-    .from("payment_submissions")
+  const { data: order, error: fetchError } = await supabaseAdmin
+    .from("payment_orders")
     .select("id, user_id, plan, status")
     .eq("id", id)
     .single()
 
-  if (fetchError || !submission) {
+  if (fetchError || !order) {
     return NextResponse.json({ error: "not_found" }, { status: 404 })
   }
-  const sub = submission as unknown as Submission
-  if (sub.status !== "pending") {
+
+  if (order.status !== "pending") {
     return NextResponse.json(
-      { error: "already_reviewed", status: sub.status },
+      { error: "already_reviewed", current_status: order.status },
       { status: 409 },
     )
   }
@@ -60,7 +52,7 @@ export async function POST(req: NextRequest) {
     const { data: existingMember } = await supabaseAdmin
       .from("memberships")
       .select("stripe_customer_id, stripe_subscription_id, status")
-      .eq("user_id", sub.user_id)
+      .eq("user_id", order.user_id)
       .single()
 
     const hasStripe = existingMember?.stripe_subscription_id && existingMember?.status === "active"
@@ -68,41 +60,37 @@ export async function POST(req: NextRequest) {
     const now = new Date()
     const { error: upsertError } = await supabaseAdmin.from("memberships").upsert(
       {
-        user_id: sub.user_id,
-        plan: sub.plan,
+        user_id: order.user_id,
+        plan: order.plan,
         status: "active",
         stripe_customer_id: hasStripe ? existingMember.stripe_customer_id : null,
         stripe_subscription_id: hasStripe ? existingMember.stripe_subscription_id : null,
         current_period_start: now.toISOString(),
-        current_period_end: periodEnd(sub.plan, now),
+        current_period_end: periodEnd(order.plan, now),
         cancel_at_period_end: false,
       },
       { onConflict: "user_id" },
     )
     if (upsertError) {
-      console.error("qr-review upsert membership error:", upsertError)
-      return NextResponse.json({ error: "failed" }, { status: 500 })
-    }
-
-    const { error: updateError } = await supabaseAdmin
-      .from("payment_submissions")
-      .update({ status: action, reviewed_at: new Date().toISOString(), verified_by: admin.user.id })
-      .eq("id", id)
-
-    if (updateError) {
-      console.error("qr-review update submission error:", updateError)
-    }
-  } else {
-    const { error: updateError } = await supabaseAdmin
-      .from("payment_submissions")
-      .update({ status: action, reviewed_at: new Date().toISOString(), verified_by: admin.user.id })
-      .eq("id", id)
-
-    if (updateError) {
-      console.error("qr-review update error:", updateError)
+      console.error("admin-review upsert membership error:", upsertError)
       return NextResponse.json({ error: "failed" }, { status: 500 })
     }
   }
 
-  return NextResponse.json({ ok: true, status: action })
+  const { error: updateError } = await supabaseAdmin
+    .from("payment_orders")
+    .update({
+      status: action === "approve" ? "approved" : "rejected",
+      reviewed_at: new Date().toISOString(),
+      verified_by: admin.user.id,
+    })
+    .eq("id", id)
+    .eq("status", "pending")
+
+  if (updateError) {
+    console.error("admin-review update order error:", updateError)
+    return NextResponse.json({ error: "failed" }, { status: 500 })
+  }
+
+  return NextResponse.json({ ok: true, status: action === "approve" ? "approved" : "rejected" })
 }
