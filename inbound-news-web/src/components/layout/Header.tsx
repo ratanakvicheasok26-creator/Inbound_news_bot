@@ -1,15 +1,15 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client"
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { createPortal } from "react-dom"
-import { CATEGORIES } from "@/lib/categories"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { LiveSearch } from "@/components/layout/LiveSearch"
 import { useI18n, LOCALE_KEY } from "@/lib/i18n/LocaleProvider"
 import type { Locale } from "@/lib/i18n/dictionaries"
-import { Menu, X, ChevronDown, UserRound } from "lucide-react"
+import { Menu, X } from "lucide-react"
 import { supabase, signOut } from "@/lib/auth"
 import type { User } from "@supabase/supabase-js"
 
@@ -281,13 +281,13 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-[#121212]/85 backdrop-blur-md border-b border-neutral-800/80 transition-colors">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          {/* Logo */}
+      <header className="bg-ir-dark/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between">
+          {/* Logo & Mobile Menu Toggle */}
           <div className="flex items-center gap-3">
             <button
               type="button"
-              className="md:hidden p-2 text-neutral-400 hover:text-white"
+              className="md:hidden p-2 text-gray-400 hover:text-white"
               onClick={() => setMobileOpen(true)}
               aria-label="Open menu"
             >
@@ -295,18 +295,18 @@ export function Header() {
             </button>
             <Link
               href="/"
-              className="font-serif text-2xl sm:text-3xl tracking-wide text-white hover:text-neutral-300 transition-colors"
+              className="font-serif text-3xl tracking-wide text-white hover:text-gray-300 hover-transition"
             >
               Inbound Reports
             </Link>
           </div>
 
           {/* Main Navigation (Home, Brief, Membership, Explore dropdown) */}
-          <nav className="hidden md:flex items-center space-x-7 text-sm font-medium text-neutral-300">
+          <nav className="hidden md:flex space-x-6 text-sm font-medium text-gray-300">
             <Link
               href="/"
-              className={`transition-colors ${
-                pathname === "/" ? "text-white font-semibold" : "text-neutral-400 hover:text-white"
+              className={`hover-transition ${
+                pathname === "/" ? "text-white" : "hover:text-white"
               }`}
             >
               {t("nav.home")}
@@ -314,10 +314,10 @@ export function Header() {
 
             <Link
               href="/brief"
-              className={`transition-colors ${
+              className={`hover-transition ${
                 pathname.startsWith("/brief")
-                  ? "text-white font-semibold"
-                  : "text-neutral-400 hover:text-white"
+                  ? "text-white"
+                  : "hover:text-white"
               }`}
             >
               {t("nav.brief")}
@@ -325,10 +325,10 @@ export function Header() {
 
             <Link
               href="/pricing"
-              className={`transition-colors ${
+              className={`hover-transition ${
                 pathname === "/pricing"
-                  ? "text-white font-semibold"
-                  : "text-neutral-400 hover:text-white"
+                  ? "text-white"
+                  : "hover:text-white"
               }`}
             >
               {t("nav.membership")}
@@ -336,41 +336,51 @@ export function Header() {
 
             {/* Explore Dropdown */}
             <div className="relative group cursor-pointer" ref={exploreRef}>
-              <button
-                type="button"
+              <span
                 onClick={() => setExploreOpen((o) => !o)}
-                className={`flex items-center transition-colors ${
-                  isExploreActive
-                    ? "text-white font-semibold"
-                    : "text-neutral-400 hover:text-white"
+                className={`flex items-center hover:text-white hover-transition ${
+                  isExploreActive ? "text-white" : ""
                 }`}
               >
-                <span>Explore</span>
-                <ChevronDown className="w-3.5 h-3.5 ml-1 transition-transform group-hover:rotate-180" />
-              </button>
+                <span>{locale === "km" ? "រុករក" : "Explore"}</span>
+                <svg
+                  className="w-4 h-4 ml-1 transition-transform group-hover:rotate-180"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+                </svg>
+              </span>
 
-              <div className="absolute left-0 mt-2 w-48 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto py-2 z-50">
+              <div
+                className={`absolute left-0 mt-2 w-48 bg-ir-gray border border-gray-800 rounded-md shadow-xl py-2 z-50 transition-opacity ${
+                  exploreOpen
+                    ? "opacity-100 pointer-events-auto"
+                    : "opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto"
+                }`}
+              >
                 <Link
                   href="/compare"
-                  className="block px-4 py-2 text-xs sm:text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors"
+                  className="block px-4 py-2 hover:bg-gray-800 hover:text-white text-gray-300 transition-colors"
                 >
                   {t("nav.compare")}
                 </Link>
                 <Link
                   href="/blindspot"
-                  className="block px-4 py-2 text-xs sm:text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors"
+                  className="block px-4 py-2 hover:bg-gray-800 hover:text-white text-gray-300 transition-colors"
                 >
                   {t("nav.blindspot")}
                 </Link>
                 <Link
                   href="/glossary"
-                  className="block px-4 py-2 text-xs sm:text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors"
+                  className="block px-4 py-2 hover:bg-gray-800 hover:text-white text-gray-300 transition-colors"
                 >
                   {t("nav.glossary")}
                 </Link>
                 <Link
                   href="/search"
-                  className="block px-4 py-2 text-xs sm:text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors"
+                  className="block px-4 py-2 hover:bg-gray-800 hover:text-white text-gray-300 transition-colors"
                 >
                   {t("nav.topics")}
                 </Link>
@@ -379,27 +389,27 @@ export function Header() {
           </nav>
 
           {/* Right Actions: Search, Language Toggle, Theme Toggle, Account */}
-          <div className="flex items-center space-x-3 sm:space-x-4">
+          <div className="flex items-center space-x-4">
             {/* Search */}
             <LiveSearch />
 
             {/* Language Toggle: EN / KH */}
-            <div className="flex items-center space-x-1 text-[11px] font-bold tracking-wider">
+            <div className="flex items-center space-x-1 text-[10px] font-bold tracking-wider">
               <button
                 type="button"
                 onClick={() => handleLanguage("en")}
-                className={`transition-colors cursor-pointer ${
-                  locale === "en" ? "text-[#FF0030]" : "text-neutral-500 hover:text-neutral-200"
+                className={`cursor-pointer transition-colors ${
+                  locale === "en" ? "text-ir-red" : "text-gray-500 hover:text-white"
                 }`}
               >
                 EN
               </button>
-              <span className="text-neutral-700 select-none">/</span>
+              <span className="text-gray-700 select-none">/</span>
               <button
                 type="button"
                 onClick={() => handleLanguage("km")}
-                className={`transition-colors cursor-pointer ${
-                  locale === "km" ? "text-[#FF0030]" : "text-neutral-500 hover:text-neutral-200"
+                className={`cursor-pointer transition-colors ${
+                  locale === "km" ? "text-ir-red" : "text-gray-500 hover:text-white"
                 }`}
               >
                 KH
@@ -414,10 +424,17 @@ export function Header() {
               {user ? (
                 <Link
                   href="/account"
-                  className="flex items-center space-x-1.5 text-sm font-medium text-neutral-300 hover:text-white transition-colors"
+                  className="flex items-center space-x-1 text-sm font-medium text-gray-300 hover:text-white transition-colors"
                 >
-                  <UserRound className="w-4 h-4" />
-                  <span className="hidden sm:inline">{t("nav.account")}</span>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="1.5"
+                    />
+                  </svg>
+                  <span>{t("nav.account")}</span>
                 </Link>
               ) : (
                 <>
@@ -427,24 +444,31 @@ export function Header() {
                       setExploreOpen(false)
                       setAccountOpen((o) => !o)
                     }}
-                    className="flex items-center space-x-1.5 text-sm font-medium text-neutral-300 hover:text-white transition-colors cursor-pointer"
+                    className="flex items-center space-x-1 text-sm font-medium text-gray-300 hover:text-white transition-colors cursor-pointer"
                   >
-                    <UserRound className="w-4 h-4" />
-                    <span className="hidden sm:inline">{t("nav.account")}</span>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="1.5"
+                      />
+                    </svg>
+                    <span>{t("nav.account")}</span>
                   </button>
                   {accountOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-48 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl p-2 space-y-2 z-50">
+                    <div className="absolute top-full right-0 mt-2 w-48 bg-ir-gray border border-gray-800 rounded-md shadow-xl p-2 space-y-2 z-50">
                       <Link
                         href="/signup"
                         onClick={() => setAccountOpen(false)}
-                        className="w-full h-9 rounded-lg bg-[#FF0030] hover:bg-[#FF0030]/90 text-white text-xs font-semibold flex items-center justify-center transition-colors"
+                        className="w-full h-9 rounded bg-[#ff0033] hover:bg-[#b30024] text-white text-xs font-semibold flex items-center justify-center transition-colors"
                       >
                         {t("nav.createAccount")}
                       </Link>
                       <Link
                         href="/login"
                         onClick={() => setAccountOpen(false)}
-                        className="w-full h-9 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 hover:text-white text-xs font-semibold flex items-center justify-center transition-colors"
+                        className="w-full h-9 rounded bg-gray-800 hover:bg-gray-700 text-gray-200 hover:text-white text-xs font-semibold flex items-center justify-center transition-colors"
                       >
                         {t("nav.signIn")}
                       </Link>

@@ -111,7 +111,7 @@ export async function prioritizeStoriesWithImages(
   stories: Story[],
   options: PriorityOptions = {},
 ): Promise<Story[]> {
-  const { resolveLimit = 24, concurrency = 6, rankForFeed = true } = options
+  const { resolveLimit = 0, concurrency = 2, rankForFeed = true } = options
   if (stories.length === 0) return stories
 
   const missing = stories

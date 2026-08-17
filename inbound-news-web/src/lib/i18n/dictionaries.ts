@@ -26,6 +26,7 @@ export function isLocale(value: string | null | undefined): value is Locale {
 const nav = {
   home: "Home",
   brief: "Brief",
+  explore: "Explore",
   compare: "Compare",
   blindspot: "Blindspot",
   glossary: "Glossary",
@@ -71,11 +72,11 @@ const common = {
 }
 
 const home = {
-  heroTag: "Inbound Reports",
+  heroTag: "INBOUND REPORTS",
   heroTitle: "Decode the Tech.",
   heroSubtitle:
-    "Technology coverage from Phnom Penh — who covered it, how they framed it, and what’s undercovered. Compare outlets, cut jargon, Local Lens for Cambodia.",
-  latest: "Latest stories",
+    "Critical technology coverage from Phnom Penh. We analyze the Cambodian tech ecosystem through a local and international lens to reveal the real impact of digital transformation.",
+  latest: "Latest Stories",
   noStoriesTitle: "No stories yet",
   noStoriesBody: "Run website ingest to cluster sources and start decoding coverage.",
   demoData: "Demo data",
@@ -668,6 +669,7 @@ export const dictionaries = {
     nav: {
       home: "ទំព័រដើម",
       brief: "សង្ខេប",
+      explore: "រុករក",
       compare: "ប្រៀបធៀប",
       blindspot: "ចំណុចខ្វាក់",
       glossary: "សទ្ទានុក្រម",

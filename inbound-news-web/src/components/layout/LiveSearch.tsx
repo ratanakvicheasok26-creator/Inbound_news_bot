@@ -156,11 +156,13 @@ export function LiveSearch() {
       <button
         type="button"
         onClick={openSearch}
-        className="header-icon-btn"
+        className="p-2 text-gray-500 hover:text-white transition-colors cursor-pointer"
         aria-label="Search"
         aria-expanded={open}
       >
-        <Search className="h-4 w-4" />
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+        </svg>
       </button>
 
       {open && (

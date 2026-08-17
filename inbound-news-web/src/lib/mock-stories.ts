@@ -22,6 +22,150 @@ type MockBundle = {
 const MOCK_BUNDLES: MockBundle[] = [
   {
     story: {
+      id: "stitch-story-001",
+      title: "Passphrase-less reboots using kexec under NixOS",
+      summary_en:
+        "NixOS can reboot using kexec without a passphrase. Discussion on Lobste.rs detailing the implementation and security implications of this approach.",
+      source_count: 1,
+      category: "opensource",
+      tags: ["nixos", "kexec", "security", "linux"],
+      premium: false,
+      created_at: hoursAgo(0.5),
+      image_url: "/stitch/lead_story.jpg",
+      primary_url: "https://lobste.rs/s/kexec-nixos",
+      primary_source: "Lobste.rs",
+      primary_source_domain: "lobste.rs",
+      coverage_outlets: [
+        { name: "Lobste.rs", domain: "lobste.rs", role: "community" },
+      ],
+    },
+    articles: [
+      {
+        id: "stitch-art-001",
+        title: "Passphrase-less reboots using kexec under NixOS",
+        summary:
+          "NixOS can reboot using kexec without a passphrase. Discussion on Lobste.rs detailing the implementation and security implications of this approach.",
+        url: "https://lobste.rs/s/kexec-nixos",
+        source_name: "Lobste.rs",
+        source_domain: "lobste.rs",
+        category: "opensource",
+        language: "en",
+        published_at: hoursAgo(0.5),
+        ingested_at: hoursAgo(0.5),
+        image_url: "/stitch/lead_story.jpg",
+      },
+    ],
+  },
+  {
+    story: {
+      id: "stitch-story-002",
+      title: "SCM_RIGHTS API quirks (2019)",
+      summary_en:
+        "A deep dive into the unexpected behaviors of the SCM_RIGHTS API and how developers can navigate them.",
+      source_count: 1,
+      category: "cloud",
+      tags: ["api", "linux", "systems", "unix"],
+      premium: false,
+      created_at: hoursAgo(2),
+      image_url: "/stitch/story_scm.jpg",
+      primary_url: "https://techblog.example/scm-rights-quirks",
+      primary_source: "Tech Blog",
+      primary_source_domain: "techblog.example",
+      coverage_outlets: [
+        { name: "Tech Blog", domain: "techblog.example", role: "trade" },
+      ],
+    },
+    articles: [
+      {
+        id: "stitch-art-002",
+        title: "SCM_RIGHTS API quirks (2019)",
+        summary:
+          "A deep dive into the unexpected behaviors of the SCM_RIGHTS API and how developers can navigate them.",
+        url: "https://techblog.example/scm-rights-quirks",
+        source_name: "Tech Blog",
+        source_domain: "techblog.example",
+        category: "cloud",
+        language: "en",
+        published_at: hoursAgo(2),
+        ingested_at: hoursAgo(2),
+        image_url: "/stitch/story_scm.jpg",
+      },
+    ],
+  },
+  {
+    story: {
+      id: "stitch-story-003",
+      title: "Qwen 3.8 27B is excellent, but it defaults to overt...",
+      summary_en:
+        "Analyzing the latest release of the Qwen model family, its impressive benchmarks, and its peculiar default behaviors.",
+      source_count: 1,
+      category: "ai",
+      tags: ["ai", "qwen", "llm", "benchmarks"],
+      premium: false,
+      created_at: hoursAgo(2),
+      image_url: "/stitch/story_qwen.jpg",
+      primary_url: "https://aiweekly.example/qwen-3-8-27b",
+      primary_source: "AI Weekly",
+      primary_source_domain: "aiweekly.example",
+      coverage_outlets: [
+        { name: "AI Weekly", domain: "aiweekly.example", role: "research" },
+      ],
+    },
+    articles: [
+      {
+        id: "stitch-art-003",
+        title: "Qwen 3.8 27B is excellent, but it defaults to overt...",
+        summary:
+          "Analyzing the latest release of the Qwen model family, its impressive benchmarks, and its peculiar default behaviors.",
+        url: "https://aiweekly.example/qwen-3-8-27b",
+        source_name: "AI Weekly",
+        source_domain: "aiweekly.example",
+        category: "ai",
+        language: "en",
+        published_at: hoursAgo(2),
+        ingested_at: hoursAgo(2),
+        image_url: "/stitch/story_qwen.jpg",
+      },
+    ],
+  },
+  {
+    story: {
+      id: "stitch-story-004",
+      title: "Stripe will reportedly acquire OpenRouter for $7B+",
+      summary_en:
+        "The massive deal marks Stripe's aggressive expansion into AI infrastructure and compute billing.",
+      source_count: 1,
+      category: "startups",
+      tags: ["stripe", "openrouter", "acquisitions", "fintech"],
+      premium: false,
+      created_at: hoursAgo(2),
+      image_url: "/stitch/story_stripe.jpg",
+      primary_url: "https://fintechnews.example/stripe-acquires-openrouter",
+      primary_source: "FinTech News",
+      primary_source_domain: "fintechnews.example",
+      coverage_outlets: [
+        { name: "FinTech News", domain: "fintechnews.example", role: "trade" },
+      ],
+    },
+    articles: [
+      {
+        id: "stitch-art-004",
+        title: "Stripe will reportedly acquire OpenRouter for $7B+",
+        summary:
+          "The massive deal marks Stripe's aggressive expansion into AI infrastructure and compute billing.",
+        url: "https://fintechnews.example/stripe-acquires-openrouter",
+        source_name: "FinTech News",
+        source_domain: "fintechnews.example",
+        category: "startups",
+        language: "en",
+        published_at: hoursAgo(2),
+        ingested_at: hoursAgo(2),
+        image_url: "/stitch/story_stripe.jpg",
+      },
+    ],
+  },
+  {
+    story: {
       id: "11111111-1111-4111-8111-111111111101",
       title: "OpenAI opens a Bangkok office as Southeast Asia AI demand accelerates",
       summary_en:

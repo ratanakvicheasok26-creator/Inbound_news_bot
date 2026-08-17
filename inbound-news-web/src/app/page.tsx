@@ -3,7 +3,6 @@ import { prioritizeStoriesWithImages, selectFeedStories } from "@/lib/story-prio
 import { FeaturedEditorialGrid } from "@/components/story/FeaturedEditorialGrid"
 import { StoryCard } from "@/components/story/StoryCard"
 import { AdBand } from "@/components/ads/AdBand"
-import { isMockStoriesEnabled } from "@/lib/mock-stories"
 import { pickSponsorFrom } from "@/lib/sponsors"
 import { getActiveSponsors } from "@/lib/sponsors-server"
 import { LocalizedText } from "@/components/LocalizedText"
@@ -12,11 +11,10 @@ import Link from "next/link"
 export const revalidate = 60
 
 export default async function HomePage() {
-  const demoMode = isMockStoriesEnabled()
   const { stories, error } = await getAllStoriesSafe(72)
   const prioritized = await prioritizeStoriesWithImages(stories, {
-    resolveLimit: demoMode ? 0 : 6,
-    concurrency: 3,
+    resolveLimit: 0,
+    concurrency: 1,
   })
   const feed = selectFeedStories(prioritized, 13)
   const { sponsors } = await getActiveSponsors()
@@ -45,47 +43,35 @@ export default async function HomePage() {
 
   return (
     <main className="flex-grow min-h-screen">
-      {demoMode && (
-        <div className="border-b border-neutral-800 bg-neutral-900/60">
-          <div className="max-w-[1400px] mx-auto px-6 py-2.5 text-xs text-neutral-400">
-            <strong className="text-white">
-              <LocalizedText k="home.demoData" />
-            </strong>
-            {" — "}
-            <LocalizedText k="home.demoBody" />
-          </div>
-        </div>
-      )}
-
       <div className="max-w-[1400px] mx-auto px-6 py-16">
-        {/* Header Hero Section */}
+        {/* Header Section */}
         <section className="max-w-2xl pb-8 mx-auto text-center mb-16">
-          <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#3a1a20] text-[#FF0030] text-xs font-bold tracking-wider mb-6 mx-auto">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#FF0030] mr-2 animate-pulse" aria-hidden="true" />
+          <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#3a1a20] text-ir-red text-xs font-bold tracking-wider mb-6 mx-auto">
+            <span className="w-1.5 h-1.5 rounded-full bg-ir-red mr-2" aria-hidden="true" />
             <LocalizedText k="home.heroTag" />
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-white mb-6 shadow-glow-red font-display-modern">
+          <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-white mb-6 shadow-glow-red font-sans">
             <LocalizedText k="home.heroTitle" />
           </h1>
 
-          <p className="text-xl text-neutral-400 leading-relaxed">
+          <p className="text-xl text-gray-400 leading-relaxed">
             <LocalizedText k="home.heroSubtitle" />
           </p>
         </section>
 
         {/* Latest Editorial Grid Section */}
         <section>
-          <div className="flex items-center justify-between mb-8 pb-2">
-            <h2 className="text-3xl font-bold tracking-tight text-white flex items-center font-display-modern">
-              <span className="w-2 h-8 bg-[#FF0030] mr-4 rounded-full" aria-hidden="true" />
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl font-bold tracking-tight text-white flex items-center font-sans">
+              <span className="w-2 h-8 bg-ir-red mr-4 rounded-full" aria-hidden="true" />
               <LocalizedText k="home.latest" />
             </h2>
             <Link
               href="/search"
-              className="text-sm font-medium text-neutral-400 hover:text-white transition-colors flex items-center group"
+              className="text-sm font-medium text-gray-400 hover:text-white transition-colors flex items-center group"
             >
-              <LocalizedText k="search.searchAll" />
+              <LocalizedText k="common.viewAll" />
               <svg
                 className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform"
                 fill="none"

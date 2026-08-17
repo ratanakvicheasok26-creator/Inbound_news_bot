@@ -1,53 +1,10 @@
+/* eslint-disable @next/next/no-page-custom-font */
 import type { Metadata } from "next";
-import {
-  Source_Serif_4,
-  Source_Sans_3,
-  JetBrains_Mono,
-  Noto_Sans_Khmer,
-  Space_Grotesk,
-} from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
-import { Ticker } from "@/components/Ticker";
 import { Footer } from "@/components/layout/Footer";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
-import { cn } from "@/lib/utils";
-
-const display = Source_Serif_4({
-  subsets: ["latin"],
-  variable: "--font-display",
-  weight: ["400", "600", "700"],
-  display: "swap",
-});
-
-const sans = Source_Sans_3({
-  subsets: ["latin"],
-  variable: "--font-sans",
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
-
-const mono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-  weight: ["400", "500", "700"],
-  display: "swap",
-});
-
-const displayModern = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-display-modern",
-  weight: ["500", "600", "700"],
-  display: "swap",
-});
-
-const notoKhmer = Noto_Sans_Khmer({
-  subsets: ["khmer"],
-  variable: "--font-khmer",
-  weight: ["400", "500", "700"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "Inbound Reports — Decode the Tech.",
@@ -141,16 +98,15 @@ export default async function RootLayout({
       lang="en"
       data-theme={theme}
       suppressHydrationWarning
-      className={cn(
-        display.variable,
-        sans.variable,
-        mono.variable,
-        notoKhmer.variable,
-        displayModern.variable,
-        "font-sans"
-      )}
+      className="font-sans"
     >
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script dangerouslySetInnerHTML={{ __html: localeInitScript }} />
       </head>
@@ -160,7 +116,6 @@ export default async function RootLayout({
         </a>
         <LocaleProvider>
           <Header />
-          <Ticker />
           <main id="main-content">{children}</main>
           <Footer />
           <MobileBottomNav />

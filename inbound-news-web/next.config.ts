@@ -1,9 +1,9 @@
 import os from "node:os";
 import type { NextConfig } from "next";
 
-/** All non-internal IPv4 addresses on this machine (current LAN IPs). */
+/** All local and non-internal IPv4 addresses on this machine (current LAN IPs). */
 function getLanAddresses(): string[] {
-  const addresses: string[] = [];
+  const addresses: string[] = ["localhost", "127.0.0.1", "0.0.0.0"];
   for (const nets of Object.values(os.networkInterfaces())) {
     for (const net of nets ?? []) {
       if (net.family === "IPv4" && !net.internal) addresses.push(net.address);
@@ -35,9 +35,9 @@ const securityHeaders = [
     value: [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://www.googletagservices.com https://www.google.com https://partner.googleadservices.com",
-      "style-src 'self' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.cdnfonts.com",
       "img-src 'self' data: blob: https:",
-      "font-src 'self' data:",
+      "font-src 'self' data: https://fonts.gstatic.com https://fonts.cdnfonts.com",
       `connect-src 'self' ${supabaseHost} https://*.supabase.co wss://*.supabase.co https://pagead2.googlesyndication.com https://*.google.com https://*.doubleclick.net`,
       "frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com",
       "frame-ancestors 'none'",

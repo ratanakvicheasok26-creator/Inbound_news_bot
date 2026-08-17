@@ -2,25 +2,22 @@
 
 import { useEffect, useState } from "react";
 
-function ThemeIcon({ theme }: { theme: "light" | "dark" }) {
-  if (theme === "dark") {
-    return (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-        <circle cx="12" cy="12" r="5" />
-        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-      </svg>
-    );
-  }
+function ThemeIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
     </svg>
   );
 }
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-  const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
+  const [, setMounted] = useState(false);
 
   /* eslint-disable react-hooks/set-state-in-effect -- read DOM theme after mount to avoid hydration mismatch */
   useEffect(() => {
@@ -53,8 +50,12 @@ export function ThemeToggle() {
   }
 
   return (
-    <button className="theme-toggle" onClick={toggle} aria-label="Toggle theme">
-      <ThemeIcon theme={mounted ? theme : "light"} />
+    <button
+      className="p-2 text-gray-500 hover:text-white transition-colors cursor-pointer"
+      onClick={toggle}
+      aria-label="Toggle theme"
+    >
+      <ThemeIcon />
     </button>
   );
 }

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Inbound Reports - Decode the Tech</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <style data-purpose="custom-fonts">
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    @font-face {
+      font-family: 'Chomsky';
+      src: url('https://fonts.cdnfonts.com/s/17393/Chomsky.woff') format('woff');
+    }
+  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['Chomsky', 'serif'],
+          },
+          colors: {
+            'ir-dark': '#121212',
+            'ir-gray': '#1e1e1e',
+            'ir-red': '#ff0033',
+            'ir-red-dark': '#b30024',
+            'ir-text-muted': '#a0a0a0',
+          },
+          boxShadow: {
+            'glow-red': '0 0 60px -15px rgba(255, 0, 51, 0.4)',
+            'glow-red-sm': '0 0 30px -10px rgba(255, 0, 51, 0.3)',
+          }
+        }
+      }
+    }
+  </script>
+  <style data-purpose="custom-utilities">
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    /* Smooth transition for hover effects */
+    .hover-transition {
+      transition: all 0.2s ease-in-out;
+    }
+
+    /* Bleeding edge effect for main image */
+    .image-bleed-effect {
+      position: relative;
+    }
+    
+    .image-bleed-effect::before {
+      content: '';
+      position: absolute;
+      inset: -20px;
+      background: radial-gradient(circle, rgba(255,0,51,0.2) 0%, rgba(18,18,18,0) 70%);
+      filter: blur(20px);
+      z-index: -1;
+      border-radius: 20px;
+    }
+
+    .image-bleed-effect-sm {
+      position: relative;
+    }
+    
+    .image-bleed-effect-sm::before {
+      content: '';
+      position: absolute;
+      inset: -10px;
+      background: radial-gradient(circle, rgba(255,0,51,0.15) 0%, rgba(18,18,18,0) 70%);
+      filter: blur(10px);
+      z-index: -1;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+  <!-- BEGIN: NavigationBar -->
+  <header class="bg-ir-dark/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between">
+      <!-- Logo -->
+      <a class="font-serif text-3xl tracking-wide text-white hover:text-gray-300 hover-transition" href="#">
+        Inbound Reports
+      </a>
+      <!-- Main Navigation -->
+      <nav class="hidden md:flex space-x-6 text-sm font-medium text-gray-300">
+        <a class="text-white" href="#">Home</a>
+        <a class="hover:text-white hover-transition" href="#">Brief</a>
+        <a class="hover:text-white hover-transition" href="#">Membership</a>
+        <div class="relative group cursor-pointer">
+          <span class="flex items-center hover:text-white hover-transition">
+            Explore
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+              <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            </svg>
+          </span>
+          <div class="absolute left-0 mt-2 w-48 bg-ir-gray border border-gray-800 rounded-md shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto py-2 z-50">
+            <a class="block px-4 py-2 hover:bg-gray-800 hover:text-white" href="#">Compare</a>
+            <a class="block px-4 py-2 hover:bg-gray-800 hover:text-white" href="#">Blindspot</a>
+            <a class="block px-4 py-2 hover:bg-gray-800 hover:text-white" href="#">Glossary</a>
+            <a class="block px-4 py-2 hover:bg-gray-800 hover:text-white" href="#">Topics</a>
+          </div>
+        </div>
+      </nav>
+      <!-- Right Actions -->
+      <div class="flex items-center space-x-4">
+        <!-- Search -->
+        <button class="p-2 text-gray-500 hover:text-white transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+        </button>
+        <!-- Language Toggle -->
+        <div class="flex items-center space-x-1 text-[10px] font-bold tracking-wider">
+          <button class="text-ir-red">EN</button>
+          <span class="text-gray-700">/</span>
+          <button class="text-gray-500 hover:text-white transition-colors">KH</button>
+        </div>
+        <!-- Theme Toggle -->
+        <button class="p-2 text-gray-500 hover:text-white transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+            <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+        </button>
+        <!-- Account -->
+        <button class="flex items-center space-x-1 text-sm font-medium text-gray-300 hover:text-white transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+            <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+          </svg>
+          <span>Account</span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <!-- END: NavigationBar -->
+  <!-- BEGIN: MainContent -->
+  <main class="flex-grow">
+    <div class="max-w-[1400px] mx-auto px-6 py-16">
+      <!-- Header Section -->
+      <section class="max-w-2xl pb-8 mx-auto text-center mb-16">
+        <div class="inline-flex items-center px-3 py-1 rounded-full bg-[#3a1a20] text-ir-red text-xs font-bold tracking-wider mb-6 mx-auto">
+          <span class="w-1.5 h-1.5 rounded-full bg-ir-red mr-2"></span>
+          INBOUND REPORTS
+        </div>
+        <h1 class="text-5xl md:text-6xl font-bold tracking-tight text-white mb-6 shadow-glow-red">
+          Decode the Tech.
+        </h1>
+        <p class="text-xl text-gray-400 leading-relaxed">
+          Critical technology coverage from Phnom Penh. We analyze the Cambodian tech ecosystem through a local and international lens to reveal the real impact of digital transformation.
+        </p>
+      </section>
+      <!-- Latest Editorial Grid Section -->
+      <section>
+        <div class="flex items-center justify-between mb-8">
+          <h2 class="text-3xl font-bold tracking-tight text-white flex items-center">
+            <span class="w-2 h-8 bg-ir-red mr-4 rounded-full"></span>
+            Latest Stories
+          </h2>
+          <a class="text-sm font-medium text-gray-400 hover:text-white transition-colors flex items-center group" href="#">
+            View all
+            <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+              <path d="M17 8l4 4m0 0l-4 4m4-4H3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            </svg>
+          </a>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <!-- Featured Large Story (Span 7 cols) -->
+          <div class="lg:col-span-7 flex flex-col group cursor-pointer">
+            <div class="image-bleed-effect rounded-xl mb-6 overflow-hidden">
+              <img alt="Cupcakes with rainbow toppers" class="w-full h-auto rounded-xl object-cover shadow-glow-red relative z-10 border border-gray-800 transform group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsX680sm4D-YrqBNplS5ce0DG5YcIHaerrqVGeq1HeQpyvP8hyC4PGDyh_3JqF5RnIhjCSr_xFjseXUufhoCaflHPB28HopxRZes5qbjvf0oAXuJ1zLF86c-G0EbgriqMIVI6WaHJ8DKwnf0YaMVZgPdjUpZGnhnedop7cpsrZuIGO8c3ZwIgzMni7o4BUW0sjAqoK_7Xw1eRZGi2pU1ayiy_iAuqm5Ut0Brbda4Yda1mSaZkLRfqv3w" style="aspect-ratio: 16/10;"/>
+            </div>
+            <div class="flex flex-col flex-grow justify-start">
+              <div class="flex items-center space-x-3 mb-4">
+                <span class="px-2.5 py-1 rounded-md bg-[#3a1a20] text-ir-red text-xs font-bold uppercase tracking-wider">OPEN SOURCE</span>
+                <span class="text-gray-500 text-xs font-medium uppercase tracking-wider">31M AGO</span>
+              </div>
+              <h3 class="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight group-hover:text-gray-300 transition-colors">
+                Passphrase-less reboots using kexec under NixOS
+              </h3>
+              <p class="text-lg text-gray-400 mb-6 leading-relaxed line-clamp-2">
+                NixOS can reboot using kexec without a passphrase. Discussion on Lobste.rs detailing the implementation and security implications of this approach.
+              </p>
+              <div class="flex items-center space-x-3 mt-auto">
+                <span class="text-xs text-gray-400 font-medium tracking-wide">1 OUTLET</span>
+                <span class="px-2 py-0.5 rounded bg-gray-800 text-gray-300 text-[10px] font-bold uppercase tracking-wider">COMMUNITY</span>
+                <span class="text-xs text-gray-400 font-medium">Lobste.rs</span>
+              </div>
+            </div>
+          </div>
+          <!-- Right Side Stacked Stories (Span 5 cols) -->
+          <div class="lg:col-span-5 flex flex-col space-y-8">
+            <!-- Story 2 -->
+            <div class="flex flex-col sm:flex-row gap-6 group cursor-pointer border-b border-gray-800/50 pb-8">
+              <div class="sm:w-1/3 shrink-0 image-bleed-effect-sm rounded-lg overflow-hidden">
+                <img alt="Abstract digital art" class="w-full h-full object-cover rounded-lg shadow-glow-red-sm relative z-10 border border-gray-800 transform group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_1ldK2ollas5lC0t6cnMKkQCKnNFTOMlUXZAGM6USytOJ5-bU7jA05G9Taj_1WHLFfJ7vonZSxSx-w0thqC3Udqpv0YoJhjvEuNfvjiK5wASmgLj7jVEsQve8IXBwV7lfpc9L9Lcv5vCMnvrk9ZubZuFpA9GiPg2wGxnRNNpFfvFPUdZiK80f45ZcY-mvQAJ7L4pURH43Zft_l5p8Os_POmbFYcImXrF_EKHyurLPBZrHVzxI7l5utQ" style="aspect-ratio: 4/3;"/>
+              </div>
+              <div class="flex flex-col justify-center sm:w-2/3">
+                <div class="flex items-center space-x-3 mb-2">
+                  <span class="text-ir-red text-[10px] font-bold uppercase tracking-wider">API</span>
+                  <span class="text-gray-500 text-[10px] font-medium uppercase tracking-wider">2H AGO</span>
+                </div>
+                <h4 class="text-xl font-bold text-white mb-2 leading-snug group-hover:text-gray-300 transition-colors">SCM_RIGHTS API quirks (2019)</h4>
+                <p class="text-sm text-gray-400 line-clamp-2 mb-3">A deep dive into the unexpected behaviors of the SCM_RIGHTS API and how developers can navigate them.</p>
+                <div class="flex items-center space-x-2 mt-auto">
+                  <span class="text-[10px] text-gray-500 font-medium">Tech Blog</span>
+                </div>
+              </div>
+            </div>
+            <!-- Story 3 -->
+            <div class="flex flex-col sm:flex-row gap-6 group cursor-pointer border-b border-gray-800/50 pb-8">
+              <div class="sm:w-1/3 shrink-0 image-bleed-effect-sm rounded-lg overflow-hidden">
+                <img alt="AI visual representation" class="w-full h-full object-cover rounded-lg shadow-glow-red-sm relative z-10 border border-gray-800 transform group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBe8xSNtZY4ZgOeETI_QM_EpU2cxCNVJbBwgd0H-3iIh6Q8YEYDvgfDPG1M9k9zfp51Qf_y_h4Y1AsNdvANKBYHbt2nxlcMLnRcAcw2ldaWelRNGUnYzbFIbG3UWHtgdwr8TczbDsPba-mymX4gR2QDeGFxWhEvEO2vUq8ahfKF-aGglmo2iIogRvMN12XQI0wjbXlwUugl3lXuTDhbdoqQ3S1rP_UcaI6ZQGBYpdJr6lhKpvl-twAM_A" style="aspect-ratio: 4/3;"/>
+              </div>
+              <div class="flex flex-col justify-center sm:w-2/3">
+                <div class="flex items-center space-x-3 mb-2">
+                  <span class="text-ir-red text-[10px] font-bold uppercase tracking-wider">AI MODELS</span>
+                  <span class="text-gray-500 text-[10px] font-medium uppercase tracking-wider">2H AGO</span>
+                </div>
+                <h4 class="text-xl font-bold text-white mb-2 leading-snug group-hover:text-gray-300 transition-colors">Qwen 3.8 27B is excellent, but it defaults to overt...</h4>
+                <p class="text-sm text-gray-400 line-clamp-2 mb-3">Analyzing the latest release of the Qwen model family, its impressive benchmarks, and its peculiar default behaviors.</p>
+                <div class="flex items-center space-x-2 mt-auto">
+                  <span class="text-[10px] text-gray-500 font-medium">AI Weekly</span>
+                </div>
+              </div>
+            </div>
+            <!-- Story 4 -->
+            <div class="flex flex-col sm:flex-row gap-6 group cursor-pointer">
+              <div class="sm:w-1/3 shrink-0 image-bleed-effect-sm rounded-lg overflow-hidden">
+                <img alt="Financial technology concept" class="w-full h-full object-cover rounded-lg shadow-glow-red-sm relative z-10 border border-gray-800 transform group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAX4lWWEwcqDBF-X2cHU8ZvfZ7UPUcTGfvzu8m20nYLNbk-FkyVmeQMZuW5T1p_vGRAnDc_7gIQ3dvKTXWt25S8id1_jolWWzoB8p-0fWeGUi7mKA5QBn1y8JBf0cV_MOPGKcpAPHcUpB_SykCo5EHtB6ejhNIjEddB8PJiYnnfgxeB1zPMFgJYN9BZFaV_ObB7V0MKDcxFsyTBX8CZnFi7aGExzycdIZqPlxX75sVvvtRFco_bok97kg" style="aspect-ratio: 4/3;"/>
+              </div>
+              <div class="flex flex-col justify-center sm:w-2/3">
+                <div class="flex items-center space-x-3 mb-2">
+                  <span class="text-ir-red text-[10px] font-bold uppercase tracking-wider">ACQUISITIONS</span>
+                  <span class="text-gray-500 text-[10px] font-medium uppercase tracking-wider">2H AGO</span>
+                </div>
+                <h4 class="text-xl font-bold text-white mb-2 leading-snug group-hover:text-gray-300 transition-colors">Stripe will reportedly acquire OpenRouter for $7B+</h4>
+                <p class="text-sm text-gray-400 line-clamp-2 mb-3">The massive deal marks Stripe's aggressive expansion into AI infrastructure and compute billing.</p>
+                <div class="flex items-center space-x-2 mt-auto">
+                  <span class="text-[10px] text-gray-500 font-medium">FinTech News</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <!-- END: MainContent -->
+</body>
+</html>
