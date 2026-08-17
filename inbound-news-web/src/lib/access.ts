@@ -112,3 +112,8 @@ export function canAccessTier(tier: PlanTier, feature: Feature): boolean {
 export function canAccess(membership: Membership | null | undefined, feature: Feature): boolean {
   return canAccessTier(effectiveTier(membership), feature)
 }
+
+/** Returns the minimum PlanTier required for a feature. */
+export function requiredTier(feature: Feature): PlanTier {
+  return FEATURE_TIER[feature]
+}
