@@ -25,13 +25,13 @@ export function FeaturedEditorialGrid({
   const leadCategoryLabel = CATEGORY_MAP[leadSlug]
     ? t(`category.${leadSlug}`)
     : t("common.news")
-  const leadDek = resolveStoryDek(leadStory.summary_en, 190)
+  const leadDek = resolveStoryDek(leadStory.summary_en, 180)
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
       {/* Featured Large Story (Span 7 cols) */}
-      <article className="lg:col-span-7 flex flex-col group min-w-0">
-        <div className="image-bleed-effect rounded-2xl mb-6 overflow-hidden bg-[var(--surface-alt)] border border-[var(--border)]">
+      <article className="lg:col-span-7 flex flex-col group cursor-pointer min-w-0">
+        <div className="image-bleed-effect rounded-xl mb-6 overflow-hidden">
           <Link href={`/story/${leadStory.id}`} className="block relative z-10 overflow-hidden">
             <StoryImage
               imageUrl={leadStory.image_url}
@@ -39,42 +39,42 @@ export function FeaturedEditorialGrid({
               alt={leadStory.title}
               variant="lead"
               priority
-              className="rounded-none transform group-hover:scale-[1.02] transition-transform duration-500 ease-out"
+              className="w-full h-auto rounded-xl object-cover shadow-glow-red relative z-10 border border-neutral-800 transform group-hover:scale-105 transition-transform duration-500"
             />
           </Link>
         </div>
 
         <div className="flex flex-col flex-grow justify-start">
-          <div className="flex items-center space-x-3 mb-3.5 flex-wrap">
-            <span className="px-2.5 py-1 rounded-md bg-[var(--red-subtle-bg)] text-[var(--accent)] text-xs font-bold uppercase tracking-wider">
+          <div className="flex items-center space-x-3 mb-4 flex-wrap">
+            <span className="px-2.5 py-1 rounded-md bg-[#3a1a20] text-[#FF0030] text-xs font-bold uppercase tracking-wider">
               {leadCategoryLabel}
             </span>
-            <span className="text-[var(--text-secondary)] text-xs font-medium uppercase tracking-wider">
+            <span className="text-neutral-500 text-xs font-medium uppercase tracking-wider">
               {formatDistanceToNow(leadStory.created_at)}
             </span>
           </div>
 
           <Link href={`/story/${leadStory.id}`} className="block">
-            <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold font-display-modern text-[var(--text-primary)] mb-3.5 leading-[1.15] group-hover:text-[var(--accent)] transition-colors">
+            <h3 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight group-hover:text-neutral-300 transition-colors">
               {leadStory.title}
             </h3>
           </Link>
 
           {leadDek && (
-            <p className="text-base md:text-lg text-[var(--text-secondary)] mb-6 leading-relaxed line-clamp-3">
+            <p className="text-lg text-neutral-400 mb-6 leading-relaxed line-clamp-2">
               {leadDek}
             </p>
           )}
 
-          <div className="flex items-center justify-between gap-4 mt-auto pt-4 border-t border-[var(--border)]">
-            <CoverageMeta story={leadStory} maxNames={3} />
-            <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center justify-between gap-4 mt-auto pt-2">
+            <CoverageMeta story={leadStory} maxNames={2} compact />
+            <div className="flex items-center gap-2 shrink-0">
               <SaveButton storyId={leadStory.id} />
               <Link
                 href={`/story/${leadStory.id}`}
-                className="btn-primary text-xs sm:text-sm py-2 px-4"
+                className="text-xs font-semibold text-[#FF0030] hover:text-white transition-colors"
               >
-                {t("story.decodeThis")}
+                {t("story.decodeThis")} &rarr;
               </Link>
             </div>
           </div>
@@ -82,7 +82,7 @@ export function FeaturedEditorialGrid({
       </article>
 
       {/* Right Side Stacked Stories (Span 5 cols) */}
-      <div className="lg:col-span-5 flex flex-col space-y-6 sm:space-y-8 justify-between">
+      <div className="lg:col-span-5 flex flex-col space-y-8 justify-between">
         {secondaryStories.map((story) => {
           const slug = story.category || ""
           const categoryLabel = CATEGORY_MAP[slug]
@@ -93,9 +93,9 @@ export function FeaturedEditorialGrid({
           return (
             <article
               key={story.id}
-              className="flex flex-col sm:flex-row gap-5 sm:gap-6 group min-w-0 border-b border-[var(--border)] last:border-0 pb-6 sm:pb-8 last:pb-0"
+              className="flex flex-col sm:flex-row gap-6 group cursor-pointer border-b border-neutral-800/50 pb-8 last:border-0 last:pb-0 min-w-0"
             >
-              <div className="sm:w-1/3 shrink-0 image-bleed-effect-sm rounded-xl overflow-hidden bg-[var(--surface-alt)] border border-[var(--border)] self-start w-full aspect-[4/3]">
+              <div className="sm:w-1/3 shrink-0 image-bleed-effect-sm rounded-lg overflow-hidden w-full aspect-[4/3]">
                 <Link
                   href={`/story/${story.id}`}
                   className="block h-full relative z-10 overflow-hidden"
@@ -105,37 +105,37 @@ export function FeaturedEditorialGrid({
                     pageUrl={story.primary_url}
                     alt={story.title}
                     variant="card"
-                    className="h-full w-full object-cover rounded-none transform group-hover:scale-105 transition-transform duration-500 ease-out"
+                    className="w-full h-full object-cover rounded-lg shadow-glow-red-sm relative z-10 border border-neutral-800 transform group-hover:scale-105 transition-transform duration-500"
                   />
                 </Link>
               </div>
 
-              <div className="flex flex-col justify-between sm:w-2/3 min-w-0">
-                <div>
-                  <div className="flex items-center space-x-2.5 mb-2 flex-wrap">
-                    <span className="text-[var(--accent)] text-[11px] font-bold uppercase tracking-wider">
-                      {categoryLabel}
-                    </span>
-                    <span className="text-[var(--text-secondary)] text-[11px] font-medium uppercase tracking-wider">
-                      {formatDistanceToNow(story.created_at)}
-                    </span>
-                  </div>
-
-                  <Link href={`/story/${story.id}`} className="block">
-                    <h4 className="text-base sm:text-lg font-bold text-[var(--text-primary)] mb-2 leading-snug group-hover:text-[var(--accent)] transition-colors line-clamp-2">
-                      {story.title}
-                    </h4>
-                  </Link>
-
-                  {dek && (
-                    <p className="text-xs sm:text-sm text-[var(--text-secondary)] line-clamp-2 mb-3 leading-relaxed">
-                      {dek}
-                    </p>
-                  )}
+              <div className="flex flex-col justify-center sm:w-2/3 min-w-0">
+                <div className="flex items-center space-x-3 mb-2 flex-wrap">
+                  <span className="text-[#FF0030] text-[10px] font-bold uppercase tracking-wider">
+                    {categoryLabel}
+                  </span>
+                  <span className="text-neutral-500 text-[10px] font-medium uppercase tracking-wider">
+                    {formatDistanceToNow(story.created_at)}
+                  </span>
                 </div>
 
-                <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-[var(--border)]/60">
-                  <CoverageMeta story={story} maxNames={2} compact showBar={false} />
+                <Link href={`/story/${story.id}`} className="block">
+                  <h4 className="text-xl font-bold text-white mb-2 leading-snug group-hover:text-neutral-300 transition-colors line-clamp-2">
+                    {story.title}
+                  </h4>
+                </Link>
+
+                {dek && (
+                  <p className="text-sm text-neutral-400 line-clamp-2 mb-3 leading-relaxed">
+                    {dek}
+                  </p>
+                )}
+
+                <div className="flex items-center justify-between gap-2 mt-auto">
+                  <span className="text-[10px] text-neutral-500 font-medium">
+                    {story.primary_source || story.primary_source_domain || "Tech News"}
+                  </span>
                   <SaveButton storyId={story.id} />
                 </div>
               </div>
