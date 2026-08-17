@@ -57,7 +57,7 @@ async function upsertFromSubscription(sub: Stripe.Subscription, userId?: string 
   const row = toRow(sub, uid, String(sub.customer || ""))
   await supabaseAdmin
     .from("memberships")
-    .upsert(row, { onConflict: "stripe_subscription_id" })
+    .upsert(row, { onConflict: "user_id" })
 }
 
 /** Stripe webhook — sync subscription state into `memberships`. */
