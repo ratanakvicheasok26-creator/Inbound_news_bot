@@ -10,7 +10,6 @@ import { useI18n } from "@/lib/i18n/LocaleProvider"
 import { PaymentModal } from "@/components/membership/PaymentModal"
 import type { Feature } from "@/lib/access"
 import { requiredTier } from "@/lib/access"
-import type { MembershipPlan } from "@/lib/stripe"
 
 function planForFeature(feature: Feature): MembershipPlan {
   return requiredTier(feature) === "premium" ? "premium_yearly" : "pro_monthly"

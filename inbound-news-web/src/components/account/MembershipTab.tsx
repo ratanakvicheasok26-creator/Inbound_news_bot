@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
 import { Copy, CheckCheck } from "lucide-react"
-import { useMembership, isActiveMembership, refreshAllMemberships, getOrders, submitPaymentCode } from "@/lib/membership"
+import { useMembership, isActiveMembership, refreshAllMemberships, getOrders, submitPaymentCode, openBillingPortal } from "@/lib/membership"
 import { PLANS, priceLabel, hasStripeBilling, planTitleKey } from "@/lib/plans"
 import { PaymentSuccessModal } from "@/components/membership/PaymentSuccessModal"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
@@ -40,6 +40,7 @@ export function MembershipTab() {
   const [ordersLoaded, setOrdersLoaded] = useState(false)
   const [celebrate, setCelebrate] = useState<PaymentOrder | null>(null)
   const stripeBilled = hasStripeBilling(membership)
+  const [busy, setBusy] = useState(false)
   const seenPendingRef = useRef<Set<string>>(new Set())
   const hasPendingRef = useRef(false)
   const [refreshTick, setRefreshTick] = useState(0)
@@ -81,6 +82,13 @@ export function MembershipTab() {
       clearTimeout(timer)
     }
   }, [refreshTick, loadOrders])
+
+  async function handlePortal() {
+    setBusy(true)
+    const url = await openBillingPortal()
+    if (url) window.location.assign(url)
+    setBusy(false)
+  }
 
   if (loading) {
     return (
