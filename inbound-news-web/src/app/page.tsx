@@ -1,6 +1,6 @@
 import { getAllStoriesSafe } from "@/lib/posts"
 import { prioritizeStoriesWithImages, selectFeedStories } from "@/lib/story-priority"
-import { LeadStoryCard } from "@/components/story/LeadStoryCard"
+import { FeaturedEditorialGrid } from "@/components/story/FeaturedEditorialGrid"
 import { StoryCard } from "@/components/story/StoryCard"
 import { AdBand } from "@/components/ads/AdBand"
 import { isMockStoriesEnabled } from "@/lib/mock-stories"
@@ -27,13 +27,12 @@ export default async function HomePage() {
   const feedAd = pickSponsorFrom("homeFeed", sponsors)
 
   const leadStory = feed[0] || null
-  const latestStories = feed.slice(1)
-  const feedTop = latestStories.slice(0, 6)
-  const feedRest = latestStories.slice(6)
+  const secondaryStories = feed.slice(1, 4)
+  const feedRest = feed.slice(4)
 
   if (!leadStory) {
     return (
-      <div className="container py-20">
+      <div className="container mx-auto px-4 py-20">
         <div className="empty-state max-w-lg mx-auto">
           <p className="page-title mb-3">
             <LocalizedText k="home.noStoriesTitle" />
@@ -48,10 +47,10 @@ export default async function HomePage() {
   }
 
   return (
-    <div>
+    <div className="min-h-screen">
       {demoMode && (
         <div className="border-b border-[var(--border)] bg-[var(--surface-alt)]">
-          <div className="container py-2.5 text-[12px] text-[var(--text-secondary)]">
+          <div className="container mx-auto px-4 sm:px-6 py-2.5 text-[12px] text-[var(--text-secondary)]">
             <strong className="text-[var(--text-primary)]">
               <LocalizedText k="home.demoData" />
             </strong>
@@ -60,58 +59,78 @@ export default async function HomePage() {
           </div>
         </div>
       )}
-      {/* Hero — brand positioning + lead story */}
-      <section className="border-b border-[var(--border)] bg-[var(--surface)]">
-        <div className="container pt-8 pb-10 md:pt-12 md:pb-14">
-          <div className="mb-8 md:mb-10">
-            <p className="chip mb-4">
-              <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
-              <LocalizedText k="home.heroTag" />
-            </p>
-            <h1 className="font-display-modern text-[clamp(32px,5vw,56px)] font-bold leading-[1.04] tracking-[-0.025em]">
-              <LocalizedText k="home.heroTitle" />
-            </h1>
-            <p className="mt-4 max-w-[46ch] text-[15px] md:text-[17px] leading-[1.6] text-[var(--text-secondary)]">
-              <LocalizedText k="home.heroSubtitle" />
-            </p>
-          </div>
 
-          <LeadStoryCard story={leadStory} />
+      {/* Centered Hero Section from Stitch design */}
+      <section className="pt-10 pb-8 md:pt-16 md:pb-12 text-center">
+        <div className="container max-w-3xl mx-auto px-4 sm:px-6">
+          <div className="inline-flex items-center px-3.5 py-1 rounded-full bg-[var(--red-subtle-bg)] text-[var(--accent)] text-xs font-bold tracking-wider mb-5">
+            <span className="w-2 h-2 rounded-full bg-[var(--accent)] mr-2 animate-pulse" aria-hidden="true" />
+            <LocalizedText k="home.heroTag" />
+          </div>
+          <h1 className="font-display-modern text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-[var(--text-primary)] mb-5 leading-[1.08]">
+            <LocalizedText k="home.heroTitle" />
+          </h1>
+          <p className="text-base sm:text-lg md:text-xl text-[var(--text-secondary)] leading-relaxed max-w-2xl mx-auto">
+            <LocalizedText k="home.heroSubtitle" />
+          </p>
         </div>
       </section>
 
-      {homeAd && <AdBand placement="home" creative={homeAd} sponsors={sponsors} />}
-
-      {/* Latest stories — equal 3-column grid */}
-      <section className="container pt-14 pb-12 md:pt-20 md:pb-16">
-        <div className="section-header">
-          <h2 className="section-title flex items-center gap-2.5">
-            <span className="inline-block h-4 w-1 rounded-full bg-[var(--accent)]" aria-hidden="true" />
+      {/* Latest Stories Editorial Grid Section */}
+      <section className="container mx-auto px-4 sm:px-6 pb-16">
+        <div className="flex items-center justify-between mb-8 pb-3 border-b border-[var(--border)]">
+          <h2 className="text-2xl sm:text-3xl font-bold font-display-modern tracking-tight text-[var(--text-primary)] flex items-center">
+            <span className="w-2 h-7 sm:h-8 bg-[var(--accent)] mr-3.5 rounded-full" aria-hidden="true" />
             <LocalizedText k="home.latest" />
           </h2>
           <Link
             href="/search"
-            className="meta-text hover:text-[var(--accent)] transition-colors"
+            className="text-xs sm:text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors flex items-center group"
           >
             <LocalizedText k="search.searchAll" />
+            <svg
+              className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path d="M17 8l4 4m0 0l-4 4m4-4H3" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+            </svg>
           </Link>
         </div>
 
-        <div className="grid gap-5 gap-y-8 sm:grid-cols-2 sm:gap-6 sm:gap-y-10 lg:grid-cols-3">
-          {feedTop.map((story) => (
-            <StoryCard key={story.id} story={story} />
-          ))}
-          {feedRest.length > 0 && (
-            <div className="col-span-full min-w-0">
-              {feedAd && (
-                <AdBand placement="homeFeed" flush creative={feedAd} sponsors={sponsors} />
+        {/* Featured Editorial Grid (7 cols Lead + 5 cols Stacked) */}
+        <FeaturedEditorialGrid
+          leadStory={leadStory}
+          secondaryStories={secondaryStories}
+        />
+
+        {homeAd && (
+          <div className="my-10 sm:my-14">
+            <AdBand placement="home" creative={homeAd} sponsors={sponsors} />
+          </div>
+        )}
+
+        {/* Remaining Stories Grid */}
+        {feedRest.length > 0 && (
+          <div className="mt-12 sm:mt-16 pt-10 border-t border-[var(--border)]">
+            <div className="grid gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {feedRest.slice(0, 6).map((story) => (
+                <StoryCard key={story.id} story={story} />
+              ))}
+              {feedRest.length > 6 && (
+                <div className="col-span-full min-w-0">
+                  {feedAd && (
+                    <AdBand placement="homeFeed" flush creative={feedAd} sponsors={sponsors} />
+                  )}
+                </div>
               )}
+              {feedRest.slice(6).map((story) => (
+                <StoryCard key={story.id} story={story} />
+              ))}
             </div>
-          )}
-          {feedRest.map((story) => (
-            <StoryCard key={story.id} story={story} />
-          ))}
-        </div>
+          </div>
+        )}
       </section>
     </div>
   )
