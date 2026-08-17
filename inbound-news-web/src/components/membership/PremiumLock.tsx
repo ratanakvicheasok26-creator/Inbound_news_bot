@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Lock } from "lucide-react"
+import { PLANS, annualMonthlyEquivalent, formatUsd, type MembershipPlan } from "@/lib/plans"
 import { subscribe } from "@/lib/membership"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import { PaymentModal } from "@/components/membership/PaymentModal"
@@ -20,7 +21,7 @@ export function PremiumLock({ feature, teaser }: { feature?: Feature; teaser?: s
   const router = useRouter()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
-  const [qrOpen, setQrOpen] = useState(false)
+  const [qrPlan, setQrPlan] = useState<MembershipPlan | null>(null)
   const plan = feature ? planForFeature(feature) : "pro_monthly"
 
   async function handleJoin() {
@@ -49,7 +50,7 @@ export function PremiumLock({ feature, teaser }: { feature?: Feature; teaser?: s
     <div>
       <div className="flex items-center gap-2 mb-3">
         <Lock className="h-4 w-4 text-[var(--accent)]" />
-        <span className="meta-text font-semibold text-[var(--accent)]">{t("membership.proOnly")}</span>
+        <span className="meta-text font-semibold text-[var(--accent)]">{t("membership.membersOnlyBadge")}</span>
       </div>
 
       {teaser && (
@@ -63,15 +64,22 @@ export function PremiumLock({ feature, teaser }: { feature?: Feature; teaser?: s
         {t("membership.storyForMembers")}
       </p>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 sm:gap-3">
         <button
           type="button"
-          onClick={() => setQrOpen(true)}
-          className="btn-primary text-[14px] px-5"
+          onClick={() => setQrPlan("premium_yearly")}
+          className="btn-primary w-full sm:w-auto text-[14px] px-5"
         >
-          {t("membership.payByQrMonthly")}
+          {t("membership.joinFrom", { price: formatUsd(annualMonthlyEquivalent()) })}
         </button>
-        <Link href="/pricing" className="btn-ghost text-[14px] px-5">
+        <button
+          type="button"
+          onClick={() => setQrPlan("pro_monthly")}
+          className="btn-ghost w-full sm:w-auto text-[14px] px-5"
+        >
+          {t("membership.payByQrMonthly", { price: formatUsd(PLANS.pro_monthly.price) })}
+        </button>
+        <Link href="/pricing" className="btn-ghost w-full sm:w-auto text-[14px] px-5">
           {t("membership.viewPlans")}
         </Link>
       </div>
@@ -97,7 +105,7 @@ export function PremiumLock({ feature, teaser }: { feature?: Feature; teaser?: s
         </p>
       )}
 
-      {qrOpen && <PaymentModal plan={plan} onClose={() => setQrOpen(false)} />}
+      {qrPlan && <PaymentModal plan={qrPlan} onClose={() => setQrPlan(null)} />}
     </div>
   )
 }

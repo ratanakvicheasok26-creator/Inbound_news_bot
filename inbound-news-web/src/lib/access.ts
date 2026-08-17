@@ -45,23 +45,25 @@ const FEATURE_TIER: Record<Feature, PlanTier> = {
   daily_brief: "pro",
   bookmarks: "pro",
   advanced_search: "pro",
-  local_lens: "premium",
-  undercovered: "premium",
-  trend_radar: "premium",
+  // Monthly and annual are one membership. Every paid cadence unlocks the
+  // same tools — Local Lens, Blindspot, and Trend Radar included.
+  local_lens: "pro",
+  undercovered: "pro",
+  trend_radar: "pro",
   // Khmer content — free tier gets limited translation + basic summaries.
   basic_khmer_translation: "free",
   khmer_summary: "free",
   full_khmer_translation: "pro",
-  unlimited_khmer_translation: "premium",
+  unlimited_khmer_translation: "pro",
   khmer_decode: "pro",
   khmer_compare: "pro",
   khmer_daily_brief: "pro",
   khmer_coverage_intelligence: "pro",
-  khmer_local_lens: "premium",
-  khmer_trend_radar: "premium",
-  khmer_intelligence_reports: "premium",
-  khmer_historical_intelligence: "premium",
-  khmer_premium_analysis: "premium",
+  khmer_local_lens: "pro",
+  khmer_trend_radar: "pro",
+  khmer_intelligence_reports: "pro",
+  khmer_historical_intelligence: "pro",
+  khmer_premium_analysis: "pro",
 }
 
 /** Human-friendly feature names for locked / upgrade UI copy. */
@@ -71,7 +73,7 @@ export const FEATURE_LABELS: Record<Feature, string> = {
   daily_brief: "Personalized Daily Brief",
   bookmarks: "Bookmarks",
   advanced_search: "Advanced Search",
-  local_lens: "Premium Local Lens",
+  local_lens: "Local Lens",
   undercovered: "Undercovered Stories",
   trend_radar: "Trend Radar",
   basic_khmer_translation: "Basic Khmer Translation",
@@ -82,25 +84,14 @@ export const FEATURE_LABELS: Record<Feature, string> = {
   khmer_compare: "Khmer Advanced Compare",
   khmer_daily_brief: "Khmer Daily Brief",
   khmer_coverage_intelligence: "Khmer Coverage Intelligence",
-  khmer_local_lens: "Premium Khmer Local Lens",
+  khmer_local_lens: "Khmer Local Lens",
   khmer_trend_radar: "Khmer Trend Radar",
   khmer_intelligence_reports: "Khmer Intelligence Reports",
   khmer_historical_intelligence: "Khmer Historical Intelligence",
   khmer_premium_analysis: "Khmer Premium Analysis",
 }
 
-export const TIER_LABELS: Record<PlanTier, string> = {
-  free: "Free",
-  pro: "Pro",
-  premium: "Premium",
-}
-
 const TIER_RANK: Record<PlanTier, number> = { free: 0, pro: 1, premium: 2 }
-
-/** The plan tier a given feature requires. */
-export function requiredTier(feature: Feature): PlanTier {
-  return FEATURE_TIER[feature]
-}
 
 /**
  * A user's effective plan tier, resolved from their Supabase membership.

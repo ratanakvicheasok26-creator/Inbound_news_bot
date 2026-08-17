@@ -11,7 +11,7 @@ const ARTICLE_COLUMNS =
 
 type Params = { params: Promise<{ id: string }> }
 
-/** Full premium story body + articles — Full Decode is Pro+ (JWT via Authorization). */
+/** Full gated story body + articles — Full Decode is a member feature (JWT via Authorization). */
 export async function GET(req: NextRequest, { params }: Params) {
   const { id } = await params
 

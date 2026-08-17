@@ -5,7 +5,7 @@ import { LocalizedText } from "@/components/LocalizedText"
 export const metadata = {
   title: "Membership — Inbound Reports",
   description:
-    "Keep Inbound Reports independent. Pro unlocks every premium story the moment it's published.",
+    "Keep Inbound Reports independent. One membership, billed monthly or yearly.",
 }
 
 const FREE_FEATURE_KEYS = [
@@ -18,18 +18,18 @@ const FREE_FEATURE_KEYS = [
 
 export default function PricingPage() {
   return (
-    <div className="container py-10 md:py-14">
-      <h1 className="page-title mb-3">
+    <div className="container py-8 sm:py-10 md:py-14">
+      <h1 className="page-title mb-3 text-balance">
         <LocalizedText k="pricing.pageTitle" />
       </h1>
-      <p className="text-[16px] text-[var(--text-secondary)] leading-[1.7] mb-8 max-w-[65ch]">
+      <p className="text-[15px] sm:text-[16px] text-[var(--text-secondary)] leading-[1.7] mb-6 sm:mb-8 max-w-[65ch]">
         <LocalizedText k="pricing.pageSubtitle" />
       </p>
 
       <PricingCards />
 
-      <div className="mt-10 grid gap-6 md:grid-cols-2 items-stretch">
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6">
+      <div className="mt-8 sm:mt-10 grid gap-4 sm:gap-6 md:grid-cols-2 items-stretch">
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-4 sm:p-6 min-w-0">
           <h2 className="font-display text-[16px] font-semibold mb-3">
             <LocalizedText k="pricing.goodToKnow" />
           </h2>
@@ -48,7 +48,7 @@ export default function PricingPage() {
             </li>
           </ul>
         </div>
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6">
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-4 sm:p-6 min-w-0">
           <h2 className="font-display text-[16px] font-semibold mb-3">
             <LocalizedText k="pricing.freeKeepsEverything" />
           </h2>

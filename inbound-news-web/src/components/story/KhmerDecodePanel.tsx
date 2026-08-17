@@ -15,8 +15,7 @@ import type { KhmerContent } from "@/lib/khmer-content"
  * The Khmer UI is free; this panel surfaces AI-generated Khmer content gated
  * by the user's plan:
  *   Free    → basic Khmer summary + upgrade prompt
- *   Pro     → full Khmer Decode of every source
- *   Premium → full Khmer Decode, no daily cap
+ *   Member  → full Khmer Decode of every source (monthly or annual)
  */
 export function KhmerDecodePanel({ storyId }: { storyId: string }) {
   const { t } = useI18n()
@@ -88,8 +87,8 @@ export function KhmerDecodePanel({ storyId }: { storyId: string }) {
   return (
     <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6 font-khmer">
       <div className="flex items-start justify-between gap-3 mb-4">
-        <div className="flex items-center gap-2">
-          <Languages className="h-4 w-4 text-[var(--accent)]" />
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <Languages className="h-4 w-4 shrink-0 text-[var(--accent)]" />
           <span className="meta-text font-semibold text-[var(--accent)]">
             {content?.level === "full" ? t("story.khmerDecode") : t("story.khmerBasic")}
           </span>
@@ -141,12 +140,12 @@ export function KhmerDecodePanel({ storyId }: { storyId: string }) {
               <div className="flex items-center gap-2 mb-1">
                 <Lock className="h-3.5 w-3.5 text-[var(--accent)]" />
                 <span className="text-[12px] font-semibold text-[var(--accent)]">
-                  {t("membership.proOnly")}
+                  {t("membership.membersOnlyBadge")}
                 </span>
               </div>
               <p className="text-[13px] text-[var(--text-primary)] mb-3">{t("story.khmerUnlockFull")}</p>
-              <Link href="/pricing" className="btn-primary text-[13px] px-4 py-2 inline-flex">
-                {t("membership.upgradeTo")} Pro
+              <Link href="/pricing" className="btn-primary w-full sm:w-auto text-[13px] px-4 py-2 inline-flex">
+                {t("membership.viewPlans")}
               </Link>
             </div>
           )}

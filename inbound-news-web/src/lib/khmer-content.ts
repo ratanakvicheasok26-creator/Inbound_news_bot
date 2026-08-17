@@ -12,8 +12,7 @@ import { canAccessTier, type PlanTier } from "./access"
  * permissions (lib/access.ts) used everywhere else.
  *
  *   Free   → basic Khmer summary (title + a few article summaries, daily cap)
- *   Pro    → full Khmer Decode (every linked source, translated + recombined)
- *   Premium→ full Khmer Decode, no daily cap
+ *   Member → full Khmer Decode (every linked source, translated + recombined)
  *
  * Translation flow mirrors the Telegram bot's EN→KM pipeline (newsbot/ai.py):
  * the Khmer content is the same story, only in a different language — the
@@ -271,7 +270,7 @@ export function canUseFreeTranslation(userId: string): boolean {
   return rateLimit(`khmer:${userId}:${DAY_KEY()}`, FREE_DAILY_LIMIT, 24 * 60 * 60 * 1000).ok
 }
 
-/** Burst guard for Pro/Premium Khmer generation. */
+/** Burst guard for member Khmer generation. */
 export function canUsePaidTranslation(userId: string): boolean {
   return rateLimit(`khmer-paid:${userId}:${DAY_KEY()}`, PAID_HOURLY_LIMIT, 60 * 60 * 1000).ok
 }
