@@ -95,14 +95,14 @@ export function Footer() {
                 alt="Inbound Reports"
                 width={1983}
                 height={467}
-                className="block h-6 sm:h-7 w-auto dark:hidden"
+                className="block h-10 sm:h-12 w-auto dark:hidden"
               />
               <Image
                 src="/logo-light.png"
                 alt="Inbound Reports"
-                width={1982}
-                height={467}
-                className="hidden h-6 sm:h-7 w-auto dark:block"
+                width={2500}
+                height={590}
+                className="hidden h-10 sm:h-12 w-auto dark:block"
               />
             </Link>
             <p className="text-sm sm:text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[360px]">

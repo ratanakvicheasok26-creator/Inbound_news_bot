@@ -135,14 +135,14 @@ export function Header() {
                   alt="Inbound Reports"
                   width={1983}
                   height={467}
-                  className="h-6 w-auto dark:hidden"
+                  className="h-8 sm:h-10 w-auto dark:hidden"
                 />
                 <Image
                   src="/logo-light.png"
                   alt="Inbound Reports"
-                  width={1982}
-                  height={467}
-                  className="hidden h-6 w-auto dark:block"
+                  width={2500}
+                  height={590}
+                  className="hidden h-8 sm:h-10 w-auto dark:block"
                 />
               </Link>
               <button
@@ -296,7 +296,7 @@ export function Header() {
   return (
     <>
       <header className="bg-[var(--surface)]/90 backdrop-blur-md sticky top-0 z-50 border-b border-[var(--border)] transition-colors duration-200">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2">
           {/* Logo & Mobile Menu Toggle */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
@@ -316,15 +316,15 @@ export function Header() {
                 alt="Inbound Reports"
                 width={1983}
                 height={467}
-                className="h-5 sm:h-6 md:h-7 w-auto dark:hidden"
+                className="h-8 sm:h-10 md:h-12 w-auto dark:hidden"
                 priority
               />
               <Image
                 src="/logo-light.png"
                 alt="Inbound Reports"
-                width={1982}
-                height={467}
-                className="hidden h-5 sm:h-6 md:h-7 w-auto dark:block"
+                width={2500}
+                height={590}
+                className="hidden h-8 sm:h-10 md:h-12 w-auto dark:block"
                 priority
               />
             </Link>
