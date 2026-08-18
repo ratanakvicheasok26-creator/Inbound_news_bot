@@ -38,6 +38,14 @@ function InstagramIcon({ className }: { className?: string }) {
   )
 }
 
+function TikTokIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15.2a6.34 6.34 0 0 0 10.86 4.48V13a8.28 8.28 0 0 0 5.58 2.17v-3.44a4.85 4.85 0 0 1-5.58-2.73V6.69h5.58z" />
+    </svg>
+  )
+}
+
 const linkClass =
   "text-[14px] text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
 
@@ -66,6 +74,7 @@ export function Footer() {
     { href: "https://x.com/inboundcrewm?s=11", label: t("footer.xTwitter"), icon: XIcon },
     { href: "https://www.facebook.com/inboundcrew420", label: t("footer.facebook"), icon: FacebookIcon },
     { href: "https://www.instagram.com/inboundcrew/", label: t("footer.instagram"), icon: InstagramIcon },
+    { href: "https://www.tiktok.com/@inbound_crew26?_r=1&_t=ZS-98yiCK9FwdZ", label: t("footer.tiktok"), icon: TikTokIcon },
     { href: "mailto:inboundcrew82@gmail.com", label: t("footer.email"), icon: Mail },
   ]
 

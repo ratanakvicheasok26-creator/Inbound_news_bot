@@ -2,6 +2,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { createPortal } from "react-dom"
@@ -127,9 +128,22 @@ export function Header() {
               <Link
                 href="/"
                 onClick={closeMobileMenu}
-                className="font-serif text-2xl tracking-wide text-[var(--text-primary)]"
+                className="inline-flex items-center"
               >
-                Inbound Reports
+                <Image
+                  src="/logo-dark.png"
+                  alt="Inbound Reports"
+                  width={1983}
+                  height={467}
+                  className="h-6 w-auto dark:hidden"
+                />
+                <Image
+                  src="/logo-light.png"
+                  alt="Inbound Reports"
+                  width={1982}
+                  height={467}
+                  className="hidden h-6 w-auto dark:block"
+                />
               </Link>
               <button
                 ref={closeBtnRef}
@@ -295,9 +309,24 @@ export function Header() {
             </button>
             <Link
               href="/"
-              className="font-serif text-xl sm:text-2xl md:text-3xl tracking-wide text-[var(--text-primary)] hover:text-[var(--accent)] hover-transition truncate"
+              className="inline-flex items-center hover:text-[var(--accent)] hover-transition truncate"
             >
-              Inbound Reports
+              <Image
+                src="/logo-dark.png"
+                alt="Inbound Reports"
+                width={1983}
+                height={467}
+                className="h-5 sm:h-6 md:h-7 w-auto dark:hidden"
+                priority
+              />
+              <Image
+                src="/logo-light.png"
+                alt="Inbound Reports"
+                width={1982}
+                height={467}
+                className="hidden h-5 sm:h-6 md:h-7 w-auto dark:block"
+                priority
+              />
             </Link>
           </div>
 
