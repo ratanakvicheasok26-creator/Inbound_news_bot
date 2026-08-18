@@ -28,10 +28,10 @@ export function FeaturedEditorialGrid({
   const leadDek = resolveStoryDek(leadStory.summary_en, 180)
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-stretch">
       {/* Featured Large Story (Span 7 cols) */}
       <article className="lg:col-span-7 flex flex-col group cursor-pointer min-w-0">
-        <div className="image-bleed-effect rounded-xl mb-6 overflow-hidden">
+        <div className="image-bleed-effect rounded-xl mb-4 sm:mb-6 overflow-hidden">
           <Link href={`/story/${leadStory.id}`} className="block relative z-10 overflow-hidden">
             <StoryImage
               imageUrl={leadStory.image_url}
@@ -45,34 +45,34 @@ export function FeaturedEditorialGrid({
         </div>
 
         <div className="flex flex-col flex-grow justify-start">
-          <div className="flex items-center space-x-3 mb-4 flex-wrap">
-            <span className="px-2.5 py-1 rounded-md bg-[#3a1a20] text-ir-red text-xs font-bold uppercase tracking-wider">
+          <div className="flex items-center space-x-2.5 sm:space-x-3 mb-3 sm:mb-4 flex-wrap">
+            <span className="px-2.5 py-1 rounded-md bg-[#ff0033]/10 border border-[#ff0033]/20 text-[var(--accent)] text-[11px] sm:text-xs font-bold uppercase tracking-wider">
               {leadCategoryLabel}
             </span>
-            <span className="text-gray-500 text-xs font-medium uppercase tracking-wider">
+            <span className="text-[var(--text-secondary)] text-[11px] sm:text-xs font-medium uppercase tracking-wider">
               {formatDistanceToNow(leadStory.created_at)}
             </span>
           </div>
 
           <Link href={`/story/${leadStory.id}`} className="block">
-            <h3 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight group-hover:text-gray-300 transition-colors">
+            <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--text-primary)] mb-3 sm:mb-4 leading-tight group-hover:text-[var(--accent)] transition-colors line-clamp-3 sm:line-clamp-none">
               {leadStory.title}
             </h3>
           </Link>
 
           {leadDek && (
-            <p className="text-lg text-gray-400 mb-6 leading-relaxed line-clamp-2">
+            <p className="text-base sm:text-lg text-[var(--text-secondary)] mb-4 sm:mb-6 leading-relaxed line-clamp-2 sm:line-clamp-3">
               {leadDek}
             </p>
           )}
 
-          <div className="flex items-center justify-between gap-4 mt-auto pt-2">
+          <div className="flex items-center justify-between gap-3 sm:gap-4 mt-auto pt-2 flex-wrap sm:flex-nowrap">
             <CoverageMeta story={leadStory} maxNames={2} compact />
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
               <SaveButton storyId={leadStory.id} />
               <Link
                 href={`/story/${leadStory.id}`}
-                className="text-xs font-semibold text-ir-red hover:text-white transition-colors"
+                className="text-xs font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
               >
                 {t("story.decodeThis")} &rarr;
               </Link>
@@ -82,7 +82,7 @@ export function FeaturedEditorialGrid({
       </article>
 
       {/* Right Side Stacked Stories (Span 5 cols) */}
-      <div className="lg:col-span-5 flex flex-col space-y-8 justify-between">
+      <div className="lg:col-span-5 flex flex-col space-y-6 sm:space-y-8 justify-between">
         {secondaryStories.map((story) => {
           const slug = story.category || ""
           const categoryLabel = CATEGORY_MAP[slug]
@@ -93,9 +93,9 @@ export function FeaturedEditorialGrid({
           return (
             <article
               key={story.id}
-              className="flex flex-col sm:flex-row gap-6 group cursor-pointer border-b border-gray-800/50 pb-8 last:border-0 last:pb-0 min-w-0"
+              className="flex flex-col sm:flex-row gap-4 sm:gap-6 group cursor-pointer border-b border-[var(--border)] pb-6 sm:pb-8 last:border-0 last:pb-0 min-w-0"
             >
-              <div className="sm:w-1/3 shrink-0 image-bleed-effect-sm rounded-lg overflow-hidden w-full aspect-[4/3]">
+              <div className="sm:w-2/5 md:w-1/3 shrink-0 image-bleed-effect-sm rounded-lg overflow-hidden w-full aspect-[16/10] sm:aspect-[4/3]">
                 <Link
                   href={`/story/${story.id}`}
                   className="block h-full relative z-10 overflow-hidden"
@@ -105,35 +105,35 @@ export function FeaturedEditorialGrid({
                     pageUrl={story.primary_url}
                     alt={story.title}
                     variant="card"
-                    className="w-full h-full object-cover rounded-lg shadow-glow-red-sm relative z-10 border border-gray-800 transform group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-cover rounded-lg shadow-glow-red-sm relative z-10 border border-[var(--border)] transform group-hover:scale-105 transition-transform duration-500"
                   />
                 </Link>
               </div>
 
-              <div className="flex flex-col justify-center sm:w-2/3 min-w-0">
-                <div className="flex items-center space-x-3 mb-2 flex-wrap">
-                  <span className="text-ir-red text-[10px] font-bold uppercase tracking-wider">
+              <div className="flex flex-col justify-center sm:w-3/5 md:w-2/3 min-w-0">
+                <div className="flex items-center space-x-2.5 sm:space-x-3 mb-2 flex-wrap">
+                  <span className="text-[var(--accent)] text-[10px] font-bold uppercase tracking-wider">
                     {categoryLabel}
                   </span>
-                  <span className="text-gray-500 text-[10px] font-medium uppercase tracking-wider">
+                  <span className="text-[var(--text-secondary)] text-[10px] font-medium uppercase tracking-wider">
                     {formatDistanceToNow(story.created_at)}
                   </span>
                 </div>
 
                 <Link href={`/story/${story.id}`} className="block">
-                  <h4 className="text-xl font-bold text-white mb-2 leading-snug group-hover:text-gray-300 transition-colors line-clamp-2">
+                  <h4 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] mb-1.5 sm:mb-2 leading-snug group-hover:text-[var(--accent)] transition-colors line-clamp-2">
                     {story.title}
                   </h4>
                 </Link>
 
                 {dek && (
-                  <p className="text-sm text-gray-400 line-clamp-2 mb-3 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-[var(--text-secondary)] line-clamp-2 mb-2.5 sm:mb-3 leading-relaxed">
                     {dek}
                   </p>
                 )}
 
                 <div className="flex items-center justify-between gap-2 mt-auto">
-                  <span className="text-[10px] text-gray-500 font-medium">
+                  <span className="text-[10px] text-[var(--text-secondary)] font-medium truncate">
                     {story.primary_source || story.primary_source_domain || "Tech News"}
                   </span>
                   <SaveButton storyId={story.id} />

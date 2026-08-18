@@ -78,30 +78,30 @@ export function Footer() {
   return (
     <footer>
       <div className="container">
-        <div className="footer-brand">
+        <div className="footer-brand flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 sm:gap-8">
           <div>
-            <Link href="/" className="inline-flex items-center mb-4">
+            <Link href="/" className="inline-flex items-center mb-3 sm:mb-4">
               <Image
                 src="/logo-dark.png"
                 alt="Inbound Reports"
                 width={1983}
                 height={467}
-                className="block h-7 w-auto dark:hidden"
+                className="block h-6 sm:h-7 w-auto dark:hidden"
               />
               <Image
                 src="/logo-light.png"
                 alt="Inbound Reports"
                 width={1982}
                 height={467}
-                className="hidden h-7 w-auto dark:block"
+                className="hidden h-6 sm:h-7 w-auto dark:block"
               />
             </Link>
-            <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[360px]">
+            <p className="text-sm sm:text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[360px]">
               {t("footer.tagline")}
             </p>
           </div>
 
-          <div className="footer-social">
+          <div className="footer-social flex-wrap gap-2">
             {SOCIAL_LINKS.map(({ href, label, icon: Icon, badge }) => (
               <a
                 key={label}
@@ -158,9 +158,9 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="footer-bottom">
-          <span>&copy; {new Date().getFullYear()} Inbound Reports</span>
-          <nav className="footer-legal" aria-label={t("footer.legalNav")}>
+        <div className="footer-bottom flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+          <span className="text-xs text-[var(--text-secondary)]">&copy; {new Date().getFullYear()} Inbound Reports</span>
+          <nav className="footer-legal flex-wrap gap-4 sm:gap-5" aria-label={t("footer.legalNav")}>
             {LEGAL_LINKS.map(({ href, label }) => (
               <Link key={label} href={href} className={linkClass}>
                 {label}

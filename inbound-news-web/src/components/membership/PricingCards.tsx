@@ -8,8 +8,6 @@ import NumberFlow from "@number-flow/react"
 import confetti from "canvas-confetti"
 import { useMembership, subscribe, openBillingPortal } from "@/lib/membership"
 import {
-  PLANS,
-  formatUsd,
   isActiveMembership,
   hasStripeBilling,
   type MembershipPlan,
@@ -121,22 +119,22 @@ export function PricingCards() {
       <InteractiveStarfield />
 
       {/* Monthly / Annual Toggle */}
-      <div className="relative z-10 flex justify-center mb-8 sm:mb-12">
+      <div className="relative z-10 flex justify-center mb-6 sm:mb-10 md:mb-12">
         <div
           ref={toggleRef}
-          className="relative inline-flex items-center rounded-full bg-neutral-900 border border-neutral-800 p-1 shadow-inner"
+          className="relative inline-flex items-center rounded-full bg-[var(--surface-alt)] border border-[var(--border)] p-1 shadow-inner max-w-full"
         >
           <button
             type="button"
             onClick={() => handleToggle(true)}
-            className={`relative rounded-full px-5 sm:px-6 py-2 text-xs sm:text-sm font-semibold transition-colors duration-200 cursor-pointer ${
-              isMonthly ? "text-neutral-900" : "text-neutral-400 hover:text-neutral-200"
+            className={`relative rounded-full px-3.5 sm:px-6 py-1.5 sm:py-2 text-[11px] sm:text-sm font-semibold transition-colors duration-200 cursor-pointer ${
+              isMonthly ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             }`}
           >
             {isMonthly && (
               <motion.div
                 layoutId="pricing-active-pill"
-                className="absolute inset-0 rounded-full bg-white dark:bg-neutral-100 shadow-md"
+                className="absolute inset-0 rounded-full bg-[var(--surface)] shadow-md border border-[var(--border)]"
                 transition={{ type: "spring", stiffness: 500, damping: 35 }}
               />
             )}
@@ -146,23 +144,21 @@ export function PricingCards() {
           <button
             type="button"
             onClick={() => handleToggle(false)}
-            className={`relative rounded-full px-5 sm:px-6 py-2 text-xs sm:text-sm font-semibold transition-colors duration-200 cursor-pointer ${
-              !isMonthly ? "text-neutral-900" : "text-neutral-400 hover:text-neutral-200"
+            className={`relative rounded-full px-3.5 sm:px-6 py-1.5 sm:py-2 text-[11px] sm:text-sm font-semibold transition-colors duration-200 cursor-pointer ${
+              !isMonthly ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             }`}
           >
             {!isMonthly && (
               <motion.div
                 layoutId="pricing-active-pill"
-                className="absolute inset-0 rounded-full bg-white dark:bg-neutral-100 shadow-md"
+                className="absolute inset-0 rounded-full bg-[var(--surface)] shadow-md border border-[var(--border)]"
                 transition={{ type: "spring", stiffness: 500, damping: 35 }}
               />
             )}
-            <span className="relative z-10 flex items-center gap-1.5">
+            <span className="relative z-10 flex items-center gap-1 sm:gap-1.5">
               Annual
               <span
-                className={`text-xs font-bold ${
-                  !isMonthly ? "text-[#FF0030]" : "text-[#FF0030]/90"
-                }`}
+                className={`text-[10px] sm:text-xs font-bold text-[#FF0030]`}
               >
                 (Save 48%)
               </span>
@@ -174,26 +170,26 @@ export function PricingCards() {
       {/* 2-Card Layout (Free on Left, Paid Pro/Premium on Right) */}
       <div className="relative z-10 max-w-4xl mx-auto grid gap-6 sm:gap-8 grid-cols-1 md:grid-cols-2 items-stretch">
         {/* 1. FREE PLAN */}
-        <div className="animate-card-in flex min-w-0 flex-col bg-neutral-950/80 backdrop-blur-md border border-neutral-800 rounded-2xl p-6 sm:p-8 transition-all duration-200 hover:border-neutral-700">
+        <div className="animate-card-in flex min-w-0 flex-col bg-[var(--surface)]/90 backdrop-blur-md border border-[var(--border)] rounded-2xl p-5 sm:p-6 md:p-8 transition-all duration-200 hover:border-[var(--text-secondary)] shadow-sm">
           <div className="flex-1 flex flex-col">
             <div>
-              <h3 className="font-display text-2xl font-bold text-white mb-1">
+              <h3 className="font-display text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-1">
                 {t("membership.free")}
               </h3>
-              <div className="flex items-baseline gap-1.5 mt-3 mb-1">
-                <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">
+              <div className="flex items-baseline gap-1.5 mt-2 sm:mt-3 mb-1">
+                <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-[var(--text-primary)]">
                   $0
                 </span>
-                <span className="text-sm font-normal text-neutral-400">
+                <span className="text-xs sm:text-sm font-normal text-[var(--text-secondary)]">
                   {t("membership.forever")}
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-neutral-400 mt-2 mb-6 min-h-[38px]">
+              <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-2 mb-4 sm:mb-6 min-h-[32px] sm:min-h-[38px]">
                 {t("membership.freeDescription")}
               </p>
             </div>
 
-            <ul className="space-y-3.5 mb-8 text-xs sm:text-sm text-neutral-300">
+            <ul className="space-y-3.5 mb-8 text-xs sm:text-sm text-[var(--text-primary)]">
               {FREE_FEATURES.map((feat) => (
                 <li key={feat} className="flex items-start gap-2.5 min-w-0">
                   <Check className="h-4 w-4 shrink-0 mt-0.5 text-[#FF0030]" />
@@ -215,7 +211,7 @@ export function PricingCards() {
                 <button
                   type="button"
                   disabled
-                  className="w-full h-11 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-400 text-sm font-semibold disabled:opacity-60"
+                  className="w-full h-11 rounded-xl bg-[var(--surface-alt)] border border-[var(--border)] text-[var(--text-secondary)] text-sm font-semibold disabled:opacity-60"
                 >
                   {t("membership.youHaveMembership")}
                 </button>
@@ -223,13 +219,13 @@ export function PricingCards() {
                 <button
                   type="button"
                   onClick={() => setFreeChosen(true)}
-                  className="w-full h-11 rounded-xl bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 text-white text-sm font-semibold transition-colors cursor-pointer"
+                  className="w-full h-11 rounded-xl bg-[var(--surface-alt)] border border-[var(--border)] hover:bg-[var(--border)] text-[var(--text-primary)] text-sm font-semibold transition-colors cursor-pointer"
                 >
                   {t("membership.chooseFree")}
                 </button>
               )}
               {freeChosen && (
-                <p className="mt-3 text-xs text-neutral-400 text-center">
+                <p className="mt-3 text-xs text-[var(--text-secondary)] text-center">
                   {t("membership.youAreFree")}
                 </p>
               )}
@@ -238,12 +234,12 @@ export function PricingCards() {
         </div>
 
         {/* 2. PAID PLAN (Pro when Monthly, Premium when Annual) */}
-        <div className="animate-card-in-delayed relative flex min-w-0 flex-col rounded-2xl p-6 sm:p-8 bg-neutral-950/90 backdrop-blur-md border-2 border-[#FF0030] shadow-xl shadow-[#FF0030]/10 transition-all duration-200">
+        <div className="animate-card-in-delayed relative flex min-w-0 flex-col rounded-2xl p-5 sm:p-6 md:p-8 bg-[var(--surface)]/95 backdrop-blur-md border-2 border-[#FF0030] shadow-xl shadow-[#FF0030]/10 transition-all duration-200">
           {/* POPULAR Badge */}
           <div className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 z-20">
-            <div className="bg-[#FF0030] py-1 px-4 rounded-full flex items-center gap-1.5 shadow-md">
-              <Sparkles className="text-white h-3.5 w-3.5 fill-current" />
-              <span className="text-white text-xs font-bold uppercase tracking-wider">
+            <div className="bg-[#FF0030] py-1 px-3 sm:px-4 rounded-full flex items-center gap-1.5 shadow-md">
+              <Sparkles className="text-white h-3 sm:h-3.5 w-3 sm:w-3.5 fill-current" />
+              <span className="text-white text-[10px] sm:text-xs font-bold uppercase tracking-wider">
                 POPULAR
               </span>
             </div>
@@ -252,29 +248,29 @@ export function PricingCards() {
           <div className="flex-1 flex flex-col">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-display text-2xl font-bold text-white transition-all duration-200">
+                <h3 className="font-display text-xl sm:text-2xl font-bold text-[var(--text-primary)] transition-all duration-200">
                   {isMonthly ? "Pro" : "Premium"}
                 </h3>
               </div>
 
-              <div className="flex items-baseline gap-1 mt-3 mb-1">
-                <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">
+              <div className="flex items-baseline gap-1 mt-2 sm:mt-3 mb-1">
+                <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-[var(--text-primary)]">
                   <NumberFlow
                     value={isMonthly ? 7.99 : 49.99}
                     format={{
-                      style: "currency",
-                      currency: "USD",
-                      minimumFractionDigits: 2,
-                    }}
+                    style: "currency",
+                    currency: "USD",
+                    minimumFractionDigits: 2,
+                  }}
                     className="font-variant-numeric: tabular-nums"
                   />
                 </span>
-                <span className="text-sm font-medium text-neutral-400">
+                <span className="text-xs sm:text-sm font-medium text-[var(--text-secondary)]">
                   {isMonthly ? "/mo" : "/yr"}
                 </span>
               </div>
 
-              <p className="text-xs sm:text-sm text-neutral-400 mt-2 mb-6 min-h-[38px] transition-all duration-200">
+              <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-2 mb-4 sm:mb-6 min-h-[32px] sm:min-h-[38px] transition-all duration-200">
                 {isMonthly
                   ? "Full premium story access"
                   : "All Pro benefits, billed yearly"}
@@ -290,7 +286,7 @@ export function PricingCards() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.18 }}
-                  className="space-y-3.5 text-xs sm:text-sm text-neutral-300"
+                  className="space-y-3.5 text-xs sm:text-sm text-[var(--text-primary)]"
                 >
                   {activeFeatures.map((feat) => (
                     <li key={feat} className="flex items-start gap-2.5 min-w-0">
@@ -309,7 +305,7 @@ export function PricingCards() {
                     type="button"
                     onClick={handlePortal}
                     disabled={busy !== null}
-                    className="w-full h-11 rounded-xl bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 text-white text-sm font-semibold transition-colors cursor-pointer"
+                    className="w-full h-11 rounded-xl bg-[var(--surface-alt)] border border-[var(--border)] hover:bg-[var(--border)] text-[var(--text-primary)] text-sm font-semibold transition-colors cursor-pointer"
                   >
                     {t("membership.manageBilling")}
                   </button>
@@ -323,7 +319,7 @@ export function PricingCards() {
                   </button>
                 )
               ) : isOtherPaid ? (
-                <p className="text-xs text-neutral-400 text-center leading-snug py-2">
+                <p className="text-xs text-[var(--text-secondary)] text-center leading-snug py-2">
                   {t("membership.switchAfterPeriod")}
                 </p>
               ) : (
@@ -339,7 +335,7 @@ export function PricingCards() {
                     type="button"
                     onClick={() => handleSubscribe(targetPlan)}
                     disabled={busy !== null}
-                    className="w-full text-xs font-semibold text-neutral-400 hover:text-white transition-colors disabled:opacity-60 cursor-pointer text-center py-1"
+                    className="w-full text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-60 cursor-pointer text-center py-1"
                   >
                     {busy === targetPlan
                       ? t("membership.openingCheckout")

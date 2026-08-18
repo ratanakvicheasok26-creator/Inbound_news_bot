@@ -46,7 +46,7 @@ export function MobileBottomNav() {
               }`}
             >
               <item.icon className="h-4 w-4 shrink-0" />
-              <span className="max-w-full text-[9px] font-semibold leading-tight tracking-normal text-center line-clamp-2">
+              <span className="w-full text-[8px] min-[360px]:text-[9px] min-[400px]:text-[9.5px] font-semibold leading-tight tracking-normal text-center truncate px-0.5">
                 {t(item.key)}
               </span>
             </Link>

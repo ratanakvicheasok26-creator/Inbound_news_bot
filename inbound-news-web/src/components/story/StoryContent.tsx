@@ -169,11 +169,11 @@ export function StoryContent({
       : null
 
   return (
-    <div className="container pb-12">
-      <div className="pt-6 pb-4">
+    <div className="container pb-12 sm:pb-16">
+      <div className="pt-4 sm:pt-6 pb-3 sm:pb-4">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs sm:text-[13px] font-semibold text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           {t("story.backToFeed")}
@@ -182,14 +182,14 @@ export function StoryContent({
 
       <SyncSavesPrompt variant="banner" />
 
-      <header className="pb-8 border-b border-[var(--border)]">
+      <header className="pb-6 sm:pb-8 border-b border-[var(--border)]">
         <StoryImage
           imageUrl={story.image_url}
           pageUrl={primaryUrl}
           alt={story.title}
           variant="story"
           priority
-          className="mb-6 rounded-[var(--radius)]"
+          className="mb-4 sm:mb-6 rounded-[var(--radius)]"
         />
 
         <div className="flex flex-col gap-3 mb-4">
@@ -211,11 +211,11 @@ export function StoryContent({
           )}
         </div>
 
-        <h1 className="font-display text-[clamp(28px,4.5vw,44px)] font-semibold leading-[1.12] tracking-[-0.025em]">
+        <h1 className="font-display text-[clamp(24px,4.5vw,42px)] font-semibold leading-[1.15] tracking-[-0.025em] text-balance">
           {story.title}
         </h1>
 
-        <p className="mt-3 text-[14px] text-[var(--text-secondary)] max-w-[58ch]">
+        <p className="mt-2.5 sm:mt-3 text-xs sm:text-[14px] text-[var(--text-secondary)] max-w-[58ch]">
           {showTierToggle ? t("story.techCoverageMap") : t("story.techCoverageJargon")}
         </p>
 
@@ -224,7 +224,7 @@ export function StoryContent({
             href={primaryUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 mt-4 text-[14px] font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)]"
+            className="inline-flex items-center gap-1.5 mt-3 sm:mt-4 text-xs sm:text-[14px] font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)]"
           >
             {t("story.openSourceArticle")}
             <ExternalLink className="h-3.5 w-3.5" />
@@ -234,12 +234,12 @@ export function StoryContent({
 
       {timelineNodes.length > 1 && <StoryTimeline nodes={timelineNodes} />}
 
-      <div className="pt-6 pb-2">
+      <div className="pt-4 sm:pt-6 pb-2">
         <KhmerDecodePanel storyId={story.id} />
       </div>
 
-      <section className="py-8">
-        <div className="grid gap-6 md:gap-8 lg:grid-cols-[1.5fr_0.85fr]">
+      <section className="py-6 sm:py-8">
+        <div className="grid gap-6 md:gap-8 lg:grid-cols-[1.5fr_0.85fr] items-start">
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-4 sm:p-6 md:p-8">
             {lockedOut ? (
               <PremiumLock feature="full_decode" teaser={premiumTeaser} />
@@ -252,7 +252,7 @@ export function StoryContent({
                 )}
                 <JargonText
                   text={displaySummary}
-                  className="text-[17px] sm:text-[18px] leading-[1.65] text-[var(--text-primary)] max-w-[65ch]"
+                  className="text-[15px] sm:text-[17px] md:text-[18px] leading-[1.65] text-[var(--text-primary)] max-w-[65ch]"
                   onJargonTap={recordJargonTap}
                 />
               </>

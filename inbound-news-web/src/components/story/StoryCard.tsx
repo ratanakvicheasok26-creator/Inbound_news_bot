@@ -27,26 +27,26 @@ export function StoryCard({ story }: { story: Story }) {
         />
       </Link>
 
-      <div className="flex flex-1 flex-col p-4 sm:p-5">
-        <div className="mb-2.5 flex items-center gap-2 flex-wrap">
-          <span className="chip">{categoryLabel}</span>
-          <span className="meta-text">{formatDistanceToNow(story.created_at)}</span>
+      <div className="flex flex-1 flex-col p-3.5 sm:p-4 md:p-5">
+        <div className="mb-2 sm:mb-2.5 flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          <span className="chip text-[10px] sm:text-[11px]">{categoryLabel}</span>
+          <span className="meta-text text-[10px] sm:text-xs">{formatDistanceToNow(story.created_at)}</span>
         </div>
 
         <Link href={`/story/${story.id}`} className="block flex-1">
-          <h3 className="font-display-modern text-[17px] md:text-[18px] font-semibold leading-snug tracking-[-0.015em] transition-colors duration-200 group-hover:text-[var(--accent)] line-clamp-3">
+          <h3 className="font-display-modern text-[15px] sm:text-[16px] md:text-[18px] font-semibold leading-snug tracking-[-0.015em] transition-colors duration-200 group-hover:text-[var(--accent)] line-clamp-3">
             {story.title}
           </h3>
         </Link>
 
-        <div className="mt-3">
+        <div className="mt-2.5 sm:mt-3">
           <CoverageMeta story={story} maxNames={2} compact />
         </div>
 
-        <div className="mt-4 flex items-center justify-between gap-2 border-t border-[var(--border)] pt-3">
+        <div className="mt-3.5 sm:mt-4 flex items-center justify-between gap-2 border-t border-[var(--border)] pt-2.5 sm:pt-3">
           <Link
             href={`/story/${story.id}`}
-            className="text-[13px] font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)]"
+            className="text-xs sm:text-[13px] font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)]"
           >
             {t("common.decode")}
           </Link>

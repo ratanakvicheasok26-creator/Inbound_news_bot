@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
+import { InteractiveBackground } from "@/components/ui/pricing";
 
 export const metadata: Metadata = {
   title: "Inbound Reports — Decode the Tech.",
@@ -110,13 +111,14 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script dangerouslySetInnerHTML={{ __html: localeInitScript }} />
       </head>
-      <body className="pb-[var(--mobile-nav-offset)] md:pb-0">
+      <body className="pb-[var(--mobile-nav-offset)] md:pb-0 relative min-h-screen">
+        <InteractiveBackground />
         <a href="#main-content" className="skip-to-content">
           Skip to content
         </a>
         <LocaleProvider>
           <Header />
-          <main id="main-content">{children}</main>
+          <main id="main-content" className="relative z-10">{children}</main>
           <Footer />
           <MobileBottomNav />
         </LocaleProvider>

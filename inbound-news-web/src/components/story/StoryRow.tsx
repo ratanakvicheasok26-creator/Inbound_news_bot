@@ -34,7 +34,7 @@ export function StoryRow({ story }: { story: Story }) {
         </div>
 
         <Link href={`/story/${story.id}`} className="block">
-          <h3 className="font-display text-[18px] md:text-[20px] font-semibold leading-snug tracking-[-0.015em] group-hover:text-[var(--accent)] transition-colors">
+          <h3 className="font-display text-[16px] sm:text-[18px] md:text-[20px] font-semibold leading-snug tracking-[-0.015em] group-hover:text-[var(--accent)] transition-colors">
             {story.title}
           </h3>
         </Link>
