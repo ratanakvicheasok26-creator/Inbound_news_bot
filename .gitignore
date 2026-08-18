@@ -16,3 +16,6 @@ rsshub/
 .vercel
 .env*
 .gstack/
+AGENTS.md
+CLAUDE.md
+
