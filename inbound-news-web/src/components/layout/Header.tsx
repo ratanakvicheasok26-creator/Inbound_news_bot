@@ -22,12 +22,82 @@ export function Header() {
   const [accountOpen, setAccountOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [mounted, setMounted] = useState(false)
+  const [visible, setVisible] = useState(true)
   const exploreRef = useRef<HTMLDivElement>(null)
   const accountRef = useRef<HTMLDivElement>(null)
   const closeBtnRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    let lastScrollY = window.scrollY || 0
+    let pivotY = lastScrollY
+    let scrollingDown = false
+    let ticking = false
+
+    const HIDE_THRESHOLD = 10 // px scrolled down from pivot before hiding
+    const SHOW_THRESHOLD = 8  // px scrolled up from pivot before showing
+    const TOP_ZONE = 40       // always show within this distance from top
+
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+
+      window.requestAnimationFrame(() => {
+        const scrollY = Math.max(0, window.scrollY || 0)
+        const delta = scrollY - lastScrollY
+
+        // Always show near the top of the page
+        if (scrollY <= TOP_ZONE) {
+          setVisible(true)
+          pivotY = scrollY
+          lastScrollY = scrollY
+          ticking = false
+          return
+        }
+
+        // Ignore micro-movements (< 2px) — prevents jitter on mobile
+        if (Math.abs(delta) < 2) {
+          ticking = false
+          return
+        }
+
+        // Detect direction change and reset pivot
+        if (delta > 0 && !scrollingDown) {
+          scrollingDown = true
+          pivotY = lastScrollY
+        } else if (delta < 0 && scrollingDown) {
+          scrollingDown = false
+          pivotY = lastScrollY
+        }
+
+        const distFromPivot = scrollY - pivotY
+
+        if (scrollingDown && distFromPivot > HIDE_THRESHOLD && scrollY > 50) {
+          setVisible(false)
+        } else if (!scrollingDown && distFromPivot < -SHOW_THRESHOLD) {
+          setVisible(true)
+        }
+
+        lastScrollY = scrollY
+        ticking = false
+      })
+    }
+
+    // touchend re-evaluates for iOS momentum scroll that doesn't fire 'scroll'
+    const onTouchEnd = () => {
+      // Short delay lets the final scroll position settle after momentum
+      setTimeout(onScroll, 100)
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true })
+    window.addEventListener("touchend", onTouchEnd, { passive: true })
+    return () => {
+      window.removeEventListener("scroll", onScroll)
+      window.removeEventListener("touchend", onTouchEnd)
+    }
   }, [])
 
   useEffect(() => {
@@ -57,6 +127,7 @@ export function Header() {
     setMobileOpen(false)
     setExploreOpen(false)
     setAccountOpen(false)
+    setVisible(true)
   }, [pathname])
 
   const closeMobileMenu = useCallback(() => {
@@ -293,9 +364,16 @@ export function Header() {
       document.body
     )
 
+  const isHeaderVisible = visible || exploreOpen || accountOpen || mobileOpen
+
   return (
     <>
-      <header className="bg-[var(--surface)]/90 backdrop-blur-md sticky top-0 z-50 border-b border-[var(--border)] transition-colors duration-200">
+      <header
+        onFocusCapture={() => setVisible(true)}
+        className={`smart-header bg-[var(--surface)]/90 backdrop-blur-md border-b border-[var(--border)] ${
+          isHeaderVisible ? "smart-header--visible" : "smart-header--hidden"
+        }`}
+      >
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2">
           {/* Logo & Mobile Menu Toggle */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -509,6 +587,9 @@ export function Header() {
           </div>
         </div>
       </header>
+
+      {/* Spacer to compensate for fixed-position header */}
+      <div className="smart-header-spacer" />
 
       {mobileDrawer}
     </>

@@ -265,6 +265,33 @@ html[lang="km"] select {
   box-sizing: border-box;
 }
 
+/* ===== Circular-reveal theme transition (View Transitions API) ===== */
+
+/* Disable the default cross-fade so only the clip-path animation
+   driven by JavaScript is visible. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* The old snapshot sits behind; the new one reveals on top. */
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
+/* Respect reduced-motion: skip the reveal entirely. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
@@ -403,6 +430,34 @@ a:focus:not(:focus-visible) {
 }
 
 /* ===== Site header ===== */
+.smart-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, border-color 0.2s ease;
+  will-change: transform;
+}
+
+.smart-header--hidden {
+  transform: translateY(-100%) !important;
+}
+
+.smart-header--visible {
+  transform: translateY(0) !important;
+}
+
+/* Spacer to prevent content from jumping behind the fixed header */
+.smart-header-spacer {
+  height: 3.5rem; /* h-14 = 56px */
+}
+@media (min-width: 640px) {
+  .smart-header-spacer {
+    height: 4rem; /* sm:h-16 = 64px */
+  }
+}
+
 .site-header {
   position: sticky;
   top: 0;

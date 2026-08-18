@@ -43,15 +43,10 @@ export default async function HomePage() {
 
   return (
     <main className="flex-grow min-h-screen">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-16">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8 sm:pt-6 sm:pb-12 md:pt-8 md:pb-16">
         {/* Header Section */}
-        <section className="max-w-3xl pb-4 sm:pb-8 mx-auto text-center mb-8 sm:mb-12 md:mb-16">
-          <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#ff0033]/10 border border-[#ff0033]/20 text-[var(--accent)] text-[11px] sm:text-xs font-bold tracking-wider mb-4 sm:mb-6 mx-auto">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] mr-2" aria-hidden="true" />
-            <LocalizedText k="home.heroTag" />
-          </div>
-
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-[var(--text-primary)] mb-4 sm:mb-6 font-sans text-balance">
+        <section className="max-w-3xl pb-4 sm:pb-6 mx-auto text-center mb-6 sm:mb-10 md:mb-12">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-[var(--text-primary)] mb-3 sm:mb-4 font-sans text-balance">
             <LocalizedText k="home.heroTitle" />
           </h1>
 
