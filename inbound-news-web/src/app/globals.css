@@ -260,7 +260,6 @@ html[lang="km"] select {
 .animate-banner-in {
   animation: slideBannerIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
-}
 
 * {
   box-sizing: border-box;
