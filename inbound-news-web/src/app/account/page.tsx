@@ -222,7 +222,7 @@ export default function AccountPage() {
               onClick={() => setActiveTab(id)}
               className={`shrink-0 -mb-px flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px] font-semibold transition-colors ${
                 activeTab === id
-                  ? "border-[var(--accent)] text-[var(--accent)]"
+                  ? "border-[var(--text-primary)] text-[var(--text-primary)] shadow-sm"
                   : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               }`}
             >
@@ -259,7 +259,7 @@ export default function AccountPage() {
                     onClick={() => setActiveTab(id)}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium transition-colors ${
                       activeTab === id
-                        ? "bg-[var(--accent)] bg-opacity-10 text-[var(--accent)]"
+                        ? "bg-[var(--surface-alt)] text-[var(--text-primary)] shadow-sm"
                         : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
                     }`}
                   >
