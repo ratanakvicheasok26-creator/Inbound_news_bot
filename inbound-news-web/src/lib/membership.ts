@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react"
 import { supabase } from "./supabase"
 import { isActiveMembership } from "./plans"
-import { canAccess, type Feature } from "./access"
+import { canAccess, hasPremiumAccess, type Feature } from "./access"
 import type { Membership, MembershipPlan } from "./stripe"
 
 export type { Membership, MembershipPlan }
@@ -259,6 +259,21 @@ export function useFeatureAccess(feature: Feature): {
 } {
   const { loading, membership, refresh } = useMembership()
   return { loading, allowed: canAccess(membership, feature), membership, refresh }
+}
+
+/**
+ * Unified premium access hook — returns true when the user holds an active
+ * Pro ($7.99/mo) or Premium ($49.99/yr) subscription. Both plans grant
+ * identical, full premium feature access.
+ */
+export function usePremiumAccess(): {
+  loading: boolean
+  hasPremiumAccess: boolean
+  membership: Membership | null
+  refresh: () => void
+} {
+  const { loading, membership, refresh } = useMembership()
+  return { loading, hasPremiumAccess: hasPremiumAccess(membership), membership, refresh }
 }
 
 /* ------------------------------------------------------------------ */

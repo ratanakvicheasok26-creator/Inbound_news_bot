@@ -24,20 +24,13 @@ const FREE_FEATURES = [
   "Limited access to advanced features",
 ]
 
-const PRO_FEATURES = [
+const PAID_FEATURES = [
   "Everything in Free",
-  "Full Decode — what happened, why it matters, and key takeaways",
-  "Advanced Compare and Coverage Intelligence",
-  "Personalized Daily Brief",
-  "Bookmarks and advanced search",
-  "Sponsored content remains visible",
-]
-
-const PREMIUM_FEATURES = [
-  "Everything in Pro",
-  "Premium Local Lens for Cambodia and Southeast Asia",
-  "Undercovered Stories and Trend Radar",
-  "Sponsored content remains visible",
+  "Member tools — Daily Brief, advanced Compare, Blindspot, bookmarks, and advanced search",
+  "Local Lens for Cambodia and Southeast Asia",
+  "Full Khmer Decode (AI) beyond the free summary",
+  "Full Decode when a story is gated for members",
+  "Sponsored placements stay on — membership funds the desk",
 ]
 
 export function PricingCards() {
@@ -112,7 +105,7 @@ export function PricingCards() {
   const targetPlan: MembershipPlan = isMonthly ? "pro_monthly" : "premium_yearly"
   const isCurrentPlan = member && membership?.plan === targetPlan
   const isOtherPaid = member && membership?.plan !== targetPlan
-  const activeFeatures = isMonthly ? PRO_FEATURES : PREMIUM_FEATURES
+  const activeFeatures = PAID_FEATURES
 
   return (
     <div className="relative w-full overflow-hidden rounded-2xl py-4 sm:py-6">

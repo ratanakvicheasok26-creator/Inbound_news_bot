@@ -9,10 +9,15 @@ import { subscribe } from "@/lib/membership"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import { PaymentModal } from "@/components/membership/PaymentModal"
 import type { Feature } from "@/lib/access"
-import { requiredTier } from "@/lib/access"
 
+/**
+ * Both Pro ($7.99/mo) and Premium ($49.99/yr) grant identical feature access.
+ * Default to pro_monthly for the Stripe checkout path; the QR modal offers
+ * both cadences regardless of which feature is locked.
+ */
 function planForFeature(feature: Feature): MembershipPlan {
-  return requiredTier(feature) === "premium" ? "premium_yearly" : "pro_monthly"
+  void feature
+  return "pro_monthly"
 }
 
 export function PremiumLock({ feature, teaser }: { feature?: Feature; teaser?: string | null }) {

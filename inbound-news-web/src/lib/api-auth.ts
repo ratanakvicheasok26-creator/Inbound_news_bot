@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server"
 import type { User } from "@supabase/supabase-js"
 import { createUserClient, isSupabaseConfigured } from "./supabase-server"
-import { canAccessTier, effectiveTier, type Feature, type PlanTier } from "./access"
+import { canAccessTier, effectiveTier, hasPremiumAccess, type Feature, type PlanTier } from "./access"
 import type { Membership } from "./stripe"
 
 const MEMBERSHIP_COLUMNS =
@@ -43,9 +43,14 @@ export async function getUserMembership(req: NextRequest): Promise<Membership | 
   return getMembershipForUser(auth)
 }
 
-/** The caller's effective plan tier (free / pro / premium). */
+/** The caller's effective plan tier (free or pro — both paid plans map to "pro"). */
 export async function getUserTier(req: NextRequest): Promise<PlanTier> {
   return effectiveTier(await getUserMembership(req))
+}
+
+/** True when the caller holds an active Pro or Premium subscription. */
+export async function getUserHasPremiumAccess(req: NextRequest): Promise<boolean> {
+  return hasPremiumAccess(await getUserMembership(req))
 }
 
 /**

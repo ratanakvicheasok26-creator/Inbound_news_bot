@@ -8,9 +8,13 @@ import { isActiveMembership } from "./plans"
  * (plan + status + billing period). Everything that gates a feature goes
  * through here — client gates and server-side API checks — so plan rules
  * live in exactly one place.
+ *
+ * Pro ($7.99/mo) and Premium ($49.99/yr) are billing cadence alternatives —
+ * both grant identical, full premium feature access. The distinction is
+ * purely a pricing/billing choice, never a feature availability tier.
  */
 
-export type PlanTier = "free" | "pro" | "premium"
+export type PlanTier = "free" | "pro"
 
 /** Every feature that can be gated behind a paid plan. */
 export type Feature =
@@ -92,16 +96,31 @@ export const FEATURE_LABELS: Record<Feature, string> = {
   khmer_premium_analysis: "Khmer Premium Analysis",
 }
 
-const TIER_RANK: Record<PlanTier, number> = { free: 0, pro: 1, premium: 2 }
+const TIER_RANK: Record<PlanTier, number> = { free: 0, pro: 1 }
 
 /**
  * A user's effective plan tier, resolved from their Supabase membership.
  * Active + trialing memberships within the billing period count as paid;
  * expired / canceled / past_due / unpaid / incomplete rows drop back to Free.
+ *
+ * Both Pro ($7.99/mo) and Premium ($49.99/yr) map to "pro" — they grant
+ * identical feature access. The plan name is a billing cadence, not an
+ * access tier.
  */
 export function effectiveTier(membership: Membership | null | undefined): PlanTier {
   if (!membership || !isActiveMembership(membership)) return "free"
-  return membership.plan === "premium_yearly" ? "premium" : "pro"
+  return "pro"
+}
+
+/**
+ * Unified premium access check — true when the user holds an active
+ * subscription on ANY paid plan (Pro monthly or Premium yearly).
+ *
+ * This is the single boolean helper that all feature gating should use.
+ * Both Pro and Premium subscribers receive 100% identical premium access.
+ */
+export function hasPremiumAccess(membership: Membership | null | undefined): boolean {
+  return effectiveTier(membership) === "pro"
 }
 
 /** True when a resolved tier may use the feature. */
