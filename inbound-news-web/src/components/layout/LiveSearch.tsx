@@ -156,7 +156,7 @@ export function LiveSearch() {
       <button
         type="button"
         onClick={openSearch}
-        className="p-2 text-gray-500 hover:text-white transition-colors cursor-pointer"
+        className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
         aria-label="Search"
         aria-expanded={open}
       >

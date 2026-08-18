@@ -51,7 +51,7 @@ export function ThemeToggle() {
 
   return (
     <button
-      className="p-2 text-gray-500 hover:text-white transition-colors cursor-pointer"
+      className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
       onClick={toggle}
       aria-label="Toggle theme"
     >

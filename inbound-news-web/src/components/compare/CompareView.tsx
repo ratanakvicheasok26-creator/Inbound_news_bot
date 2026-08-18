@@ -277,11 +277,11 @@ export function CompareView({
   }
 
   return (
-    <div className="container pb-12">
-      <div className="pt-6 pb-4">
+    <div className="container pb-12 sm:pb-16">
+      <div className="pt-4 sm:pt-6 pb-3 sm:pb-4">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs sm:text-[13px] font-semibold text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to feed
@@ -289,13 +289,13 @@ export function CompareView({
       </div>
 
       <FeatureGate feature="advanced_compare">
-        <header className="pb-8">
-          <p className="chip mb-3">
+        <header className="pb-6 sm:pb-8">
+          <p className="chip mb-2.5 sm:mb-3">
             <GitCompareArrows className="h-3 w-3" />
             Compare
           </p>
           <h1 className="page-title">Comparing articles</h1>
-          <p className="mt-2 max-w-[58ch] text-[14px] leading-relaxed text-[var(--text-secondary)]">
+          <p className="mt-2 max-w-[58ch] text-xs sm:text-[14px] leading-relaxed text-[var(--text-secondary)]">
             Pick two related articles to read them side by side — what they both say, where they
             differ, and how each source frames the story.
           </p>
@@ -303,7 +303,7 @@ export function CompareView({
 
         {showResult && articleA && articleB ? (
           <>
-            <div className="grid gap-6 md:grid-cols-2 mb-8">
+            <div className="grid gap-4 sm:gap-6 md:grid-cols-2 mb-6 sm:mb-8">
               <ArticleCard option={articleA} slot="A" />
               <ArticleCard option={articleB} slot="B" />
             </div>

@@ -9,7 +9,7 @@ import React, {
   useContext,
   useCallback,
 } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import Link from "next/link";
 import { Check, Star as LucideStar } from "lucide-react";
@@ -106,6 +106,22 @@ export function InteractiveStarfield({
   containerRef?: React.RefObject<HTMLDivElement | null>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
+
+  useEffect(() => {
+    const getTheme = () =>
+      (document.documentElement.getAttribute("data-theme") as "light" | "dark") || "dark";
+    setTheme(getTheme());
+
+    const observer = new MutationObserver(() => {
+      setTheme(getTheme());
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -133,9 +149,10 @@ export function InteractiveStarfield({
       baseX: Math.random() * width,
       baseY: Math.random() * height,
       size: 0.8 + Math.random() * 1.6,
-      opacity: 0.2 + Math.random() * 0.7,
+      opacity: 0.25 + Math.random() * 0.65,
       blinkSpeed: 0.008 + Math.random() * 0.015,
       blinkOffset: Math.random() * Math.PI * 2,
+      isAccent: Math.random() < 0.15,
     }));
 
     let mouseX: number | null = null;
@@ -162,6 +179,7 @@ export function InteractiveStarfield({
     const render = () => {
       time += 1;
       ctx.clearRect(0, 0, width, height);
+      const isDark = document.documentElement.getAttribute("data-theme") !== "light";
 
       for (let i = 0; i < starCount; i++) {
         const star = stars[i];
@@ -188,7 +206,16 @@ export function InteractiveStarfield({
           star.opacity * (0.6 + 0.4 * Math.sin(time * star.blinkSpeed + star.blinkOffset)),
         );
 
-        ctx.fillStyle = `rgba(255, 255, 255, ${currentOpacity * 0.65})`;
+        if (star.isAccent) {
+          ctx.fillStyle = isDark
+            ? `rgba(255, 0, 51, ${currentOpacity * 0.85})`
+            : `rgba(220, 0, 48, ${currentOpacity * 0.75})`;
+        } else {
+          ctx.fillStyle = isDark
+            ? `rgba(255, 255, 255, ${currentOpacity * 0.7})`
+            : `rgba(40, 50, 70, ${currentOpacity * 0.5})`;
+        }
+
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
         ctx.fill();
@@ -207,13 +234,167 @@ export function InteractiveStarfield({
       }
       cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [theme]);
 
   return (
     <canvas
       ref={canvasRef}
-      className={cn("absolute inset-0 w-full h-full pointer-events-none", className)}
-      style={{ opacity: 0.85 }}
+      className={cn(
+        "absolute inset-0 h-full w-full pointer-events-none z-0",
+        className,
+      )}
+    />
+  );
+}
+
+/**
+ * Global background particle starfield that renders across the entire app/page.
+ * Reacts dynamically to cursor movements and adapts colors to light and dark themes.
+ */
+export function InteractiveBackground() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
+
+  useEffect(() => {
+    const getTheme = () =>
+      (document.documentElement.getAttribute("data-theme") as "light" | "dark") || "dark";
+    setTheme(getTheme());
+
+    const observer = new MutationObserver(() => {
+      setTheme(getTheme());
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const handleResize = () => {
+      if (!canvas) return;
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+
+    window.addEventListener("resize", handleResize, { passive: true });
+
+    const isMobile = width < 768;
+    const starCount = isMobile ? 45 : 95;
+
+    const stars = Array.from({ length: starCount }, () => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      baseX: Math.random() * width,
+      baseY: Math.random() * height,
+      vx: (Math.random() - 0.5) * 0.25,
+      vy: (Math.random() - 0.5) * 0.25,
+      size: 0.8 + Math.random() * 1.6,
+      opacity: 0.25 + Math.random() * 0.65,
+      blinkSpeed: 0.008 + Math.random() * 0.018,
+      blinkOffset: Math.random() * Math.PI * 2,
+      isAccent: Math.random() < 0.12,
+    }));
+
+    let mouseX: number | null = null;
+    let mouseY: number | null = null;
+
+    const onMouseMove = (e: MouseEvent) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    };
+
+    const onMouseLeave = () => {
+      mouseX = null;
+      mouseY = null;
+    };
+
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
+    window.addEventListener("mouseleave", onMouseLeave, { passive: true });
+
+    let time = 0;
+
+    const render = () => {
+      time += 1;
+      ctx.clearRect(0, 0, width, height);
+
+      const isDark = document.documentElement.getAttribute("data-theme") !== "light";
+
+      for (let i = 0; i < starCount; i++) {
+        const star = stars[i];
+
+        star.baseX += star.vx;
+        star.baseY += star.vy;
+
+        if (star.baseX < -20) star.baseX = width + 20;
+        if (star.baseX > width + 20) star.baseX = -20;
+        if (star.baseY < -20) star.baseY = height + 20;
+        if (star.baseY > height + 20) star.baseY = -20;
+
+        let targetX = star.baseX;
+        let targetY = star.baseY;
+
+        if (mouseX !== null && mouseY !== null) {
+          const dx = mouseX - star.x;
+          const dy = mouseY - star.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const radius = 220;
+
+          if (dist < radius && dist > 0) {
+            const force = (1 - dist / radius) * 22;
+            targetX = star.baseX - (dx / dist) * force;
+            targetY = star.baseY - (dy / dist) * force;
+          }
+        }
+
+        star.x += (targetX - star.x) * 0.06;
+        star.y += (targetY - star.y) * 0.06;
+
+        const twinkle = 0.6 + 0.4 * Math.sin(time * star.blinkSpeed + star.blinkOffset);
+        const currentOpacity = Math.max(0.08, star.opacity * twinkle);
+
+        if (star.isAccent) {
+          ctx.fillStyle = isDark
+            ? `rgba(255, 0, 51, ${currentOpacity * 0.85})`
+            : `rgba(220, 0, 48, ${currentOpacity * 0.75})`;
+        } else {
+          ctx.fillStyle = isDark
+            ? `rgba(255, 255, 255, ${currentOpacity * 0.7})`
+            : `rgba(40, 50, 70, ${currentOpacity * 0.45})`;
+        }
+
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseleave", onMouseLeave);
+    };
+  }, [theme]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      aria-hidden="true"
+      className="fixed inset-0 pointer-events-none z-0 h-full w-full opacity-90 transition-opacity duration-500"
     />
   );
 }
