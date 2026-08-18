@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { createPortal } from "react-dom"
-import Image from "next/image"
+
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { X, Check, ShieldCheck, Copy, CheckCheck, ArrowLeft } from "lucide-react"
@@ -183,15 +183,13 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
               href={paymentQrUrl(plan)}
               target="_blank"
               rel="noopener noreferrer"
-              className="relative block w-full max-w-[min(280px,100%)] aspect-square mx-auto mb-5 bg-[var(--surface)] p-2 transition-opacity hover:opacity-80"
+              className="block w-full max-w-[min(280px,100%)] aspect-square mx-auto mb-5 bg-[var(--surface)] p-2 transition-opacity hover:opacity-80"
             >
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={paymentQrUrl(plan)}
                 alt={`KHQR payment for ${planTitle} ${t("payment.planSuffix")}`}
-                fill
-                sizes="280px"
-                priority
-                className="object-contain"
+                className="w-full h-full object-contain"
               />
             </a>
 
