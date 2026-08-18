@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/auth"
-import { getProfile, saveProfile, updatePreferences } from "@/lib/profile"
+import { getProfile, saveProfile } from "@/lib/profile"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import type { User } from "@supabase/supabase-js"
 
@@ -25,7 +25,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 export function ProfileTab({ user }: ProfileTabProps) {
-  const { t } = useI18n()
+  const { t, setLocale } = useI18n()
   const [displayName, setDisplayName] = useState(
     (user.user_metadata?.display_name as string | undefined) ||
       user.email?.split("@")[0] ||
@@ -84,7 +84,7 @@ export function ProfileTab({ user }: ProfileTabProps) {
         setError(saveError.message)
         return
       }
-      updatePreferences({ defaultLang: lang })
+      setLocale(lang)
       saveProfile({ displayName: name })
       setDisplayName(name)
       setSaved(true)
