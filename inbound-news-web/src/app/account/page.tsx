@@ -3,10 +3,13 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { User, CreditCard, BarChart3, BookOpen, Settings, LogOut } from "lucide-react"
+import { User, CreditCard, BarChart3, BookOpen, Settings, LogOut, Shield, Newspaper, UserCircle } from "lucide-react"
 import { supabase, signOut } from "@/lib/auth"
 import { getProfile, loadPreferencesFromSupabase } from "@/lib/profile"
-import { ProfileTab } from "@/components/account/ProfileTab"
+import { ProfileTab } from "@/components/account/editorial/ProfileTab"
+import { PersonalInfoTab } from "@/components/account/editorial/PersonalInfoTab"
+import { PreferencesTab } from "@/components/account/editorial/PreferencesTab"
+import { SecurityTab } from "@/components/account/editorial/SecurityTab"
 import { DashboardTab } from "@/components/account/DashboardTab"
 import { LibraryTab } from "@/components/account/LibraryTab"
 import { SettingsTab } from "@/components/account/SettingsTab"
@@ -15,14 +18,18 @@ import { SyncSavesPrompt } from "@/components/account/SyncSavesPrompt"
 import { PaymentSuccessModal } from "@/components/membership/PaymentSuccessModal"
 import { getMembership, isActiveMembership, refreshAllMemberships } from "@/lib/membership"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import type { MembershipPlan } from "@/lib/plans"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 
-const tabIds = ["profile", "membership", "dashboard", "library", "settings"] as const
+const tabIds = ["profile", "personal", "preferences", "security", "membership", "dashboard", "library", "settings"] as const
 type TabId = (typeof tabIds)[number]
 
 const tabIcons: Record<TabId, typeof User> = {
-  profile: User,
+  profile: UserCircle,
+  personal: User,
+  preferences: Newspaper,
+  security: Shield,
   membership: CreditCard,
   dashboard: BarChart3,
   library: BookOpen,
@@ -180,180 +187,157 @@ export default function AccountPage() {
 
   return (
     <div className="container container-lg py-8 md:py-12">
-      {/* Mobile: top card with avatar + name */}
-      <div className="md:hidden mb-6">
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-11 h-11 rounded-full bg-[var(--accent)] text-[var(--accent-contrast)] flex items-center justify-center text-[18px] font-bold shrink-0">
-              {initial}
-            </div>
-            <div className="min-w-0">
-              <p className="text-[15px] font-semibold text-[var(--text-primary)] truncate">{displayName}</p>
-              <p className="text-[13px] text-[var(--text-secondary)] truncate">{user.email}</p>
-            </div>
+      {/* Page header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-4 mb-2">
+          <div className="w-12 h-12 rounded-full bg-[var(--accent)] text-[var(--accent-contrast)] flex items-center justify-center text-[18px] font-bold shrink-0 shadow-sm">
+            {initial}
           </div>
-          <div className="flex items-center gap-2">
-            <span className="meta-text bg-[var(--surface-alt)] border border-[var(--border)] px-2.5 py-1 rounded-full text-[12px]">
-              {liveProfile.literacyScore} {t("account.pts")}
-            </span>
-            {stealthOn && (
-              <span className="meta-text text-[var(--accent)] bg-[var(--red-subtle-bg)] px-2.5 py-1 rounded-full text-[12px]">
-                {t("account.stealth")}
-              </span>
-            )}
+          <div className="min-w-0">
+            <h1 className="text-[20px] font-semibold text-[var(--text-primary)]">{displayName}</h1>
+            <p className="text-[13px] text-[var(--text-secondary)]">{user.email}</p>
           </div>
         </div>
       </div>
 
-      {/* Mobile: tabs */}
-      <nav
-        className="md:hidden mb-6 flex gap-1 overflow-x-auto overscroll-x-contain border-b border-[var(--border)]"
-        role="tablist"
-        aria-label={t("account.accountSections")}
-      >
-        {tabIds.map((id) => {
-          const Icon = tabIcons[id]
-          return (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === id}
-              onClick={() => setActiveTab(id)}
-              className={`shrink-0 -mb-px flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px] font-semibold transition-colors ${
-                activeTab === id
-                  ? "border-[var(--text-primary)] text-[var(--text-primary)] shadow-sm"
-                  : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {t(`account.tabs.${id}`)}
-            </button>
-          )
-        })}
-      </nav>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)} defaultValue="profile">
+        {/* Mobile: horizontal tabs */}
+        <div className="md:hidden mb-6 overflow-x-auto">
+          <TabsList className="w-full justify-start">
+            {tabIds.map((id) => {
+              const Icon = tabIcons[id]
+              return (
+                <TabsTrigger key={id} value={id} className="gap-1.5">
+                  <Icon className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{t(`account.tabs.${id}`)}</span>
+                </TabsTrigger>
+              )
+            })}
+          </TabsList>
+        </div>
 
-      <div className="flex gap-8">
-        {/* Desktop: sidebar */}
-        <aside className="hidden md:block w-56 shrink-0">
-          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4 sticky top-24">
-            <div className="flex items-center gap-3 mb-4 pb-4 border-b border-[var(--border)]">
-              <div className="w-10 h-10 rounded-full bg-[var(--accent)] text-[var(--accent-contrast)] flex items-center justify-center text-[16px] font-bold shrink-0">
-                {initial}
-              </div>
-              <div className="min-w-0">
-                <p className="text-[14px] font-semibold text-[var(--text-primary)] truncate">{displayName}</p>
-                <p className="text-[12px] text-[var(--text-secondary)] truncate">{user.email}</p>
-              </div>
-            </div>
+        <div className="flex gap-8">
+          {/* Desktop: sidebar */}
+          <aside className="hidden md:block w-56 shrink-0">
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4 sticky top-24">
+              <nav className="space-y-0.5" role="tablist" aria-label={t("account.accountSections")}>
+                {tabIds.map((id) => {
+                  const Icon = tabIcons[id]
+                  return (
+                    <TabsTrigger
+                      key={id}
+                      value={id}
+                      className="w-full justify-start gap-2.5"
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      {t(`account.tabs.${id}`)}
+                    </TabsTrigger>
+                  )
+                })}
+              </nav>
 
-            <nav className="space-y-0.5" role="tablist" aria-label={t("account.accountSections")}>
-              {tabIds.map((id) => {
-                const Icon = tabIcons[id]
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    role="tab"
-                    aria-selected={activeTab === id}
-                    onClick={() => setActiveTab(id)}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium transition-colors ${
-                      activeTab === id
-                        ? "bg-[var(--surface-alt)] text-[var(--text-primary)] shadow-sm"
-                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4 shrink-0" />
-                    {t(`account.tabs.${id}`)}
-                  </button>
-                )
-              })}
-            </nav>
-
-            <div className="mt-4 pt-4 border-t border-[var(--border)]">
-              <div className="flex items-center justify-between mb-2">
-                <span className="meta-text text-[12px]">
-                  {liveProfile.literacyScore} {t("account.pts")}
-                </span>
-                {stealthOn && (
-                  <span className="meta-text text-[var(--accent)] text-[12px]">
-                    {t("account.stealth")}
+              <div className="mt-4 pt-4 border-t border-[var(--border)]">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="meta-text text-[12px]">
+                    {liveProfile.literacyScore} {t("account.pts")}
                   </span>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--red-subtle-bg)] transition-colors"
-              >
-                <LogOut className="h-4 w-4 shrink-0" />
-                {t("account.signOut")}
-              </button>
-            </div>
-          </div>
-        </aside>
-
-        {/* Main content */}
-        <main className="flex-1 min-w-0">
-          {showWelcome && (
-            <div className="mb-6 p-4 rounded-2xl bg-[var(--red-subtle-bg)] border border-[var(--accent)] border-opacity-30 text-[13px] text-[var(--text-primary)] flex items-start justify-between gap-3 animate-banner-in">
-              <div>
-                <p className="font-semibold mb-1">{t("account.welcomeTitle")}</p>
-                <p className="text-[var(--text-secondary)]">{t("account.welcomeMessage")}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowWelcome(false)}
-                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] shrink-0 text-[18px] leading-none"
-                aria-label="Dismiss"
-              >
-                ×
-              </button>
-            </div>
-          )}
-
-          {paidNotice && (
-            <div className="mb-6 p-4 rounded-2xl bg-[var(--surface-alt)] border border-[var(--border)] text-[13px] text-[var(--text-primary)]">
-              <p className="mb-3">{t("account.paidNotice")}</p>
-              <div className="flex items-center gap-2">
+                  {stealthOn && (
+                    <span className="meta-text text-[var(--accent)] text-[12px]">
+                      {t("account.stealth")}
+                    </span>
+                  )}
+                </div>
                 <button
                   type="button"
-                  onClick={() => {
-                    cleanupRef.current?.()
-                    cleanupRef.current = startPaidPolling()
-                  }}
-                  className="btn-primary text-[13px] h-8 px-4"
+                  onClick={handleSignOut}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--red-subtle-bg)] transition-colors"
                 >
-                  {t("account.checkAgain")}
+                  <LogOut className="h-4 w-4 shrink-0" />
+                  {t("account.signOut")}
                 </button>
-                <Link
-                  href="/account?tab=membership"
-                  onClick={() => setActiveTab("membership")}
-                  className="text-[13px] text-[var(--text-secondary)] hover:text-[var(--accent)]"
-                >
-                  {t("account.viewMembership")}
-                </Link>
               </div>
             </div>
-          )}
+          </aside>
 
-          {!user && hasSaves && (
-            <SyncSavesPrompt variant="banner" force />
-          )}
+          {/* Main content */}
+          <main className="flex-1 min-w-0">
+            {showWelcome && (
+              <div className="mb-6 p-4 rounded-2xl bg-[var(--red-subtle-bg)] border border-[var(--accent)] border-opacity-30 text-[13px] text-[var(--text-primary)] flex items-start justify-between gap-3 animate-banner-in">
+                <div>
+                  <p className="font-semibold mb-1">{t("account.welcomeTitle")}</p>
+                  <p className="text-[var(--text-secondary)]">{t("account.welcomeMessage")}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowWelcome(false)}
+                  className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] shrink-0 text-[18px] leading-none"
+                  aria-label="Dismiss"
+                >
+                  ×
+                </button>
+              </div>
+            )}
 
-          {paidModal && (
-            <PaymentSuccessModal plan={paidModal} onClose={() => setPaidModal(null)} />
-          )}
+            {paidNotice && (
+              <div className="mb-6 p-4 rounded-2xl bg-[var(--surface-alt)] border border-[var(--border)] text-[13px] text-[var(--text-primary)]">
+                <p className="mb-3">{t("account.paidNotice")}</p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      cleanupRef.current?.()
+                      cleanupRef.current = startPaidPolling()
+                    }}
+                    className="btn-primary text-[13px] h-8 px-4"
+                  >
+                    {t("account.checkAgain")}
+                  </button>
+                  <Link
+                    href="/account?tab=membership"
+                    onClick={() => setActiveTab("membership")}
+                    className="text-[13px] text-[var(--text-secondary)] hover:text-[var(--accent)]"
+                  >
+                    {t("account.viewMembership")}
+                  </Link>
+                </div>
+              </div>
+            )}
 
-          {activeTab === "profile" && user && <ProfileTab user={user} />}
-          {activeTab === "membership" && <MembershipTab />}
-          {activeTab === "dashboard" && <DashboardTab />}
-          {activeTab === "library" && <LibraryTab />}
-          {activeTab === "settings" && (
-            <SettingsTab user={user} onSignOut={handleSignOut} />
-          )}
-        </main>
-      </div>
+            {!user && hasSaves && (
+              <SyncSavesPrompt variant="banner" force />
+            )}
+
+            {paidModal && (
+              <PaymentSuccessModal plan={paidModal} onClose={() => setPaidModal(null)} />
+            )}
+
+            <TabsContent value="profile">
+              {user && <ProfileTab user={user} />}
+            </TabsContent>
+            <TabsContent value="personal">
+              {user && <PersonalInfoTab user={user} />}
+            </TabsContent>
+            <TabsContent value="preferences">
+              {user && <PreferencesTab user={user} />}
+            </TabsContent>
+            <TabsContent value="security">
+              {user && <SecurityTab user={user} onSignOut={handleSignOut} />}
+            </TabsContent>
+            <TabsContent value="membership">
+              <MembershipTab />
+            </TabsContent>
+            <TabsContent value="dashboard">
+              <DashboardTab />
+            </TabsContent>
+            <TabsContent value="library">
+              <LibraryTab />
+            </TabsContent>
+            <TabsContent value="settings">
+              <SettingsTab user={user} onSignOut={handleSignOut} />
+            </TabsContent>
+          </main>
+        </div>
+      </Tabs>
     </div>
   )
 }
