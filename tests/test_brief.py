@@ -281,7 +281,7 @@ _KM_EMPTY_SLOT_CTA = (
     "ព័ត៌មានសំខាន់ៗផ្ញើមកកាន់ឆានែលនេះភ្លាមៗ។ "
     "ខាងក្រោម (និងនៅលើគេហទំព័រ) ជាការត្រួតពិនិត្យរហ័ស — "
     "មានប្រភពពេញលេញ និង Local Lens នៅលើ Inbound Reports។\n\n"
-    '<a href="https://inbound-news-web.vercel.app/brief/2026-08-11">បើក Brief ថ្ងៃនេះ →</a>'
+    '<a href="https://inbound-report.vercel.app/brief/2026-08-11">បើក Brief ថ្ងៃនេះ →</a>'
 )
 
 _EN_EMPTY_SLOT_CTA = (
@@ -289,7 +289,7 @@ _EN_EMPTY_SLOT_CTA = (
     "Must-know tech hits this channel as it breaks. "
     "Below (and on the site) is a short keep-up skim — "
     "full sources and Local Lens on Inbound Reports.\n\n"
-    '<a href="https://inbound-news-web.vercel.app/brief/2026-08-11">Open today\'s Brief →</a>'
+    '<a href="https://inbound-report.vercel.app/brief/2026-08-11">Open today\'s Brief →</a>'
 )
 
 

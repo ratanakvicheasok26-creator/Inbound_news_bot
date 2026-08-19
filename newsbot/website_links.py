@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_WEBSITE = "https://inbound-news-web.vercel.app"
+_DEFAULT_WEBSITE = "https://inbound-report.vercel.app"
 _TZ = ZoneInfo("Asia/Phnom_Penh")
 
 

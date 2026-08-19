@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 DEMO_MESSAGE_EN = """📰 <b>Inbound Reports</b> · <i>Aug 08, 2026 · 06:00 PM</i>
 ─────────────────────────────
-💡 <i>Tease only — full coverage + <b>Local Lens (Cambodia)</b> on the <a href="https://inbound-news-web.vercel.app">daily Brief</a>.</i>
+💡 <i>Tease only — full coverage + <b>Local Lens (Cambodia)</b> on the <a href="https://inbound-report.vercel.app">daily Brief</a>.</i>
 
 🔹 <b>Apple Announces M4 Chip</b>
 Apple's M4 brings a 16-core Neural Engine delivering 38 TOPS, a 40% GPU uplift over M3, and up to 128 GB unified memory. The chip targets AI inference workloads and high-end content creation.
@@ -41,7 +41,7 @@ A buffer overflow in libopenssl 3.x (CVE-2026-4418) allows remote code execution
 <i><a href="https://www.bleepingcomputer.com">BleepingComputer</a> · <a href="https://krebsonsecurity.com">Krebs on Security</a></i>
 
 ─────────────────────────────
-🌐 <a href="https://inbound-news-web.vercel.app"><b>Open today's Brief on Inbound Reports →</b></a>"""
+🌐 <a href="https://inbound-report.vercel.app"><b>Open today's Brief on Inbound Reports →</b></a>"""
 
 DEMO_MESSAGE_KM = """📰 <b>របាយការណ៍ព័ត៌មាន Inbound</b> · <i>Aug 08, 2026 · 06:00 PM</i>
 ─────────────────────────────
@@ -56,7 +56,7 @@ Gemini 3.0 ណែនាំនូវសមត្ថភាពយល់ដឹងវ
 <i><a href="https://www.theverge.com">The Verge</a> · <a href="https://techcrunch.com">TechCrunch</a></i>
 
 ─────────────────────────────
-🌐 <a href="https://inbound-news-web.vercel.app"><b>បើកមើលរបាយការណ៍ព័ត៌មានពេញលេញ →</b></a>"""
+🌐 <a href="https://inbound-report.vercel.app"><b>បើកមើលរបាយការណ៍ព័ត៌មានពេញលេញ →</b></a>"""
 
 
 async def main() -> None:

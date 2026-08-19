@@ -279,8 +279,8 @@ DIGEST_HEADER_TEXT: str = _normalize_digest_header(
 
 # Public website base URL — Telegram CTAs link here instead of raw sources.
 WEBSITE_BASE_URL: str = (
-    os.environ.get("WEBSITE_BASE_URL", "https://inbound-news-web.vercel.app").strip().rstrip("/")
-    or "https://inbound-news-web.vercel.app"
+    os.environ.get("WEBSITE_BASE_URL", "https://inbound-report.vercel.app").strip().rstrip("/")
+    or "https://inbound-report.vercel.app"
 )
 URGENT_CHECK_INTERVAL_SECONDS: int = 60 * 30  # every 30 minutes
 URGENT_FIRST_DELAY_SECONDS: int = 60

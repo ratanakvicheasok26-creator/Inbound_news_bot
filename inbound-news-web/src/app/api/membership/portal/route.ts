@@ -4,7 +4,7 @@ import { createUserClient } from "@/lib/supabase-server"
 import { isStripeConfigured, stripe } from "@/lib/stripe"
 
 function originOf(req: NextRequest): string {
-  return req.headers.get("origin") || "https://inbound-news-web.vercel.app"
+  return req.headers.get("origin") || "https://inbound-report.vercel.app"
 }
 
 /** Open Stripe Billing portal for the user's existing subscription. */

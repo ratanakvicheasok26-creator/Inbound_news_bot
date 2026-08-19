@@ -53,17 +53,17 @@ class TestSourceKeyboard:
     def test_primary_read_more_button(self):
         post = StoryPost(
             text="x",
-            primary_url="https://inbound-news-web.vercel.app/story/abc",
+            primary_url="https://inbound-report.vercel.app/story/abc",
             primary_source="Example",
         )
         markup = _source_keyboard(post)
         assert "Local Lens" in markup.inline_keyboard[0][0].text or "sources" in markup.inline_keyboard[0][0].text
-        assert markup.inline_keyboard[0][0].url == "https://inbound-news-web.vercel.app/story/abc"
+        assert markup.inline_keyboard[0][0].url == "https://inbound-report.vercel.app/story/abc"
 
     def test_no_extra_source_buttons(self):
         post = StoryPost(
             text="x",
-            primary_url="https://inbound-news-web.vercel.app/brief/2026-08-05",
+            primary_url="https://inbound-report.vercel.app/brief/2026-08-05",
             primary_source="Source A",
             extra_urls=["https://b.com", "https://c.com"],
             extra_sources=["Source B", "Source C"],
@@ -129,7 +129,7 @@ class TestPrepareUrgent:
 
 
 def test_broadcast_stories_sends_separately_with_button():
-    site = "https://inbound-news-web.vercel.app"
+    site = "https://inbound-report.vercel.app"
     post1 = StoryPost(
         text="<b>One</b>",
         primary_url=f"{site}/story/1",
@@ -175,7 +175,7 @@ def test_broadcast_stories_sends_separately_with_button():
 def test_broadcast_routes_subscribed_group_to_recorded_topic():
     post = StoryPost(
         text="<b>One</b>",
-        primary_url="https://inbound-news-web.vercel.app/story/1",
+        primary_url="https://inbound-report.vercel.app/story/1",
         primary_source="Source A",
         entry_ids={"1"},
     )
@@ -209,7 +209,7 @@ def test_broadcast_prefers_configured_thread_over_stale_autolearned_one():
     for the primary channel."""
     post = StoryPost(
         text="<b>One</b>",
-        primary_url="https://inbound-news-web.vercel.app/story/1",
+        primary_url="https://inbound-report.vercel.app/story/1",
         primary_source="Source A",
         entry_ids={"1"},
     )

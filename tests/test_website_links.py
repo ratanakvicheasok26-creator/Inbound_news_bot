@@ -11,7 +11,7 @@ from newsbot.website_links import (
 
 
 def test_website_base_default(monkeypatch):
-    monkeypatch.setenv("WEBSITE_BASE_URL", "https://inbound-news-web.vercel.app")
+    monkeypatch.setenv("WEBSITE_BASE_URL", "https://inbound-report.vercel.app")
     assert website_base_url().startswith("https://")
 
 

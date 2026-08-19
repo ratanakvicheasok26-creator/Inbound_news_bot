@@ -5,7 +5,7 @@ import { isActiveMembership } from "@/lib/plans"
 import type { MembershipPlan } from "@/lib/stripe"
 
 function originOf(req: NextRequest): string {
-  return req.headers.get("origin") || "https://inbound-news-web.vercel.app"
+  return req.headers.get("origin") || "https://inbound-report.vercel.app"
 }
 
 /** Create a Stripe Checkout session for a subscription. JWT via Authorization. */
