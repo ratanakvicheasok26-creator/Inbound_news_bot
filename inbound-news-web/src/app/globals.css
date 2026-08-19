@@ -450,11 +450,11 @@ a:focus:not(:focus-visible) {
 
 /* Spacer to prevent content from jumping behind the fixed header */
 .smart-header-spacer {
-  height: 3.5rem; /* h-14 = 56px */
+  height: 4rem; /* h-16 = 64px */
 }
 @media (min-width: 640px) {
   .smart-header-spacer {
-    height: 4rem; /* sm:h-16 = 64px */
+    height: 5rem; /* sm:h-20 = 80px */
   }
 }
 

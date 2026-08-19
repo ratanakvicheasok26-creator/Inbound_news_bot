@@ -6,7 +6,6 @@ import { Footer } from "@/components/layout/Footer";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 import { InteractiveBackground } from "@/components/ui/pricing";
-import { PromoBanner } from "@/components/PromoBanner";
 
 export const metadata: Metadata = {
   title: "Inbound Reports — Decode the Tech.",
@@ -119,7 +118,6 @@ export default async function RootLayout({
         </a>
         <LocaleProvider>
           <Header />
-          <PromoBanner />
           <main id="main-content" className="relative z-10">{children}</main>
           <Footer />
           <MobileBottomNav />

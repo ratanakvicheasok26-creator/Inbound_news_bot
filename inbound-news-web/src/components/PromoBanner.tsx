@@ -36,7 +36,9 @@ export function PromoBanner() {
     }
 
     check()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const dismiss = useCallback(() => {
@@ -52,46 +54,43 @@ export function PromoBanner() {
         <motion.div
           role="banner"
           aria-label="Promotional banner"
-          initial={{ y: -40, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -40, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="relative z-10 w-full border-b"
-          style={{
-            background: "var(--surface)",
-            borderColor: "var(--border)",
-          }}
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full overflow-hidden border-b bg-gradient-to-r from-[var(--surface-alt)] via-[var(--surface)] to-[var(--surface-alt)] border-[var(--border)]"
         >
-          <div className="mx-auto flex w-full max-w-screen-xl items-center justify-between gap-2 px-3 py-2 sm:gap-4 sm:px-5 sm:py-2.5 md:px-8">
-            {/* Left: icon + text */}
-            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-              <span className="promo-pulse-glow flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full sm:h-8 sm:w-8">
-                <Sparkles className="h-3.5 w-3.5 text-[var(--accent)] sm:h-4 sm:w-4" />
+          <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-3 px-4 py-2 sm:px-6 lg:px-8">
+            {/* Left: icon badge + title & subtitle */}
+            <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FF0030]/15 text-[#FF0030] ring-1 ring-[#FF0030]/30 sm:h-7 sm:w-7">
+                <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </span>
-              <div className="min-w-0">
-                <p className="truncate text-xs font-semibold leading-tight text-[var(--text-primary)] sm:text-sm">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 min-w-0">
+                <span className="text-xs font-bold text-[var(--text-primary)] sm:text-sm">
                   {t("promo.title")}
-                </p>
-                <p className="hidden truncate text-xs leading-snug text-[var(--text-secondary)] md:block">
-                  {t("promo.subtitle")}
-                </p>
+                </span>
+                <span className="hidden text-xs text-[var(--text-secondary)] sm:inline-block">
+                  — {t("promo.subtitle")}
+                </span>
               </div>
             </div>
 
-            {/* Right: CTA + close */}
-            <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
+            {/* Right: CTA button + Dismiss X */}
+            <div className="flex shrink-0 items-center gap-2">
               <Link
                 href="/signup"
-                className="promo-shimmer-btn btn-primary h-7 rounded-full bg-gradient-to-r from-[var(--accent)] via-[#ff4d6d] to-[var(--accent)] px-3 text-[11px] font-bold text-white shadow-md transition-transform hover:scale-105 sm:h-8 sm:px-4 sm:text-xs"
+                className="inline-flex h-7 items-center justify-center rounded-full bg-[#FF0030] px-3.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-[#d60028] hover:shadow-md sm:h-8 sm:px-4"
               >
                 {t("promo.cta")}
               </Link>
               <button
+                type="button"
                 onClick={dismiss}
                 aria-label={t("promo.dismiss")}
-                className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-alt)] hover:text-[var(--text-primary)] sm:h-7 sm:w-7"
+                className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-alt)] hover:text-[var(--text-primary)]"
               >
-                <X className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
           </div>
@@ -100,3 +99,4 @@ export function PromoBanner() {
     </AnimatePresence>
   )
 }
+

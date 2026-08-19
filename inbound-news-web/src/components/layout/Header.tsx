@@ -8,6 +8,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { createPortal } from "react-dom"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { LiveSearch } from "@/components/layout/LiveSearch"
+import { PromoBanner } from "@/components/PromoBanner"
 import { useI18n, LOCALE_KEY } from "@/lib/i18n/LocaleProvider"
 import type { Locale } from "@/lib/i18n/dictionaries"
 import { Menu, X } from "lucide-react"
@@ -23,9 +24,24 @@ export function Header() {
   const [user, setUser] = useState<User | null>(null)
   const [mounted, setMounted] = useState(false)
   const [visible, setVisible] = useState(true)
+  const [headerHeight, setHeaderHeight] = useState<number | null>(null)
+  const headerRef = useRef<HTMLElement>(null)
   const exploreRef = useRef<HTMLDivElement>(null)
   const accountRef = useRef<HTMLDivElement>(null)
   const closeBtnRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!headerRef.current) return
+    const updateHeight = () => {
+      if (headerRef.current) {
+        setHeaderHeight(headerRef.current.getBoundingClientRect().height)
+      }
+    }
+    updateHeight()
+    const observer = new ResizeObserver(updateHeight)
+    observer.observe(headerRef.current)
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
     setMounted(true)
@@ -369,11 +385,13 @@ export function Header() {
   return (
     <>
       <header
+        ref={headerRef}
         onFocusCapture={() => setVisible(true)}
         className={`smart-header bg-[var(--surface)]/90 backdrop-blur-md border-b border-[var(--border)] ${
           isHeaderVisible ? "smart-header--visible" : "smart-header--hidden"
         }`}
       >
+        <PromoBanner />
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2">
           {/* Logo & Mobile Menu Toggle */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -589,7 +607,10 @@ export function Header() {
       </header>
 
       {/* Spacer to compensate for fixed-position header */}
-      <div className="smart-header-spacer" />
+      <div
+        className="smart-header-spacer"
+        style={headerHeight ? { height: `${headerHeight}px` } : undefined}
+      />
 
       {mobileDrawer}
     </>
