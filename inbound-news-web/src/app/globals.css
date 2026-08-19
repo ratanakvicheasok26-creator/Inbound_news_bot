@@ -1054,6 +1054,32 @@ footer {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes promoShimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes promoPulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 0, 48, 0.3); }
+  50% { box-shadow: 0 0 16px 2px rgba(255, 0, 48, 0.15); }
+}
+
+.promo-shimmer-btn {
+  background-size: 200% auto;
+  animation: promoShimmer 3s linear infinite;
+}
+
+.promo-pulse-glow {
+  animation: promoPulseGlow 2.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .promo-shimmer-btn,
+  .promo-pulse-glow {
+    animation: none;
+  }
+}
+
 .legal-prose {
   display: flex;
   flex-direction: column;

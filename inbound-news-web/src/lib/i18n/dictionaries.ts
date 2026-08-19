@@ -725,6 +725,13 @@ const empty = {
   body: "Content will appear here once ingest starts clustering sources.",
 }
 
+const promo = {
+  title: "Free for 6 weeks",
+  subtitle: "Create an account and get full Pro access — no payment required.",
+  cta: "Get started",
+  dismiss: "Dismiss",
+}
+
 export const dictionaries = {
   en: {
     nav,
@@ -749,6 +756,7 @@ export const dictionaries = {
     payment,
     topic,
     empty,
+    promo,
   },
   km: {
     nav: {
@@ -1431,6 +1439,12 @@ export const dictionaries = {
     empty: {
       title: "មិនទាន់មានអ្វីនៅទីនេះទេ",
       body: "ខ្លឹមសារនឹងបង្ហាញនៅពេល ingest ចាប់ផ្តើមប្រមូលប្រភព។",
+    },
+    promo: {
+      title: "ឥតគិតថ្លៃ ៦ សប្តាហ៍",
+      subtitle: "បង្កើតគណនី និងទទួលបានសិទ្ធិ Pro ពេញលេញ — មិនតម្រូវឱ្យបង់ប្រាក់។",
+      cta: "ចាប់ផ្តើម",
+      dismiss: "បិទ",
     },
   },
 } as const
