@@ -9,10 +9,10 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import type { User } from "@supabase/supabase-js"
+import type { AuthUser } from "@/lib/auth"
 
 interface PreferencesTabProps {
-  user: User
+  user: AuthUser
 }
 
 const TOPIC_OPTIONS = [
@@ -101,6 +101,7 @@ export function PreferencesTab({ user }: PreferencesTabProps) {
       localStorage.setItem("theme", next === "system"
         ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
         : next)
+      // eslint-disable-next-line react-hooks/immutability
       document.cookie = `theme=${next === "system" ? "system" : next}; path=/; max-age=31536000; SameSite=Lax`
     } catch {}
   }

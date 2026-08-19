@@ -58,7 +58,6 @@ export async function POST(req: NextRequest) {
       try {
         const customer = await stripe.customers.create({
           email: auth.user.email || undefined,
-          name: auth.user.user_metadata?.display_name || undefined,
           metadata: { user_id: auth.user.id },
         })
         customerId = customer.id

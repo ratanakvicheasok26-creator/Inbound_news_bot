@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Mail } from "lucide-react"
@@ -12,6 +12,40 @@ import {
   PasswordInput,
   authInputClass,
 } from "@/components/auth/AuthShell"
+import zxcvbn from "zxcvbn"
+
+function validatePasswordStrength(password: string): { valid: boolean; error: string; score: number } {
+  if (password.length < 15) {
+    return { valid: false, error: "Password must be at least 15 characters", score: 0 }
+  }
+  const result = zxcvbn(password)
+  if (result.score < 3) {
+    return { valid: false, error: "Password is too weak. Try adding more words or avoiding common patterns", score: result.score }
+  }
+  return { valid: true, error: "", score: result.score }
+}
+
+function ScoreBar({ score }: { score: number }) {
+  const colors = ["bg-red-500", "bg-orange-500", "bg-yellow-500", "bg-green-500", "bg-emerald-500"]
+  const labels = ["Very weak", "Weak", "Fair", "Strong", "Very strong"]
+  return (
+    <div className="mt-2">
+      <div className="flex gap-1 mb-1">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className={`h-1 flex-1 rounded-full transition-colors ${
+              i <= score ? colors[score] : "bg-[var(--border)]"
+            }`}
+          />
+        ))}
+      </div>
+      <p className="text-[11px] text-[var(--text-secondary)]">
+        {score >= 0 && labels[score]}
+      </p>
+    </div>
+  )
+}
 
 export default function SignupPage() {
   const { t } = useI18n()
@@ -24,6 +58,17 @@ export default function SignupPage() {
   const [error, setError] = useState("")
   const [emailSent, setEmailSent] = useState(false)
   const [sentEmail, setSentEmail] = useState("")
+  const [passwordScore, setPasswordScore] = useState(-1)
+
+  const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value
+    setPassword(val)
+    if (val.length > 0) {
+      setPasswordScore(zxcvbn(val).score)
+    } else {
+      setPasswordScore(-1)
+    }
+  }, [])
 
   function validate(): string {
     const name = displayName.trim()
@@ -31,10 +76,9 @@ export default function SignupPage() {
     if (name.length > 40) return t("auth.errorDisplayName")
     const mail = email.trim()
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) return t("auth.errorEmailInvalid")
-    if (password.length < 8) return t("auth.errorPasswordMin")
-    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
-      return t("auth.errorPasswordWeak")
-    }
+    if (password.length < 15) return "Password must be at least 15 characters"
+    const strength = zxcvbn(password)
+    if (strength.score < 3) return "Password is too weak. Try adding more words or avoiding common patterns"
     if (password !== confirmPassword) return t("auth.errorPasswordsMatch")
     return ""
   }
@@ -54,30 +98,16 @@ export default function SignupPage() {
       const mail = email.trim()
       const { data, error: authError } = await signUp(mail, password, displayName.trim())
       if (authError) {
-        setError(authError.message)
+        setError(authError.error)
         return
       }
 
-      if (data.session) {
+      if (data) {
         router.push("/account?welcome=1")
         router.refresh()
         return
       }
 
-      if (data.user && (!data.user.identities || data.user.identities.length === 0)) {
-        setError(t("auth.errorEmailTaken"))
-        return
-      }
-
-      // Try automatic sign-in if confirm email is disabled in Supabase
-      const { data: signInData } = await signIn(mail, password)
-      if (signInData?.session) {
-        router.push("/account?welcome=1")
-        router.refresh()
-        return
-      }
-
-      // Only show check email screen if email verification is required
       setSentEmail(mail)
       setEmailSent(true)
     } catch {
@@ -160,11 +190,15 @@ export default function SignupPage() {
           <PasswordInput
             required
             autoComplete="new-password"
-            minLength={8}
+            minLength={15}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder={t("auth.passwordHint")}
+            onChange={handlePasswordChange}
+            placeholder="At least 15 characters"
           />
+          {passwordScore >= 0 && <ScoreBar score={passwordScore} />}
+          <p className="text-[11px] text-[var(--text-secondary)] mt-1">
+            Use a passphrase or mix unrelated words. No special character rules.
+          </p>
         </div>
 
         <div>

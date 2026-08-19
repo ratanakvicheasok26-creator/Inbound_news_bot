@@ -2,15 +2,15 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Check, AlertCircle } from "lucide-react"
-import { supabase } from "@/lib/auth"
+import { supabase } from "@/lib/supabase"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import type { User } from "@supabase/supabase-js"
+import type { AuthUser } from "@/lib/auth"
 
 interface PersonalInfoTabProps {
-  user: User
+  user: AuthUser
 }
 
 export function PersonalInfoTab({ user }: PersonalInfoTabProps) {
@@ -39,7 +39,7 @@ export function PersonalInfoTab({ user }: PersonalInfoTabProps) {
         if (data.phone) setPhone(data.phone)
         if (data.address) setAddress(data.address)
       } catch {
-        // Column may not exist yet — form still renders with defaults
+        // Column may not exist yet
       }
     }
     load()

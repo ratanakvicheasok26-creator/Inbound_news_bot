@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { User, CreditCard, BarChart3, BookOpen, Settings, LogOut, Shield, Newspaper, UserCircle } from "lucide-react"
-import { supabase, signOut } from "@/lib/auth"
+import { supabase, signOut, getCurrentUser, type AuthUser } from "@/lib/auth"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getProfile, loadPreferencesFromSupabase } from "@/lib/profile"
 import { ProfileTab } from "@/components/account/editorial/ProfileTab"
@@ -21,7 +21,6 @@ import { getMembership, isActiveMembership, refreshAllMemberships } from "@/lib/
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import type { MembershipPlan } from "@/lib/plans"
-import type { User as SupabaseUser } from "@supabase/supabase-js"
 
 const tabIds = ["profile", "personal", "preferences", "security", "membership", "dashboard", "library", "settings"] as const
 type TabId = (typeof tabIds)[number]
@@ -45,7 +44,7 @@ export default function AccountPage() {
   const { t } = useI18n()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabId>("profile")
-  const [user, setUser] = useState<SupabaseUser | null>(null)
+  const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
   const [paidModal, setPaidModal] = useState<MembershipPlan | null>(null)
   const [paidNotice, setPaidNotice] = useState(false)
@@ -72,14 +71,12 @@ export default function AccountPage() {
   const hasSaves = profile.savedStoryIds.length > 0
 
   useEffect(() => {
-    let mounted = true
+    const abortController = new AbortController()
     async function check() {
       const params = new URLSearchParams(window.location.search)
       if (params.get("tab") === "membership") setActiveTab("membership")
-      const {
-        data: { user: u },
-      } = await supabase.auth.getUser()
-      if (!mounted) return
+      const u = await getCurrentUser()
+      if (abortController.signal.aborted) return
       setUser(u)
       setLoading(false)
       if (u) {
@@ -92,7 +89,7 @@ export default function AccountPage() {
           await supabase.from("profiles").upsert(
             {
               id: u.id,
-              display_name: u.user_metadata?.display_name || u.email?.split("@")[0] || "Reader",
+              display_name: u.display_name || u.email?.split("@")[0] || "Reader",
             },
             { onConflict: "id" },
           )
@@ -110,20 +107,7 @@ export default function AccountPage() {
       setProfileTick((t) => t + 1)
     }
     check()
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        loadPreferencesFromSupabase().then(() => setProfileTick((t) => t + 1))
-      } else {
-        router.replace("/login")
-      }
-    })
-    return () => {
-      mounted = false
-      subscription.unsubscribe()
-    }
+    return () => abortController.abort()
   }, [router])
 
   const startPaidPolling = useCallback(() => {
@@ -188,7 +172,7 @@ export default function AccountPage() {
   const liveProfile = profileTick >= 0 ? getProfile() : profile
   const displayName =
     liveProfile.displayName ||
-    user?.user_metadata?.display_name ||
+    user?.display_name ||
     user?.email?.split("@")[0] ||
     t("account.guestReader")
   const initial = getInitial(displayName)

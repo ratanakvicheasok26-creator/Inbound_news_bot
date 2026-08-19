@@ -8,10 +8,10 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import type { User } from "@supabase/supabase-js"
+import type { AuthUser } from "@/lib/auth"
 
 interface ProfileTabProps {
-  user: User
+  user: AuthUser
   onAvatarChange?: (url: string) => void
 }
 

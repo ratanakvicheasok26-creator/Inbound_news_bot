@@ -6,10 +6,10 @@ import { Check, AlertCircle } from "lucide-react"
 import { supabase } from "@/lib/auth"
 import { getProfile, saveProfile } from "@/lib/profile"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
-import type { User } from "@supabase/supabase-js"
+import type { AuthUser } from "@/lib/auth"
 
 interface ProfileTabProps {
-  user: User
+  user: AuthUser
 }
 
 const LANGS = [

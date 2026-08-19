@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { supabase, updatePassword, signOut } from "@/lib/auth"
+import { useRouter, useSearchParams } from "next/navigation"
+import { updatePassword, signOut } from "@/lib/auth"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import {
   AuthShell,
@@ -11,48 +11,63 @@ import {
   AuthSuccess,
   PasswordInput,
 } from "@/components/auth/AuthShell"
+import zxcvbn from "zxcvbn"
+
+function ScoreBar({ score }: { score: number }) {
+  const colors = ["bg-red-500", "bg-orange-500", "bg-yellow-500", "bg-green-500", "bg-emerald-500"]
+  const labels = ["Very weak", "Weak", "Fair", "Strong", "Very strong"]
+  return (
+    <div className="mt-2">
+      <div className="flex gap-1 mb-1">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className={`h-1 flex-1 rounded-full transition-colors ${
+              i <= score ? colors[score] : "bg-[var(--border)]"
+            }`}
+          />
+        ))}
+      </div>
+      <p className="text-[11px] text-[var(--text-secondary)]">
+        {score >= 0 && labels[score]}
+      </p>
+    </div>
+  )
+}
 
 export default function ResetPasswordPage() {
   const { t } = useI18n()
   const router = useRouter()
-  const [ready, setReady] = useState(false)
+  const searchParams = useSearchParams()
+  const [ready, setReady] = useState(() => !!searchParams.get("token"))
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  const [passwordScore, setPasswordScore] = useState(-1)
 
-  useEffect(() => {
-    let mounted = true
-    async function checkSession() {
-      const { data } = await supabase.auth.getSession()
-      if (!mounted) return
-      if (data.session) setReady(true)
+  function handlePasswordChange(val: string) {
+    setPassword(val)
+    if (val.length > 0) {
+      setPasswordScore(zxcvbn(val).score)
+    } else {
+      setPasswordScore(-1)
     }
-    checkSession()
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return
-      if (event === "PASSWORD_RECOVERY" && session) setReady(true)
-    })
-    return () => {
-      mounted = false
-      subscription.unsubscribe()
-    }
-  }, [])
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError("")
     setSuccess("")
 
-    if (password.length < 8) {
-      setError(t("auth.errorPasswordMin"))
+    if (password.length < 15) {
+      setError("Password must be at least 15 characters")
       return
     }
-    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
-      setError(t("auth.errorPasswordWeak"))
+    const strength = zxcvbn(password)
+    if (strength.score < 3) {
+      setError("Password is too weak. Try adding more words or avoiding common patterns")
       return
     }
     if (password !== confirmPassword) {
@@ -60,14 +75,19 @@ export default function ResetPasswordPage() {
       return
     }
 
+    const token = searchParams.get("token")
+    if (!token) {
+      setError("Invalid reset link")
+      return
+    }
+
     setLoading(true)
     try {
-      const { error: authError } = await updatePassword(password)
+      const { error: authError } = await updatePassword(token, password)
       if (authError) {
-        setError(authError.message)
+        setError(authError.error)
         return
       }
-      await signOut()
       setSuccess(t("auth.passwordUpdated"))
       setTimeout(() => router.push("/login"), 1200)
     } catch {
@@ -101,11 +121,12 @@ export default function ResetPasswordPage() {
           <PasswordInput
             required
             autoComplete="new-password"
-            minLength={8}
+            minLength={15}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder={t("auth.passwordHint")}
+            onChange={(e) => handlePasswordChange(e.target.value)}
+            placeholder="At least 15 characters"
           />
+          {passwordScore >= 0 && <ScoreBar score={passwordScore} />}
         </div>
 
         <div>

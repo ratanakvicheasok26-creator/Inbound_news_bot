@@ -27,7 +27,7 @@ export default function ForgotPasswordPage() {
     try {
       const { error: authError } = await resetPassword(email.trim())
       if (authError) {
-        setError(authError.message)
+        setError(authError.error)
       } else {
         setSent(true)
       }

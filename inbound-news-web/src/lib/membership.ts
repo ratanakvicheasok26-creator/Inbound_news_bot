@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react"
 import { supabase } from "./supabase"
+import { getCurrentUser } from "./auth"
 import { isActiveMembership } from "./plans"
 import {
   requiredTier,
@@ -33,10 +34,14 @@ export function refreshAllMemberships() {
 }
 
 export async function getAccessToken(): Promise<string | null> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-  return session?.access_token ?? null
+  try {
+    const res = await fetch("/api/auth/me", { credentials: "include" })
+    if (!res.ok) return null
+    const data = await res.json()
+    return data.user ? "cookie-auth" : null
+  } catch {
+    return null
+  }
 }
 
 /** Current user's membership row, or null when signed out / no plan / not configured. */

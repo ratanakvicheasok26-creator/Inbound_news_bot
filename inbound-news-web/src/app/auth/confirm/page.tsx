@@ -5,7 +5,6 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AlertCircle } from "lucide-react"
 import confetti from "canvas-confetti"
-import { supabase } from "@/lib/supabase"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import { AuthShell } from "@/components/auth/AuthShell"
 
@@ -39,7 +38,7 @@ export default function ConfirmPage() {
     let mounted = true
 
     async function handleConfirm() {
-      const code = searchParams.get("code")
+      const token = searchParams.get("token")
       const errorParam = searchParams.get("error")
       const errorDescription = searchParams.get("error_description")
 
@@ -51,7 +50,7 @@ export default function ConfirmPage() {
         return
       }
 
-      if (!code) {
+      if (!token) {
         if (mounted) {
           setErrorMsg(t("auth.confirmNoCode"))
           setStatus("error")
@@ -60,12 +59,13 @@ export default function ConfirmPage() {
       }
 
       try {
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+        const res = await fetch(`/api/auth/verify-email?token=${encodeURIComponent(token)}`)
+        const data = await res.json()
 
         if (!mounted) return
 
-        if (exchangeError) {
-          setErrorMsg(exchangeError.message || t("auth.confirmError"))
+        if (!res.ok) {
+          setErrorMsg(data.error || t("auth.confirmError"))
           setStatus("error")
         } else {
           setStatus("success")

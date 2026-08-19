@@ -12,8 +12,7 @@ import { PromoBanner } from "@/components/PromoBanner"
 import { useI18n, LOCALE_KEY } from "@/lib/i18n/LocaleProvider"
 import type { Locale } from "@/lib/i18n/dictionaries"
 import { Menu, X } from "lucide-react"
-import { supabase, signOut } from "@/lib/auth"
-import type { User } from "@supabase/supabase-js"
+import { signOut, getCurrentUser, type AuthUser } from "@/lib/auth"
 
 export function Header() {
   const { t, locale, setLocale } = useI18n()
@@ -21,7 +20,7 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [exploreOpen, setExploreOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<AuthUser | null>(null)
   const [mounted, setMounted] = useState(false)
   const [visible, setVisible] = useState(true)
   const [headerHeight, setHeaderHeight] = useState<number | null>(null)
@@ -117,13 +116,7 @@ export function Header() {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user: u } }) => setUser(u))
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-    return () => subscription.unsubscribe()
+    getCurrentUser().then(setUser)
   }, [])
 
   useEffect(() => {

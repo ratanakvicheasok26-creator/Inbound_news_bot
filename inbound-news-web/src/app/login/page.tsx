@@ -28,7 +28,7 @@ export default function LoginPage() {
       const mail = email.trim()
       const { error: authError } = await signIn(mail, password)
       if (authError) {
-        setError(authError.message)
+        setError(authError.error)
       } else {
         const params = new URLSearchParams(window.location.search)
         router.push(params.get("returnTo") || "/account")

@@ -1,4 +1,5 @@
 import { supabase } from "./supabase"
+import { getCurrentUser } from "./auth"
 import { markSyncPromptPending } from "./sync-prompt"
 
 const STORAGE_KEY = "ib_profile"
@@ -124,7 +125,7 @@ export function toggleSavedStory(id: string): boolean {
     : [...profile.savedStoryIds, id]
   saveProfile({ savedStoryIds: next })
   if (!saved && typeof window !== "undefined") {
-    void supabase.auth.getUser().then(({ data: { user } }) => {
+    void getCurrentUser().then((user) => {
       if (!user) markSyncPromptPending()
     })
   }
@@ -177,7 +178,7 @@ export function resetProfile(): void {
 
 export async function syncPreferencesToSupabase(): Promise<void> {
   if (typeof window === "undefined") return
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   if (!user) return
   const profile = getProfile()
   await supabase.from("profiles").upsert({
@@ -191,7 +192,7 @@ export async function syncPreferencesToSupabase(): Promise<void> {
 
 export async function loadPreferencesFromSupabase(): Promise<void> {
   if (typeof window === "undefined") return
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   if (!user) return
   try {
     const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle()

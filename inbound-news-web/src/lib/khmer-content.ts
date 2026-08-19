@@ -1,4 +1,3 @@
-import type { User } from "@supabase/supabase-js"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { callGemini, callGroq } from "./groq"
 import { rateLimit } from "./rate-limit"
@@ -315,7 +314,7 @@ function composeEnglishBody(opts: {
  */
 export async function buildKhmerContent(opts: {
   supabase: SupabaseClient
-  user: User
+  user: { id: string; email: string }
   tier: PlanTier
   story: { id: string; title: string; summary_en: string | null }
   articles: KhmerArticleSource[]

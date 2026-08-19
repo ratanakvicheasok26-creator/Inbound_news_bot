@@ -4,10 +4,10 @@ import { useState } from "react"
 import Link from "next/link"
 import { getProfile, updatePreferences, resetProfile, syncPreferencesToSupabase } from "@/lib/profile"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
-import type { User } from "@supabase/supabase-js"
+import type { AuthUser } from "@/lib/auth"
 
 interface SettingsTabProps {
-  user: User | null
+  user: AuthUser | null
   onSignOut: () => void
 }
 

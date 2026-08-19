@@ -1,85 +1,78 @@
 import type { NextRequest } from "next/server"
 import type { User } from "@supabase/supabase-js"
-import { createUserClient, isSupabaseConfigured } from "./supabase-server"
+import { verifyAccessToken, type AuthJWTPayload } from "./crypto"
+import { getAccessTokenFromCookies } from "./session"
 import { canAccessTier, effectiveTier, hasPremiumAccess, type Feature, type PlanTier, type TrialProfile } from "./access"
 import type { Membership } from "./stripe"
+import { getUserMembership as getMembership, getTrialProfileForUser } from "./membership-db"
 
-const MEMBERSHIP_COLUMNS =
-  "user_id, plan, status, stripe_customer_id, stripe_subscription_id, current_period_start, current_period_end, cancel_at_period_end"
+export interface AuthenticatedUser {
+  id: string
+  email: string
+  email_verified: boolean
+}
 
-const PROFILE_TRIAL_COLUMNS = "trial_started_at, trial_ends_at, trial_used, membership_status"
+export interface AuthContext {
+  user: AuthenticatedUser
+  token: string
+}
 
-/** Authenticate the caller from the Supabase access token in `Authorization`. */
 export async function authenticateRequest(
   req: NextRequest,
-): Promise<{ user: User; token: string } | null> {
+): Promise<AuthContext | null> {
+  let token: string | null = null
+
   const authz = req.headers.get("authorization")
-  if (!authz || !isSupabaseConfigured) return null
-  const supabase = createUserClient(authz)
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser()
-  if (error || !user) return null
-  return { user, token: authz.replace(/^Bearer\s+/i, "") }
+  if (authz?.startsWith("Bearer ")) {
+    token = authz.replace(/^Bearer\s+/i, "")
+  }
+
+  if (!token) {
+    token = getAccessTokenFromCookies(req.headers.get("cookie"))
+  }
+
+  if (!token) return null
+
+  const payload = await verifyAccessToken(token)
+  if (!payload) return null
+
+  return {
+    user: {
+      id: payload.sub!,
+      email: payload.email as string,
+      email_verified: payload.email_verified as boolean,
+    },
+    token,
+  }
 }
 
-/** Fetch the caller's own membership row for an already-authenticated request. */
 export async function getMembershipForUser(auth: {
-  user: User
+  user: AuthenticatedUser
   token: string
 }): Promise<Membership | null> {
-  const supabase = createUserClient(`Bearer ${auth.token}`)
-  const { data } = await supabase
-    .from("memberships")
-    .select(MEMBERSHIP_COLUMNS)
-    .eq("user_id", auth.user.id)
-    .maybeSingle()
-  return (data as Membership | null) ?? null
+  return getMembership(auth.user.id)
 }
 
-/** Fetch the caller's own trial profile data. */
-export async function getTrialProfileForUser(auth: {
-  user: User
-  token: string
-}): Promise<TrialProfile | null> {
-  const supabase = createUserClient(`Bearer ${auth.token}`)
-  const { data } = await supabase
-    .from("profiles")
-    .select(PROFILE_TRIAL_COLUMNS)
-    .eq("id", auth.user.id)
-    .maybeSingle()
-  return (data as TrialProfile | null) ?? null
-}
-
-/** Fetch the caller's own membership row (RLS-scoped to the user). */
 export async function getUserMembership(req: NextRequest): Promise<Membership | null> {
   const auth = await authenticateRequest(req)
   if (!auth) return null
   return getMembershipForUser(auth)
 }
 
-/** The caller's effective plan tier (free or pro — both paid plans map to "pro"). */
 export async function getUserTier(req: NextRequest): Promise<PlanTier> {
   return effectiveTier(await getUserMembership(req))
 }
 
-/** True when the caller holds an active Pro or Premium subscription. */
 export async function getUserHasPremiumAccess(req: NextRequest): Promise<boolean> {
   const auth = await authenticateRequest(req)
   if (!auth) return false
   const [membership, trialProfile] = await Promise.all([
     getMembershipForUser(auth),
-    getTrialProfileForUser(auth),
+    getTrialProfileForUser(auth.user.id),
   ])
   return hasPremiumAccess(membership, trialProfile)
 }
 
-/**
- * Server-side feature guard for protected API routes. Free users and guests
- * cannot bypass it by calling the endpoint directly.
- * Now considers both paid subscriptions and active trials.
- */
 export async function requireFeature(
   req: NextRequest,
   feature: Feature,
@@ -89,14 +82,12 @@ export async function requireFeature(
 
   const [membership, trialProfile] = await Promise.all([
     getMembershipForUser(auth),
-    getTrialProfileForUser(auth),
+    getTrialProfileForUser(auth.user.id),
   ])
 
-  // Check paid subscription first
   const tier = effectiveTier(membership)
   if (canAccessTier(tier, feature)) return { ok: true, tier }
 
-  // Check active trial — trial users get same access as paid
   if (trialProfile?.trial_ends_at) {
     const trialEnd = new Date(trialProfile.trial_ends_at).getTime()
     if (Number.isFinite(trialEnd) && trialEnd > Date.now()) {
