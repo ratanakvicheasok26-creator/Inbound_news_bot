@@ -118,8 +118,8 @@ export default async function RootLayout({
           Skip to content
         </a>
         <LocaleProvider>
-          <PromoBanner />
           <Header />
+          <PromoBanner />
           <main id="main-content" className="relative z-10">{children}</main>
           <Footer />
           <MobileBottomNav />

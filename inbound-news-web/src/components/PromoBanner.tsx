@@ -7,7 +7,7 @@ import { Sparkles, X } from "lucide-react"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 
-const DISMISS_KEY = "promo_banner_dismissed"
+const SESSION_DISMISS_KEY = "promo_banner_dismissed_session"
 
 export function PromoBanner() {
   const { t } = useI18n()
@@ -18,7 +18,7 @@ export function PromoBanner() {
 
     async function check() {
       if (typeof window === "undefined") return
-      if (localStorage.getItem(DISMISS_KEY) === "1") return
+      if (sessionStorage.getItem(SESSION_DISMISS_KEY) === "1") return
 
       if (!isSupabaseConfigured) {
         if (!cancelled) setVisible(true)
@@ -42,7 +42,7 @@ export function PromoBanner() {
   const dismiss = useCallback(() => {
     setVisible(false)
     try {
-      localStorage.setItem(DISMISS_KEY, "1")
+      sessionStorage.setItem(SESSION_DISMISS_KEY, "1")
     } catch {}
   }, [])
 
@@ -52,11 +52,11 @@ export function PromoBanner() {
         <motion.div
           role="banner"
           aria-label="Promotional banner"
-          initial={{ y: -64, opacity: 0 }}
+          initial={{ y: -60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -64, opacity: 0 }}
+          exit={{ y: -60, opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="relative z-[60] w-full border-b"
+          className="relative z-10 w-full border-b"
           style={{
             background: "var(--surface)",
             borderColor: "var(--border)",
