@@ -12,9 +12,10 @@ import type { User } from "@supabase/supabase-js"
 
 interface ProfileTabProps {
   user: User
+  onAvatarChange?: (url: string) => void
 }
 
-export function ProfileTab({ user }: ProfileTabProps) {
+export function ProfileTab({ user, onAvatarChange }: ProfileTabProps) {
   const { t } = useI18n()
   const [handle, setHandle] = useState("")
   const [byline, setByline] = useState("")
@@ -30,16 +31,20 @@ export function ProfileTab({ user }: ProfileTabProps) {
   useEffect(() => {
     let mounted = true
     async function load() {
-      const { data } = await supabase
-        .from("profiles")
-        .select("handle, byline, bio, avatar_url")
-        .eq("id", user.id)
-        .maybeSingle()
-      if (!mounted || !data) return
-      if (data.handle) setHandle(data.handle)
-      if (data.byline) setByline(data.byline)
-      if (data.bio) setBio(data.bio)
-      if (data.avatar_url) setAvatarUrl(data.avatar_url)
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("handle, byline, bio, avatar_url")
+          .eq("id", user.id)
+          .maybeSingle()
+        if (!mounted || !data) return
+        if (data.handle) setHandle(data.handle)
+        if (data.byline) setByline(data.byline)
+        if (data.bio) setBio(data.bio)
+        if (data.avatar_url) setAvatarUrl(data.avatar_url)
+      } catch {
+        // Column may not exist yet — form still renders with defaults
+      }
     }
     load()
     return () => { mounted = false }
@@ -61,19 +66,38 @@ export function ProfileTab({ user }: ProfileTabProps) {
     setUploading(true)
     setError("")
     try {
-      const ext = file.name.split(".").pop() || "png"
+      const MAX_BYTES = 2 * 1024 * 1024 // 2 MB
+      if (file.size > MAX_BYTES) {
+        setError("Image must be under 2 MB.")
+        setUploading(false)
+        return
+      }
+      if (!file.type.startsWith("image/")) {
+        setError("Please select an image file.")
+        setUploading(false)
+        return
+      }
+      const ext = file.name.split(".").pop()?.toLowerCase() || "png"
       const path = `${user.id}/avatar.${ext}`
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(path, file, { upsert: true })
+        .upload(path, file, { upsert: true, cacheControl: "3600" })
       if (uploadError) throw uploadError
       const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path)
       setAvatarUrl(urlData.publicUrl)
       flashSaved()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed")
+      const msg = err instanceof Error ? err.message : "Upload failed"
+      if (msg.includes("Bucket not found")) {
+        setError("Storage not configured. Please contact support.")
+      } else if (msg.includes("row-level security")) {
+        setError("Permission denied — are you signed in?")
+      } else {
+        setError(msg)
+      }
     } finally {
       setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ""
     }
   }
 
@@ -114,6 +138,7 @@ export function ProfileTab({ user }: ProfileTabProps) {
         return
       }
       flashSaved()
+      onAvatarChange?.(avatarUrl)
     } catch {
       setError("Something went wrong.")
     } finally {

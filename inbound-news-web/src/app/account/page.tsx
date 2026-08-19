@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { User, CreditCard, BarChart3, BookOpen, Settings, LogOut, Shield, Newspaper, UserCircle } from "lucide-react"
 import { supabase, signOut } from "@/lib/auth"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getProfile, loadPreferencesFromSupabase } from "@/lib/profile"
 import { ProfileTab } from "@/components/account/editorial/ProfileTab"
 import { PersonalInfoTab } from "@/components/account/editorial/PersonalInfoTab"
@@ -49,6 +50,7 @@ export default function AccountPage() {
   const [paidModal, setPaidModal] = useState<MembershipPlan | null>(null)
   const [paidNotice, setPaidNotice] = useState(false)
   const [profileTick, setProfileTick] = useState(0)
+  const [headerAvatarUrl, setHeaderAvatarUrl] = useState<string>("")
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get("welcome") === "1") {
@@ -95,6 +97,12 @@ export default function AccountPage() {
             { onConflict: "id" },
           )
         }
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("avatar_url")
+          .eq("id", u.id)
+          .maybeSingle()
+        if (profileData?.avatar_url) setHeaderAvatarUrl(profileData.avatar_url)
         await loadPreferencesFromSupabase()
       } else {
         router.replace("/login")
@@ -190,9 +198,12 @@ export default function AccountPage() {
       {/* Page header */}
       <div className="mb-8">
         <div className="flex items-center gap-4 mb-2">
-          <div className="w-12 h-12 rounded-full bg-[var(--accent)] text-[var(--accent-contrast)] flex items-center justify-center text-[18px] font-bold shrink-0 shadow-sm">
-            {initial}
-          </div>
+          <Avatar className="w-12 h-12 shrink-0 shadow-sm">
+            <AvatarImage src={headerAvatarUrl} alt={displayName} />
+            <AvatarFallback className="bg-[var(--accent)] text-[var(--accent-contrast)] text-[18px] font-bold">
+              {initial}
+            </AvatarFallback>
+          </Avatar>
           <div className="min-w-0">
             <h1 className="text-[20px] font-semibold text-[var(--text-primary)]">{displayName}</h1>
             <p className="text-[13px] text-[var(--text-secondary)]">{user.email}</p>
@@ -312,7 +323,7 @@ export default function AccountPage() {
             )}
 
             <TabsContent value="profile">
-              {user && <ProfileTab user={user} />}
+              {user && <ProfileTab user={user} onAvatarChange={(url) => setHeaderAvatarUrl(url)} />}
             </TabsContent>
             <TabsContent value="personal">
               {user && <PersonalInfoTab user={user} />}

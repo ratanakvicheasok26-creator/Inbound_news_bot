@@ -33,17 +33,21 @@ export function PreferencesTab({ user }: PreferencesTabProps) {
   useEffect(() => {
     let mounted = true
     async function load() {
-      const { data } = await supabase
-        .from("profiles")
-        .select("newsletter_daily, newsletter_breaking, topic_interests, theme")
-        .eq("id", user.id)
-        .maybeSingle()
-      if (!mounted || !data) return
-      setDailyBriefing(data.newsletter_daily ?? false)
-      setBreakingAlerts(data.newsletter_breaking ?? false)
-      setTopicInterests(data.topic_interests ?? [])
-      if (data.theme === "light" || data.theme === "dark" || data.theme === "system") {
-        setTheme(data.theme)
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("newsletter_daily, newsletter_breaking, topic_interests, theme")
+          .eq("id", user.id)
+          .maybeSingle()
+        if (!mounted || !data) return
+        setDailyBriefing(data.newsletter_daily ?? false)
+        setBreakingAlerts(data.newsletter_breaking ?? false)
+        setTopicInterests(data.topic_interests ?? [])
+        if (data.theme === "light" || data.theme === "dark" || data.theme === "system") {
+          setTheme(data.theme)
+        }
+      } catch {
+        // Column may not exist yet — form still renders with defaults
       }
     }
     load()

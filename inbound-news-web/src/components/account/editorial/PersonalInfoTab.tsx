@@ -27,16 +27,20 @@ export function PersonalInfoTab({ user }: PersonalInfoTabProps) {
   useEffect(() => {
     let mounted = true
     async function load() {
-      const { data } = await supabase
-        .from("profiles")
-        .select("first_name, last_name, phone, address")
-        .eq("id", user.id)
-        .maybeSingle()
-      if (!mounted || !data) return
-      if (data.first_name) setFirstName(data.first_name)
-      if (data.last_name) setLastName(data.last_name)
-      if (data.phone) setPhone(data.phone)
-      if (data.address) setAddress(data.address)
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("first_name, last_name, phone, address")
+          .eq("id", user.id)
+          .maybeSingle()
+        if (!mounted || !data) return
+        if (data.first_name) setFirstName(data.first_name)
+        if (data.last_name) setLastName(data.last_name)
+        if (data.phone) setPhone(data.phone)
+        if (data.address) setAddress(data.address)
+      } catch {
+        // Column may not exist yet — form still renders with defaults
+      }
     }
     load()
     return () => { mounted = false }
