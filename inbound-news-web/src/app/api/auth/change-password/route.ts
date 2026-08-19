@@ -1,69 +1,42 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getAccessTokenFromCookies } from "@/lib/session"
-import { verifyAccessToken, hashPassword } from "@/lib/crypto"
-import { getPasswordHash, updatePasswordHash, revokeAllUserRefreshTokens } from "@/lib/auth-db"
-import { verifyPassword } from "@/lib/crypto"
-import { validatePassword, checkPasswordBreach } from "@/lib/password-policy"
+import { createServerClient } from "@/lib/supabase-route"
 
 export async function POST(req: NextRequest) {
   try {
-    const token = getAccessTokenFromCookies(req.headers.get("cookie"))
-    if (!token) {
+    const supabase = await createServerClient()
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
 
-    const payload = await verifyAccessToken(token)
-    if (!payload) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 })
-    }
-
     const body = await req.json()
-    const { current_password, new_password } = body
+    const { new_password } = body
 
-    if (!current_password || !new_password) {
+    if (!new_password) {
       return NextResponse.json(
-        { error: "Current and new passwords are required" },
+        { error: "New password is required" },
         { status: 400 },
       )
     }
 
-    const passwordValidation = validatePassword(new_password)
-    if (!passwordValidation.valid) {
+    if (new_password.length < 15) {
       return NextResponse.json(
-        { error: passwordValidation.errors[0] },
+        { error: "Password must be at least 15 characters" },
         { status: 400 },
       )
     }
 
-    const breachCheck = await checkPasswordBreach(new_password)
-    if (breachCheck.breached) {
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: new_password,
+    })
+
+    if (updateError) {
       return NextResponse.json(
-        {
-          error: "This password has appeared in a data breach. Please choose a different password.",
-        },
+        { error: updateError.message || "Failed to update password" },
         { status: 400 },
       )
     }
-
-    const storedHash = await getPasswordHash(payload.sub)
-    if (!storedHash) {
-      return NextResponse.json(
-        { error: "No password set for this account" },
-        { status: 400 },
-      )
-    }
-
-    const currentValid = await verifyPassword(current_password, storedHash)
-    if (!currentValid) {
-      return NextResponse.json(
-        { error: "Current password is incorrect" },
-        { status: 401 },
-      )
-    }
-
-    const newHash = await hashPassword(new_password)
-    await updatePasswordHash(payload.sub, newHash)
-    await revokeAllUserRefreshTokens(payload.sub)
 
     return NextResponse.json({ ok: true, message: "Password updated successfully" })
   } catch {

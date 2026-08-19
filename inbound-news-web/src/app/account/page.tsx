@@ -80,6 +80,8 @@ export default function AccountPage() {
       setUser(u)
       setLoading(false)
       if (u) {
+        // Profile is auto-created by the database trigger on auth.users INSERT.
+        // Upsert as a safety fallback in case the trigger hasn't fired yet.
         const { data: existing } = await supabase
           .from("profiles")
           .select("id")

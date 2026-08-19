@@ -1,53 +1,46 @@
 import { NextRequest, NextResponse } from "next/server"
-import { hashPassword } from "@/lib/crypto"
-import { verifyPasswordResetToken, updatePasswordHash, revokeAllUserRefreshTokens } from "@/lib/auth-db"
-import { hashToken } from "@/lib/crypto"
-import { validatePassword, checkPasswordBreach } from "@/lib/password-policy"
+import { createServerClient } from "@/lib/supabase-route"
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const token = body.token
     const newPassword = body.password
 
-    if (!token || !newPassword) {
+    if (!newPassword) {
       return NextResponse.json(
-        { error: "Token and new password are required" },
+        { error: "New password is required" },
         { status: 400 },
       )
     }
 
-    const passwordValidation = validatePassword(newPassword)
-    if (!passwordValidation.valid) {
+    if (newPassword.length < 15) {
       return NextResponse.json(
-        { error: passwordValidation.errors[0] },
+        { error: "Password must be at least 15 characters" },
         { status: 400 },
       )
     }
 
-    const breachCheck = await checkPasswordBreach(newPassword)
-    if (breachCheck.breached) {
+    const supabase = await createServerClient()
+
+    // The user must have a valid session from the recovery link callback
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
       return NextResponse.json(
-        {
-          error: "This password has appeared in a data breach. Please choose a different password.",
-        },
+        { error: "Invalid or expired reset link" },
         { status: 400 },
       )
     }
 
-    const tokenHash = await hashToken(token)
-    const userId = await verifyPasswordResetToken(tokenHash)
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: newPassword,
+    })
 
-    if (!userId) {
+    if (updateError) {
       return NextResponse.json(
-        { error: "Invalid or expired reset token" },
+        { error: updateError.message || "Failed to update password" },
         { status: 400 },
       )
     }
-
-    const newHash = await hashPassword(newPassword)
-    await updatePasswordHash(userId, newHash)
-    await revokeAllUserRefreshTokens(userId)
 
     return NextResponse.json({ ok: true, message: "Password updated successfully" })
   } catch {

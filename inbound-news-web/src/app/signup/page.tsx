@@ -4,7 +4,7 @@ import { useState, useCallback } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Mail } from "lucide-react"
-import { signUp, signIn } from "@/lib/auth"
+import { signUp } from "@/lib/auth"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import {
   AuthShell,
@@ -102,9 +102,13 @@ export default function SignupPage() {
         return
       }
 
-      if (data) {
-        router.push("/account?welcome=1")
-        router.refresh()
+      if (!data) {
+        setError(t("auth.errorGeneric"))
+        return
+      }
+
+      if (data.sessionCreated) {
+        router.push("/account")
         return
       }
 

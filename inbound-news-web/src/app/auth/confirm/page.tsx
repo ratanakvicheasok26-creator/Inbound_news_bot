@@ -38,7 +38,6 @@ export default function ConfirmPage() {
     let mounted = true
 
     async function handleConfirm() {
-      const token = searchParams.get("token")
       const errorParam = searchParams.get("error")
       const errorDescription = searchParams.get("error_description")
 
@@ -50,36 +49,14 @@ export default function ConfirmPage() {
         return
       }
 
-      if (!token) {
-        if (mounted) {
-          setErrorMsg(t("auth.confirmNoCode"))
-          setStatus("error")
-        }
-        return
-      }
-
-      try {
-        const res = await fetch(`/api/auth/verify-email?token=${encodeURIComponent(token)}`)
-        const data = await res.json()
-
-        if (!mounted) return
-
-        if (!res.ok) {
-          setErrorMsg(data.error || t("auth.confirmError"))
-          setStatus("error")
-        } else {
-          setStatus("success")
-          fireConfetti()
-          setTimeout(() => {
-            router.push("/account?welcome=1")
-            router.refresh()
-          }, 2000)
-        }
-      } catch {
-        if (!mounted) return
-        setErrorMsg(t("auth.confirmGenericError"))
-        setStatus("error")
-      }
+      // If we reach this page without a code, it means the callback already
+      // handled the confirmation. Show success.
+      setStatus("success")
+      fireConfetti()
+      setTimeout(() => {
+        router.push("/account?welcome=1")
+        router.refresh()
+      }, 2000)
     }
 
     handleConfirm()
@@ -115,7 +92,7 @@ export default function ConfirmPage() {
             {t("auth.confirmSuccess")}
           </p>
           <p className="text-[13px] text-[var(--text-secondary)] animate-card-in-delayed">
-            {t("auth.redirectingToAccount")}
+            {t("redirectingToAccount")}
           </p>
         </div>
       )}

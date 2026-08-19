@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { hashPassword } from "@/lib/crypto"
-import { createUser, getUserByEmail, storeRefreshToken, getUserProfile } from "@/lib/auth-db"
-import { signAccessToken, signRefreshToken, hashToken } from "@/lib/crypto"
-import { setSessionCookies } from "@/lib/session"
-import { validatePassword, validateEmail, checkPasswordBreach } from "@/lib/password-policy"
+import { createClient } from "@supabase/supabase-js"
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,76 +18,41 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (!validateEmail(email)) {
-      return NextResponse.json(
-        { error: "Invalid email format" },
-        { status: 400 },
-      )
-    }
+    const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-    const passwordValidation = validatePassword(password)
-    if (!passwordValidation.valid) {
-      return NextResponse.json(
-        {
-          error: passwordValidation.errors[0],
-          score: passwordValidation.score,
-          feedback: passwordValidation.feedback,
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          display_name: displayName || "",
         },
-        { status: 400 },
-      )
-    }
-
-    const breachCheck = await checkPasswordBreach(password)
-    if (breachCheck.breached) {
-      return NextResponse.json(
-        {
-          error: "This password has appeared in a data breach. Please choose a different password.",
-          breachCount: breachCheck.count,
-        },
-        { status: 400 },
-      )
-    }
-
-    const existingUser = await getUserByEmail(email)
-    if (existingUser) {
-      return NextResponse.json(
-        { error: "An account with this email already exists" },
-        { status: 409 },
-      )
-    }
-
-    const passwordHash = await hashPassword(password)
-    const user = await createUser(email, passwordHash, displayName)
-
-    const accessToken = await signAccessToken({
-      sub: user.id,
-      email: user.email,
-      email_verified: user.email_verified,
+      },
     })
 
-    const refreshToken = await signRefreshToken(user.id)
-    const refreshTokenHash = await hashToken(refreshToken)
-    const refreshExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-    await storeRefreshToken(user.id, refreshTokenHash, refreshExpiry.toISOString())
-
-    const profile = await getUserProfile(user.id)
-
-    const response = NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        email_verified: user.email_verified,
-        display_name: profile?.display_name || displayName || email.split("@")[0],
-      },
-      access_token: accessToken,
-    }, { status: 201 })
-
-    const cookies = setSessionCookies(accessToken, refreshToken)
-    for (const cookie of cookies) {
-      response.headers.append("Set-Cookie", cookie)
+    if (error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 },
+      )
     }
 
-    return response
+    if (!data.user) {
+      return NextResponse.json(
+        { error: "Signup failed" },
+        { status: 400 },
+      )
+    }
+
+    return NextResponse.json({
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+        email_verified: !!data.user.email_confirmed_at,
+        display_name: displayName || email.split("@")[0],
+      },
+      access_token: data.session?.access_token || null,
+    }, { status: 201 })
   } catch {
     return NextResponse.json(
       { error: "Internal server error" },

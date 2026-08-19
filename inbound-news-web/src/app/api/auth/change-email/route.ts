@@ -1,26 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getAccessTokenFromCookies } from "@/lib/session"
-import { verifyAccessToken } from "@/lib/crypto"
-import {
-  storeEmailChangeNonce,
-  verifyEmailChangeNonce,
-  updateUserEmail,
-  cancelPendingEmailChange,
-  getUserById,
-} from "@/lib/auth-db"
-import { hashToken } from "@/lib/crypto"
-import { validateEmail } from "@/lib/password-policy"
+import { createServerClient } from "@/lib/supabase-route"
 
 export async function POST(req: NextRequest) {
   try {
-    const token = getAccessTokenFromCookies(req.headers.get("cookie"))
-    if (!token) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 })
-    }
+    const supabase = await createServerClient()
 
-    const payload = await verifyAccessToken(token)
-    if (!payload) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 })
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
 
     const body = await req.json()
@@ -30,48 +17,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "New email is required" }, { status: 400 })
     }
 
-    if (!validateEmail(newEmail)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
       return NextResponse.json({ error: "Invalid email format" }, { status: 400 })
     }
 
-    if (newEmail === payload.email) {
+    if (newEmail === user.email) {
       return NextResponse.json(
         { error: "New email must be different from current email" },
         { status: 400 },
       )
     }
 
-    await cancelPendingEmailChange(payload.sub)
+    const { error: updateError } = await supabase.auth.updateUser({ email: newEmail })
 
-    const expiryMs = 60 * 60 * 1000
-    const expiresAt = new Date(Date.now() + expiryMs)
-
-    const oldNonceToken = crypto.randomUUID().replace(/-/g, "")
-    const oldNonceHash = await hashToken(oldNonceToken)
-    await storeEmailChangeNonce(
-      payload.sub,
-      "old_email_revoke",
-      newEmail,
-      oldNonceHash,
-      expiresAt.toISOString(),
-    )
-
-    const newNonceToken = crypto.randomUUID().replace(/-/g, "")
-    const newNonceHash = await hashToken(newNonceToken)
-    await storeEmailChangeNonce(
-      payload.sub,
-      "new_email_verify",
-      newEmail,
-      newNonceHash,
-      expiresAt.toISOString(),
-    )
-
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
-    const cancelUrl = `${baseUrl}/api/auth/cancel-email-change?token=${oldNonceToken}`
-    const confirmUrl = `${baseUrl}/api/auth/change-email?token=${newNonceToken}`
-
-    console.log(`[DEV] Security alert (cancel) link: ${cancelUrl}`)
-    console.log(`[DEV] New email verification link: ${confirmUrl}`)
+    if (updateError) {
+      return NextResponse.json(
+        { error: updateError.message || "Failed to update email" },
+        { status: 400 },
+      )
+    }
 
     return NextResponse.json({
       ok: true,
@@ -86,31 +50,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url)
-    const token = searchParams.get("token")
-
-    if (!token) {
-      return NextResponse.json({ error: "Token is required" }, { status: 400 })
-    }
-
-    const tokenHash = await hashToken(token)
-    const result = await verifyEmailChangeNonce(tokenHash, "new_email_verify")
-
-    if (!result) {
-      return NextResponse.json(
-        { error: "Invalid or expired email change token" },
-        { status: 400 },
-      )
-    }
-
-    await updateUserEmail(result.userId, result.newEmail)
-
-    return NextResponse.json({ ok: true, message: "Email updated successfully" })
-  } catch {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    )
-  }
+  // With Supabase Auth, email confirmation is handled automatically.
+  // This endpoint is no longer needed.
+  return NextResponse.json({ ok: true, message: "Email confirmation handled by Supabase Auth" })
 }

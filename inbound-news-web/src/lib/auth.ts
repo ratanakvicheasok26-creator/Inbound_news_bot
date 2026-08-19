@@ -13,7 +13,7 @@ export interface AuthUser {
 
 export interface AuthResponse {
   user: AuthUser
-  access_token: string
+  sessionCreated: boolean
 }
 
 export interface AuthError {
@@ -24,23 +24,49 @@ export interface AuthError {
   breachCount?: number
 }
 
-function getBaseUrl(): string {
-  if (typeof window !== "undefined") return ""
-  return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+function mapSupabaseError(error: { message: string; code?: string }): AuthError {
+  const msg = error.message || "An unexpected error occurred"
+
+  if (msg.includes("already registered") || msg.includes("already been registered")) {
+    return { error: "An account with this email already exists" }
+  }
+  if (msg.includes("Invalid login credentials")) {
+    return { error: "Invalid email or password" }
+  }
+  if (msg.includes("Email not confirmed")) {
+    return { error: "Please confirm your email before signing in. Check your inbox." }
+  }
+  if (msg.includes("User not found")) {
+    return { error: "No account found with this email" }
+  }
+  if (msg.includes("rate limit")) {
+    return { error: "Too many attempts. Please try again later." }
+  }
+  if (msg.includes("Password should be at least")) {
+    return { error: msg }
+  }
+
+  console.error("[Auth] Supabase error:", error)
+  return { error: msg }
 }
 
-async function authFetch(
-  path: string,
-  options: RequestInit = {},
-): Promise<Response> {
-  const base = getBaseUrl()
-  return fetch(`${base}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  })
+function extractAuthUser(supabaseUser: {
+  id: string
+  email?: string
+  email_confirmed_at?: string | null
+  created_at?: string
+  user_metadata?: Record<string, unknown>
+  app_metadata?: Record<string, unknown>
+}): AuthUser {
+  return {
+    id: supabaseUser.id,
+    email: supabaseUser.email || "",
+    email_verified: !!supabaseUser.email_confirmed_at,
+    display_name:
+      (supabaseUser.user_metadata?.display_name as string) || null,
+    created_at: supabaseUser.created_at,
+    user_metadata: supabaseUser.user_metadata,
+  }
 }
 
 export async function signUp(
@@ -49,23 +75,41 @@ export async function signUp(
   displayName?: string,
 ): Promise<{ data: AuthResponse | null; error: AuthError | null }> {
   try {
-    const res = await authFetch("/api/auth/signup", {
-      method: "POST",
-      body: JSON.stringify({
-        email,
-        password,
-        display_name: displayName,
-      }),
+    const redirectTo =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/auth/callback`
+        : undefined
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectTo,
+        data: {
+          display_name: displayName || "",
+        },
+      },
     })
 
-    const data = await res.json()
-
-    if (!res.ok) {
-      return { data: null, error: data as AuthError }
+    if (error) {
+      console.error("[Auth] signUp error:", error)
+      return { data: null, error: mapSupabaseError(error) }
     }
 
-    return { data: data as AuthResponse, error: null }
-  } catch {
+    if (!data.user) {
+      return { data: null, error: { error: "Signup failed. Please try again." } }
+    }
+
+    if (data.user.identities && data.user.identities.length === 0) {
+      return { data: null, error: { error: "An account with this email already exists" } }
+    }
+
+    return {
+      data: { user: extractAuthUser(data.user), sessionCreated: !!data.session },
+      error: null,
+    }
+  } catch (e) {
+    console.error("[Auth] signUp network error:", e)
     return { data: null, error: { error: "Network error. Please try again." } }
   }
 }
@@ -75,26 +119,37 @@ export async function signIn(
   password: string,
 ): Promise<{ data: AuthResponse | null; error: AuthError | null }> {
   try {
-    const res = await authFetch("/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     })
 
-    const data = await res.json()
-
-    if (!res.ok) {
-      return { data: null, error: data as AuthError }
+    if (error) {
+      console.error("[Auth] signIn error:", error)
+      return { data: null, error: mapSupabaseError(error) }
     }
 
-    return { data: data as AuthResponse, error: null }
-  } catch {
+    if (!data.user) {
+      return { data: null, error: { error: "Login failed. Please try again." } }
+    }
+
+    return {
+      data: { user: extractAuthUser(data.user), sessionCreated: true },
+      error: null,
+    }
+  } catch (e) {
+    console.error("[Auth] signIn network error:", e)
     return { data: null, error: { error: "Network error. Please try again." } }
   }
 }
 
 export async function signOut(): Promise<{ error: AuthError | null }> {
   try {
-    await authFetch("/api/auth/logout", { method: "POST" })
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      console.error("[Auth] signOut error:", error)
+      return { error: { error: "Failed to sign out" } }
+    }
     return { error: null }
   } catch {
     return { error: { error: "Failed to sign out" } }
@@ -105,17 +160,13 @@ export async function resetPassword(
   email: string,
 ): Promise<{ error: AuthError | null }> {
   try {
-    const res = await authFetch("/api/auth/forgot-password", {
-      method: "POST",
-      body: JSON.stringify({ email }),
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
     })
-
-    const data = await res.json()
-
-    if (!res.ok) {
-      return { error: data as AuthError }
+    if (error) {
+      console.error("[Auth] resetPassword error:", error)
+      return { error: mapSupabaseError(error) }
     }
-
     return { error: null }
   } catch {
     return { error: { error: "Network error. Please try again." } }
@@ -123,63 +174,16 @@ export async function resetPassword(
 }
 
 export async function updatePassword(
-  token: string,
-  password: string,
-): Promise<{ error: AuthError | null }> {
-  try {
-    const res = await authFetch("/api/auth/reset-password", {
-      method: "POST",
-      body: JSON.stringify({ token, password }),
-    })
-
-    const data = await res.json()
-
-    if (!res.ok) {
-      return { error: data as AuthError }
-    }
-
-    return { error: null }
-  } catch {
-    return { error: { error: "Network error. Please try again." } }
-  }
-}
-
-export async function changePassword(
   newPassword: string,
 ): Promise<{ error: AuthError | null }> {
   try {
-    const res = await authFetch("/api/auth/change-password", {
-      method: "POST",
-      body: JSON.stringify({ password: newPassword }),
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
     })
-
-    const data = await res.json()
-
-    if (!res.ok) {
-      return { error: data as AuthError }
+    if (error) {
+      console.error("[Auth] updatePassword error:", error)
+      return { error: mapSupabaseError(error) }
     }
-
-    return { error: null }
-  } catch {
-    return { error: { error: "Network error. Please try again." } }
-  }
-}
-
-export async function requestEmailChange(
-  newEmail: string,
-): Promise<{ error: AuthError | null }> {
-  try {
-    const res = await authFetch("/api/auth/change-email", {
-      method: "POST",
-      body: JSON.stringify({ new_email: newEmail }),
-    })
-
-    const data = await res.json()
-
-    if (!res.ok) {
-      return { error: data as AuthError }
-    }
-
     return { error: null }
   } catch {
     return { error: { error: "Network error. Please try again." } }
@@ -188,14 +192,9 @@ export async function requestEmailChange(
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
   try {
-    const res = await authFetch("/api/auth/me", {
-      credentials: "include",
-    })
-
-    if (!res.ok) return null
-
-    const data = await res.json()
-    return data.user || null
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error || !user) return null
+    return extractAuthUser(user)
   } catch {
     return null
   }
@@ -203,12 +202,30 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 
 export async function refreshSession(): Promise<boolean> {
   try {
-    const res = await authFetch("/api/auth/refresh", {
-      method: "POST",
-      credentials: "include",
-    })
-    return res.ok
+    const { error } = await supabase.auth.getSession()
+    return !error
   } catch {
     return false
+  }
+}
+
+export async function changePassword(
+  newPassword: string,
+): Promise<{ error: AuthError | null }> {
+  return updatePassword(newPassword)
+}
+
+export async function requestEmailChange(
+  newEmail: string,
+): Promise<{ error: AuthError | null }> {
+  try {
+    const { error } = await supabase.auth.updateUser({ email: newEmail })
+    if (error) {
+      console.error("[Auth] requestEmailChange error:", error)
+      return { error: mapSupabaseError(error) }
+    }
+    return { error: null }
+  } catch {
+    return { error: { error: "Network error. Please try again." } }
   }
 }

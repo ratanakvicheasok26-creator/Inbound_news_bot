@@ -1,19 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { hashPassword, verifyPassword } from "@/lib/crypto"
-import {
-  getUserByEmail,
-  getPasswordHash,
-  storeRefreshToken,
-  getUserProfile,
-} from "@/lib/auth-db"
-import { signAccessToken, signRefreshToken, hashToken } from "@/lib/crypto"
-import { setSessionCookies } from "@/lib/session"
-import {
-  checkLoginRateLimit,
-  recordFailedLogin,
-  clearLoginAttempts,
-  getBackoffDelay,
-} from "@/lib/rate-limit-enhanced"
+import { createServerClient } from "@/lib/supabase-route"
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,90 +14,45 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const clientIp =
-      req.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ||
-      req.headers.get("x-real-ip") ||
-      req.headers.get("cf-connecting-ip") ||
-      "unknown"
+    const supabase = await createServerClient()
 
-    const rateLimitResult = checkLoginRateLimit(email, clientIp)
-    if (!rateLimitResult.allowed) {
-      return NextResponse.json(
-        {
-          error: "Too many login attempts. Please try again later.",
-          retryAfterMs: rateLimitResult.retryAfterMs,
-        },
-        {
-          status: 429,
-          headers: {
-            "Retry-After": String(Math.ceil(rateLimitResult.retryAfterMs / 1000)),
-          },
-        },
-      )
-    }
-
-    const user = await getUserByEmail(email)
-    if (!user) {
-      const attemptIdx = recordFailedLogin(email, clientIp)
-      const backoffMs = getBackoffDelay(attemptIdx)
-      await new Promise((resolve) => setTimeout(resolve, backoffMs))
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 },
-      )
-    }
-
-    const storedHash = await getPasswordHash(user.id)
-    if (!storedHash) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 },
-      )
-    }
-
-    const passwordValid = await verifyPassword(password, storedHash)
-    if (!passwordValid) {
-      const attemptIdx = recordFailedLogin(email, clientIp)
-      const backoffMs = getBackoffDelay(attemptIdx)
-      await new Promise((resolve) => setTimeout(resolve, backoffMs))
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 },
-      )
-    }
-
-    clearLoginAttempts(email)
-
-    const accessToken = await signAccessToken({
-      sub: user.id,
-      email: user.email,
-      email_verified: user.email_verified,
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     })
 
-    const refreshToken = await signRefreshToken(user.id)
-    const refreshTokenHash = await hashToken(refreshToken)
-    const refreshExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-    await storeRefreshToken(user.id, refreshTokenHash, refreshExpiry.toISOString())
+    if (error) {
+      return NextResponse.json(
+        { error: error.message || "Invalid email or password" },
+        { status: 401 },
+      )
+    }
 
-    const profile = await getUserProfile(user.id)
+    if (!data.user) {
+      return NextResponse.json(
+        { error: "Login failed" },
+        { status: 401 },
+      )
+    }
 
-    const response = NextResponse.json({
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", data.user.id)
+      .maybeSingle()
+
+    return NextResponse.json({
       user: {
-        id: user.id,
-        email: user.email,
-        email_verified: user.email_verified,
-        display_name: profile?.display_name || email.split("@")[0],
-        created_at: new Date().toISOString(),
+        id: data.user.id,
+        email: data.user.email,
+        email_verified: !!data.user.email_confirmed_at,
+        display_name:
+          (data.user.user_metadata?.display_name as string) ||
+          profile?.display_name ||
+          email.split("@")[0],
+        created_at: data.user.created_at,
       },
-      access_token: accessToken,
     })
-
-    const cookies = setSessionCookies(accessToken, refreshToken)
-    for (const cookie of cookies) {
-      response.headers.append("Set-Cookie", cookie)
-    }
-
-    return response
   } catch {
     return NextResponse.json(
       { error: "Internal server error" },

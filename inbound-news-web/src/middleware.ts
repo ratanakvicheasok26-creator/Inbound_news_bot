@@ -1,8 +1,26 @@
 import { NextRequest, NextResponse } from "next/server"
-import { jwtVerify } from "jose"
+import { createServerClient } from "@supabase/ssr"
 
-const SESSION_COOKIE = "__Host-session_id"
-const PUBLIC_PATHS = ["/login", "/signup", "/forgot-password", "/reset-password", "/auth/confirm", "/api/auth/login", "/api/auth/signup", "/api/auth/logout", "/api/auth/refresh", "/api/auth/verify-email", "/api/auth/forgot-password", "/api/auth/reset-password", "/api/auth/change-email", "/api/auth/cancel-email-change", "/_next", "/favicon.ico", "/public"]
+const PUBLIC_PATHS = [
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/reset-password",
+  "/auth/confirm",
+  "/auth/callback",
+  "/api/auth/login",
+  "/api/auth/signup",
+  "/api/auth/logout",
+  "/api/auth/refresh",
+  "/api/auth/verify-email",
+  "/api/auth/forgot-password",
+  "/api/auth/reset-password",
+  "/api/auth/change-email",
+  "/api/auth/cancel-email-change",
+  "/_next",
+  "/favicon.ico",
+  "/public",
+]
 
 const STATIC_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".ico", ".css", ".js", ".woff", ".woff2", ".ttf", ".eot"]
 
@@ -34,56 +52,48 @@ function hasCacheDeceptionSignature(pathname: string): boolean {
   return pathWithoutExt.includes("/api/") || pathWithoutExt.includes("/auth/")
 }
 
-function parseCookies(cookieHeader: string): Map<string, string> {
-  const cookies = new Map<string, string>()
-  for (const pair of cookieHeader.split(";")) {
-    const [name, ...rest] = pair.split("=")
-    if (name && rest.length > 0) {
-      cookies.set(name.trim(), rest.join("=").trim())
-    }
-  }
-  return cookies
-}
-
-async function verifyTokenEdge(token: string): Promise<boolean> {
-  try {
-    const secret = process.env.JWT_SECRET
-    if (!secret) return false
-
-    const encoder = new TextEncoder()
-    const key = encoder.encode(secret)
-
-    const { payload } = await jwtVerify(token, key, {
-      audience: process.env.JWT_AUDIENCE || "inbound-news-api",
-      issuer: process.env.JWT_ISSUER || "inbound-news-auth",
-    })
-
-    const sub = payload.sub
-    if (!sub || payload.exp === undefined) return false
-    if (payload.exp < Math.floor(Date.now() / 1000)) return false
-
-    return true
-  } catch {
-    return false
-  }
+function applySecurityHeaders(response: NextResponse): void {
+  response.headers.set("X-Content-Type-Options", "nosniff")
+  response.headers.set("X-Frame-Options", "DENY")
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
+  response.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), payment=()",
+  )
 }
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   if (pathname.startsWith("/api/auth/")) {
-    return handleAuthApiMiddleware(req)
+    const response = NextResponse.next()
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate")
+    response.headers.set("Pragma", "no-cache")
+    applySecurityHeaders(response)
+    return response
   }
 
   if (pathname.startsWith("/api/")) {
-    return handleApiMiddleware(req)
+    const response = NextResponse.next()
+    response.headers.set("Cache-Control", CACHE_CONTROL_HEADERS.dynamic)
+    applySecurityHeaders(response)
+
+    const origin = req.headers.get("origin")
+    const host = req.headers.get("host")
+    if (origin && host && !origin.includes(host)) {
+      return new NextResponse("Forbidden", { status: 403 })
+    }
+
+    return response
   }
 
   if (hasCacheDeceptionSignature(pathname)) {
     return new NextResponse("Not Found", { status: 404 })
   }
 
-  const response = NextResponse.next()
+  let response = NextResponse.next({
+    request: { headers: req.headers },
+  })
 
   applySecurityHeaders(response)
 
@@ -94,78 +104,47 @@ export async function middleware(req: NextRequest) {
 
   response.headers.set("Cache-Control", CACHE_CONTROL_HEADERS.dynamic)
 
+  // Create a Supabase client that refreshes expired sessions
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          // Set cookies on the request for downstream server components
+          for (const { name, value, options } of cookiesToSet) {
+            req.cookies.set({ name, value, ...options })
+          }
+          // Re-create response with updated request headers
+          response = NextResponse.next({
+            request: { headers: req.headers },
+          })
+          // Also set cookies on the response so the browser gets them
+          for (const { name, value, options } of cookiesToSet) {
+            response.cookies.set(name, value, options as Parameters<typeof response.cookies.set>[2])
+          }
+        },
+      },
+    },
+  )
+
+  // Refresh the session if it exists but is expired
+  const { data: { user } } = await supabase.auth.getUser()
+
   if (!isPublicPath(pathname)) {
-    const cookieHeader = req.headers.get("cookie")
-    if (!cookieHeader) {
+    if (!user) {
       const loginUrl = new URL("/login", req.url)
       loginUrl.searchParams.set("returnTo", pathname)
       return NextResponse.redirect(loginUrl)
-    }
-    const cookies = parseCookies(cookieHeader)
-    const accessToken = cookies.get(SESSION_COOKIE)
-
-    if (!accessToken) {
-      const loginUrl = new URL("/login", req.url)
-      loginUrl.searchParams.set("returnTo", pathname)
-      return NextResponse.redirect(loginUrl)
-    }
-
-    const valid = await verifyTokenEdge(accessToken)
-    if (!valid) {
-      const refreshCookie = cookies.get("__Host-refresh_token")
-      if (refreshCookie) {
-        const refreshUrl = new URL("/api/auth/refresh", req.url)
-        const refreshResponse = NextResponse.rewrite(refreshUrl)
-        return refreshResponse
-      }
-
-      const loginUrl = new URL("/login", req.url)
-      loginUrl.searchParams.set("returnTo", pathname)
-      const redirectResponse = NextResponse.redirect(loginUrl)
-      redirectResponse.headers.append(
-        "Set-Cookie",
-        `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`,
-      )
-      return redirectResponse
     }
 
     response.headers.set("Cache-Control", CACHE_CONTROL_HEADERS.authenticated)
   }
 
   return response
-}
-
-function handleAuthApiMiddleware(req: NextRequest): NextResponse {
-  const response = NextResponse.next()
-  response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate")
-  response.headers.set("Pragma", "no-cache")
-  response.headers.set("X-Content-Type-Options", "nosniff")
-  response.headers.set("X-Frame-Options", "DENY")
-  return response
-}
-
-function handleApiMiddleware(req: NextRequest): NextResponse {
-  const response = NextResponse.next()
-  response.headers.set("Cache-Control", CACHE_CONTROL_HEADERS.dynamic)
-  response.headers.set("X-Content-Type-Options", "nosniff")
-
-  const origin = req.headers.get("origin")
-  const host = req.headers.get("host")
-  if (origin && host && !origin.includes(host)) {
-    return new NextResponse("Forbidden", { status: 403 })
-  }
-
-  return response
-}
-
-function applySecurityHeaders(response: NextResponse): void {
-  response.headers.set("X-Content-Type-Options", "nosniff")
-  response.headers.set("X-Frame-Options", "DENY")
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
-  response.headers.set(
-    "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=(), payment=()",
-  )
 }
 
 export const config = {

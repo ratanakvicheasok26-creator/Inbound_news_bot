@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { updatePassword, signOut } from "@/lib/auth"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import {
@@ -38,14 +38,25 @@ function ScoreBar({ score }: { score: number }) {
 export default function ResetPasswordPage() {
   const { t } = useI18n()
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const [ready, setReady] = useState(() => !!searchParams.get("token"))
+  const [ready, setReady] = useState(false)
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [passwordScore, setPasswordScore] = useState(-1)
+
+  useEffect(() => {
+    // With Supabase Auth, the user arrives at this page after the callback
+    // has established a session. We can check if the user is authenticated.
+    // If they are, they came from a recovery link and can reset their password.
+    async function checkSession() {
+      const { getCurrentUser } = await import("@/lib/auth")
+      const user = await getCurrentUser()
+      setReady(!!user)
+    }
+    checkSession()
+  }, [])
 
   function handlePasswordChange(val: string) {
     setPassword(val)
@@ -75,21 +86,15 @@ export default function ResetPasswordPage() {
       return
     }
 
-    const token = searchParams.get("token")
-    if (!token) {
-      setError("Invalid reset link")
-      return
-    }
-
     setLoading(true)
     try {
-      const { error: authError } = await updatePassword(token, password)
+      const { error: authError } = await updatePassword(password)
       if (authError) {
         setError(authError.error)
         return
       }
       setSuccess(t("auth.passwordUpdated"))
-      setTimeout(() => router.push("/login"), 1200)
+      setTimeout(() => router.push("/account"), 1200)
     } catch {
       setError(t("auth.errorGeneric"))
     } finally {
