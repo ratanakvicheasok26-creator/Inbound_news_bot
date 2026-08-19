@@ -3,6 +3,15 @@
 -- Date: 2026-08-19
 -- =============================================================================
 
+-- 0. Ensure handle_updated_at trigger function exists (may be missing on fresh DBs)
+create or replace function public.handle_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
 -- 1. Auth credentials table (Argon2id password hashes)
 create table if not exists public.auth_credentials (
   user_id         uuid primary key references auth.users(id) on delete cascade,
@@ -95,12 +104,12 @@ create trigger set_updated_at_auth
   execute function public.handle_updated_at();
 
 -- 9. RLS policies (service-role only for auth tables)
-alter table public.auth_credentials enable row level policy;
-alter table public.refresh_tokens enable row level policy;
-alter table public.email_verification_tokens enable row level policy;
-alter table public.password_reset_tokens enable row level policy;
-alter table public.email_change_nonces enable row level policy;
-alter table public.login_attempts enable row level policy;
+alter table public.auth_credentials enable row level security;
+alter table public.refresh_tokens enable row level security;
+alter table public.email_verification_tokens enable row level security;
+alter table public.password_reset_tokens enable row level security;
+alter table public.email_change_nonces enable row level security;
+alter table public.login_attempts enable row level security;
 
 -- No user-facing RLS policies - all auth tables accessed via service role only
 -- This ensures token hashes, password hashes, and nonces are never exposed
