@@ -3,14 +3,11 @@ import { supabase } from "./supabase"
 export { supabase }
 
 export async function signUp(email: string, password: string, displayName?: string) {
-  const redirectTo =
-    typeof window !== "undefined" ? `${window.location.origin}/auth/confirm` : undefined
   return supabase.auth.signUp({
     email,
     password,
     options: {
       ...(displayName ? { data: { display_name: displayName } } : {}),
-      ...(redirectTo ? { emailRedirectTo: redirectTo } : {}),
     },
   })
 }

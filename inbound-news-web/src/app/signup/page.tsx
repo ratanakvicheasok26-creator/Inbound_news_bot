@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Mail } from "lucide-react"
-import { signUp } from "@/lib/auth"
+import { signUp, signIn } from "@/lib/auth"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import {
   AuthShell,
@@ -55,13 +55,31 @@ export default function SignupPage() {
       const { data, error: authError } = await signUp(mail, password, displayName.trim())
       if (authError) {
         setError(authError.message)
-      } else if (data.session) {
+        return
+      }
+
+      if (data.session) {
         router.push("/account?welcome=1")
         router.refresh()
-      } else {
-        setSentEmail(mail)
-        setEmailSent(true)
+        return
       }
+
+      if (data.user && (!data.user.identities || data.user.identities.length === 0)) {
+        setError(t("auth.errorEmailTaken"))
+        return
+      }
+
+      // Try automatic sign-in if confirm email is disabled in Supabase
+      const { data: signInData } = await signIn(mail, password)
+      if (signInData?.session) {
+        router.push("/account?welcome=1")
+        router.refresh()
+        return
+      }
+
+      // Only show check email screen if email verification is required
+      setSentEmail(mail)
+      setEmailSent(true)
     } catch {
       setError(t("auth.errorGeneric"))
     } finally {
