@@ -11,6 +11,7 @@ export const metadata = {
 const FREE_FEATURE_KEYS = [
   "pricing.features.free1",
   "pricing.features.free2",
+  "pricing.features.free2b",
   "pricing.features.free3",
   "pricing.features.free4",
   "pricing.features.free5",

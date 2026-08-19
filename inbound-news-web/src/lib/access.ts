@@ -4,17 +4,22 @@ import { isActiveMembership } from "./plans"
 /**
  * Centralized plan-based feature authorization.
  *
- * The source of truth is the user's `memberships` row in Supabase
- * (plan + status + billing period). Everything that gates a feature goes
- * through here — client gates and server-side API checks — so plan rules
- * live in exactly one place.
+ * The source of truth is the user's `memberships` row (paid subscriptions)
+ * combined with `profiles` trial fields (42-day free trial). Everything that
+ * gates a feature goes through here — client gates and server-side API checks
+ * — so plan rules live in exactly one place.
  *
  * Pro ($7.99/mo) and Premium ($49.99/yr) are billing cadence alternatives —
  * both grant identical, full premium feature access. The distinction is
  * purely a pricing/billing choice, never a feature availability tier.
+ *
+ * A 42-day free trial grants the same feature access as a paid subscription.
  */
 
 export type PlanTier = "free" | "pro"
+
+/** High-level membership tier including trial states. */
+export type MembershipTier = "PAID_PRO" | "PRO_TRIAL" | "EXPIRED" | "FREE"
 
 /** Every feature that can be gated behind a paid plan. */
 export type Feature =
@@ -48,13 +53,10 @@ const FEATURE_TIER: Record<Feature, PlanTier> = {
   advanced_compare: "pro",
   daily_brief: "pro",
   bookmarks: "pro",
-  advanced_search: "pro",
-  // Monthly and annual are one membership. Every paid cadence unlocks the
-  // same tools — Local Lens, Blindspot, and Trend Radar included.
+  advanced_search: "free",
   local_lens: "pro",
   undercovered: "pro",
   trend_radar: "pro",
-  // Khmer content — free tier gets limited translation + basic summaries.
   basic_khmer_translation: "free",
   khmer_summary: "free",
   full_khmer_translation: "pro",
@@ -98,6 +100,97 @@ export const FEATURE_LABELS: Record<Feature, string> = {
 
 const TIER_RANK: Record<PlanTier, number> = { free: 0, pro: 1 }
 
+/* ── Entitlement State ────────────────────────────────────────────────────── */
+
+export interface EntitlementState {
+  tier: MembershipTier
+  hasProAccess: boolean
+  trialStartedAt: string | null
+  trialEndsAt: string | null
+  daysRemaining: number
+  isPaid: boolean
+}
+
+/** Profile trial fields from the profiles table. */
+export interface TrialProfile {
+  trial_started_at: string | null
+  trial_ends_at: string | null
+  trial_used: boolean
+  membership_status: string
+}
+
+const EMPTY_ENTITLEMENT: EntitlementState = {
+  tier: "FREE",
+  hasProAccess: false,
+  trialStartedAt: null,
+  trialEndsAt: null,
+  daysRemaining: 0,
+  isPaid: false,
+}
+
+/**
+ * Resolve the user's full entitlement state from their membership and profile.
+ *
+ * Priority:
+ * 1. Active paid subscription → PAID_PRO
+ * 2. Active 42-day trial (not expired) → PRO_TRIAL
+ * 3. Expired trial → EXPIRED
+ * 4. No trial, no subscription → FREE
+ */
+export function resolveEntitlement(
+  membership: Membership | null | undefined,
+  profile: TrialProfile | null | undefined,
+): EntitlementState {
+  // 1. Paid subscription takes absolute precedence
+  if (membership && isActiveMembership(membership)) {
+    return {
+      tier: "PAID_PRO",
+      hasProAccess: true,
+      trialStartedAt: profile?.trial_started_at ?? null,
+      trialEndsAt: profile?.trial_ends_at ?? null,
+      daysRemaining: 0,
+      isPaid: true,
+    }
+  }
+
+  // 2. Check for an active trial
+  if (profile?.trial_ends_at) {
+    const now = Date.now()
+    const trialEnd = new Date(profile.trial_ends_at).getTime()
+
+    if (Number.isFinite(trialEnd)) {
+      const diffMs = trialEnd - now
+      const daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)))
+
+      if (diffMs > 0) {
+        return {
+          tier: "PRO_TRIAL",
+          hasProAccess: true,
+          trialStartedAt: profile.trial_started_at,
+          trialEndsAt: profile.trial_ends_at,
+          daysRemaining,
+          isPaid: false,
+        }
+      }
+
+      // Trial expired
+      return {
+        tier: "EXPIRED",
+        hasProAccess: false,
+        trialStartedAt: profile.trial_started_at,
+        trialEndsAt: profile.trial_ends_at,
+        daysRemaining: 0,
+        isPaid: false,
+      }
+    }
+  }
+
+  // 3. No trial, no subscription
+  return { ...EMPTY_ENTITLEMENT }
+}
+
+/* ── Plan Tier Resolution (backward-compatible) ───────────────────────────── */
+
 /**
  * A user's effective plan tier, resolved from their Supabase membership.
  * Active + trialing memberships within the billing period count as paid;
@@ -114,13 +207,25 @@ export function effectiveTier(membership: Membership | null | undefined): PlanTi
 
 /**
  * Unified premium access check — true when the user holds an active
- * subscription on ANY paid plan (Pro monthly or Premium yearly).
+ * subscription on ANY paid plan (Pro monthly or Premium yearly) OR has
+ * an active 42-day free trial.
  *
  * This is the single boolean helper that all feature gating should use.
  * Both Pro and Premium subscribers receive 100% identical premium access.
+ * Trial users receive the same access as paid subscribers.
  */
-export function hasPremiumAccess(membership: Membership | null | undefined): boolean {
-  return effectiveTier(membership) === "pro"
+export function hasPremiumAccess(
+  membership: Membership | null | undefined,
+  profile?: TrialProfile | null,
+): boolean {
+  // Paid subscription
+  if (effectiveTier(membership) === "pro") return true
+  // Active trial
+  if (profile?.trial_ends_at) {
+    const trialEnd = new Date(profile.trial_ends_at).getTime()
+    if (Number.isFinite(trialEnd) && trialEnd > Date.now()) return true
+  }
+  return false
 }
 
 /** True when a resolved tier may use the feature. */
@@ -131,6 +236,19 @@ export function canAccessTier(tier: PlanTier, feature: Feature): boolean {
 /** True when the given membership row may use the feature. */
 export function canAccess(membership: Membership | null | undefined, feature: Feature): boolean {
   return canAccessTier(effectiveTier(membership), feature)
+}
+
+/**
+ * True when the user can access a feature, considering both paid subscription
+ * and active trial. This is the recommended check for feature gating.
+ */
+export function canAccessWithTrial(
+  membership: Membership | null | undefined,
+  feature: Feature,
+  profile?: TrialProfile | null,
+): boolean {
+  if (hasPremiumAccess(membership, profile)) return true
+  return canAccessTier("free", feature) || canAccessTier(effectiveTier(membership), feature)
 }
 
 /** Returns the minimum PlanTier required for a feature. */

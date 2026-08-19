@@ -1,13 +1,22 @@
 import { useEffect, useState, useCallback } from "react"
 import { supabase } from "./supabase"
 import { isActiveMembership } from "./plans"
-import { canAccess, hasPremiumAccess, type Feature } from "./access"
+import {
+  requiredTier,
+  resolveEntitlement,
+  type Feature,
+  type EntitlementState,
+  type TrialProfile,
+} from "./access"
 import type { Membership, MembershipPlan } from "./stripe"
 
-export type { Membership, MembershipPlan }
+export type { Membership, MembershipPlan, EntitlementState, TrialProfile }
 export { isActiveMembership }
 
 type MembershipState = { loading: boolean; membership: Membership | null; refresh: () => void }
+
+type EntitlementState_ = EntitlementState
+type EntitlementStateLoading = { loading: boolean; entitlement: EntitlementState_; refresh: () => void }
 
 /**
  * Global version counter. Incrementing this forces every mounted useMembership()
@@ -44,6 +53,40 @@ export async function getMembership(): Promise<Membership | null> {
     return data.membership ?? null
   } catch {
     return null
+  }
+}
+
+/** Fetch the current user's trial profile data. */
+export async function getTrialProfile(): Promise<TrialProfile | null> {
+  const token = await getAccessToken()
+  if (!token) return null
+  try {
+    const res = await fetch("/api/membership", {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    })
+    if (!res.ok) return null
+    const data = (await res.json()) as { trial: TrialProfile | null }
+    return data.trial ?? null
+  } catch {
+    return null
+  }
+}
+
+/** Fetch the combined entitlement state (membership + trial). */
+export async function getEntitlement(): Promise<EntitlementState_> {
+  const token = await getAccessToken()
+  if (!token) return resolveEntitlement(null, null)
+  try {
+    const res = await fetch("/api/membership/entitlement", {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    })
+    if (!res.ok) return resolveEntitlement(null, null)
+    const data = (await res.json()) as { entitlement: EntitlementState_ | null }
+    return data.entitlement ?? resolveEntitlement(null, null)
+  } catch {
+    return resolveEntitlement(null, null)
   }
 }
 
@@ -250,21 +293,64 @@ export function useMembership(): MembershipState {
   return { loading: initialLoad, membership, refresh }
 }
 
-/** Client-side feature gate state — permission rules live in lib/access. */
+/**
+ * Hook that returns the full entitlement state (paid, trial, expired, free).
+ * Re-fetches when refreshAllMemberships() is called.
+ */
+export function useEntitlement(): EntitlementStateLoading {
+  const [entitlement, setEntitlement] = useState<EntitlementState_>(resolveEntitlement(null, null))
+  const [initialLoad, setInitialLoad] = useState(true)
+  const [version, setVersion] = useState(membershipVersion)
+
+  useEffect(() => {
+    function handleVersionChange() {
+      setVersion((v) => v + 1)
+    }
+    membershipListeners.add(handleVersionChange)
+    return () => {
+      membershipListeners.delete(handleVersionChange)
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+    getEntitlement().then((e) => {
+      if (active) {
+        setEntitlement(e)
+        setInitialLoad(false)
+      }
+    })
+    return () => {
+      active = false
+    }
+  }, [version])
+
+  const refresh = useCallback(() => {
+    refreshAllMemberships()
+  }, [])
+
+  return { loading: initialLoad, entitlement, refresh }
+}
+
+/** Client-side feature gate state — permission rules live in lib/access.
+ *  Considers both paid subscriptions and active 42-day free trials. */
 export function useFeatureAccess(feature: Feature): {
   loading: boolean
   allowed: boolean
   membership: Membership | null
   refresh: () => void
 } {
-  const { loading, membership, refresh } = useMembership()
-  return { loading, allowed: canAccess(membership, feature), membership, refresh }
+  const { loading: membershipLoading, membership, refresh } = useMembership()
+  const { loading: entitlementLoading, entitlement } = useEntitlement()
+  const loading = membershipLoading || entitlementLoading
+  const allowed = entitlement.hasProAccess || requiredTier(feature) === "free"
+  return { loading, allowed, membership, refresh }
 }
 
 /**
  * Unified premium access hook — returns true when the user holds an active
- * Pro ($7.99/mo) or Premium ($49.99/yr) subscription. Both plans grant
- * identical, full premium feature access.
+ * Pro ($7.99/mo) or Premium ($49.99/yr) subscription OR has an active
+ * 42-day free trial. Both plans and trials grant identical, full premium access.
  */
 export function usePremiumAccess(): {
   loading: boolean
@@ -272,8 +358,10 @@ export function usePremiumAccess(): {
   membership: Membership | null
   refresh: () => void
 } {
-  const { loading, membership, refresh } = useMembership()
-  return { loading, hasPremiumAccess: hasPremiumAccess(membership), membership, refresh }
+  const { loading: membershipLoading, membership, refresh } = useMembership()
+  const { loading: entitlementLoading, entitlement } = useEntitlement()
+  const loading = membershipLoading || entitlementLoading
+  return { loading, hasPremiumAccess: entitlement.hasProAccess, membership, refresh }
 }
 
 /* ------------------------------------------------------------------ */

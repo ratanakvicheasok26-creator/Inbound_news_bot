@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { authenticateRequest, getMembershipForUser } from "@/lib/api-auth"
-import { canAccessTier, effectiveTier } from "@/lib/access"
+import { authenticateRequest, requireFeature } from "@/lib/api-auth"
 import { createUserClient } from "@/lib/supabase-server"
 import { resolveStoryBody } from "@/lib/story-body"
 import type { Article } from "@/lib/types"
@@ -20,9 +19,9 @@ export async function GET(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 })
   }
 
-  const membership = await getMembershipForUser(auth)
-  if (!canAccessTier(effectiveTier(membership), "full_decode")) {
-    return NextResponse.json({ error: "membership_required" }, { status: 403 })
+  const featureCheck = await requireFeature(req, "full_decode")
+  if (!featureCheck.ok) {
+    return NextResponse.json({ error: "membership_required" }, { status: featureCheck.status })
   }
 
   const supabase = createUserClient(`Bearer ${auth.token}`)

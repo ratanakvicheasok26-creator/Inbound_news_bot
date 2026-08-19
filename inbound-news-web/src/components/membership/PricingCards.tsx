@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Check, Sparkles } from "lucide-react"
 import NumberFlow from "@number-flow/react"
 import confetti from "canvas-confetti"
-import { useMembership, subscribe, openBillingPortal } from "@/lib/membership"
+import { useMembership, useEntitlement, subscribe, openBillingPortal } from "@/lib/membership"
 import {
   isActiveMembership,
   hasStripeBilling,
@@ -16,29 +16,32 @@ import { PaymentModal } from "@/components/membership/PaymentModal"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import { InteractiveStarfield } from "@/components/ui/pricing"
 
-const FREE_FEATURES = [
-  "Latest technology news and all categories",
-  "Basic search, summaries, Coverage Intensity, and Glossary",
-  "Selected Cambodia and Southeast Asia news",
-  "Sponsored content",
-  "Limited access to advanced features",
+const FREE_FEATURE_KEYS = [
+  "pricing.features.free1",
+  "pricing.features.free2",
+  "pricing.features.free2b",
+  "pricing.features.free3",
+  "pricing.features.free4",
+  "pricing.features.free5",
 ]
 
-const PAID_FEATURES = [
-  "Everything in Free",
-  "Member tools — Daily Brief, advanced Compare, Blindspot, bookmarks, and advanced search",
-  "Local Lens for Cambodia and Southeast Asia",
-  "Full Khmer Decode (AI) beyond the free summary",
-  "Full Decode when a story is gated for members",
-  "Sponsored placements stay on — membership funds the desk",
+const PAID_FEATURE_KEYS = [
+  "pricing.features.member1",
+  "pricing.features.member2",
+  "pricing.features.member3",
+  "pricing.features.member4",
+  "pricing.features.member5",
+  "pricing.features.member6",
 ]
 
 export function PricingCards() {
   const { t } = useI18n()
   const router = useRouter()
   const { membership } = useMembership()
+  const { entitlement } = useEntitlement()
   const member = isActiveMembership(membership)
   const stripeBilled = hasStripeBilling(membership)
+  const isTrialUser = entitlement.tier === "PRO_TRIAL"
 
   const [isMonthly, setIsMonthly] = useState(true)
   const [busy, setBusy] = useState<MembershipPlan | null>(null)
@@ -105,11 +108,31 @@ export function PricingCards() {
   const targetPlan: MembershipPlan = isMonthly ? "pro_monthly" : "premium_yearly"
   const isCurrentPlan = member && membership?.plan === targetPlan
   const isOtherPaid = member && membership?.plan !== targetPlan
-  const activeFeatures = PAID_FEATURES
+  const activeFeatures = PAID_FEATURE_KEYS
 
   return (
     <div className="relative w-full overflow-hidden rounded-2xl py-4 sm:py-6">
       <InteractiveStarfield />
+
+      {/* Trial Status Banner */}
+      {isTrialUser && (
+        <div className="relative z-10 max-w-4xl mx-auto mb-6 sm:mb-8 p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🎁</span>
+            <div>
+              <h4 className="text-base font-semibold text-[var(--text-primary)]">
+                {t("membership.trialBannerTitle")}
+              </h4>
+              <p className="text-sm text-[var(--text-secondary)] mt-0.5">
+                {t("membership.trialBannerSubtitle")} — {entitlement.daysRemaining} {t("account.trial.daysRemaining")}
+              </p>
+              <p className="text-xs text-[var(--text-secondary)]/80 mt-1">
+                {t("membership.noPaymentRequired")}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Monthly / Annual Toggle */}
       <div className="relative z-10 flex justify-center mb-6 sm:mb-10 md:mb-12">
@@ -131,7 +154,7 @@ export function PricingCards() {
                 transition={{ type: "spring", stiffness: 500, damping: 35 }}
               />
             )}
-            <span className="relative z-10">Monthly</span>
+            <span className="relative z-10">{t("pricing.monthlyTitle")}</span>
           </button>
 
           <button
@@ -149,11 +172,11 @@ export function PricingCards() {
               />
             )}
             <span className="relative z-10 flex items-center gap-1 sm:gap-1.5">
-              Annual
+              {t("pricing.annualTitle")}
               <span
                 className={`text-[10px] sm:text-xs font-bold text-[#FF0030]`}
               >
-                (Save 48%)
+                ({t("pricing.savePercentage", { percent: "48" })})
               </span>
             </span>
           </button>
@@ -183,10 +206,10 @@ export function PricingCards() {
             </div>
 
             <ul className="space-y-3.5 mb-8 text-xs sm:text-sm text-[var(--text-primary)]">
-              {FREE_FEATURES.map((feat) => (
-                <li key={feat} className="flex items-start gap-2.5 min-w-0">
+              {FREE_FEATURE_KEYS.map((key) => (
+                <li key={key} className="flex items-start gap-2.5 min-w-0">
                   <Check className="h-4 w-4 shrink-0 mt-0.5 text-[#FF0030]" />
-                  <span className="min-w-0 text-pretty leading-snug">{feat}</span>
+                  <span className="min-w-0 text-pretty leading-snug">{t(key)}</span>
                 </li>
               ))}
             </ul>
@@ -226,14 +249,14 @@ export function PricingCards() {
           </div>
         </div>
 
-        {/* 2. PAID PLAN (Pro when Monthly, Premium when Annual) */}
+        {/* 2. PAID PLAN (Pro) */}
         <div className="animate-card-in-delayed relative flex min-w-0 flex-col rounded-2xl p-5 sm:p-6 md:p-8 bg-[var(--surface)]/95 backdrop-blur-md border-2 border-[#FF0030] shadow-xl shadow-[#FF0030]/10 transition-all duration-200">
           {/* POPULAR Badge */}
           <div className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 z-20">
             <div className="bg-[#FF0030] py-1 px-3 sm:px-4 rounded-full flex items-center gap-1.5 shadow-md">
               <Sparkles className="text-white h-3 sm:h-3.5 w-3 sm:w-3.5 fill-current" />
               <span className="text-white text-[10px] sm:text-xs font-bold uppercase tracking-wider">
-                POPULAR
+                {t("pricing.popular")}
               </span>
             </div>
           </div>
@@ -242,7 +265,7 @@ export function PricingCards() {
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="font-display text-xl sm:text-2xl font-bold text-[var(--text-primary)] transition-all duration-200">
-                  {isMonthly ? "Pro" : "Premium"}
+                  Pro
                 </h3>
               </div>
 
@@ -259,14 +282,12 @@ export function PricingCards() {
                   />
                 </span>
                 <span className="text-xs sm:text-sm font-medium text-[var(--text-secondary)]">
-                  {isMonthly ? "/mo" : "/yr"}
+                  {isMonthly ? t("pricing.perMonth") : t("pricing.perYear")}
                 </span>
               </div>
 
               <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-2 mb-4 sm:mb-6 min-h-[32px] sm:min-h-[38px] transition-all duration-200">
-                {isMonthly
-                  ? "Full premium story access"
-                  : "All Pro benefits, billed yearly"}
+                {t("pricing.proTagline")}
               </p>
             </div>
 
@@ -281,10 +302,10 @@ export function PricingCards() {
                   transition={{ duration: 0.18 }}
                   className="space-y-3.5 text-xs sm:text-sm text-[var(--text-primary)]"
                 >
-                  {activeFeatures.map((feat) => (
-                    <li key={feat} className="flex items-start gap-2.5 min-w-0">
+                  {activeFeatures.map((key) => (
+                    <li key={key} className="flex items-start gap-2.5 min-w-0">
                       <Check className="h-4 w-4 shrink-0 mt-0.5 text-[#FF0030]" />
-                      <span className="min-w-0 text-pretty leading-snug">{feat}</span>
+                      <span className="min-w-0 text-pretty leading-snug">{t(key)}</span>
                     </li>
                   ))}
                 </motion.ul>
@@ -322,7 +343,7 @@ export function PricingCards() {
                     onClick={() => setQrPlan(targetPlan)}
                     className="w-full h-11 rounded-xl bg-[#FF0030] hover:bg-[#FF0030]/90 text-white text-sm font-semibold shadow-md shadow-[#FF0030]/20 transition-all cursor-pointer"
                   >
-                    Pay by QR — {isMonthly ? "Pro" : "Premium"}
+                    {t("membership.payByQr")} Pro
                   </button>
                   <button
                     type="button"

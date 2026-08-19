@@ -1,13 +1,14 @@
 "use client"
 
 import type { ReactNode } from "react"
-import { useMembership } from "@/lib/membership"
-import { canAccess, type Feature } from "@/lib/access"
+import { useEntitlement } from "@/lib/membership"
+import { requiredTier, type Feature } from "@/lib/access"
 import { UpgradePrompt } from "./UpgradePrompt"
 
 /**
  * Declarative feature gate. Renders `children` when the current user's plan
  * (from Supabase) allows the feature, otherwise renders the locked/upgrade UI.
+ * Considers both paid subscriptions and active 42-day free trials.
  * Can wrap server-rendered children (composition) or live inside client pages.
  */
 export function FeatureGate({
@@ -19,7 +20,7 @@ export function FeatureGate({
   fallback?: ReactNode
   children: ReactNode
 }) {
-  const { loading, membership } = useMembership()
+  const { loading, entitlement } = useEntitlement()
 
   if (loading) {
     return (
@@ -31,6 +32,6 @@ export function FeatureGate({
     )
   }
 
-  if (canAccess(membership, feature)) return <>{children}</>
+  if (entitlement.hasProAccess || requiredTier(feature) === "free") return <>{children}</>
   return <>{fallback ?? <UpgradePrompt feature={feature} />}</>
 }

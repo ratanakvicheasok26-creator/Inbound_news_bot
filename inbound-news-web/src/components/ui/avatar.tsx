@@ -14,6 +14,7 @@ function Avatar({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 function AvatarImage({ className, src, alt, ...props }: React.ComponentProps<"img">) {
+  if (!src) return null
   return (
     <img
       src={src}

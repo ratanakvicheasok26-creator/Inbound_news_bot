@@ -3,9 +3,10 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
 import { Copy, CheckCheck } from "lucide-react"
-import { useMembership, isActiveMembership, refreshAllMemberships, getOrders, submitPaymentCode, openBillingPortal } from "@/lib/membership"
+import { useMembership, useEntitlement, isActiveMembership, refreshAllMemberships, getOrders, submitPaymentCode, openBillingPortal } from "@/lib/membership"
 import { PLANS, priceLabel, hasStripeBilling, planTitleKey } from "@/lib/plans"
 import { PaymentSuccessModal } from "@/components/membership/PaymentSuccessModal"
+import { TrialStatusCard } from "@/components/membership/TrialStatusCard"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import type { Membership, PaymentOrder } from "@/lib/membership"
 
@@ -35,6 +36,7 @@ function formatDate(iso: string | null): string | null {
 export function MembershipTab() {
   const { t } = useI18n()
   const { loading, membership } = useMembership()
+  const { loading: entitlementLoading, entitlement } = useEntitlement()
   const member = isActiveMembership(membership)
   const [orders, setOrders] = useState<PaymentOrder[]>([])
   const [ordersLoaded, setOrdersLoaded] = useState(false)
@@ -90,15 +92,24 @@ export function MembershipTab() {
     setBusy(false)
   }
 
-  if (loading) {
+  if (loading || entitlementLoading) {
     return (
       <p className="text-[14px] text-[var(--text-secondary)] py-8">{t("account.membershipTab.loading")}</p>
     )
   }
 
   if (!member) {
+    // Show trial status card for trial users (active or expired)
+    const showTrialCard = entitlement.tier === "PRO_TRIAL" || entitlement.tier === "EXPIRED"
+
     return (
       <div>
+        {showTrialCard && (
+          <div className="mb-6">
+            <TrialStatusCard entitlement={entitlement} />
+          </div>
+        )}
+
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="min-w-0">
