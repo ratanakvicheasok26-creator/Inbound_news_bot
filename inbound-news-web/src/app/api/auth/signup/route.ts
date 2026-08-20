@@ -1,15 +1,48 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
+import { supabaseAdmin } from "@/lib/supabase-server"
+import { findUserByEmail } from "@/lib/auth-admin"
+import { sendVerificationEmail } from "@/lib/email"
+import { validatePassword } from "@/lib/password-policy"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+function siteUrl(): string {
+  return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+}
+
+function verifyRedirectTo(): string {
+  return `${siteUrl()}/auth/callback?next=/auth/confirm`
+}
+
+async function sendSignupVerification(
+  email: string,
+  displayName: string,
+): Promise<boolean> {
+  if (!supabaseAdmin) return false
+
+  const { data, error } = await supabaseAdmin.auth.admin.generateLink({
+    type: "magiclink",
+    email,
+    options: { redirectTo: verifyRedirectTo() },
+  })
+
+  if (error || !data.properties.action_link) {
+    console.error("[Auth] generateLink signup error:", error?.message)
+    return false
+  }
+
+  const sendResult = await sendVerificationEmail(
+    email,
+    data.properties.action_link,
+    displayName,
+  )
+  return sendResult.ok
+}
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const email = body.email?.trim().toLowerCase()
     const password = body.password
-    const displayName = body.display_name?.trim()
+    const displayName = (body.display_name?.trim() || email?.split("@")[0] || "") as string
 
     if (!email || !password) {
       return NextResponse.json(
@@ -18,41 +51,98 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+    const passwordCheck = validatePassword(password)
+    if (!passwordCheck.valid) {
+      return NextResponse.json(
+        { error: passwordCheck.errors[0] || "Invalid password" },
+        { status: 400 },
+      )
+    }
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          display_name: displayName || "",
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: "Authentication service unavailable" },
+        { status: 503 },
+      )
+    }
+
+    const existingUser = await findUserByEmail(email)
+
+    if (existingUser) {
+      if (existingUser.email_confirmed_at) {
+        return NextResponse.json(
+          { error: "An account with this email already exists" },
+          { status: 400 },
+        )
+      }
+
+      await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+        password,
+        user_metadata: {
+          ...existingUser.user_metadata,
+          display_name: displayName,
+        },
+      })
+
+      const sent = await sendSignupVerification(email, displayName)
+      if (!sent) {
+        return NextResponse.json(
+          { error: "Failed to send verification email. Please try again." },
+          { status: 500 },
+        )
+      }
+
+      return NextResponse.json({
+        status: "verification_resent",
+        user: {
+          id: existingUser.id,
+          email,
+          email_verified: false,
+          display_name: displayName,
+        },
+      })
+    }
+
+    const { data: created, error: createError } =
+      await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: false,
+        user_metadata: { display_name: displayName },
+      })
+
+    if (createError || !created.user) {
+      const msg = createError?.message || "Signup failed"
+      if (msg.includes("already") || msg.includes("registered")) {
+        return NextResponse.json(
+          { error: "An account with this email already exists" },
+          { status: 400 },
+        )
+      }
+      console.error("[Auth] createUser error:", msg)
+      return NextResponse.json({ error: msg }, { status: 400 })
+    }
+
+    const sent = await sendSignupVerification(email, displayName)
+    if (!sent) {
+      return NextResponse.json(
+        { error: "Account created but verification email failed. Use resend on the login page." },
+        { status: 500 },
+      )
+    }
+
+    return NextResponse.json(
+      {
+        status: "created",
+        user: {
+          id: created.user.id,
+          email,
+          email_verified: false,
+          display_name: displayName,
         },
       },
-    })
-
-    if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 },
-      )
-    }
-
-    if (!data.user) {
-      return NextResponse.json(
-        { error: "Signup failed" },
-        { status: 400 },
-      )
-    }
-
-    return NextResponse.json({
-      user: {
-        id: data.user.id,
-        email: data.user.email,
-        email_verified: !!data.user.email_confirmed_at,
-        display_name: displayName || email.split("@")[0],
-      },
-      access_token: data.session?.access_token || null,
-    }, { status: 201 })
+      { status: 201 },
+    )
   } catch {
     return NextResponse.json(
       { error: "Internal server error" },

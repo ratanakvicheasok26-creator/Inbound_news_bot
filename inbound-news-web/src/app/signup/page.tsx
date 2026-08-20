@@ -57,6 +57,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [emailSent, setEmailSent] = useState(false)
+  const [verificationResent, setVerificationResent] = useState(false)
   const [sentEmail, setSentEmail] = useState("")
   const [passwordScore, setPasswordScore] = useState(-1)
 
@@ -113,6 +114,7 @@ export default function SignupPage() {
       }
 
       setSentEmail(mail)
+      setVerificationResent(data.status === "verification_resent")
       setEmailSent(true)
     } catch {
       setError(t("auth.errorGeneric"))
@@ -124,8 +126,8 @@ export default function SignupPage() {
   if (emailSent) {
     return (
       <AuthShell
-        title={t("auth.checkEmailTitle")}
-        subtitle={t("auth.checkEmailSubtitle")}
+        title={verificationResent ? t("auth.verificationResentTitle") : t("auth.checkEmailTitle")}
+        subtitle={verificationResent ? t("auth.verificationResentSubtitle") : t("auth.checkEmailSubtitle")}
         footer={
           <Link href="/login" className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent)]">
             {t("auth.goToSignIn")}

@@ -14,6 +14,7 @@ export interface AuthUser {
 export interface AuthResponse {
   user: AuthUser
   sessionCreated: boolean
+  status?: "created" | "verification_resent"
 }
 
 export interface AuthError {
@@ -27,7 +28,7 @@ export interface AuthError {
 function mapSupabaseError(error: { message: string; code?: string }): AuthError {
   const msg = error.message || "An unexpected error occurred"
 
-  if (msg.includes("already registered") || msg.includes("already been registered")) {
+  if (msg.includes("already registered") || msg.includes("already been registered") || msg.includes("already exists")) {
     return { error: "An account with this email already exists" }
   }
   if (msg.includes("Invalid login credentials")) {
@@ -75,37 +76,32 @@ export async function signUp(
   displayName?: string,
 ): Promise<{ data: AuthResponse | null; error: AuthError | null }> {
   try {
-    const redirectTo =
-      typeof window !== "undefined"
-        ? `${window.location.origin}/auth/callback`
-        : undefined
-
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectTo,
-        data: {
-          display_name: displayName || "",
-        },
-      },
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        password,
+        display_name: displayName || "",
+      }),
     })
 
-    if (error) {
-      console.error("[Auth] signUp error:", error)
-      return { data: null, error: mapSupabaseError(error) }
+    const payload = await res.json()
+
+    if (!res.ok) {
+      return { data: null, error: { error: payload.error || "Signup failed. Please try again." } }
     }
 
-    if (!data.user) {
+    if (!payload.user) {
       return { data: null, error: { error: "Signup failed. Please try again." } }
     }
 
-    if (data.user.identities && data.user.identities.length === 0) {
-      return { data: null, error: { error: "An account with this email already exists" } }
-    }
-
     return {
-      data: { user: extractAuthUser(data.user), sessionCreated: !!data.session },
+      data: {
+        user: payload.user,
+        sessionCreated: false,
+        status: payload.status,
+      },
       error: null,
     }
   } catch (e) {
@@ -160,13 +156,38 @@ export async function resetPassword(
   email: string,
 ): Promise<{ error: AuthError | null }> {
   try {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+    const res = await fetch("/api/auth/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
     })
-    if (error) {
-      console.error("[Auth] resetPassword error:", error)
-      return { error: mapSupabaseError(error) }
+
+    if (!res.ok) {
+      const payload = await res.json().catch(() => ({}))
+      return { error: { error: payload.error || "Network error. Please try again." } }
     }
+
+    return { error: null }
+  } catch {
+    return { error: { error: "Network error. Please try again." } }
+  }
+}
+
+export async function resendVerification(
+  email: string,
+): Promise<{ error: AuthError | null }> {
+  try {
+    const res = await fetch("/api/auth/resend-verification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+    })
+
+    if (!res.ok) {
+      const payload = await res.json().catch(() => ({}))
+      return { error: { error: payload.error || "Network error. Please try again." } }
+    }
+
     return { error: null }
   } catch {
     return { error: { error: "Network error. Please try again." } }

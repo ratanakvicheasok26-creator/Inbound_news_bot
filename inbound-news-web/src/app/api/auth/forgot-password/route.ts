@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
+import { supabaseAdmin } from "@/lib/supabase-server"
+import { sendPasswordResetEmail } from "@/lib/email"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+function siteUrl(): string {
+  return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+}
+
+function recoveryRedirectTo(): string {
+  return `${siteUrl()}/auth/callback?next=/reset-password`
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,15 +19,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 })
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+    if (!supabaseAdmin) {
+      console.error("[Auth] forgot-password: Supabase admin not configured")
+      return NextResponse.json({ ok: true })
+    }
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/auth/callback?next=/reset-password`,
+    const { data, error } = await supabaseAdmin.auth.admin.generateLink({
+      type: "recovery",
+      email,
+      options: { redirectTo: recoveryRedirectTo() },
     })
 
-    // Always return success to prevent email enumeration
     if (error) {
-      console.error("[Auth] resetPasswordForEmail error:", error.message)
+      console.error("[Auth] generateLink recovery error:", error.message)
+      return NextResponse.json({ ok: true })
+    }
+
+    const resetUrl = data.properties.action_link
+    if (resetUrl) {
+      const sendResult = await sendPasswordResetEmail(email, resetUrl)
+      if (!sendResult.ok) {
+        console.error("[Auth] sendPasswordResetEmail failed:", sendResult.error)
+      }
     }
 
     return NextResponse.json({ ok: true })
