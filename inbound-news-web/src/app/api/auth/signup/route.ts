@@ -1,41 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase-server"
 import { findUserByEmail } from "@/lib/auth-admin"
-import { sendVerificationEmail } from "@/lib/email"
+import { sendOtpEmail } from "@/lib/email"
 import { validatePassword } from "@/lib/password-policy"
-
-function siteUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
-}
-
-function verifyRedirectTo(): string {
-  return `${siteUrl()}/auth/callback?next=/auth/confirm`
-}
-
-async function sendSignupVerification(
-  email: string,
-  displayName: string,
-): Promise<boolean> {
-  if (!supabaseAdmin) return false
-
-  const { data, error } = await supabaseAdmin.auth.admin.generateLink({
-    type: "magiclink",
-    email,
-    options: { redirectTo: verifyRedirectTo() },
-  })
-
-  if (error || !data.properties.action_link) {
-    console.error("[Auth] generateLink signup error:", error?.message)
-    return false
-  }
-
-  const sendResult = await sendVerificationEmail(
-    email,
-    data.properties.action_link,
-    displayName,
-  )
-  return sendResult.ok
-}
+import { generateOtp, storeOtp } from "@/lib/otp"
 
 export async function POST(req: NextRequest) {
   try {
@@ -84,10 +52,19 @@ export async function POST(req: NextRequest) {
         },
       })
 
-      const sent = await sendSignupVerification(email, displayName)
-      if (!sent) {
+      const otp = generateOtp()
+      const stored = await storeOtp(existingUser.id, email, otp)
+      if (!stored) {
         return NextResponse.json(
-          { error: "Failed to send verification email. Please try again." },
+          { error: "Failed to create verification code. Please try again." },
+          { status: 500 },
+        )
+      }
+
+      const sent = await sendOtpEmail(email, otp, displayName)
+      if (!sent.ok) {
+        return NextResponse.json(
+          { error: "Failed to send verification code. Please try again." },
           { status: 500 },
         )
       }
@@ -123,8 +100,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: msg }, { status: 400 })
     }
 
-    const sent = await sendSignupVerification(email, displayName)
-    if (!sent) {
+    const otp = generateOtp()
+    const stored = await storeOtp(created.user.id, email, otp)
+    if (!stored) {
+      return NextResponse.json(
+        { error: "Account created but verification code failed. Please use resend." },
+        { status: 500 },
+      )
+    }
+
+    const sent = await sendOtpEmail(email, otp, displayName)
+    if (!sent.ok) {
       return NextResponse.json(
         { error: "Account created but verification email failed. Use resend on the login page." },
         { status: 500 },

@@ -167,3 +167,55 @@ export async function sendVerificationEmail(
     return { ok: false, error: "Failed to send email" }
   }
 }
+
+function otpHtml(otp: string, displayName?: string): string {
+  const greeting = displayName ? `Hi ${displayName},` : "Hi there,"
+  return emailShell(`
+    <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#18181b;">Verify your email</h1>
+    <p style="margin:0 0 8px;font-size:15px;color:#3f3f46;line-height:1.6;">${greeting}</p>
+    <p style="margin:0 0 20px;font-size:14px;color:#71717a;line-height:1.6;">
+      Welcome to ${SITE_NAME}. Your 6-digit verification code is:
+    </p>
+    <div style="background:#fafafa;border:1px solid #e4e4e7;border-radius:8px;padding:16px;margin:0 0 20px;text-align:center;">
+      <span style="font-size:32px;font-weight:700;font-family:monospace;letter-spacing:6px;color:#e53e3e;">${otp}</span>
+    </div>
+    <p style="margin:0;font-size:13px;color:#71717a;line-height:1.5;">
+      Enter this code on the website to verify your email. This code expires in <strong>10 minutes</strong>.
+    </p>
+  `)
+}
+
+export async function sendOtpEmail(
+  email: string,
+  otp: string,
+  displayName?: string,
+): Promise<{ ok: boolean; error?: string }> {
+  if (isDevFallback()) {
+    logDevEmail("OTP verification", email, `Code: ${otp}`)
+    return { ok: true }
+  }
+
+  const subject = `Your ${SITE_NAME} verification code`
+  const greeting = displayName ? `Hi ${displayName},` : "Hi there,"
+  const text = `${greeting}\n\nYour ${SITE_NAME} verification code is: ${otp}\n\nEnter this code on the website to verify your email. This code expires in 10 minutes.\n\nIf you did not request this, you can safely ignore this email.`
+
+  try {
+    const { error } = await resend!.emails.send({
+      from: FROM_EMAIL,
+      to: email,
+      subject,
+      html: otpHtml(otp, displayName),
+      text,
+    })
+
+    if (error) {
+      console.error("[Email] Resend OTP error:", error)
+      return { ok: false, error: "Failed to send email" }
+    }
+
+    return { ok: true }
+  } catch (e) {
+    console.error("[Email] Resend OTP fetch error:", e)
+    return { ok: false, error: "Failed to send email" }
+  }
+}

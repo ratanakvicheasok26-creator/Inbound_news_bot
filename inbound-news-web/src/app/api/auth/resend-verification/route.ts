@@ -1,15 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase-server"
 import { findUserByEmail } from "@/lib/auth-admin"
-import { sendVerificationEmail } from "@/lib/email"
-
-function siteUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
-}
-
-function verifyRedirectTo(): string {
-  return `${siteUrl()}/auth/callback?next=/auth/confirm`
-}
+import { sendOtpEmail } from "@/lib/email"
+import { generateOtp, storeOtp } from "@/lib/otp"
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,23 +31,16 @@ export async function POST(req: NextRequest) {
       (existing.user_metadata?.display_name as string) ||
       email.split("@")[0]
 
-    const { data: linkData, error: linkError } =
-      await supabaseAdmin.auth.admin.generateLink({
-        type: "magiclink",
-        email,
-        options: { redirectTo: verifyRedirectTo() },
-      })
-
-    if (linkError || !linkData.properties.action_link) {
-      console.error("[Auth] resend-verification generateLink error:", linkError?.message)
-      return NextResponse.json({ ok: true })
+    const otp = generateOtp()
+    const stored = await storeOtp(existing.id, email, otp)
+    if (!stored) {
+      return NextResponse.json(
+        { error: "Failed to create verification code. Please try again." },
+        { status: 500 },
+      )
     }
 
-    const sendResult = await sendVerificationEmail(
-      email,
-      linkData.properties.action_link,
-      displayName,
-    )
+    const sendResult = await sendOtpEmail(email, otp, displayName)
 
     if (!sendResult.ok) {
       console.error("[Auth] resend-verification send failed:", sendResult.error)

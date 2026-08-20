@@ -105,26 +105,6 @@ export async function signUp(
       return { data: null, error: { error: payload.error || "Signup failed. Please try again." } }
     }
 
-    const { error: otpError } = await supabase.auth.signInWithOtp({
-      email: cleanEmail,
-    })
-
-    if (otpError) {
-      console.error("[Auth] signInWithOtp error:", otpError)
-      return {
-        data: {
-          user: {
-            id: payload.user?.id || "",
-            email: cleanEmail,
-            email_verified: false,
-            display_name: displayName?.trim() || null,
-          },
-          sessionCreated: false,
-        },
-        error: mapSupabaseError(otpError),
-      }
-    }
-
     return {
       data: {
         user: {
@@ -151,37 +131,34 @@ export async function verifyOtp(
     const cleanEmail = email.trim().toLowerCase()
     const cleanToken = token.trim()
 
-    let { data, error } = await supabase.auth.verifyOtp({
-      email: cleanEmail,
-      token: cleanToken,
-      type: "email",
+    const res = await fetch("/api/auth/verify-email-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: cleanEmail, token: cleanToken }),
     })
 
-    if (error && (error.message.includes("type") || error.message.includes("invalid"))) {
-      const fallback = await supabase.auth.verifyOtp({
-        email: cleanEmail,
-        token: cleanToken,
-        type: "signup",
-      })
-      if (!fallback.error) {
-        data = fallback.data
-        error = null
+    const payload = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+      return { data: null, error: { error: payload.error || "Verification failed. Please try again." } }
+    }
+
+    const { data: { user }, error: getUserError } = await supabase.auth.getUser()
+
+    if (getUserError || !user) {
+      return {
+        data: {
+          user: { id: "", email: cleanEmail, email_verified: true, display_name: null },
+          sessionCreated: false,
+        },
+        error: null,
       }
-    }
-
-    if (error) {
-      console.error("[Auth] verifyOtp error:", error)
-      return { data: null, error: mapSupabaseError(error) }
-    }
-
-    if (!data.user) {
-      return { data: null, error: { error: "Verification failed. Please try again." } }
     }
 
     return {
       data: {
-        user: extractAuthUser(data.user),
-        sessionCreated: !!data.session,
+        user: extractAuthUser(user),
+        sessionCreated: false,
       },
       error: null,
     }
@@ -196,13 +173,16 @@ export async function resendOtp(
 ): Promise<{ error: AuthError | null }> {
   try {
     const cleanEmail = email.trim().toLowerCase()
-    const { error } = await supabase.auth.signInWithOtp({
-      email: cleanEmail,
+
+    const res = await fetch("/api/auth/resend-verification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: cleanEmail }),
     })
 
-    if (error) {
-      console.error("[Auth] resendOtp error:", error)
-      return { error: mapSupabaseError(error) }
+    if (!res.ok) {
+      const payload = await res.json().catch(() => ({}))
+      return { error: { error: payload.error || "Failed to resend code." } }
     }
 
     return { error: null }
