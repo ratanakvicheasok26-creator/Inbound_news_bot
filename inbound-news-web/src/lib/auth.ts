@@ -88,29 +88,52 @@ export async function signUp(
 ): Promise<{ data: AuthResponse | null; error: AuthError | null }> {
   try {
     const cleanEmail = email.trim().toLowerCase()
-    const { data, error } = await supabase.auth.signUp({
-      email: cleanEmail,
-      password,
-      options: {
-        data: {
-          display_name: displayName?.trim() || "",
-        },
-      },
+
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: cleanEmail,
+        password,
+        display_name: displayName?.trim() || "",
+      }),
     })
 
-    if (error) {
-      console.error("[Auth] signUp error:", error)
-      return { data: null, error: mapSupabaseError(error) }
+    const payload = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+      return { data: null, error: { error: payload.error || "Signup failed. Please try again." } }
     }
 
-    if (!data.user) {
-      return { data: null, error: { error: "Signup failed. Please try again." } }
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      email: cleanEmail,
+    })
+
+    if (otpError) {
+      console.error("[Auth] signInWithOtp error:", otpError)
+      return {
+        data: {
+          user: {
+            id: payload.user?.id || "",
+            email: cleanEmail,
+            email_verified: false,
+            display_name: displayName?.trim() || null,
+          },
+          sessionCreated: false,
+        },
+        error: mapSupabaseError(otpError),
+      }
     }
 
     return {
       data: {
-        user: extractAuthUser(data.user),
-        sessionCreated: !!data.session,
+        user: {
+          id: payload.user?.id || "",
+          email: cleanEmail,
+          email_verified: false,
+          display_name: displayName?.trim() || null,
+        },
+        sessionCreated: false,
       },
       error: null,
     }
@@ -173,8 +196,7 @@ export async function resendOtp(
 ): Promise<{ error: AuthError | null }> {
   try {
     const cleanEmail = email.trim().toLowerCase()
-    const { error } = await supabase.auth.resend({
-      type: "signup",
+    const { error } = await supabase.auth.signInWithOtp({
       email: cleanEmail,
     })
 
