@@ -137,21 +137,25 @@ export default function SignupPage() {
       return
     }
 
+    const mailToUse = (sentEmail || email).trim()
     setVerifyError("")
     setResendSuccess("")
     setVerifying(true)
 
     try {
-      const { data, error: otpError } = await verifyOtp(sentEmail, code)
+      const { data, error: otpError } = await verifyOtp(mailToUse, code, password)
       if (otpError) {
         setVerifyError(otpError.error)
         return
       }
 
-      if (data?.user) {
-        // Email verified, redirect to account/dashboard page
+      if (data?.sessionCreated) {
+        // Email verified & logged in, redirect to account page
         router.push("/account")
         router.refresh()
+      } else if (data?.user) {
+        // Email verified but session not created, redirect to login with verified notice
+        router.push("/login?verified=true")
       } else {
         setVerifyError(t("auth.errorGeneric"))
       }
@@ -165,12 +169,15 @@ export default function SignupPage() {
   async function handleResendCode() {
     if (resendCooldown > 0 || resending) return
 
+    const mailToUse = (sentEmail || email).trim()
+    if (!mailToUse) return
+
     setVerifyError("")
     setResendSuccess("")
     setResending(true)
 
     try {
-      const { error: resendErr } = await resendOtp(sentEmail)
+      const { error: resendErr } = await resendOtp(mailToUse)
       if (resendErr) {
         setVerifyError(resendErr.error)
       } else {

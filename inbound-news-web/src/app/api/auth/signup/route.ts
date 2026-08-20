@@ -63,10 +63,7 @@ export async function POST(req: NextRequest) {
 
       const sent = await sendOtpEmail(email, otp, displayName)
       if (!sent.ok) {
-        return NextResponse.json(
-          { error: "Failed to send verification code. Please try again." },
-          { status: 500 },
-        )
+        console.error("[Auth] Resend email warning for existing user:", sent.error)
       }
 
       return NextResponse.json({
@@ -111,10 +108,7 @@ export async function POST(req: NextRequest) {
 
     const sent = await sendOtpEmail(email, otp, displayName)
     if (!sent.ok) {
-      return NextResponse.json(
-        { error: "Account created but verification email failed. Use resend on the login page." },
-        { status: 500 },
-      )
+      console.error("[Auth] Resend email warning for new user:", sent.error)
     }
 
     return NextResponse.json(

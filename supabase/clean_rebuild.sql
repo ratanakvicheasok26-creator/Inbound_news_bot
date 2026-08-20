@@ -1,22 +1,53 @@
 -- ============================================================
--- INBOUND NEWS — FULL DATABASE SETUP
+-- INBOUND NEWS — COMPLETE CLEAN DATABASE REBUILD
 -- 
--- Safe to run multiple times (uses IF NOT EXISTS).
--- Creates all 10 tables, functions, triggers, RLS policies,
--- vector extension, and storage buckets.
+-- WARNING: Running this script will DROP all existing public tables
+-- and recreate the full up-to-date schema from scratch.
+-- 
+-- How to run:
+-- 1. Go to Supabase Dashboard → SQL Editor → New query
+-- 2. Paste this entire file
+-- 3. Click Run
 -- ============================================================
 
 -- ============================================================
--- STEP 1: EXTENSIONS
+-- STEP 1: DROP OLD TABLES, TRIGGERS & FUNCTIONS
+-- ============================================================
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP TRIGGER IF EXISTS profiles_updated_at ON profiles;
+DROP TRIGGER IF EXISTS set_updated_at ON public.profiles;
+DROP TRIGGER IF EXISTS sponsors_updated_at ON sponsors;
+DROP TRIGGER IF EXISTS article_translations_updated_at ON article_translations;
+
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+DROP FUNCTION IF EXISTS public.update_updated_at() CASCADE;
+DROP FUNCTION IF EXISTS public.handle_updated_at() CASCADE;
+DROP FUNCTION IF EXISTS match_stories(VECTOR(1024), FLOAT, INT) CASCADE;
+DROP FUNCTION IF EXISTS increment_story_source_count(UUID, TEXT) CASCADE;
+DROP FUNCTION IF EXISTS is_active_member() CASCADE;
+
+DROP TABLE IF EXISTS public.email_verifications CASCADE;
+DROP TABLE IF EXISTS public.payment_orders CASCADE;
+DROP TABLE IF EXISTS public.article_translations CASCADE;
+DROP TABLE IF EXISTS public.payment_submissions CASCADE;
+DROP TABLE IF EXISTS public.memberships CASCADE;
+DROP TABLE IF EXISTS public.sponsors CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
+DROP TABLE IF EXISTS public.story_sources CASCADE;
+DROP TABLE IF EXISTS public.stories CASCADE;
+DROP TABLE IF EXISTS public.articles CASCADE;
+
+-- ============================================================
+-- STEP 2: EXTENSIONS
 -- ============================================================
 CREATE EXTENSION IF NOT EXISTS vector;
 
 -- ============================================================
--- STEP 2: CREATE TABLES
+-- STEP 3: CREATE TABLES
 -- ============================================================
 
 -- 01. Articles
-CREATE TABLE IF NOT EXISTS public.articles (
+CREATE TABLE public.articles (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   title TEXT NOT NULL,
   summary TEXT,
@@ -32,7 +63,7 @@ CREATE TABLE IF NOT EXISTS public.articles (
 );
 
 -- 02. Stories
-CREATE TABLE IF NOT EXISTS public.stories (
+CREATE TABLE public.stories (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   title TEXT NOT NULL,
   summary_en TEXT,
@@ -48,7 +79,7 @@ CREATE TABLE IF NOT EXISTS public.stories (
 );
 
 -- 03. Story Sources
-CREATE TABLE IF NOT EXISTS public.story_sources (
+CREATE TABLE public.story_sources (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   story_id UUID REFERENCES public.stories(id) ON DELETE CASCADE,
   article_id UUID REFERENCES public.articles(id) ON DELETE CASCADE UNIQUE,
@@ -58,7 +89,7 @@ CREATE TABLE IF NOT EXISTS public.story_sources (
 );
 
 -- 04. Profiles
-CREATE TABLE IF NOT EXISTS public.profiles (
+CREATE TABLE public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   handle TEXT UNIQUE,
   byline TEXT,
@@ -82,7 +113,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 );
 
 -- 05. Sponsors
-CREATE TABLE IF NOT EXISTS public.sponsors (
+CREATE TABLE public.sponsors (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   brand TEXT NOT NULL,
   line TEXT NOT NULL,
@@ -100,7 +131,7 @@ CREATE TABLE IF NOT EXISTS public.sponsors (
 );
 
 -- 06. Memberships
-CREATE TABLE IF NOT EXISTS public.memberships (
+CREATE TABLE public.memberships (
   user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   plan TEXT NOT NULL CHECK (plan IN ('pro_monthly', 'premium_yearly')),
   status TEXT NOT NULL CHECK (status IN ('trialing', 'active', 'past_due', 'canceled', 'incomplete', 'unpaid')),
@@ -114,7 +145,7 @@ CREATE TABLE IF NOT EXISTS public.memberships (
 );
 
 -- 07. Payment Submissions (Manual ABA transfer)
-CREATE TABLE IF NOT EXISTS public.payment_submissions (
+CREATE TABLE public.payment_submissions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   user_email TEXT,
@@ -131,7 +162,7 @@ CREATE TABLE IF NOT EXISTS public.payment_submissions (
 );
 
 -- 08. Article Translations
-CREATE TABLE IF NOT EXISTS public.article_translations (
+CREATE TABLE public.article_translations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   article_id UUID NOT NULL REFERENCES public.articles(id) ON DELETE CASCADE,
   language TEXT NOT NULL DEFAULT 'km' CHECK (language IN ('en', 'km')),
@@ -145,7 +176,7 @@ CREATE TABLE IF NOT EXISTS public.article_translations (
 );
 
 -- 09. Payment Orders
-CREATE TABLE IF NOT EXISTS public.payment_orders (
+CREATE TABLE public.payment_orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   user_email TEXT,
@@ -163,7 +194,7 @@ CREATE TABLE IF NOT EXISTS public.payment_orders (
 );
 
 -- 10. Email Verifications (OTP Codes)
-CREATE TABLE IF NOT EXISTS public.email_verifications (
+CREATE TABLE public.email_verifications (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL,
@@ -173,46 +204,46 @@ CREATE TABLE IF NOT EXISTS public.email_verifications (
 );
 
 -- ============================================================
--- STEP 3: INDEXES
+-- STEP 4: INDEXES
 -- ============================================================
-CREATE INDEX IF NOT EXISTS idx_articles_domain ON public.articles(source_domain);
-CREATE INDEX IF NOT EXISTS idx_articles_published ON public.articles(published_at DESC);
-CREATE INDEX IF NOT EXISTS idx_articles_category ON public.articles(category);
-CREATE INDEX IF NOT EXISTS idx_articles_language ON public.articles(language);
-CREATE INDEX IF NOT EXISTS idx_articles_image ON public.articles(image_url) WHERE image_url IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_articles_ingested ON public.articles(ingested_at DESC);
+CREATE INDEX idx_articles_domain ON public.articles(source_domain);
+CREATE INDEX idx_articles_published ON public.articles(published_at DESC);
+CREATE INDEX idx_articles_category ON public.articles(category);
+CREATE INDEX idx_articles_language ON public.articles(language);
+CREATE INDEX idx_articles_image ON public.articles(image_url) WHERE image_url IS NOT NULL;
+CREATE INDEX idx_articles_ingested ON public.articles(ingested_at DESC);
 
-CREATE INDEX IF NOT EXISTS idx_stories_category ON public.stories(category);
-CREATE INDEX IF NOT EXISTS idx_stories_created ON public.stories(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_stories_image ON public.stories(image_url) WHERE image_url IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_stories_premium ON public.stories(premium) WHERE premium = TRUE;
-CREATE INDEX IF NOT EXISTS idx_stories_title_km ON public.stories(title_km) WHERE title_km IS NOT NULL;
-CREATE INDEX IF NOT EXISTS stories_embedding_idx ON public.stories USING hnsw (embedding vector_cosine_ops);
+CREATE INDEX idx_stories_category ON public.stories(category);
+CREATE INDEX idx_stories_created ON public.stories(created_at DESC);
+CREATE INDEX idx_stories_image ON public.stories(image_url) WHERE image_url IS NOT NULL;
+CREATE INDEX idx_stories_premium ON public.stories(premium) WHERE premium = TRUE;
+CREATE INDEX idx_stories_title_km ON public.stories(title_km) WHERE title_km IS NOT NULL;
+CREATE INDEX stories_embedding_idx ON public.stories USING hnsw (embedding vector_cosine_ops);
 
-CREATE INDEX IF NOT EXISTS idx_story_sources_story ON public.story_sources(story_id);
-CREATE INDEX IF NOT EXISTS idx_story_sources_article ON public.story_sources(article_id);
+CREATE INDEX idx_story_sources_story ON public.story_sources(story_id);
+CREATE INDEX idx_story_sources_article ON public.story_sources(article_id);
 
-CREATE INDEX IF NOT EXISTS idx_profiles_handle ON public.profiles(handle);
-CREATE INDEX IF NOT EXISTS idx_profiles_updated_at ON public.profiles(updated_at DESC);
+CREATE INDEX idx_profiles_handle ON public.profiles(handle);
+CREATE INDEX idx_profiles_updated_at ON public.profiles(updated_at DESC);
 
-CREATE INDEX IF NOT EXISTS idx_sponsors_active ON public.sponsors(active) WHERE active = TRUE;
-CREATE INDEX IF NOT EXISTS idx_sponsors_updated ON public.sponsors(updated_at DESC);
+CREATE INDEX idx_sponsors_active ON public.sponsors(active) WHERE active = TRUE;
+CREATE INDEX idx_sponsors_updated ON public.sponsors(updated_at DESC);
 
-CREATE INDEX IF NOT EXISTS idx_memberships_customer ON public.memberships(stripe_customer_id);
-CREATE INDEX IF NOT EXISTS idx_memberships_subscription ON public.memberships(stripe_subscription_id);
+CREATE INDEX idx_memberships_customer ON public.memberships(stripe_customer_id);
+CREATE INDEX idx_memberships_subscription ON public.memberships(stripe_subscription_id);
 
-CREATE INDEX IF NOT EXISTS idx_payment_submissions_status ON public.payment_submissions(status, created_at);
-CREATE INDEX IF NOT EXISTS idx_article_translations_article ON public.article_translations(article_id);
+CREATE INDEX idx_payment_submissions_status ON public.payment_submissions(status, created_at);
+CREATE INDEX idx_article_translations_article ON public.article_translations(article_id);
 
-CREATE INDEX IF NOT EXISTS idx_payment_orders_user ON public.payment_orders(user_id);
-CREATE INDEX IF NOT EXISTS idx_payment_orders_status ON public.payment_orders(status);
-CREATE INDEX IF NOT EXISTS idx_payment_orders_code ON public.payment_orders(payment_code);
+CREATE INDEX idx_payment_orders_user ON public.payment_orders(user_id);
+CREATE INDEX idx_payment_orders_status ON public.payment_orders(status);
+CREATE INDEX idx_payment_orders_code ON public.payment_orders(payment_code);
 
-CREATE INDEX IF NOT EXISTS idx_email_verifications_email ON public.email_verifications(email);
-CREATE INDEX IF NOT EXISTS idx_email_verifications_token_hash ON public.email_verifications(token_hash);
+CREATE INDEX idx_email_verifications_email ON public.email_verifications(email);
+CREATE INDEX idx_email_verifications_token_hash ON public.email_verifications(token_hash);
 
 -- ============================================================
--- STEP 4: FUNCTIONS & TRIGGERS
+-- STEP 5: FUNCTIONS & TRIGGERS
 -- ============================================================
 
 -- Function: Auto updated_at timestamp
@@ -224,17 +255,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS profiles_updated_at ON public.profiles;
 CREATE TRIGGER profiles_updated_at
   BEFORE UPDATE ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
-DROP TRIGGER IF EXISTS sponsors_updated_at ON public.sponsors;
 CREATE TRIGGER sponsors_updated_at
   BEFORE UPDATE ON public.sponsors
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
-DROP TRIGGER IF EXISTS article_translations_updated_at ON public.article_translations;
 CREATE TRIGGER article_translations_updated_at
   BEFORE UPDATE ON public.article_translations
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
@@ -255,7 +283,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
@@ -316,7 +343,7 @@ $$;
 GRANT EXECUTE ON FUNCTION is_active_member() TO authenticated;
 
 -- ============================================================
--- STEP 5: ROW LEVEL SECURITY (RLS) POLICIES
+-- STEP 6: ROW LEVEL SECURITY (RLS) POLICIES
 -- ============================================================
 ALTER TABLE public.articles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.stories ENABLE ROW LEVEL SECURITY;
@@ -330,134 +357,50 @@ ALTER TABLE public.payment_orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.email_verifications ENABLE ROW LEVEL SECURITY;
 
 -- Articles Policies
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public can read articles' AND tablename = 'articles') THEN
-    CREATE POLICY "Public can read articles" ON public.articles FOR SELECT USING (true);
-  END IF;
-END $$;
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role can manage articles' AND tablename = 'articles') THEN
-    CREATE POLICY "Service role can manage articles" ON public.articles FOR ALL USING (auth.role() = 'service_role');
-  END IF;
-END $$;
+CREATE POLICY "Public can read articles" ON public.articles FOR SELECT USING (true);
+CREATE POLICY "Service role can manage articles" ON public.articles FOR ALL USING (auth.role() = 'service_role');
 
 -- Stories Policies
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public can read stories' AND tablename = 'stories') THEN
-    CREATE POLICY "Public can read stories" ON public.stories FOR SELECT USING (true);
-  END IF;
-END $$;
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role can manage stories' AND tablename = 'stories') THEN
-    CREATE POLICY "Service role can manage stories" ON public.stories FOR ALL USING (auth.role() = 'service_role');
-  END IF;
-END $$;
+CREATE POLICY "Public can read stories" ON public.stories FOR SELECT USING (true);
+CREATE POLICY "Service role can manage stories" ON public.stories FOR ALL USING (auth.role() = 'service_role');
 
 -- Story Sources Policies
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public can read story_sources' AND tablename = 'story_sources') THEN
-    CREATE POLICY "Public can read story_sources" ON public.story_sources FOR SELECT USING (true);
-  END IF;
-END $$;
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role can manage story_sources' AND tablename = 'story_sources') THEN
-    CREATE POLICY "Service role can manage story_sources" ON public.story_sources FOR ALL USING (auth.role() = 'service_role');
-  END IF;
-END $$;
+CREATE POLICY "Public can read story_sources" ON public.story_sources FOR SELECT USING (true);
+CREATE POLICY "Service role can manage story_sources" ON public.story_sources FOR ALL USING (auth.role() = 'service_role');
 
 -- Profiles Policies
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public read for profiles' AND tablename = 'profiles') THEN
-    CREATE POLICY "Public read for profiles" ON public.profiles FOR SELECT USING (true);
-  END IF;
-END $$;
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Owners can insert own profile' AND tablename = 'profiles') THEN
-    CREATE POLICY "Owners can insert own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
-  END IF;
-END $$;
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Owners can update own profile' AND tablename = 'profiles') THEN
-    CREATE POLICY "Owners can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
-  END IF;
-END $$;
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Owners can delete own profile' AND tablename = 'profiles') THEN
-    CREATE POLICY "Owners can delete own profile" ON public.profiles FOR DELETE USING (auth.uid() = id);
-  END IF;
-END $$;
+CREATE POLICY "Public read for profiles" ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Owners can insert own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Owners can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+CREATE POLICY "Owners can delete own profile" ON public.profiles FOR DELETE USING (auth.uid() = id);
 
 -- Sponsors Policies
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public can read active sponsors' AND tablename = 'sponsors') THEN
-    CREATE POLICY "Public can read active sponsors" ON public.sponsors FOR SELECT
-      USING (active = true AND (starts_at IS NULL OR starts_at <= NOW()) AND (ends_at IS NULL OR ends_at > NOW()));
-  END IF;
-END $$;
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role can manage sponsors' AND tablename = 'sponsors') THEN
-    CREATE POLICY "Service role can manage sponsors" ON public.sponsors FOR ALL
-      USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
-  END IF;
-END $$;
+CREATE POLICY "Public can read active sponsors" ON public.sponsors FOR SELECT
+  USING (active = true AND (starts_at IS NULL OR starts_at <= NOW()) AND (ends_at IS NULL OR ends_at > NOW()));
+CREATE POLICY "Service role can manage sponsors" ON public.sponsors FOR ALL
+  USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
 
 -- Memberships Policies
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Memberships select own' AND tablename = 'memberships') THEN
-    CREATE POLICY "Memberships select own" ON public.memberships FOR SELECT USING (auth.uid() = user_id);
-  END IF;
-END $$;
+CREATE POLICY "Memberships select own" ON public.memberships FOR SELECT USING (auth.uid() = user_id);
 
 -- Payment Submissions Policies
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Submissions select own' AND tablename = 'payment_submissions') THEN
-    CREATE POLICY "Submissions select own" ON public.payment_submissions FOR SELECT USING (auth.uid() = user_id);
-  END IF;
-END $$;
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Submissions insert own' AND tablename = 'payment_submissions') THEN
-    CREATE POLICY "Submissions insert own" ON public.payment_submissions FOR INSERT WITH CHECK (auth.uid() = user_id);
-  END IF;
-END $$;
+CREATE POLICY "Submissions select own" ON public.payment_submissions FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Submissions insert own" ON public.payment_submissions FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- Article Translations Policies
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Authenticated can read translations' AND tablename = 'article_translations') THEN
-    CREATE POLICY "Authenticated can read translations" ON public.article_translations FOR SELECT USING (auth.role() = 'authenticated');
-  END IF;
-END $$;
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Authenticated can insert translations' AND tablename = 'article_translations') THEN
-    CREATE POLICY "Authenticated can insert translations" ON public.article_translations FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-  END IF;
-END $$;
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Authenticated can update translations' AND tablename = 'article_translations') THEN
-    CREATE POLICY "Authenticated can update translations" ON public.article_translations FOR UPDATE USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
-  END IF;
-END $$;
+CREATE POLICY "Authenticated can read translations" ON public.article_translations FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Authenticated can insert translations" ON public.article_translations FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "Authenticated can update translations" ON public.article_translations FOR UPDATE USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
 
 -- Payment Orders Policies
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Payment orders select own' AND tablename = 'payment_orders') THEN
-    CREATE POLICY "Payment orders select own" ON public.payment_orders FOR SELECT USING (auth.uid() = user_id);
-  END IF;
-END $$;
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Payment orders insert own' AND tablename = 'payment_orders') THEN
-    CREATE POLICY "Payment orders insert own" ON public.payment_orders FOR INSERT WITH CHECK (auth.uid() = user_id);
-  END IF;
-END $$;
+CREATE POLICY "Payment orders select own" ON public.payment_orders FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Payment orders insert own" ON public.payment_orders FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- Email Verifications Policies
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role can manage email verifications' AND tablename = 'email_verifications') THEN
-    CREATE POLICY "Service role can manage email verifications" ON public.email_verifications FOR ALL USING (true) WITH CHECK (true);
-  END IF;
-END $$;
+CREATE POLICY "Service role can manage email verifications" ON public.email_verifications FOR ALL USING (true) WITH CHECK (true);
 
 -- ============================================================
--- STEP 6: STORAGE BUCKETS & STORAGE POLICIES
+-- STEP 7: STORAGE BUCKETS & STORAGE POLICIES
 -- ============================================================
 
 -- Bucket 1: sponsor-creatives (Public)

@@ -71,13 +71,22 @@ export default function LoginPage() {
 
     try {
       const mail = email.trim()
-      const { data, error: otpError } = await verifyOtp(mail, code)
+      const { data, error: otpError } = await verifyOtp(mail, code, password)
       if (otpError) {
         setVerifyError(otpError.error)
         return
       }
 
-      if (data?.user) {
+      if (data?.sessionCreated) {
+        const params = new URLSearchParams(window.location.search)
+        router.push(params.get("returnTo") || "/account")
+        router.refresh()
+      } else if (data?.user && password) {
+        const { error: signInErr } = await signIn(mail, password)
+        if (signInErr) {
+          setVerifyError(signInErr.error)
+          return
+        }
         const params = new URLSearchParams(window.location.search)
         router.push(params.get("returnTo") || "/account")
         router.refresh()

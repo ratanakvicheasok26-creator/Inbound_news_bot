@@ -5,10 +5,10 @@
 -- this whole file -> Run. Every row should say PASS.
 -- ============================================================
 
-SELECT '1. all 9 tables exist' AS check_name,
+SELECT '1. all 10 tables exist' AS check_name,
   CASE WHEN (
     SELECT count(*) FROM (
-      SELECT unnest(ARRAY['articles','stories','story_sources','profiles','sponsors','memberships','payment_submissions','article_translations','payment_orders'])::text AS t
+      SELECT unnest(ARRAY['articles','stories','story_sources','profiles','sponsors','memberships','payment_submissions','article_translations','payment_orders','email_verifications'])::text AS t
     ) x
     LEFT JOIN information_schema.tables t
       ON t.table_schema='public' AND t.table_type='BASE TABLE' AND t.table_name = x.t
@@ -26,13 +26,13 @@ UNION ALL SELECT '3. memberships has expected columns',
     WHERE table_schema='public' AND table_name='memberships'
       AND column_name IN ('plan','status','current_period_start','current_period_end','cancel_at_period_end')
   ) = 5 THEN 'PASS' ELSE 'FAIL' END
-UNION ALL SELECT '4. RLS enabled on all 9 tables',
+UNION ALL SELECT '4. RLS enabled on all 10 tables',
   CASE WHEN (
     SELECT count(*) FROM pg_tables
     WHERE schemaname='public'
-      AND tablename IN ('articles','stories','story_sources','profiles','sponsors','memberships','payment_submissions','article_translations','payment_orders')
+      AND tablename IN ('articles','stories','story_sources','profiles','sponsors','memberships','payment_submissions','article_translations','payment_orders','email_verifications')
       AND rowsecurity
-  ) = 9 THEN 'PASS' ELSE 'FAIL' END
+  ) = 10 THEN 'PASS' ELSE 'FAIL' END
 UNION ALL SELECT '5. payment_proofs bucket is private',
   CASE WHEN EXISTS (
     SELECT 1 FROM storage.buckets WHERE id='payment_proofs' AND public = false

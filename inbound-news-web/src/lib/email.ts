@@ -210,12 +210,14 @@ export async function sendOtpEmail(
 
     if (error) {
       console.error("[Email] Resend OTP error:", error)
-      return { ok: false, error: "Failed to send email" }
+      logDevEmail("OTP verification (Resend Fallback)", email, `Code: ${otp}`)
+      return { ok: false, error: typeof error === "object" && error !== null && "message" in error ? String((error as { message: string }).message) : "Failed to send email" }
     }
 
     return { ok: true }
   } catch (e) {
     console.error("[Email] Resend OTP fetch error:", e)
+    logDevEmail("OTP verification (Resend Fallback)", email, `Code: ${otp}`)
     return { ok: false, error: "Failed to send email" }
   }
 }

@@ -126,6 +126,7 @@ export async function signUp(
 export async function verifyOtp(
   email: string,
   token: string,
+  password?: string,
 ): Promise<{ data: AuthResponse | null; error: AuthError | null }> {
   try {
     const cleanEmail = email.trim().toLowerCase()
@@ -143,6 +144,23 @@ export async function verifyOtp(
       return { data: null, error: { error: payload.error || "Verification failed. Please try again." } }
     }
 
+    if (password) {
+      const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password,
+      })
+
+      if (!signInErr && signInData?.user) {
+        return {
+          data: {
+            user: extractAuthUser(signInData.user),
+            sessionCreated: true,
+          },
+          error: null,
+        }
+      }
+    }
+
     const { data: { user }, error: getUserError } = await supabase.auth.getUser()
 
     if (getUserError || !user) {
@@ -158,7 +176,7 @@ export async function verifyOtp(
     return {
       data: {
         user: extractAuthUser(user),
-        sessionCreated: false,
+        sessionCreated: true,
       },
       error: null,
     }
