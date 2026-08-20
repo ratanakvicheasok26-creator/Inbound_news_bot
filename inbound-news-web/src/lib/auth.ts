@@ -40,11 +40,22 @@ function mapSupabaseError(error: { message: string; code?: string }): AuthError 
   if (msg.includes("User not found")) {
     return { error: "No account found with this email" }
   }
-  if (msg.includes("rate limit")) {
+  if (msg.includes("rate limit") || msg.includes("over_email_send_rate_limit")) {
     return { error: "Too many attempts. Please try again later." }
   }
   if (msg.includes("Password should be at least")) {
     return { error: msg }
+  }
+  if (msg.includes("expired") || msg.includes("Token has expired") || msg.includes("is expired")) {
+    return { error: "This verification code has expired. Please request a new code." }
+  }
+  if (
+    msg.includes("invalid") ||
+    msg.includes("Token is invalid") ||
+    msg.includes("Otp format is invalid") ||
+    msg.includes("bad_code")
+  ) {
+    return { error: "The verification code is incorrect. Please try again." }
   }
 
   console.error("[Auth] Supabase error:", error)
@@ -76,37 +87,106 @@ export async function signUp(
   displayName?: string,
 ): Promise<{ data: AuthResponse | null; error: AuthError | null }> {
   try {
-    const res = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email,
-        password,
-        display_name: displayName || "",
-      }),
+    const cleanEmail = email.trim().toLowerCase()
+    const { data, error } = await supabase.auth.signUp({
+      email: cleanEmail,
+      password,
+      options: {
+        data: {
+          display_name: displayName?.trim() || "",
+        },
+      },
     })
 
-    const payload = await res.json()
-
-    if (!res.ok) {
-      return { data: null, error: { error: payload.error || "Signup failed. Please try again." } }
+    if (error) {
+      console.error("[Auth] signUp error:", error)
+      return { data: null, error: mapSupabaseError(error) }
     }
 
-    if (!payload.user) {
+    if (!data.user) {
       return { data: null, error: { error: "Signup failed. Please try again." } }
     }
 
     return {
       data: {
-        user: payload.user,
-        sessionCreated: false,
-        status: payload.status,
+        user: extractAuthUser(data.user),
+        sessionCreated: !!data.session,
       },
       error: null,
     }
   } catch (e) {
     console.error("[Auth] signUp network error:", e)
     return { data: null, error: { error: "Network error. Please try again." } }
+  }
+}
+
+export async function verifyOtp(
+  email: string,
+  token: string,
+): Promise<{ data: AuthResponse | null; error: AuthError | null }> {
+  try {
+    const cleanEmail = email.trim().toLowerCase()
+    const cleanToken = token.trim()
+
+    let { data, error } = await supabase.auth.verifyOtp({
+      email: cleanEmail,
+      token: cleanToken,
+      type: "email",
+    })
+
+    if (error && (error.message.includes("type") || error.message.includes("invalid"))) {
+      const fallback = await supabase.auth.verifyOtp({
+        email: cleanEmail,
+        token: cleanToken,
+        type: "signup",
+      })
+      if (!fallback.error) {
+        data = fallback.data
+        error = null
+      }
+    }
+
+    if (error) {
+      console.error("[Auth] verifyOtp error:", error)
+      return { data: null, error: mapSupabaseError(error) }
+    }
+
+    if (!data.user) {
+      return { data: null, error: { error: "Verification failed. Please try again." } }
+    }
+
+    return {
+      data: {
+        user: extractAuthUser(data.user),
+        sessionCreated: !!data.session,
+      },
+      error: null,
+    }
+  } catch (e) {
+    console.error("[Auth] verifyOtp network error:", e)
+    return { data: null, error: { error: "Network error. Please try again." } }
+  }
+}
+
+export async function resendOtp(
+  email: string,
+): Promise<{ error: AuthError | null }> {
+  try {
+    const cleanEmail = email.trim().toLowerCase()
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: cleanEmail,
+    })
+
+    if (error) {
+      console.error("[Auth] resendOtp error:", error)
+      return { error: mapSupabaseError(error) }
+    }
+
+    return { error: null }
+  } catch (e) {
+    console.error("[Auth] resendOtp network error:", e)
+    return { error: { error: "We couldn't send a new verification code. Please try again later." } }
   }
 }
 
