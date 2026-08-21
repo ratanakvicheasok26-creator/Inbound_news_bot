@@ -49,14 +49,17 @@ export function ProfileTab({ user, onAvatarChange }: ProfileTabProps) {
           setByline(user.display_name)
         }
         if (data.bio) setBio(data.bio)
-        if (data.avatar_url) setAvatarUrl(data.avatar_url)
+        if (data.avatar_url) {
+          setAvatarUrl(data.avatar_url)
+          onAvatarChange?.(data.avatar_url)
+        }
       } catch {
         // Column may not exist yet — form still renders with defaults
       }
     }
     load()
     return () => { mounted = false }
-  }, [user.id, user.display_name, user.email])
+  }, [user.id, user.display_name, user.email, onAvatarChange])
 
   useEffect(() => {
     return () => { if (savedTimer.current) clearTimeout(savedTimer.current) }
@@ -92,7 +95,15 @@ export function ProfileTab({ user, onAvatarChange }: ProfileTabProps) {
         .upload(path, file, { upsert: true, cacheControl: "3600" })
       if (uploadError) throw uploadError
       const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path)
-      setAvatarUrl(urlData.publicUrl)
+      const freshUrl = `${urlData.publicUrl}?t=${Date.now()}`
+      setAvatarUrl(freshUrl)
+      await supabase
+        .from("profiles")
+        .upsert({
+          id: user.id,
+          avatar_url: freshUrl,
+        }, { onConflict: "id" })
+      onAvatarChange?.(freshUrl)
       flashSaved()
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Upload failed"
