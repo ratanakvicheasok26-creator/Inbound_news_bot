@@ -12,7 +12,7 @@ interface OtpInputProps {
 
 export function OtpInput({ value, onChange, disabled = false, onComplete, length }: OtpInputProps) {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
-  const numBoxes = length || 6
+  const numBoxes = length || value.length || 6
 
   useEffect(() => {
     // Focus the first empty input on mount if available
@@ -75,11 +75,11 @@ export function OtpInput({ value, onChange, disabled = false, onComplete, length
     const digits = pastedText.replace(/\D/g, "")
     if (!digits) return
 
-    const targetLength = digits.length >= 8 ? 8 : (length || 6)
-    const newOtp = Array.from({ length: targetLength }, (_, i) => "")
+    const targetLength = numBoxes
+    const newOtp = Array.from({ length: targetLength }, (_, i) => value[i] || "")
 
-    for (let i = 0; i < digits.length && i < targetLength; i++) {
-      newOtp[i] = digits[i]
+    for (let i = 0; i < digits.length && startIdx + i < targetLength; i++) {
+      newOtp[startIdx + i] = digits[i]
     }
     onChange(newOtp)
 
