@@ -1,8 +1,14 @@
+import type { Metadata } from "next"
 import Image from "next/image"
 import { Heart } from "lucide-react"
 import { AdBand } from "@/components/ads/AdBand"
 import { pickSponsorFrom } from "@/lib/sponsors"
 import { getActiveSponsors } from "@/lib/sponsors-server"
+
+export const metadata: Metadata = {
+  title: "Donation",
+  description: "Support Inbound Reports to keep open-access tech news and AI literacy tools running.",
+}
 
 export default async function DonatePage() {
   const { sponsors } = await getActiveSponsors()

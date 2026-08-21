@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { Sparkles, X } from "lucide-react"
-import { supabase, isSupabaseConfigured } from "@/lib/supabase"
+import { supabase } from "@/lib/supabase"
+import { getCurrentUser } from "@/lib/auth"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 
 const SESSION_DISMISS_KEY = "promo_banner_dismissed_session"
@@ -20,24 +21,31 @@ export function PromoBanner() {
       if (typeof window === "undefined") return
       if (sessionStorage.getItem(SESSION_DISMISS_KEY) === "1") return
 
-      if (!isSupabaseConfigured) {
-        if (!cancelled) setVisible(true)
-        return
-      }
-
       try {
-        const { data } = await supabase.auth.getSession()
-        if (!cancelled && !data.session) {
-          setVisible(true)
+        const user = await getCurrentUser()
+        if (!cancelled) {
+          setVisible(!user)
         }
       } catch {
-        if (!cancelled) setVisible(true)
+        if (!cancelled) setVisible(false)
       }
     }
 
     check()
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!cancelled) {
+        if (session?.user) {
+          setVisible(false)
+        } else {
+          check()
+        }
+      }
+    })
+
     return () => {
       cancelled = true
+      authListener?.subscription.unsubscribe()
     }
   }, [])
 

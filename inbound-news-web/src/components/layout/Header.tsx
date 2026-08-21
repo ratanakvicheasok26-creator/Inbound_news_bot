@@ -184,8 +184,10 @@ export function Header() {
     pathname.startsWith("/compare") ||
     pathname.startsWith("/blindspot") ||
     pathname.startsWith("/glossary") ||
+    pathname.startsWith("/concept") ||
     pathname.startsWith("/topic") ||
-    pathname.startsWith("/source")
+    pathname.startsWith("/source") ||
+    pathname.startsWith("/search")
 
   const mobileDrawer =
     mounted &&
@@ -236,71 +238,107 @@ export function Header() {
               </button>
             </div>
 
-            <nav className="mt-6 flex flex-col space-y-4 text-base font-medium">
+            <nav className="mt-6 flex flex-col space-y-1.5 text-base font-medium">
               <Link
                 href="/"
                 onClick={closeMobileMenu}
-                className={`transition-colors ${
-                  pathname === "/" ? "text-[var(--accent)] font-semibold" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                aria-current={pathname === "/" ? "page" : undefined}
+                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all ${
+                  pathname === "/"
+                    ? "bg-[var(--accent)]/10 text-[var(--accent)] font-semibold border-l-3 border-[var(--accent)] shadow-sm"
+                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
                 }`}
               >
-                {t("nav.home")}
+                <span>{t("nav.home")}</span>
+                {pathname === "/" && <span className="w-2 h-2 rounded-full bg-[var(--accent)] ring-4 ring-[var(--accent)]/20" />}
               </Link>
               <Link
                 href="/brief"
                 onClick={closeMobileMenu}
-                className={`transition-colors ${
+                aria-current={pathname.startsWith("/brief") ? "page" : undefined}
+                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all ${
                   pathname.startsWith("/brief")
-                    ? "text-[var(--accent)] font-semibold"
-                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                    ? "bg-[var(--accent)]/10 text-[var(--accent)] font-semibold border-l-3 border-[var(--accent)] shadow-sm"
+                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
                 }`}
               >
-                {t("nav.brief")}
+                <span>{t("nav.brief")}</span>
+                {pathname.startsWith("/brief") && <span className="w-2 h-2 rounded-full bg-[var(--accent)] ring-4 ring-[var(--accent)]/20" />}
               </Link>
               <Link
                 href="/pricing"
                 onClick={closeMobileMenu}
-                className={`transition-colors ${
-                  pathname === "/pricing"
-                    ? "text-[var(--accent)] font-semibold"
-                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                aria-current={pathname.startsWith("/pricing") ? "page" : undefined}
+                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all ${
+                  pathname.startsWith("/pricing")
+                    ? "bg-[var(--accent)]/10 text-[var(--accent)] font-semibold border-l-3 border-[var(--accent)] shadow-sm"
+                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
                 }`}
               >
-                {t("nav.membership")}
+                <span>{t("nav.membership")}</span>
+                {pathname.startsWith("/pricing") && <span className="w-2 h-2 rounded-full bg-[var(--accent)] ring-4 ring-[var(--accent)]/20" />}
               </Link>
 
-              <div className="pt-2 border-t border-[var(--border)]">
-                <p className="text-xs uppercase tracking-wider text-[var(--text-secondary)] opacity-75 font-semibold mb-3">
-                  Explore
+              <div className="pt-3 border-t border-[var(--border)]">
+                <p className="text-xs uppercase tracking-wider text-[var(--text-secondary)] opacity-75 font-semibold px-3 mb-2">
+                  {t("nav.explore")}
                 </p>
-                <div className="flex flex-col space-y-3 pl-2">
+                <div className="flex flex-col space-y-1">
                   <Link
                     href="/compare"
                     onClick={closeMobileMenu}
-                    className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm"
+                    aria-current={pathname.startsWith("/compare") ? "page" : undefined}
+                    className={`flex items-center justify-between px-3.5 py-2 rounded-xl text-sm transition-all ${
+                      pathname.startsWith("/compare")
+                        ? "bg-[var(--accent)]/10 text-[var(--accent)] font-semibold border-l-3 border-[var(--accent)] shadow-sm"
+                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
+                    }`}
                   >
-                    {t("nav.compare")}
+                    <span>{t("nav.compare")}</span>
+                    {pathname.startsWith("/compare") && <span className="w-2 h-2 rounded-full bg-[var(--accent)] ring-4 ring-[var(--accent)]/20" />}
                   </Link>
                   <Link
                     href="/blindspot"
                     onClick={closeMobileMenu}
-                    className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm"
+                    aria-current={pathname.startsWith("/blindspot") ? "page" : undefined}
+                    className={`flex items-center justify-between px-3.5 py-2 rounded-xl text-sm transition-all ${
+                      pathname.startsWith("/blindspot")
+                        ? "bg-[var(--accent)]/10 text-[var(--accent)] font-semibold border-l-3 border-[var(--accent)] shadow-sm"
+                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
+                    }`}
                   >
-                    {t("nav.blindspot")}
+                    <span>{t("nav.blindspot")}</span>
+                    {pathname.startsWith("/blindspot") && <span className="w-2 h-2 rounded-full bg-[var(--accent)] ring-4 ring-[var(--accent)]/20" />}
                   </Link>
                   <Link
                     href="/glossary"
                     onClick={closeMobileMenu}
-                    className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm"
+                    aria-current={pathname.startsWith("/glossary") || pathname.startsWith("/concept") ? "page" : undefined}
+                    className={`flex items-center justify-between px-3.5 py-2 rounded-xl text-sm transition-all ${
+                      pathname.startsWith("/glossary") || pathname.startsWith("/concept")
+                        ? "bg-[var(--accent)]/10 text-[var(--accent)] font-semibold border-l-3 border-[var(--accent)] shadow-sm"
+                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
+                    }`}
                   >
-                    {t("nav.glossary")}
+                    <span>{t("nav.glossary")}</span>
+                    {(pathname.startsWith("/glossary") || pathname.startsWith("/concept")) && (
+                      <span className="w-2 h-2 rounded-full bg-[var(--accent)] ring-4 ring-[var(--accent)]/20" />
+                    )}
                   </Link>
                   <Link
                     href="/search"
                     onClick={closeMobileMenu}
-                    className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm"
+                    aria-current={pathname.startsWith("/search") || pathname.startsWith("/topic") || pathname.startsWith("/source") ? "page" : undefined}
+                    className={`flex items-center justify-between px-3.5 py-2 rounded-xl text-sm transition-all ${
+                      pathname.startsWith("/search") || pathname.startsWith("/topic") || pathname.startsWith("/source")
+                        ? "bg-[var(--accent)]/10 text-[var(--accent)] font-semibold border-l-3 border-[var(--accent)] shadow-sm"
+                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
+                    }`}
                   >
-                    {t("nav.topics")}
+                    <span>{t("nav.topics")}</span>
+                    {(pathname.startsWith("/search") || pathname.startsWith("/topic") || pathname.startsWith("/source")) && (
+                      <span className="w-2 h-2 rounded-full bg-[var(--accent)] ring-4 ring-[var(--accent)]/20" />
+                    )}
                   </Link>
                 </div>
               </div>
@@ -334,36 +372,40 @@ export function Header() {
                 <Link
                   href="/account"
                   onClick={closeMobileMenu}
-                  className="w-full h-10 rounded-xl bg-[var(--surface-alt)] border border-[var(--border)] hover:bg-[var(--border)] flex items-center justify-center text-sm font-semibold text-[var(--text-primary)] transition-colors"
+                  className={`w-full h-10 rounded-xl border border-[var(--border)] flex items-center justify-center text-sm font-semibold transition-colors ${
+                    pathname.startsWith("/account")
+                      ? "bg-[var(--red-subtle-bg)] text-[var(--accent)] border-[var(--accent)]"
+                      : "bg-[var(--surface-alt)] text-[var(--text-primary)] hover:bg-[var(--border)]"
+                  }`}
                 >
                   {t("nav.openAccount")}
                 </Link>
                 <button
                   type="button"
                   onClick={() => {
-                    handleSignOut()
                     closeMobileMenu()
+                    handleSignOut()
                   }}
-                  className="w-full h-10 rounded-xl bg-transparent border border-[var(--border)] hover:bg-[var(--surface-alt)] flex items-center justify-center text-sm font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                  className="w-full h-10 rounded-xl border border-[var(--border)] hover:bg-[var(--surface-alt)] flex items-center justify-center text-sm font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
                 >
-                  {t("nav.signOut")}
+                  {t("nav.logout")}
                 </button>
               </div>
             ) : (
               <div className="space-y-2">
-                <Link
-                  href="/signup"
-                  onClick={closeMobileMenu}
-                  className="w-full h-10 rounded-xl bg-[#FF0030] hover:bg-[#FF0030]/90 flex items-center justify-center text-sm font-semibold text-white transition-colors"
-                >
-                  {t("nav.createAccount")}
-                </Link>
                 <Link
                   href="/login"
                   onClick={closeMobileMenu}
                   className="w-full h-10 rounded-xl bg-[var(--surface-alt)] border border-[var(--border)] hover:bg-[var(--border)] flex items-center justify-center text-sm font-semibold text-[var(--text-primary)] transition-colors"
                 >
                   {t("nav.signIn")}
+                </Link>
+                <Link
+                  href="/signup"
+                  onClick={closeMobileMenu}
+                  className="w-full h-10 rounded-xl bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] flex items-center justify-center text-sm font-semibold transition-colors"
+                >
+                  {t("nav.createAccount")}
                 </Link>
               </div>
             )}
@@ -373,10 +415,19 @@ export function Header() {
       document.body
     )
 
-  const isHeaderVisible = visible || exploreOpen || accountOpen || mobileOpen
+  const isHeaderVisible = visible || mobileOpen
 
   return (
     <>
+      <div
+        className="smart-header-spacer"
+        aria-hidden="true"
+        style={
+          headerHeight != null
+            ? { height: `${headerHeight}px` }
+            : undefined
+        }
+      />
       <header
         ref={headerRef}
         onFocusCapture={() => setVisible(true)}
@@ -420,59 +471,81 @@ export function Header() {
           </div>
 
           {/* Main Navigation (Home, Brief, Membership, Explore dropdown) */}
-          <nav className="hidden md:flex space-x-5 lg:space-x-6 text-sm font-medium text-[var(--text-secondary)] shrink-0">
+          <nav className="hidden md:flex items-center space-x-1 lg:space-x-2 text-sm font-medium text-[var(--text-secondary)] shrink-0">
             <Link
               href="/"
-              className={`hover-transition ${
-                pathname === "/" ? "text-[var(--accent)] font-semibold" : "hover:text-[var(--text-primary)]"
+              aria-current={pathname === "/" ? "page" : undefined}
+              className={`relative px-3 py-1.5 rounded-lg transition-all ${
+                pathname === "/"
+                  ? "text-[var(--accent)] font-semibold bg-[var(--accent)]/10"
+                  : "hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
               }`}
             >
               {t("nav.home")}
+              {pathname === "/" && (
+                <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-[var(--accent)] rounded-full" />
+              )}
             </Link>
 
             <Link
               href="/brief"
-              className={`hover-transition ${
+              aria-current={pathname.startsWith("/brief") ? "page" : undefined}
+              className={`relative px-3 py-1.5 rounded-lg transition-all ${
                 pathname.startsWith("/brief")
-                  ? "text-[var(--accent)] font-semibold"
-                  : "hover:text-[var(--text-primary)]"
+                  ? "text-[var(--accent)] font-semibold bg-[var(--accent)]/10"
+                  : "hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
               }`}
             >
               {t("nav.brief")}
+              {pathname.startsWith("/brief") && (
+                <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-[var(--accent)] rounded-full" />
+              )}
             </Link>
 
             <Link
               href="/pricing"
-              className={`hover-transition ${
-                pathname === "/pricing"
-                  ? "text-[var(--accent)] font-semibold"
-                  : "hover:text-[var(--text-primary)]"
+              aria-current={pathname.startsWith("/pricing") ? "page" : undefined}
+              className={`relative px-3 py-1.5 rounded-lg transition-all ${
+                pathname.startsWith("/pricing")
+                  ? "text-[var(--accent)] font-semibold bg-[var(--accent)]/10"
+                  : "hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
               }`}
             >
               {t("nav.membership")}
+              {pathname.startsWith("/pricing") && (
+                <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-[var(--accent)] rounded-full" />
+              )}
             </Link>
 
             {/* Explore Dropdown */}
-            <div className="relative group cursor-pointer" ref={exploreRef}>
-              <span
+            <div className="relative group" ref={exploreRef}>
+              <button
+                type="button"
                 onClick={() => setExploreOpen((o) => !o)}
-                className={`flex items-center hover:text-[var(--text-primary)] hover-transition ${
-                  isExploreActive ? "text-[var(--text-primary)] font-semibold" : ""
+                aria-expanded={exploreOpen}
+                aria-current={isExploreActive ? "page" : undefined}
+                className={`relative flex items-center px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  isExploreActive
+                    ? "text-[var(--accent)] font-semibold bg-[var(--accent)]/10"
+                    : "hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
                 }`}
               >
-                <span>{locale === "km" ? "រុករក" : "Explore"}</span>
+                <span>{t("nav.explore")}</span>
                 <svg
-                  className="w-4 h-4 ml-1 transition-transform group-hover:rotate-180"
+                  className={`w-4 h-4 ml-1 transition-transform ${exploreOpen ? "rotate-180" : "group-hover:rotate-180"}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
                   <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
                 </svg>
-              </span>
+                {isExploreActive && (
+                  <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-[var(--accent)] rounded-full" />
+                )}
+              </button>
 
               <div
-                className={`absolute left-0 mt-2 w-48 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-xl py-2 z-50 transition-opacity ${
+                className={`absolute left-0 mt-2 w-52 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-xl py-2 z-50 transition-opacity ${
                   exploreOpen
                     ? "opacity-100 pointer-events-auto"
                     : "opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto"
@@ -480,27 +553,55 @@ export function Header() {
               >
                 <Link
                   href="/compare"
-                  className="block px-4 py-2 hover:bg-[var(--surface-alt)] hover:text-[var(--text-primary)] text-[var(--text-secondary)] transition-colors"
+                  aria-current={pathname.startsWith("/compare") ? "page" : undefined}
+                  className={`flex items-center justify-between px-4 py-2 text-sm transition-colors ${
+                    pathname.startsWith("/compare")
+                      ? "text-[var(--accent)] font-semibold bg-[var(--accent)]/10"
+                      : "text-[var(--text-secondary)] hover:bg-[var(--surface-alt)] hover:text-[var(--text-primary)]"
+                  }`}
                 >
-                  {t("nav.compare")}
+                  <span>{t("nav.compare")}</span>
+                  {pathname.startsWith("/compare") && <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />}
                 </Link>
                 <Link
                   href="/blindspot"
-                  className="block px-4 py-2 hover:bg-[var(--surface-alt)] hover:text-[var(--text-primary)] text-[var(--text-secondary)] transition-colors"
+                  aria-current={pathname.startsWith("/blindspot") ? "page" : undefined}
+                  className={`flex items-center justify-between px-4 py-2 text-sm transition-colors ${
+                    pathname.startsWith("/blindspot")
+                      ? "text-[var(--accent)] font-semibold bg-[var(--accent)]/10"
+                      : "text-[var(--text-secondary)] hover:bg-[var(--surface-alt)] hover:text-[var(--text-primary)]"
+                  }`}
                 >
-                  {t("nav.blindspot")}
+                  <span>{t("nav.blindspot")}</span>
+                  {pathname.startsWith("/blindspot") && <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />}
                 </Link>
                 <Link
                   href="/glossary"
-                  className="block px-4 py-2 hover:bg-[var(--surface-alt)] hover:text-[var(--text-primary)] text-[var(--text-secondary)] transition-colors"
+                  aria-current={pathname.startsWith("/glossary") || pathname.startsWith("/concept") ? "page" : undefined}
+                  className={`flex items-center justify-between px-4 py-2 text-sm transition-colors ${
+                    pathname.startsWith("/glossary") || pathname.startsWith("/concept")
+                      ? "text-[var(--accent)] font-semibold bg-[var(--accent)]/10"
+                      : "text-[var(--text-secondary)] hover:bg-[var(--surface-alt)] hover:text-[var(--text-primary)]"
+                  }`}
                 >
-                  {t("nav.glossary")}
+                  <span>{t("nav.glossary")}</span>
+                  {(pathname.startsWith("/glossary") || pathname.startsWith("/concept")) && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
+                  )}
                 </Link>
                 <Link
                   href="/search"
-                  className="block px-4 py-2 hover:bg-[var(--surface-alt)] hover:text-[var(--text-primary)] text-[var(--text-secondary)] transition-colors"
+                  aria-current={pathname.startsWith("/search") || pathname.startsWith("/topic") || pathname.startsWith("/source") ? "page" : undefined}
+                  className={`flex items-center justify-between px-4 py-2 text-sm transition-colors ${
+                    pathname.startsWith("/search") || pathname.startsWith("/topic") || pathname.startsWith("/source")
+                      ? "text-[var(--accent)] font-semibold bg-[var(--accent)]/10"
+                      : "text-[var(--text-secondary)] hover:bg-[var(--surface-alt)] hover:text-[var(--text-primary)]"
+                  }`}
                 >
-                  {t("nav.topics")}
+                  <span>{t("nav.topics")}</span>
+                  {(pathname.startsWith("/search") || pathname.startsWith("/topic") || pathname.startsWith("/source")) && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
+                  )}
                 </Link>
               </div>
             </div>
@@ -542,7 +643,12 @@ export function Header() {
               {user ? (
                 <Link
                   href="/account"
-                  className="flex items-center space-x-1 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                  aria-current={pathname.startsWith("/account") ? "page" : undefined}
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                    pathname.startsWith("/account")
+                      ? "text-[var(--accent)] font-semibold bg-[var(--accent)]/10"
+                      : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
+                  }`}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -562,7 +668,13 @@ export function Header() {
                       setExploreOpen(false)
                       setAccountOpen((o) => !o)
                     }}
-                    className="flex items-center space-x-1 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+                    aria-expanded={accountOpen}
+                    aria-current={pathname === "/login" || pathname === "/signup" ? "page" : undefined}
+                    className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                      pathname === "/login" || pathname === "/signup"
+                        ? "text-[var(--accent)] font-semibold bg-[var(--accent)]/10"
+                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-alt)]"
+                    }`}
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path

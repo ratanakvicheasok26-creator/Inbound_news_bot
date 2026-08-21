@@ -1,25 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 
-const PUBLIC_PATHS = [
-  "/login",
-  "/signup",
-  "/forgot-password",
-  "/reset-password",
-  "/auth/confirm",
-  "/auth/callback",
-  "/api/auth/login",
-  "/api/auth/signup",
-  "/api/auth/logout",
-  "/api/auth/refresh",
-  "/api/auth/verify-email",
-  "/api/auth/forgot-password",
-  "/api/auth/reset-password",
-  "/api/auth/change-email",
-  "/api/auth/cancel-email-change",
-  "/_next",
-  "/favicon.ico",
-  "/public",
+const PROTECTED_PATHS = [
+  "/account",
+  "/admin",
 ]
 
 const STATIC_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".ico", ".css", ".js", ".woff", ".woff2", ".ttf", ".eot"]
@@ -30,9 +14,8 @@ const CACHE_CONTROL_HEADERS = {
   public: "public, max-age=31536000, immutable",
 } as const
 
-function isPublicPath(pathname: string): boolean {
-  if (pathname === "/") return true
-  return PUBLIC_PATHS.some((p) => pathname.startsWith(p))
+function isProtectedPath(pathname: string): boolean {
+  return PROTECTED_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 }
 
 function isStaticAsset(pathname: string): boolean {
@@ -134,13 +117,15 @@ export async function middleware(req: NextRequest) {
   // Refresh the session if it exists but is expired
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!isPublicPath(pathname)) {
+  if (isProtectedPath(pathname)) {
     if (!user) {
       const loginUrl = new URL("/login", req.url)
       loginUrl.searchParams.set("returnTo", pathname)
       return NextResponse.redirect(loginUrl)
     }
 
+    response.headers.set("Cache-Control", CACHE_CONTROL_HEADERS.authenticated)
+  } else if (user) {
     response.headers.set("Cache-Control", CACHE_CONTROL_HEADERS.authenticated)
   }
 

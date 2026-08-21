@@ -8,7 +8,10 @@ import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 import { InteractiveBackground } from "@/components/ui/pricing";
 
 export const metadata: Metadata = {
-  title: "Inbound Reports — Decode the Tech.",
+  title: {
+    default: "Inbound Reports — Decode the Tech.",
+    template: "%s | Inbound Reports",
+  },
   description:
     "Technology coverage from Phnom Penh — map who covered a story, compare framing, spot blindspots, and cut jargon.",
   icons: {

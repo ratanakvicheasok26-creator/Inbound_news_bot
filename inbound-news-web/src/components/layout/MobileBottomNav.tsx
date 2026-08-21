@@ -35,18 +35,23 @@ export function MobileBottomNav() {
           const isActive =
             item.href === "/"
               ? pathname === "/"
+              : item.href === "/glossary"
+              ? pathname.startsWith("/glossary") || pathname.startsWith("/concept")
               : pathname === item.href || pathname.startsWith(`${item.href}/`)
           return (
             <Link
               key={item.href}
               href={item.href}
               aria-current={isActive ? "page" : undefined}
-              className={`flex min-w-0 flex-col items-center justify-center gap-0.5 w-full h-full px-0.5 transition-colors ${
-                isActive ? "text-[var(--accent)]" : "text-[var(--text-secondary)]"
+              className={`relative flex min-w-0 flex-col items-center justify-center gap-0.5 w-full h-full px-0.5 transition-all ${
+                isActive ? "text-[var(--accent)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               }`}
             >
-              <item.icon className="h-4 w-4 shrink-0" />
-              <span className="w-full text-[8px] min-[360px]:text-[9px] min-[400px]:text-[9.5px] font-semibold leading-tight tracking-normal text-center truncate px-0.5">
+              {isActive && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-7 h-0.5 bg-[var(--accent)] rounded-full shadow-[0_1px_4px_rgba(255,0,51,0.5)]" />
+              )}
+              <item.icon className={`h-4 w-4 shrink-0 transition-transform ${isActive ? "scale-110 font-bold stroke-[2.5]" : ""}`} />
+              <span className={`w-full text-[8px] min-[360px]:text-[9px] min-[400px]:text-[9.5px] leading-tight tracking-normal text-center truncate px-0.5 ${isActive ? "font-bold" : "font-medium"}`}>
                 {t(item.key)}
               </span>
             </Link>
