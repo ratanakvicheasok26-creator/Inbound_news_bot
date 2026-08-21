@@ -12,7 +12,7 @@ import { PromoBanner } from "@/components/PromoBanner"
 import { useI18n, LOCALE_KEY } from "@/lib/i18n/LocaleProvider"
 import type { Locale } from "@/lib/i18n/dictionaries"
 import { Menu, X } from "lucide-react"
-import { signOut, getCurrentUser, type AuthUser } from "@/lib/auth"
+import { signOut, getCurrentUser, extractAuthUser, supabase, type AuthUser } from "@/lib/auth"
 
 export function Header() {
   const { t, locale, setLocale } = useI18n()
@@ -116,7 +116,27 @@ export function Header() {
   }, [])
 
   useEffect(() => {
-    getCurrentUser().then(setUser)
+    let isMounted = true
+
+    // 1. Initial check
+    getCurrentUser().then((u) => {
+      if (isMounted) setUser(u)
+    })
+
+    // 2. Real-time subscription to auth state changes (login, signup, logout, token refresh)
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return
+      if (session?.user) {
+        setUser(extractAuthUser(session.user))
+      } else {
+        setUser(null)
+      }
+    })
+
+    return () => {
+      isMounted = false
+      authListener?.subscription?.unsubscribe()
+    }
   }, [])
 
   useEffect(() => {
@@ -137,6 +157,7 @@ export function Header() {
     setExploreOpen(false)
     setAccountOpen(false)
     setVisible(true)
+    getCurrentUser().then(setUser)
   }, [pathname])
 
   const closeMobileMenu = useCallback(() => {

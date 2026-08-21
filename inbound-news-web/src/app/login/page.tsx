@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Loader2, KeyRound } from "lucide-react"
-import { signIn, verifyOtp, resendOtp } from "@/lib/auth"
+import { signIn, verifyOtp, resendOtp, getCurrentUser } from "@/lib/auth"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import {
   AuthShell,
@@ -33,6 +33,19 @@ export default function LoginPage() {
   const [verifyError, setVerifyError] = useState("")
   const [resending, setResending] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
+
+  useEffect(() => {
+    getCurrentUser().then((u) => {
+      if (u) {
+        const params = new URLSearchParams(window.location.search)
+        router.replace(params.get("returnTo") || "/account")
+      }
+    })
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("verified") === "true") {
+      setResendSuccess("Email verified successfully! Please sign in with your password.")
+    }
+  }, [router])
 
   const showResendVerification = error.includes("confirm your email") || error === EMAIL_NOT_CONFIRMED
 

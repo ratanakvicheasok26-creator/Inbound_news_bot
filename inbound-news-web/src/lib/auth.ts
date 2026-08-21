@@ -62,7 +62,7 @@ function mapSupabaseError(error: { message: string; code?: string }): AuthError 
   return { error: msg }
 }
 
-function extractAuthUser(supabaseUser: {
+export function extractAuthUser(supabaseUser: {
   id: string
   email?: string
   email_confirmed_at?: string | null

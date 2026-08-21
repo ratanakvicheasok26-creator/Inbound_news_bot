@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Loader2, KeyRound } from "lucide-react"
-import { signUp, verifyOtp, resendOtp } from "@/lib/auth"
+import { signUp, verifyOtp, resendOtp, getCurrentUser } from "@/lib/auth"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import {
   AuthShell,
@@ -58,6 +58,14 @@ export default function SignupPage() {
   const [resending, setResending] = useState(false)
   const [resendSuccess, setResendSuccess] = useState("")
   const [resendCooldown, setResendCooldown] = useState(0)
+
+  useEffect(() => {
+    getCurrentUser().then((u) => {
+      if (u) {
+        router.replace("/account")
+      }
+    })
+  }, [router])
 
   // Cooldown timer effect
   useEffect(() => {

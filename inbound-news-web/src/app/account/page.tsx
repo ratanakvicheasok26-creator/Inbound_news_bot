@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { User, CreditCard, BarChart3, BookOpen, Settings, LogOut, Shield, Newspaper, UserCircle } from "lucide-react"
-import { supabase, signOut, getCurrentUser, type AuthUser } from "@/lib/auth"
+import { supabase, signOut, getCurrentUser, extractAuthUser, type AuthUser } from "@/lib/auth"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getProfile, loadPreferencesFromSupabase } from "@/lib/profile"
 import { ProfileTab } from "@/components/account/editorial/ProfileTab"
@@ -71,12 +71,13 @@ export default function AccountPage() {
   const hasSaves = profile.savedStoryIds.length > 0
 
   useEffect(() => {
-    const abortController = new AbortController()
-    async function check() {
-      const params = new URLSearchParams(window.location.search)
-      if (params.get("tab") === "membership") setActiveTab("membership")
-      const u = await getCurrentUser()
-      if (abortController.signal.aborted) return
+    let isMounted = true
+
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("tab") === "membership") setActiveTab("membership")
+
+    async function handleUser(u: AuthUser | null) {
+      if (!isMounted) return
       setUser(u)
       setLoading(false)
       if (u) {
@@ -87,7 +88,7 @@ export default function AccountPage() {
           .select("id")
           .eq("id", u.id)
           .maybeSingle()
-        if (!existing) {
+        if (!existing && isMounted) {
           await supabase.from("profiles").upsert(
             {
               id: u.id,
@@ -101,15 +102,35 @@ export default function AccountPage() {
           .select("avatar_url")
           .eq("id", u.id)
           .maybeSingle()
-        if (profileData?.avatar_url) setHeaderAvatarUrl(profileData.avatar_url)
+        if (profileData?.avatar_url && isMounted) setHeaderAvatarUrl(profileData.avatar_url)
         await loadPreferencesFromSupabase()
       } else {
         router.replace("/login")
       }
-      setProfileTick((t) => t + 1)
+      if (isMounted) setProfileTick((t) => t + 1)
     }
-    check()
-    return () => abortController.abort()
+
+    getCurrentUser().then((u) => {
+      if (u) {
+        handleUser(u)
+      }
+    })
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return
+      if (session?.user) {
+        handleUser(extractAuthUser(session.user))
+      } else if (_event === "INITIAL_SESSION" && !session) {
+        handleUser(null)
+      } else if (_event === "SIGNED_OUT") {
+        handleUser(null)
+      }
+    })
+
+    return () => {
+      isMounted = false
+      authListener?.subscription?.unsubscribe()
+    }
   }, [router])
 
   const startPaidPolling = useCallback(() => {
