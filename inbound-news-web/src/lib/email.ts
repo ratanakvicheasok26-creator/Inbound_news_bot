@@ -1,14 +1,27 @@
 import { Resend } from "resend"
+import nodemailer from "nodemailer"
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || ""
-const FROM_EMAIL =
-  process.env.RESEND_FROM_EMAIL || "Inbound Reports <onboarding@resend.dev>"
 const SITE_NAME = "Inbound Reports"
+const GMAIL_USER = process.env.GMAIL_USER || process.env.SMTP_USER || "Inboundcrew82@gmail.com"
+const GMAIL_APP_PASSWORD = (process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS || "pbmo timq mkxh apzb").replace(/\s+/g, "")
+const FROM_EMAIL =
+  process.env.RESEND_FROM_EMAIL || `Inbound Reports <${GMAIL_USER}>`
 
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null
 
+const nodemailerTransporter = GMAIL_USER && GMAIL_APP_PASSWORD
+  ? nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: GMAIL_USER,
+        pass: GMAIL_APP_PASSWORD,
+      },
+    })
+  : null
+
 function isDevFallback(): boolean {
-  return !resend
+  return !resend && !nodemailerTransporter
 }
 
 function logDevEmail(type: string, to: string, url: string) {
@@ -112,25 +125,37 @@ export async function sendPasswordResetEmail(
   const subject = `Reset your ${SITE_NAME} password`
   const text = `Reset your password for ${SITE_NAME}.\n\nClick this link to choose a new password (expires in 1 hour):\n${resetUrl}\n\nIf you did not request this, you can safely ignore this email.`
 
-  try {
-    const { error } = await resend!.emails.send({
-      from: FROM_EMAIL,
-      to: email,
-      subject,
-      html: passwordResetHtml(resetUrl),
-      text,
-    })
-
-    if (error) {
-      console.error("[Email] Resend error:", error)
-      return { ok: false, error: "Failed to send email" }
+  if (resend) {
+    try {
+      const { error } = await resend.emails.send({
+        from: FROM_EMAIL,
+        to: email,
+        subject,
+        html: passwordResetHtml(resetUrl),
+        text,
+      })
+      if (!error) return { ok: true }
+    } catch (e) {
+      console.error("[Email] Resend fetch error:", e)
     }
-
-    return { ok: true }
-  } catch (e) {
-    console.error("[Email] Resend fetch error:", e)
-    return { ok: false, error: "Failed to send email" }
   }
+
+  if (nodemailerTransporter) {
+    try {
+      await nodemailerTransporter.sendMail({
+        from: FROM_EMAIL,
+        to: email,
+        subject,
+        html: passwordResetHtml(resetUrl),
+        text,
+      })
+      return { ok: true }
+    } catch (e) {
+      console.error("[Email] Nodemailer Gmail error:", e)
+    }
+  }
+
+  return { ok: false, error: "Failed to send email" }
 }
 
 export async function sendVerificationEmail(
@@ -147,25 +172,37 @@ export async function sendVerificationEmail(
   const greeting = displayName ? `Hi ${displayName},` : "Hi there,"
   const text = `${greeting}\n\nVerify your email for ${SITE_NAME} (expires in 24 hours):\n${verifyUrl}\n\nIf you did not request this, you can safely ignore this email.`
 
-  try {
-    const { error } = await resend!.emails.send({
-      from: FROM_EMAIL,
-      to: email,
-      subject,
-      html: verificationHtml(verifyUrl, displayName),
-      text,
-    })
-
-    if (error) {
-      console.error("[Email] Resend error:", error)
-      return { ok: false, error: "Failed to send email" }
+  if (resend) {
+    try {
+      const { error } = await resend.emails.send({
+        from: FROM_EMAIL,
+        to: email,
+        subject,
+        html: verificationHtml(verifyUrl, displayName),
+        text,
+      })
+      if (!error) return { ok: true }
+    } catch (e) {
+      console.error("[Email] Resend fetch error:", e)
     }
-
-    return { ok: true }
-  } catch (e) {
-    console.error("[Email] Resend fetch error:", e)
-    return { ok: false, error: "Failed to send email" }
   }
+
+  if (nodemailerTransporter) {
+    try {
+      await nodemailerTransporter.sendMail({
+        from: FROM_EMAIL,
+        to: email,
+        subject,
+        html: verificationHtml(verifyUrl, displayName),
+        text,
+      })
+      return { ok: true }
+    } catch (e) {
+      console.error("[Email] Nodemailer Gmail error:", e)
+    }
+  }
+
+  return { ok: false, error: "Failed to send email" }
 }
 
 function otpHtml(otp: string, displayName?: string): string {
@@ -199,25 +236,39 @@ export async function sendOtpEmail(
   const greeting = displayName ? `Hi ${displayName},` : "Hi there,"
   const text = `${greeting}\n\nYour ${SITE_NAME} verification code is: ${otp}\n\nEnter this code on the website to verify your email. This code expires in 10 minutes.\n\nIf you did not request this, you can safely ignore this email.`
 
-  try {
-    const { error } = await resend!.emails.send({
-      from: FROM_EMAIL,
-      to: email,
-      subject,
-      html: otpHtml(otp, displayName),
-      text,
-    })
-
-    if (error) {
-      console.error("[Email] Resend OTP error:", error)
-      logDevEmail("OTP verification (Resend Fallback)", email, `Code: ${otp}`)
-      return { ok: false, error: typeof error === "object" && error !== null && "message" in error ? String((error as { message: string }).message) : "Failed to send email" }
+  if (resend) {
+    try {
+      const { error } = await resend.emails.send({
+        from: FROM_EMAIL,
+        to: email,
+        subject,
+        html: otpHtml(otp, displayName),
+        text,
+      })
+      if (!error) return { ok: true }
+      console.warn("[Email] Resend OTP error, falling back to Gmail SMTP:", error)
+    } catch (e) {
+      console.error("[Email] Resend OTP fetch error:", e)
     }
-
-    return { ok: true }
-  } catch (e) {
-    console.error("[Email] Resend OTP fetch error:", e)
-    logDevEmail("OTP verification (Resend Fallback)", email, `Code: ${otp}`)
-    return { ok: false, error: "Failed to send email" }
   }
+
+  if (nodemailerTransporter) {
+    try {
+      await nodemailerTransporter.sendMail({
+        from: FROM_EMAIL,
+        to: email,
+        subject,
+        html: otpHtml(otp, displayName),
+        text,
+      })
+      console.log(`[Email] Successfully sent OTP code to ${email} via Gmail SMTP`)
+      return { ok: true }
+    } catch (e) {
+      console.error("[Email] Nodemailer Gmail OTP error:", e)
+      return { ok: false, error: e instanceof Error ? e.message : "Failed to send email via Gmail" }
+    }
+  }
+
+  logDevEmail("OTP verification (Dev Fallback)", email, `Code: ${otp}`)
+  return { ok: true }
 }
