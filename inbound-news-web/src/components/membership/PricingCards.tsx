@@ -124,7 +124,7 @@ export function PricingCards() {
                 {t("membership.trialBannerTitle")}
               </h4>
               <p className="text-sm text-[var(--text-secondary)] mt-0.5">
-                {t("membership.trialBannerSubtitle")} — {entitlement.daysRemaining} {t("account.trial.daysRemaining")}
+                {t("membership.trialBannerSubtitle")} — {entitlement.daysRemaining} {t("trial.daysRemaining")}
               </p>
               <p className="text-xs text-[var(--text-secondary)]/80 mt-1">
                 {t("membership.noPaymentRequired")}

@@ -74,4 +74,10 @@ UNION ALL SELECT '12. memberships INSERT/UPDATE policies dropped (security fix)'
     SELECT count(*) FROM pg_policies
     WHERE schemaname='public' AND tablename='memberships'
       AND cmd IN ('INSERT','UPDATE')
-  ) = 0 THEN 'PASS' ELSE 'FAIL' END;
+  ) = 0 THEN 'PASS' ELSE 'FAIL' END
+UNION ALL SELECT '13. profiles has trial columns',
+  CASE WHEN (
+    SELECT count(*) FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='profiles'
+      AND column_name IN ('trial_started_at','trial_ends_at','trial_used','membership_status')
+  ) = 4 THEN 'PASS' ELSE 'FAIL' END;

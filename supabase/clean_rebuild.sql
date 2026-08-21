@@ -108,6 +108,10 @@ CREATE TABLE public.profiles (
   default_lang TEXT DEFAULT 'en' CHECK (default_lang IN ('en', 'km')),
   stealth_mode BOOLEAN DEFAULT FALSE,
   telegram_digest BOOLEAN DEFAULT FALSE,
+  trial_started_at TIMESTAMPTZ NULL,
+  trial_ends_at TIMESTAMPTZ NULL,
+  trial_used BOOLEAN NOT NULL DEFAULT FALSE,
+  membership_status TEXT NOT NULL DEFAULT 'free' CHECK (membership_status IN ('free', 'trial', 'pro', 'expired')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -267,25 +271,90 @@ CREATE TRIGGER article_translations_updated_at
   BEFORE UPDATE ON public.article_translations
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
--- Function: Auto provision profile on user signup
+-- Function: Auto provision profile on user signup with 42-day free trial
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_now       TIMESTAMPTZ := NOW();
+  v_trial_end TIMESTAMPTZ := v_now + INTERVAL '42 days';
 BEGIN
-  INSERT INTO public.profiles (id, display_name, first_name, last_name)
+  INSERT INTO public.profiles (
+    id,
+    display_name,
+    first_name,
+    last_name,
+    trial_started_at,
+    trial_ends_at,
+    trial_used,
+    membership_status,
+    created_at,
+    updated_at
+  )
   VALUES (
     new.id,
-    COALESCE(new.raw_user_meta_data->>'display_name', split_part(new.email, '@', 1)),
+    COALESCE(new.raw_user_meta_data->>'display_name', split_part(new.email, '@', 1), 'Reader'),
     COALESCE(new.raw_user_meta_data->>'first_name', ''),
-    COALESCE(new.raw_user_meta_data->>'last_name', '')
+    COALESCE(new.raw_user_meta_data->>'last_name', ''),
+    v_now,
+    v_trial_end,
+    TRUE,
+    'trial',
+    v_now,
+    v_now
   )
-  ON CONFLICT (id) DO NOTHING;
+  ON CONFLICT (id) DO UPDATE SET
+    trial_started_at  = COALESCE(profiles.trial_started_at, EXCLUDED.trial_started_at),
+    trial_ends_at     = COALESCE(profiles.trial_ends_at, EXCLUDED.trial_ends_at),
+    trial_used        = TRUE,
+    membership_status = CASE
+      WHEN profiles.membership_status = 'pro' THEN 'pro'
+      ELSE COALESCE(profiles.membership_status, EXCLUDED.membership_status)
+    END;
+
   RETURN new;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Trigger: protect trial fields from client-side modification
+CREATE OR REPLACE FUNCTION public.protect_profile_trial_fields()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  IF (NULLIF(current_setting('request.jwt.claim.role', true), '') IN ('authenticated', 'anon'))
+     OR (CURRENT_USER IN ('authenticated', 'anon')) THEN
+    IF NEW.trial_started_at IS DISTINCT FROM OLD.trial_started_at THEN
+      RAISE EXCEPTION 'Modification of trial_started_at is unauthorized.' USING ERRCODE = '42501';
+    END IF;
+    IF NEW.trial_ends_at IS DISTINCT FROM OLD.trial_ends_at THEN
+      RAISE EXCEPTION 'Modification of trial_ends_at is unauthorized.' USING ERRCODE = '42501';
+    END IF;
+    IF NEW.trial_used IS DISTINCT FROM OLD.trial_used THEN
+      RAISE EXCEPTION 'Modification of trial_used is unauthorized.' USING ERRCODE = '42501';
+    END IF;
+    IF NEW.membership_status IS DISTINCT FROM OLD.membership_status THEN
+      RAISE EXCEPTION 'Modification of membership_status is unauthorized.' USING ERRCODE = '42501';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS enforce_profile_column_security ON public.profiles;
+CREATE TRIGGER enforce_profile_column_security
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.protect_profile_trial_fields();
 
 -- Function: Vector similarity match for stories
 CREATE OR REPLACE FUNCTION match_stories(
@@ -329,7 +398,7 @@ $$;
 
 GRANT EXECUTE ON FUNCTION increment_story_source_count(UUID, TEXT) TO service_role;
 
--- Function: Check active membership status
+-- Function: Check active membership status (paid or active 42-day trial)
 CREATE OR REPLACE FUNCTION is_active_member()
 RETURNS BOOLEAN LANGUAGE sql SECURITY DEFINER STABLE AS $$
   SELECT EXISTS (
@@ -337,10 +406,17 @@ RETURNS BOOLEAN LANGUAGE sql SECURITY DEFINER STABLE AS $$
     WHERE m.user_id = auth.uid()
       AND m.status IN ('trialing', 'active')
       AND (m.current_period_end IS NULL OR m.current_period_end > NOW())
+  )
+  OR EXISTS (
+    SELECT 1 FROM public.profiles p
+    WHERE p.id = auth.uid()
+      AND p.trial_started_at IS NOT NULL
+      AND p.trial_ends_at IS NOT NULL
+      AND p.trial_ends_at > NOW()
   );
 $$;
 
-GRANT EXECUTE ON FUNCTION is_active_member() TO authenticated;
+GRANT EXECUTE ON FUNCTION is_active_member() TO authenticated, anon;
 
 -- ============================================================
 -- STEP 6: ROW LEVEL SECURITY (RLS) POLICIES

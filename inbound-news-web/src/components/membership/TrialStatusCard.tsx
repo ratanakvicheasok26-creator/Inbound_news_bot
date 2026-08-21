@@ -26,14 +26,14 @@ export function TrialStatusCard({ entitlement }: { entitlement: EntitlementState
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <h3 className="font-display text-[18px] font-semibold">
-                {t("account.trial.activeTitle")}
+                {t("trial.activeTitle")}
               </h3>
               <span className="text-[11px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400 bg-amber-500/10 rounded-full px-2 py-0.5 shrink-0">
-                {t("account.trial.badge")}
+                {t("trial.badge")}
               </span>
             </div>
             <p className="text-[14px] text-[var(--text-secondary)]">
-              {t("account.trial.activeDescription")}
+              {t("trial.activeDescription")}
             </p>
           </div>
           <div className="text-right shrink-0">
@@ -41,17 +41,17 @@ export function TrialStatusCard({ entitlement }: { entitlement: EntitlementState
               {daysRemaining}
             </p>
             <p className="text-[12px] text-[var(--text-secondary)] mt-0.5">
-              {t("account.trial.daysRemaining")}
+              {t("trial.daysRemaining")}
             </p>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 mt-4 border-t border-[var(--border)]">
           <div>
-            <span className="text-[12px] text-[var(--text-secondary)] block">{t("account.trial.started")}</span>
+            <span className="text-[12px] text-[var(--text-secondary)] block">{t("trial.started")}</span>
             <span className="text-[14px] font-medium">{formatDate(trialStartedAt)}</span>
           </div>
           <div>
-            <span className="text-[12px] text-[var(--text-secondary)] block">{t("account.trial.ends")}</span>
+            <span className="text-[12px] text-[var(--text-secondary)] block">{t("trial.ends")}</span>
             <span className="text-[14px] font-medium">{formatDate(trialEndsAt)}</span>
           </div>
         </div>
@@ -66,30 +66,30 @@ export function TrialStatusCard({ entitlement }: { entitlement: EntitlementState
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <h3 className="font-display text-[18px] font-semibold">
-                {t("account.trial.expiredTitle")}
+                {t("trial.expiredTitle")}
               </h3>
               <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-secondary)] bg-[var(--surface-alt)] rounded-full px-2 py-0.5 shrink-0">
-                {t("account.trial.expiredBadge")}
+                {t("trial.expiredBadge")}
               </span>
             </div>
             <p className="text-[14px] text-[var(--text-secondary)]">
-              {t("account.trial.expiredDescription")}
+              {t("trial.expiredDescription")}
             </p>
           </div>
           <Link
             href="/pricing"
             className="btn-primary w-full sm:w-auto text-[14px] min-h-10 px-5 inline-flex items-center justify-center"
           >
-            {t("account.trial.upgradeToContinue")}
+            {t("trial.upgradeToContinue")}
           </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 mt-4 border-t border-[var(--border)]">
           <div>
-            <span className="text-[12px] text-[var(--text-secondary)] block">{t("account.trial.started")}</span>
+            <span className="text-[12px] text-[var(--text-secondary)] block">{t("trial.started")}</span>
             <span className="text-[14px] font-medium">{formatDate(trialStartedAt)}</span>
           </div>
           <div>
-            <span className="text-[12px] text-[var(--text-secondary)] block">{t("account.trial.ended")}</span>
+            <span className="text-[12px] text-[var(--text-secondary)] block">{t("trial.ended")}</span>
             <span className="text-[14px] font-medium">{formatDate(trialEndsAt)}</span>
           </div>
         </div>

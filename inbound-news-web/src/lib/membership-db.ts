@@ -40,5 +40,57 @@ export async function getTrialProfileForUser(userId: string): Promise<TrialProfi
     .eq("id", userId)
     .maybeSingle()
 
-  return (data as TrialProfile | null) ?? null
+  if (!data) return null
+
+  let profile = data as TrialProfile
+
+  // Auto-enrollment safety net for existing accounts without trial records:
+  // If trial_started_at is null, check if they have an active paid membership.
+  // If not paid, enroll them into the 42-day free trial.
+  if (!profile.trial_started_at) {
+    const { data: paidMembership } = await supabase
+      .from("memberships")
+      .select("status, current_period_end")
+      .eq("user_id", userId)
+      .maybeSingle()
+
+    const isPaid =
+      paidMembership &&
+      (paidMembership.status === "active" || paidMembership.status === "trialing") &&
+      (!paidMembership.current_period_end ||
+        new Date(paidMembership.current_period_end).getTime() > Date.now())
+
+    if (!isPaid && profile.membership_status !== "pro") {
+      const now = new Date()
+      const endsAt = new Date(now.getTime() + 42 * 24 * 60 * 60 * 1000)
+      const nowIso = now.toISOString()
+      const endsAtIso = endsAt.toISOString()
+
+      const { data: updated } = await supabase
+        .from("profiles")
+        .update({
+          trial_started_at: nowIso,
+          trial_ends_at: endsAtIso,
+          trial_used: true,
+          membership_status: "trial",
+          updated_at: nowIso,
+        })
+        .eq("id", userId)
+        .select(PROFILE_TRIAL_COLUMNS)
+        .single()
+
+      if (updated) {
+        profile = updated as TrialProfile
+      } else {
+        profile = {
+          trial_started_at: nowIso,
+          trial_ends_at: endsAtIso,
+          trial_used: true,
+          membership_status: "trial",
+        }
+      }
+    }
+  }
+
+  return profile
 }

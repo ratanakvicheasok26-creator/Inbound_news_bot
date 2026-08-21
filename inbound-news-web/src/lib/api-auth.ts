@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import type { Membership } from "./stripe"
-import { effectiveTier, hasPremiumAccess, type Feature, type PlanTier, type TrialProfile } from "./access"
+import { effectiveTier, hasPremiumAccess, canAccessWithTrial, type Feature, type PlanTier, type TrialProfile } from "./access"
 import { getUserMembership as getMembership, getTrialProfileForUser } from "./membership-db"
 
 export interface AuthenticatedUser {
@@ -143,8 +143,10 @@ export async function requireFeature(
     getTrialProfileForUser(auth.user.id),
   ])
 
-  const tier = effectiveTier(membership)
-  if (hasPremiumAccess(membership, trialProfile)) return { ok: true, tier: "pro" }
+  if (canAccessWithTrial(membership, feature, trialProfile)) {
+    const isPro = hasPremiumAccess(membership, trialProfile)
+    return { ok: true, tier: isPro ? "pro" : "free" }
+  }
 
   return { ok: false, status: 403 }
 }

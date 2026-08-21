@@ -203,7 +203,20 @@ export async function resendOtp(
   try {
     const cleanEmail = email.trim().toLowerCase()
 
-    // 1. Try Supabase native resend
+    // 1. Prioritize custom API route (generates consistent 6-digit code via Gmail/Resend)
+    const res = await fetch("/api/auth/resend-verification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: cleanEmail }),
+    })
+
+    if (res.ok) {
+      return { error: null }
+    }
+
+    const payload = await res.json().catch(() => ({}))
+
+    // 2. Fallback to Supabase native resend if API route fails
     const { error: sbError } = await supabase.auth.resend({
       type: "signup",
       email: cleanEmail,
@@ -213,19 +226,11 @@ export async function resendOtp(
       return { error: null }
     }
 
-    // 2. Fallback to API route
-    const res = await fetch("/api/auth/resend-verification", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: cleanEmail }),
-    })
-
-    if (!res.ok) {
-      const payload = await res.json().catch(() => ({}))
-      return { error: { error: payload.error || mapSupabaseError(sbError).error } }
+    return {
+      error: {
+        error: payload.error || mapSupabaseError(sbError).error || "Failed to resend code",
+      },
     }
-
-    return { error: null }
   } catch (e) {
     console.error("[Auth] resendOtp network error:", e)
     return { error: { error: "We couldn't send a new verification code. Please try again later." } }
