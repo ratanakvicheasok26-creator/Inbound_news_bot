@@ -20,7 +20,8 @@ const LANGS = [
 export function ProfileTab({ user }: ProfileTabProps) {
   const { t, locale, setLocale } = useI18n()
   const [displayName, setDisplayName] = useState(
-    (user.user_metadata?.display_name as string | undefined) ||
+    user.display_name ||
+      (user.user_metadata?.display_name as string | undefined) ||
       user.email?.split("@")[0] ||
       t("account.profile.readerFallback")
   )

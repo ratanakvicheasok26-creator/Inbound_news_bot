@@ -18,7 +18,9 @@ interface ProfileTabProps {
 export function ProfileTab({ user, onAvatarChange }: ProfileTabProps) {
   const { t } = useI18n()
   const [handle, setHandle] = useState("")
-  const [byline, setByline] = useState("")
+  const [byline, setByline] = useState(
+    user.display_name || (user.user_metadata?.display_name as string) || ""
+  )
   const [bio, setBio] = useState("")
   const [avatarUrl, setAvatarUrl] = useState("")
   const [uploading, setUploading] = useState(false)
@@ -34,12 +36,18 @@ export function ProfileTab({ user, onAvatarChange }: ProfileTabProps) {
       try {
         const { data } = await supabase
           .from("profiles")
-          .select("handle, byline, bio, avatar_url")
+          .select("handle, byline, bio, avatar_url, display_name")
           .eq("id", user.id)
           .maybeSingle()
         if (!mounted || !data) return
         if (data.handle) setHandle(data.handle)
-        if (data.byline) setByline(data.byline)
+        if (data.byline) {
+          setByline(data.byline)
+        } else if (data.display_name && data.display_name !== user.email?.split("@")[0]) {
+          setByline(data.display_name)
+        } else if (user.display_name) {
+          setByline(user.display_name)
+        }
         if (data.bio) setBio(data.bio)
         if (data.avatar_url) setAvatarUrl(data.avatar_url)
       } catch {
@@ -48,7 +56,7 @@ export function ProfileTab({ user, onAvatarChange }: ProfileTabProps) {
     }
     load()
     return () => { mounted = false }
-  }, [user.id])
+  }, [user.id, user.display_name, user.email])
 
   useEffect(() => {
     return () => { if (savedTimer.current) clearTimeout(savedTimer.current) }
@@ -126,7 +134,7 @@ export function ProfileTab({ user, onAvatarChange }: ProfileTabProps) {
           byline: byline.trim() || null,
           bio: bio.trim() || null,
           avatar_url: avatarUrl || null,
-          display_name: byline.trim() || handle.trim() || user.email?.split("@")[0] || "Reader",
+          display_name: byline.trim() || handle.trim() || user.display_name || user.email?.split("@")[0] || "Reader",
         }, { onConflict: "id" })
       if (saveError) {
         if (saveError.message.includes("profiles_handle_key")) {
@@ -146,7 +154,14 @@ export function ProfileTab({ user, onAvatarChange }: ProfileTabProps) {
     }
   }
 
-  const initial = (byline || handle || user.email?.split("@")[0] || "R").charAt(0).toUpperCase()
+  const effectiveName =
+    byline ||
+    handle ||
+    user.display_name ||
+    (user.user_metadata?.display_name as string) ||
+    user.email?.split("@")[0] ||
+    "Reader"
+  const initial = effectiveName.trim().charAt(0).toUpperCase() || "R"
 
   return (
     <form onSubmit={handleSave} className="max-w-[580px] space-y-6">
