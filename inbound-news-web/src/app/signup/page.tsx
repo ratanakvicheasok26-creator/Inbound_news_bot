@@ -52,7 +52,7 @@ export default function SignupPage() {
   // Verification state
   const [isVerifying, setIsVerifying] = useState(false)
   const [sentEmail, setSentEmail] = useState("")
-  const [otp, setOtp] = useState<string[]>(Array(8).fill(""))
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(""))
   const [verifying, setVerifying] = useState(false)
   const [verifyError, setVerifyError] = useState("")
   const [resending, setResending] = useState(false)

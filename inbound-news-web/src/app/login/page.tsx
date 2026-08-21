@@ -28,7 +28,7 @@ export default function LoginPage() {
 
   // OTP Verification state for unconfirmed users attempting login
   const [isVerifying, setIsVerifying] = useState(false)
-  const [otp, setOtp] = useState<string[]>(Array(8).fill(""))
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(""))
   const [verifying, setVerifying] = useState(false)
   const [verifyError, setVerifyError] = useState("")
   const [resending, setResending] = useState(false)
