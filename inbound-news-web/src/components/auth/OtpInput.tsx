@@ -12,7 +12,7 @@ interface OtpInputProps {
 
 export function OtpInput({ value, onChange, disabled = false, onComplete, length }: OtpInputProps) {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
-  const numBoxes = length || (value.length >= 8 ? 8 : 6)
+  const numBoxes = length || (value.length > 0 ? value.length : 8)
 
   useEffect(() => {
     // Focus the first empty input on mount if available
