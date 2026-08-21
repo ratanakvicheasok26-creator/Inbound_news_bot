@@ -132,7 +132,45 @@ export async function verifyOtp(
     const cleanEmail = email.trim().toLowerCase()
     const cleanToken = token.trim()
 
-    // 1. Try Supabase native OTP verification first
+    // 1. Verify custom 6-digit OTP code via API route
+    const res = await fetch("/api/auth/verify-email-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: cleanEmail, token: cleanToken }),
+    })
+
+    const payload = await res.json().catch(() => ({}))
+
+    if (res.ok) {
+      if (password) {
+        const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password,
+        })
+
+        if (!signInErr && signInData?.user) {
+          return {
+            data: {
+              user: extractAuthUser(signInData.user),
+              sessionCreated: true,
+            },
+            error: null,
+          }
+        }
+      }
+
+      const { data: { user } } = await supabase.auth.getUser()
+
+      return {
+        data: {
+          user: user ? extractAuthUser(user) : { id: "", email: cleanEmail, email_verified: true, display_name: null },
+          sessionCreated: Boolean(user),
+        },
+        error: null,
+      }
+    }
+
+    // 2. Fallback to Supabase native OTP verification
     const { data: sbData, error: sbError } = await supabase.auth.verifyOtp({
       email: cleanEmail,
       token: cleanToken,
@@ -149,44 +187,9 @@ export async function verifyOtp(
       }
     }
 
-    // 2. Fallback to API route for custom OTP verification
-    const res = await fetch("/api/auth/verify-email-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: cleanEmail, token: cleanToken }),
-    })
-
-    const payload = await res.json().catch(() => ({}))
-
-    if (!res.ok && sbError) {
-      return { data: null, error: mapSupabaseError(sbError) }
-    }
-
-    if (password) {
-      const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
-        email: cleanEmail,
-        password,
-      })
-
-      if (!signInErr && signInData?.user) {
-        return {
-          data: {
-            user: extractAuthUser(signInData.user),
-            sessionCreated: true,
-          },
-          error: null,
-        }
-      }
-    }
-
-    const { data: { user } } = await supabase.auth.getUser()
-
     return {
-      data: {
-        user: user ? extractAuthUser(user) : { id: "", email: cleanEmail, email_verified: true, display_name: null },
-        sessionCreated: Boolean(user),
-      },
-      error: null,
+      data: null,
+      error: { error: payload.error || (sbError ? mapSupabaseError(sbError).error : "Verification failed. Please try again.") },
     }
   } catch (e) {
     console.error("[Auth] verifyOtp network error:", e)
