@@ -43,7 +43,10 @@ export async function POST(req: NextRequest) {
     const sendResult = await sendOtpEmail(email, otp, displayName)
 
     if (!sendResult.ok) {
-      console.error("[Auth] resend-verification send failed:", sendResult.error)
+      console.error("[Auth] resend-verification send failed, trying Supabase fallback:", sendResult.error)
+      await supabaseAdmin.auth.resend({ type: "signup", email }).catch((err) => {
+        console.error("[Auth] Supabase fallback resend email error:", err)
+      })
     }
 
     return NextResponse.json({ ok: true })

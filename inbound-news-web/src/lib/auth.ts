@@ -132,6 +132,24 @@ export async function verifyOtp(
     const cleanEmail = email.trim().toLowerCase()
     const cleanToken = token.trim()
 
+    // 1. Try Supabase native OTP verification first
+    const { data: sbData, error: sbError } = await supabase.auth.verifyOtp({
+      email: cleanEmail,
+      token: cleanToken,
+      type: "signup",
+    })
+
+    if (!sbError && sbData?.user) {
+      return {
+        data: {
+          user: extractAuthUser(sbData.user),
+          sessionCreated: true,
+        },
+        error: null,
+      }
+    }
+
+    // 2. Fallback to API route for custom OTP verification
     const res = await fetch("/api/auth/verify-email-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -140,8 +158,8 @@ export async function verifyOtp(
 
     const payload = await res.json().catch(() => ({}))
 
-    if (!res.ok) {
-      return { data: null, error: { error: payload.error || "Verification failed. Please try again." } }
+    if (!res.ok && sbError) {
+      return { data: null, error: mapSupabaseError(sbError) }
     }
 
     if (password) {
@@ -161,22 +179,12 @@ export async function verifyOtp(
       }
     }
 
-    const { data: { user }, error: getUserError } = await supabase.auth.getUser()
-
-    if (getUserError || !user) {
-      return {
-        data: {
-          user: { id: "", email: cleanEmail, email_verified: true, display_name: null },
-          sessionCreated: false,
-        },
-        error: null,
-      }
-    }
+    const { data: { user } } = await supabase.auth.getUser()
 
     return {
       data: {
-        user: extractAuthUser(user),
-        sessionCreated: true,
+        user: user ? extractAuthUser(user) : { id: "", email: cleanEmail, email_verified: true, display_name: null },
+        sessionCreated: Boolean(user),
       },
       error: null,
     }
@@ -192,6 +200,17 @@ export async function resendOtp(
   try {
     const cleanEmail = email.trim().toLowerCase()
 
+    // 1. Try Supabase native resend
+    const { error: sbError } = await supabase.auth.resend({
+      type: "signup",
+      email: cleanEmail,
+    })
+
+    if (!sbError) {
+      return { error: null }
+    }
+
+    // 2. Fallback to API route
     const res = await fetch("/api/auth/resend-verification", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -200,7 +219,7 @@ export async function resendOtp(
 
     if (!res.ok) {
       const payload = await res.json().catch(() => ({}))
-      return { error: { error: payload.error || "Failed to resend code." } }
+      return { error: { error: payload.error || mapSupabaseError(sbError).error } }
     }
 
     return { error: null }

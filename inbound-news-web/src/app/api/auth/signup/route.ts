@@ -63,7 +63,10 @@ export async function POST(req: NextRequest) {
 
       const sent = await sendOtpEmail(email, otp, displayName)
       if (!sent.ok) {
-        console.error("[Auth] Resend email warning for existing user:", sent.error)
+        console.error("[Auth] Resend failed, using Supabase Auth fallback:", sent.error)
+        await supabaseAdmin.auth.resend({ type: "signup", email }).catch((err) => {
+          console.error("[Auth] Supabase fallback email error:", err)
+        })
       }
 
       return NextResponse.json({
@@ -108,7 +111,10 @@ export async function POST(req: NextRequest) {
 
     const sent = await sendOtpEmail(email, otp, displayName)
     if (!sent.ok) {
-      console.error("[Auth] Resend email warning for new user:", sent.error)
+      console.error("[Auth] Resend failed, using Supabase Auth fallback:", sent.error)
+      await supabaseAdmin.auth.resend({ type: "signup", email }).catch((err) => {
+        console.error("[Auth] Supabase fallback email error:", err)
+      })
     }
 
     return NextResponse.json(
