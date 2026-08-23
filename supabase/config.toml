@@ -1,0 +1,11 @@
+# Minimal config so `supabase functions deploy` can set JWT verification.
+# Link the project with `supabase link --project-ref <ref>` before deploying.
+
+[functions.create-payway-transaction]
+verify_jwt = true
+
+[functions.payway-webhook-callback]
+verify_jwt = false
+
+[functions.check-transaction-status]
+verify_jwt = false

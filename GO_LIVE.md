@@ -15,6 +15,7 @@ Rotate any keys that were ever in a shared `.env`, then set them on hosts — ne
 | **Railway/Render (Telegram bot)** | `TELEGRAM_BOT_TOKEN`, `GROQ_API_KEY`, `TELEGRAM_CHANNEL_ID`, `REDIS_URL`, `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (for `/story` deep links), optional Gemini/OpenRouter / `WEBSITE_BASE_URL` |
 | **GitHub Actions secrets (website ingest)** | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GROQ_API_KEY`, optional Cohere/NewsData/Gemini/OpenRouter |
 | **Vercel (Next.js site)** | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, optional `GROQ_API_KEY` or `GROQ_API_KEYS` (Local Lens) |
+| **Supabase Edge Functions (ABA PayWay)** | `ABA_PAYWAY_MERCHANT_ID`, `ABA_PAYWAY_API_URL`, `ABA_PAYWAY_PUBLIC_KEY`, `ABA_PAYWAY_RSA_PUBLIC_KEY`, `ABA_PAYWAY_RSA_PRIVATE_KEY`, `SITE_URL`, `PAYWAY_CRON_SECRET` — see `docs/PAYWAY.md` |
 
 ---
 

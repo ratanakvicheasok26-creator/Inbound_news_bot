@@ -8,7 +8,15 @@ import { useRouter } from "next/navigation"
 import { X, Check, ShieldCheck, Copy, CheckCheck, ArrowLeft } from "lucide-react"
 import { PLANS, MEMBER_FEATURE_KEYS, planTitleKey, formatUsd, annualMonthlyEquivalent } from "@/lib/plans"
 import { paymentQrUrl } from "@/lib/payment-qr"
-import { createOrder, submitPaymentCode } from "@/lib/membership"
+import {
+  createOrder,
+  submitPaymentCode,
+  startPaywayCheckout,
+  refreshAllMemberships,
+  type PaywayCheckout as PaywayCheckoutPayload,
+  type PaywayTransaction,
+} from "@/lib/membership"
+import { PaywayPanel } from "@/components/membership/PaywayCheckout"
 import { useI18n } from "@/lib/i18n/LocaleProvider"
 import type { MembershipPlan } from "@/lib/plans"
 import type { PaymentOrder } from "@/lib/membership"
@@ -18,7 +26,7 @@ interface PaymentModalProps {
   onClose: () => void
 }
 
-type Step = "loading" | "qr" | "code_input" | "submitted"
+type Step = "loading" | "qr" | "code_input" | "submitted" | "payway" | "paid"
 
 /**
  * QR-code payment dialog for a single membership cadence. Monthly and annual
@@ -57,6 +65,8 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
   const [error, setError] = useState("")
   const [copied, setCopied] = useState(false)
   const [code, setCode] = useState("")
+  const [paywayTx, setPaywayTx] = useState<PaywayTransaction | null>(null)
+  const [paywayCheckout, setPaywayCheckout] = useState<PaywayCheckoutPayload | null>(null)
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -75,6 +85,20 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
   useEffect(() => {
     let active = true
     ;(async () => {
+      const payway = await startPaywayCheckout(plan)
+      if (!active) return
+      if (payway.transaction && payway.checkout) {
+        setPaywayTx(payway.transaction)
+        setPaywayCheckout(payway.checkout)
+        setStep("payway")
+        return
+      }
+      if (payway.error === "auth") {
+        close()
+        router.push("/login?returnTo=/pricing")
+        return
+      }
+
       const res = await createOrder(plan)
       if (!active) return
       if (res.order) {
@@ -174,6 +198,49 @@ export function PaymentModal({ plan, onClose }: PaymentModalProps) {
         {step === "loading" && (
           <div className="py-10 text-center text-[14px] text-[var(--text-secondary)]">
             {t("payment.confirming")}
+          </div>
+        )}
+
+        {step === "payway" && paywayTx && paywayCheckout && (
+          <>
+            {error && (
+              <p
+                className="mb-4 p-3 rounded-[var(--radius-sm)] bg-[var(--red-subtle-bg)] text-[13px] font-semibold text-[var(--accent)]"
+                role="alert"
+              >
+                {error}
+              </p>
+            )}
+            <PaywayPanel
+              transaction={paywayTx}
+              checkout={paywayCheckout}
+              onPaid={() => {
+                refreshAllMemberships()
+                setStep("paid")
+              }}
+              onFailed={(message) => setError(message)}
+            />
+          </>
+        )}
+
+        {step === "paid" && (
+          <div>
+            <div className="mx-auto mb-4 w-14 h-14 rounded-full flex items-center justify-center bg-[var(--red-subtle-bg)]">
+              <ShieldCheck className="h-7 w-7 text-[var(--accent)]" />
+            </div>
+            <div className="text-center text-[12px] font-semibold uppercase tracking-wide text-[var(--accent)] mb-3">
+              {t("payment.verified")}
+            </div>
+            <p className="text-center text-[14px] text-[var(--text-secondary)] mb-5">
+              {t("payment.membershipActive", { plan: planTitle })}
+            </p>
+            <Link
+              href="/account?tab=membership"
+              className="btn-primary w-full min-h-11 text-[14px] inline-flex items-center justify-center"
+              onClick={close}
+            >
+              {t("payment.startReading")}
+            </Link>
           </div>
         )}
 

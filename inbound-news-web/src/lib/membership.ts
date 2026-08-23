@@ -478,6 +478,81 @@ export async function listAllOrders(): Promise<AdminPaymentOrder[] | null> {
   }
 }
 
+export type PaywayCurrency = "USD" | "KHR"
+
+export type PaywayCheckout = {
+  qr_string: string | null
+  qr_image: string | null
+  abapay_deeplink: string | null
+  checkout_url: string | null
+  checkout_html: string | null
+}
+
+export type PaywayTransaction = {
+  id: string
+  aba_tran_id: string
+  plan: MembershipPlan
+  amount: number
+  currency: PaywayCurrency
+  status: "pending" | "completed" | "failed" | "expired"
+  expires_at: string | null
+}
+
+/** Start an official ABA PayWay checkout (KHQR / hosted). Falls back if unconfigured. */
+export async function startPaywayCheckout(
+  plan: MembershipPlan,
+  currency: PaywayCurrency = "USD",
+): Promise<{ transaction?: PaywayTransaction; checkout?: PaywayCheckout; error?: string }> {
+  const token = await getAccessToken()
+  if (!token) return { error: "auth" }
+  try {
+    const res = await fetch("/api/membership/payway", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ plan, currency }),
+    })
+    const data = (await res.json().catch(() => ({}))) as {
+      transaction?: PaywayTransaction
+      checkout?: PaywayCheckout
+      error?: string
+    }
+    if (res.status === 503) return { error: "payway_not_configured" }
+    if (!res.ok) return { error: data.error || "failed" }
+    return { transaction: data.transaction, checkout: data.checkout }
+  } catch {
+    return { error: "failed" }
+  }
+}
+
+/** Poll PayWay Check Transaction for a pending charge owned by the current user. */
+export async function getPaywayStatus(
+  abaTranId: string,
+): Promise<{ status?: PaywayTransaction["status"]; error?: string }> {
+  const token = await getAccessToken()
+  if (!token) return { error: "auth" }
+  try {
+    const res = await fetch("/api/membership/payway/status", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ aba_tran_id: abaTranId }),
+    })
+    const data = (await res.json().catch(() => ({}))) as {
+      transaction?: { status?: PaywayTransaction["status"] }
+      error?: string
+    }
+    if (!res.ok) return { error: data.error || "failed" }
+    return { status: data.transaction?.status }
+  } catch {
+    return { error: "failed" }
+  }
+}
+
 /** Admin: approve or reject a payment order. */
 export async function reviewOrder(
   id: string,
