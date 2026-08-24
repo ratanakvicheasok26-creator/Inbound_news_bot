@@ -412,6 +412,13 @@ TECH_ONLY: bool = os.environ.get("TECH_ONLY", "true").lower() in (
     "1", "true", "yes", "on",
 )
 
+# Second-stage AI verification layered on top of the keyword gate (EN bot only).
+# Keyword-matched stories are double-checked by the AI router; when the AI is
+# unavailable or fails, the keyword decision stands unchanged (fail-open).
+TECH_AI_FILTER: bool = os.environ.get("TECH_AI_FILTER", "true").lower() in (
+    "1", "true", "yes", "on",
+)
+
 TECH_KEYWORDS: tuple[str, ...] = (
     # cybersecurity
     "security", "hack", "breach", "vulnerability", "ransomware",

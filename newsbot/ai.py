@@ -27,6 +27,7 @@ __all__ = [
     "ContentRejected",
     "KhmerTranslationFailed",
     "collect_links",
+    "is_tech_news_ai",
     "pick_image_url",
     "render_template",
     "rewrite_with_ai",
@@ -41,6 +42,11 @@ _MAX_TELEGRAM_LENGTH: int = 4096
 _CAPTION_MAX: int = 1024
 
 _REQUIRED_JSON_KEYS = ("urgency", "headline", "summary", "category")
+
+# Bounded verdict cache for is_tech_news_ai (cleared wholesale when full —
+# entries are tiny and the cap only bounds memory across a long-lived process).
+_TECH_VERDICT_CACHE: dict[str, bool] = {}
+_TECH_VERDICT_CACHE_CAP: int = 1024
 
 # Khmer Unicode block — used to detect when the model ignored language instructions.
 _KHMER_RE = re.compile(r"[\u1780-\u17FF]")
@@ -605,6 +611,61 @@ def _fallback_data(cluster: list[Entry], urgent: bool) -> dict:
         "tags": ["News"],
         "published_date": primary.published_date or "",
     }
+
+
+def is_tech_news_ai(title: str, summary: str) -> bool | None:
+    """Second-stage tech verification for the TECH_ONLY gate.
+
+    The keyword gate (config.is_tech_text) stays the fast first pass. This
+    asks the AI router to confirm a keyword-matched story really is technology
+    news, catching broad-keyword false positives ("EU bans X", "study finds Y").
+
+    Returns True/False from the model, or ``None`` when the AI cannot answer
+    (all providers down, quota exhausted, malformed output). Callers must
+    treat ``None`` as "keep the story" so behavior never regresses when AI
+    is unavailable.
+
+    Verdicts are cached per normalized title: unposted entries are re-collected
+    on every poll tick, and without a cache each tick would re-classify them.
+    """
+    key = (title or "").strip().lower()
+    if key and key in _TECH_VERDICT_CACHE:
+        return _TECH_VERDICT_CACHE[key]
+
+    prompt = (
+        "You are a strict classifier for a technology news channel.\n"
+        "Decide whether this story is PRIMARILY about technology: software,\n"
+        "internet, AI/ML, gadgets & hardware, cybersecurity, crypto/DeFi,\n"
+        "cloud/devops, gaming, space/telecom, science/research, tech policy\n"
+        "or regulation of tech companies, tech startups/funding, or big tech\n"
+        "companies.\n"
+        "General world news, politics, crime, sports, entertainment, health\n"
+        "trends, or lifestyle stories are NOT tech — even when they mention a\n"
+        "tech word like 'app', 'digital', or a city/country name.\n\n"
+        f"Title: {title[:300]}\n"
+        f"Summary: {summary[:600]}\n\n"
+        'Reply with JSON only: {"tech": true} or {"tech": false}'
+    )
+    try:
+        router = get_router()
+        raw_output, _provider = router.call(prompt, max_tokens=64)
+        if not raw_output or not raw_output.strip():
+            return None
+        data = _parse_ai_json(raw_output)
+        verdict = data.get("tech")
+        if isinstance(verdict, str):
+            verdict = verdict.strip().lower() == "true"
+        if not isinstance(verdict, bool):
+            return None
+    except Exception:
+        logger.debug("Tech AI classification unavailable — falling back", exc_info=True)
+        return None
+
+    if key:
+        if len(_TECH_VERDICT_CACHE) >= _TECH_VERDICT_CACHE_CAP:
+            _TECH_VERDICT_CACHE.clear()
+        _TECH_VERDICT_CACHE[key] = verdict
+    return verdict
 
 
 def _translate_to_khmer(text: str, router) -> str:

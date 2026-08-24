@@ -22,6 +22,7 @@ from newsbot.ai import (
     KhmerTranslationFailed,
     MirrorRewriteFailed,
     collect_links,
+    is_tech_news_ai,
     pick_image_url,
     rewrite_compact,
     rewrite_compact_khmer,
@@ -41,6 +42,8 @@ from newsbot.config import (
     MAX_URGENT_POSTS_PER_RUN,
     NEWS_LANGUAGE,
     PREPARE_ENTRIES_TIMEOUT_SECONDS,
+    TECH_AI_FILTER,
+    TECH_ONLY,
     TELEGRAM_CHANNEL_ID,
     TELEGRAM_THREAD_ID,
     TIMEZONE,
@@ -425,6 +428,34 @@ def _rank_clusters(clusters: list[list[Entry]]) -> list[list[Entry]]:
     return [c for _, c in indexed]
 
 
+def _ai_tech_gate(cluster: list[Entry]) -> bool:
+    """Second-stage tech check layered on the keyword gate (TECH_AI_FILTER).
+
+    The keyword gate in feeds.py already passed — this asks the AI to confirm
+    the story is genuinely tech, catching broad-keyword false positives.
+    Fail-open everywhere: disabled flag, non-EN bot, or AI unavailable all
+    return True so posting behavior never regresses vs. the keyword-only era.
+    """
+    if not TECH_ONLY or not TECH_AI_FILTER or NEWS_LANGUAGE != "en":
+        return True
+    if not cluster:
+        return True
+    title = cluster[0].title or ""
+    summary = " ".join(
+        (entry.summary or "") for entry in cluster[:3]
+    ).strip()
+    verdict = is_tech_news_ai(title, summary)
+    if verdict is None:
+        logger.info(
+            "Tech AI filter unavailable for '%s' — keeping story (keyword gate only)",
+            title[:120],
+        )
+        return True
+    if not verdict:
+        logger.info("Tech AI filter dropped non-tech story: %s", title[:120])
+    return verdict
+
+
 def _cluster_to_story(
     cluster: list[Entry],
     *,
@@ -711,6 +742,14 @@ def _prepare_entries(urgent: bool = False, header: str | None = None) -> list[St
         ][:MAX_URGENT_POSTS_PER_RUN]
     else:
         clusters = _rank_clusters(cluster_entries(entries))[:DIGEST_MAX_STORIES]
+        gated = [c for c in clusters if _ai_tech_gate(c)]
+        dropped = len(clusters) - len(gated)
+        if dropped:
+            logger.info("Tech AI filter: %d/%d digest cluster(s) dropped.", dropped, len(clusters))
+        clusters = gated
+        if not clusters:
+            logger.info("All digest clusters dropped by the tech filter.")
+            return []
 
     stories: list[StoryPost] = []
     n = len(clusters)
@@ -868,6 +907,19 @@ async def _run_batched_pipeline(context: ContextTypes.DEFAULT_TYPE) -> int:
         all_clusters = _rank_clusters(cluster_entries(entries))
         if not all_clusters:
             logger.info("Brief: clustering produced no clusters.")
+            return 0
+
+        # Same tech gate as the individual path — one AI check per cluster,
+        # cached by title so repeat poll ticks don't re-classify.
+        gated_clusters = [c for c in all_clusters if _ai_tech_gate(c)]
+        dropped = len(all_clusters) - len(gated_clusters)
+        if dropped:
+            logger.info(
+                "Brief: tech filter dropped %d/%d cluster(s).", dropped, len(all_clusters)
+            )
+        all_clusters = gated_clusters
+        if not all_clusters:
+            logger.info("Brief: all clusters dropped by the tech filter.")
             return 0
 
         # 1 story → individual path (full rewrite + keyboard)
